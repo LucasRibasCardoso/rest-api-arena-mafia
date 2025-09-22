@@ -73,7 +73,7 @@ public class SecurityConfig {
 
                     // Restringe o acesso a endpoints de monitoramento
                     .requestMatchers(EndpointRequest.toAnyEndpoint())
-                    .hasRole("ADMIN")
+                    .hasRole("DEVELOPER")
 
                     // Exige autenticação para todas as outras requisições
                     .anyRequest()
