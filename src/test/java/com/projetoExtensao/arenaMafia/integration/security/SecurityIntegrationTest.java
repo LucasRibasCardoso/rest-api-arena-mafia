@@ -29,6 +29,8 @@ public class SecurityIntegrationTest extends WebIntegrationTestConfig {
   @Autowired private PendingPhoneChangePort pendingPhoneChangePort;
 
   private RequestSpecification specification;
+  private AuthTokensTest tokens;
+  private User mockUser;
 
   @BeforeEach
   void setup() {
@@ -38,6 +40,9 @@ public class SecurityIntegrationTest extends WebIntegrationTestConfig {
             .setBasePath("/api/users/me")
             .setContentType(MediaType.APPLICATION_JSON_VALUE)
             .build();
+
+    mockUser = mockPersistUser();
+    tokens = mockLogin(defaultUsername, defaultPassword);
   }
 
   @Test
@@ -66,10 +71,7 @@ public class SecurityIntegrationTest extends WebIntegrationTestConfig {
   @DisplayName("Deve retornar 401 ao usar token de usuário deletado")
   void protectedEndpoint_ShouldReturn401_whenUserIsDeletedAfterLogin() {
     // Arrange
-    User persistedUser = mockPersistUser();
-    AuthTokensTest tokens = mockLogin(defaultUsername, defaultPassword);
-    deleteMockUser(persistedUser.getId());
-
+    deleteMockUser(mockUser.getId());
     UpdateProfileRequestDto request = new UpdateProfileRequestDto("Novo Nome Completo");
 
     // Act & Assert
@@ -107,8 +109,6 @@ public class SecurityIntegrationTest extends WebIntegrationTestConfig {
         "Deve retornar 401 Unauthorized para os status: DISABLED, LOCKED, PENDING_VERIFICATION")
     void protectedEndpoint_shouldReturn401_whenAccountStatusIsInvalid(AccountStatus invalidStatus) {
       // Arrange
-      User mockUser = mockPersistUser();
-      AuthTokensTest tokens = mockLogin(defaultUsername, defaultPassword);
       alterAccountStatus(mockUser.getId(), invalidStatus);
 
       ErrorCode expectedErrorCode =

@@ -41,6 +41,8 @@ public class UserControllerTest extends WebIntegrationTestConfig {
   @Autowired private OtpPort otpPort;
 
   private RequestSpecification specification;
+  private AuthTokensTest tokens;
+  private User mockUser;
 
   @BeforeEach
   void setup() {
@@ -50,6 +52,9 @@ public class UserControllerTest extends WebIntegrationTestConfig {
             .setBasePath("/api/users/me")
             .setContentType(MediaType.APPLICATION_JSON_VALUE)
             .build();
+
+    mockUser = mockPersistUser();
+    tokens = mockLogin(defaultUsername, defaultPassword);
   }
 
   @Nested
@@ -59,10 +64,6 @@ public class UserControllerTest extends WebIntegrationTestConfig {
     @Test
     @DisplayName("Deve retornar 200 OK com os detalhes do perfil do usuário")
     void getMyProfile_shouldReturn200_withUserProfileDetails() {
-      // Arrange
-      User mockUser = mockPersistUser();
-      AuthTokensTest tokens = mockLogin(defaultUsername, defaultPassword);
-
       // Act & Assert
       var response =
           given()
@@ -90,8 +91,6 @@ public class UserControllerTest extends WebIntegrationTestConfig {
     @DisplayName("Deve retornar 200 OK quando a atualização for bem-sucedida")
     void updateProfile_shouldReturn200_whenSuccessful() {
       // Arrange
-      User mockUser = mockPersistUser();
-      AuthTokensTest tokens = mockLogin(defaultUsername, defaultPassword);
       var request = new UpdateProfileRequestDto("Novo Nome Completo");
 
       // Act & Assert
@@ -117,8 +116,6 @@ public class UserControllerTest extends WebIntegrationTestConfig {
       void updateProfile_shouldReturn400_whenFullNameIsEmptyOrNull(
           String fullName, String expectedErrorCode) {
         // Arrange
-        mockPersistUser();
-        AuthTokensTest tokens = mockLogin(defaultUsername, defaultPassword);
         var request = new UpdateProfileRequestDto(fullName);
 
         // Act & Assert
@@ -161,8 +158,6 @@ public class UserControllerTest extends WebIntegrationTestConfig {
     @DisplayName("Deve retornar 200 OK quando o nome de usuário for alterado com sucesso")
     void changeUsername_shouldReturn200_whenSuccessful() {
       // Arrange
-      User mockUser = mockPersistUser();
-      AuthTokensTest tokens = mockLogin(defaultUsername, defaultPassword);
       var request = new ChangeUsernameRequestDto("new_username");
 
       // Act & Assert
@@ -188,8 +183,6 @@ public class UserControllerTest extends WebIntegrationTestConfig {
       void changeUsername_shouldReturn400_whenUsernameIsEmptyOrNull(
           String username, String expectedErrorCode) {
         // Arrange
-        mockPersistUser();
-        AuthTokensTest tokens = mockLogin(defaultUsername, defaultPassword);
         var request = new ChangeUsernameRequestDto(username);
 
         // Act & Assert
@@ -227,8 +220,6 @@ public class UserControllerTest extends WebIntegrationTestConfig {
     @DisplayName("Deve retornar 409 Conflict quando o nome de usuário já estiver em uso")
     void changeUsername_shouldReturn409_whenUsernameAlreadyExists() {
       // Arrange
-      mockPersistUser();
-      AuthTokensTest tokens = mockLogin(defaultUsername, defaultPassword);
       User mockExistingUser =
           mockPersistUser("existing_user", "Existing User", "+5521921340987", "123456");
 
@@ -263,8 +254,6 @@ public class UserControllerTest extends WebIntegrationTestConfig {
     @DisplayName("Deve retornar 204 No Content quando a alteração de senha for bem-sucedida")
     void changePassword_shouldReturn204_whenSuccessful() {
       // Arrange
-      User mockUser = mockPersistUser();
-      AuthTokensTest tokens = mockLogin(defaultUsername, defaultPassword);
       var request = new ChangePasswordRequestDto(defaultPassword, "new_password", "new_password");
 
       // Act & Assert
@@ -289,8 +278,6 @@ public class UserControllerTest extends WebIntegrationTestConfig {
       @DisplayName("Deve retornar 400 Bad Request quando às senhas não se corresponderem")
       void changePassword_shouldReturn400_whenNewPasswordAndConfirmationDoNotMatch() {
         // Arrange
-        mockPersistUser();
-        AuthTokensTest tokens = mockLogin(defaultUsername, defaultPassword);
         var request = new ChangePasswordRequestDto(defaultPassword, "new_password", "password");
 
         // Act & Assert
@@ -328,8 +315,6 @@ public class UserControllerTest extends WebIntegrationTestConfig {
       void changePassword_shouldReturn400_whenCurrentPasswordIsInvalid(
           String currentPassword, String expectedErrorCode) {
         // Arrange
-        mockPersistUser();
-        AuthTokensTest tokens = mockLogin(defaultUsername, defaultPassword);
         var request = new ChangePasswordRequestDto(currentPassword, "new_password", "new_password");
 
         // Act & Assert
@@ -367,8 +352,6 @@ public class UserControllerTest extends WebIntegrationTestConfig {
       void changePassword_shouldReturn400_whenNewPasswordIsInvalid(
           String newPassword, String expectedErrorCode) {
         // Arrange
-        mockPersistUser();
-        AuthTokensTest tokens = mockLogin(defaultUsername, defaultPassword);
         var request = new ChangePasswordRequestDto(defaultPassword, newPassword, newPassword);
 
         // Act & Assert
@@ -406,8 +389,6 @@ public class UserControllerTest extends WebIntegrationTestConfig {
       @DisplayName("Deve retornar 400 Bad Request quando a senha de confirmação for nula ou vazia")
       void changePassword_shouldReturn400_whenConfirmPasswordIsInvalid(String confirmPassword) {
         // Arrange
-        mockPersistUser();
-        AuthTokensTest tokens = mockLogin(defaultUsername, defaultPassword);
         var request =
             new ChangePasswordRequestDto(defaultPassword, "new_password", confirmPassword);
 
@@ -446,8 +427,6 @@ public class UserControllerTest extends WebIntegrationTestConfig {
     @DisplayName("Deve retornar 400 Bad Request quando a senha atual estiver incorreta")
     void changePassword_shouldReturn400_whenCurrentPasswordIsIncorrect() {
       // Arrange
-      mockPersistUser();
-      AuthTokensTest tokens = mockLogin(defaultUsername, defaultPassword);
       var request = new ChangePasswordRequestDto("wrong_password", "new_password", "new_password");
 
       // Act & Assert
@@ -483,8 +462,6 @@ public class UserControllerTest extends WebIntegrationTestConfig {
       @DisplayName("Deve retornar 202 Accepted quando a alteração de telefone iniciar com sucesso")
       void initiateChangePhone_shouldReturn202_whenSuccessful() {
         // Arrange
-        mockPersistUser();
-        AuthTokensTest tokens = mockLogin(defaultUsername, defaultPassword);
         var request = new InitiateChangePhoneRequestDto("+5547992044567");
 
         // Act & Assert
@@ -507,8 +484,6 @@ public class UserControllerTest extends WebIntegrationTestConfig {
         void initiateChangePhone_shouldReturn400_whenPhoneIsEmptyOrNull(
             String invalidPhone, String expectedErrorCode) {
           // Arrange
-          mockPersistUser();
-          AuthTokensTest tokens = mockLogin(defaultUsername, defaultPassword);
           var request = new InitiateChangePhoneRequestDto(invalidPhone);
 
           // Act & Assert
@@ -546,8 +521,6 @@ public class UserControllerTest extends WebIntegrationTestConfig {
       @Test
       @DisplayName("Deve retornar 400 Bad Request quando o número de telefone for inválido")
       void initiateChangePhone_shouldReturn400_whenPhoneIsInvalid() {
-        mockPersistUser();
-        AuthTokensTest tokens = mockLogin(defaultUsername, defaultPassword);
         var request = new InitiateChangePhoneRequestDto("+999999999999");
 
         var response =
@@ -574,9 +547,6 @@ public class UserControllerTest extends WebIntegrationTestConfig {
       @DisplayName("Deve retornar 409 Conflict quando o número de telefone já está em uso")
       void initiateChangePhone_shouldReturn409_whenPhoneAlreadyExists() {
         // Arrange
-        mockPersistUser();
-        AuthTokensTest tokens = mockLogin(defaultUsername, defaultPassword);
-
         User mockExistingUser =
             mockPersistUser("existing_user", "Existing User", "+5521921340987", "123456");
         var request = new InitiateChangePhoneRequestDto(mockExistingUser.getPhone());
@@ -611,9 +581,6 @@ public class UserControllerTest extends WebIntegrationTestConfig {
       @DisplayName("Deve retornar 200 OK quando a verificação de telefone for um sucesso")
       void completeChangePhone_shouldReturn200_whenSuccessful() {
         // Arrange
-        User mockUser = mockPersistUser();
-        AuthTokensTest tokens = mockLogin(defaultUsername, defaultPassword);
-
         String newPhone = "+5547992044567";
         pendingPhoneChangePort.save(mockUser.getId(), newPhone);
         OtpCode verificationCode = otpPort.generateOtpCode(mockUser.getId());
@@ -642,8 +609,6 @@ public class UserControllerTest extends WebIntegrationTestConfig {
         void completeChangePhone_shouldReturn400_whenOtpCodeIsNullOrEmpty(
             String invalidOtp, String expectedErrorCode) {
           // Arrange
-          User mockUser = mockPersistUser();
-          AuthTokensTest tokens = mockLogin(defaultUsername, defaultPassword);
           String newPhone = "+5547992044567";
           pendingPhoneChangePort.save(mockUser.getId(), newPhone);
 
@@ -686,9 +651,6 @@ public class UserControllerTest extends WebIntegrationTestConfig {
       @DisplayName("Deve retornar 400 Bad Request quando o código de verificação for inválido")
       void completeChangePhone_shouldReturn400_whenCodeIsIncorrect() {
         // Arrange
-        User mockUser = mockPersistUser();
-        AuthTokensTest tokens = mockLogin(defaultUsername, defaultPassword);
-
         String newPhone = "+5547992044567";
         pendingPhoneChangePort.save(mockUser.getId(), newPhone);
 
@@ -721,9 +683,6 @@ public class UserControllerTest extends WebIntegrationTestConfig {
           "Deve retornar 404 Not Found quando a solicitação de alteração de telefone expirar")
       void completeChangePhone_shouldReturn404_whenRequestHasExpired() {
         // Arrange
-        mockPersistUser();
-        AuthTokensTest tokens = mockLogin(defaultUsername, defaultPassword);
-
         OtpCode otpCode = OtpCode.generate();
         var request = new CompletePhoneChangeRequestDto(otpCode);
 
@@ -758,9 +717,6 @@ public class UserControllerTest extends WebIntegrationTestConfig {
     @DisplayName("Deve retornar 204 No Content quando o código OTP for reenviado com sucesso")
     void resendChangePhoneOtp_shouldReturn204_whenSuccessful() {
       // Arrange
-      User mockUser = mockPersistUser();
-      AuthTokensTest tokens = mockLogin(defaultUsername, defaultPassword);
-
       String newPhone = "+5547992044567";
       pendingPhoneChangePort.save(mockUser.getId(), newPhone);
 
@@ -776,10 +732,7 @@ public class UserControllerTest extends WebIntegrationTestConfig {
     @Test
     @DisplayName("Deve retornar 404 Not Found quando não houver alteração de telefone pendente")
     void resendChangePhoneOtp_shouldReturn404_whenNoPendingPhoneChange() {
-      // Arrange
-      mockPersistUser();
-      AuthTokensTest tokens = mockLogin(defaultUsername, defaultPassword);
-
+      // Act
       var response =
           given()
               .spec(specification)
@@ -808,10 +761,6 @@ public class UserControllerTest extends WebIntegrationTestConfig {
     @Test
     @DisplayName("Deve retornar 204 No Content quando a conta for desativada com sucesso")
     void disableMyAccount_shouldReturn204_whenSuccessful() {
-      // Arrange
-      User mockUser = mockPersistUser();
-      AuthTokensTest tokens = mockLogin(defaultUsername, defaultPassword);
-
       // Act & Assert
       given()
           .spec(specification)
