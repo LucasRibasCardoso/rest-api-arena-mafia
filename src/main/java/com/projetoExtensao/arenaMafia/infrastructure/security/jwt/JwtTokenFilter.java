@@ -19,8 +19,7 @@ public class JwtTokenFilter extends OncePerRequestFilter {
   private final CustomUnauthorizedHandler customUnauthorizedHandler;
 
   public JwtTokenFilter(
-      JwtTokenProvider tokenProvider,
-      CustomUnauthorizedHandler customUnauthorizedHandler) {
+      JwtTokenProvider tokenProvider, CustomUnauthorizedHandler customUnauthorizedHandler) {
     this.tokenProvider = tokenProvider;
     this.customUnauthorizedHandler = customUnauthorizedHandler;
   }

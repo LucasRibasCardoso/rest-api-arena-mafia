@@ -7,7 +7,6 @@ import com.projetoExtensao.arenaMafia.domain.exception.unauthorized.RefreshToken
 import com.projetoExtensao.arenaMafia.infrastructure.web.auth.dto.request.ResendOtpRequestDto;
 import jakarta.validation.Valid;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
