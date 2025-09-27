@@ -1,5 +1,11 @@
 package com.projetoExtensao.arenaMafia.domain.exception;
 
+import com.projetoExtensao.arenaMafia.domain.model.enums.AccountStatus;
+import com.projetoExtensao.arenaMafia.domain.model.enums.RoleEnum;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+
 public enum ErrorCode {
   // Erros globais
   MALFORMED_JSON_REQUEST("Requisição JSON malformada."),
@@ -9,6 +15,7 @@ public enum ErrorCode {
   INVALID_REQUEST_PARAMETER("Um parâmetro da requisição é inválido ou está malformado."),
   VALIDATION_FAILED("A validação falhou. Verifique os detalhes dos campos para mais informações."),
   SESSION_EXPIRED("Sua sessão expirou. Por favor, faça login novamente."),
+  INVALID_SORT_PARAMETER("O parâmetro de ordenação fornecido é inválido."),
 
   TOO_MANY_REQUESTS("Limite de requisições excedido. Por favor, tente novamente mais tarde."),
   TOO_MANY_LOGIN_ATTEMPTS(
@@ -69,7 +76,20 @@ public enum ErrorCode {
   REFRESH_TOKEN_REQUIRED("O token de atualização é obrigatório."),
   REFRESH_TOKEN_INVALID_FORMAT("O formato do token de atualização é inválido."),
   REFRESH_TOKEN_NOT_FOUND("Sua sessão expirou. Por favor, faça login novamente."),
-  REFRESH_TOKEN_INCORRECT_OR_EXPIRED("Sua sessão expirou. Por favor, faça login novamente.");
+  REFRESH_TOKEN_INCORRECT_OR_EXPIRED("Sua sessão expirou. Por favor, faça login novamente."),
+
+  TERM_TOO_LONG("O termo de busca é muito longo. O máximo permitido é 100 caracteres."),
+  START_DATE_AFTER_END_DATE("A data de início não pode ser posterior à data de término."),
+
+  INVALID_ROLE("O papel (role) fornecido é inválido."),
+  INVALID_ACCOUNT_STATUS("O status da conta fornecido é inválido.");
+
+  private static final Map<Class<?>, ErrorCode> ENUM_ERROR_MAP = new HashMap<>();
+
+  static {
+    ENUM_ERROR_MAP.put(AccountStatus.class, INVALID_ACCOUNT_STATUS);
+    ENUM_ERROR_MAP.put(RoleEnum.class, INVALID_ROLE);
+  }
 
   private final String message;
 
@@ -79,5 +99,15 @@ public enum ErrorCode {
 
   public String getMessage() {
     return message;
+  }
+
+  /**
+   * Retorna o ErrorCode associado a um tipo de enum específico, se existir.
+   *
+   * @param enumType O tipo de enum para o qual se deseja obter o ErrorCode.
+   * @return Um Optional contendo o ErrorCode correspondente, ou vazio se não houver associação.
+   */
+  public static Optional<ErrorCode> getForEnumType(Class<?> enumType) {
+    return Optional.ofNullable(ENUM_ERROR_MAP.get(enumType));
   }
 }

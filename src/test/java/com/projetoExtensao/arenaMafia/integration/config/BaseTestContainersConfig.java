@@ -52,7 +52,7 @@ public abstract class BaseTestContainersConfig {
   @Autowired private UserJpaRepository userJpaRepository;
   @Autowired private RefreshTokenRepositoryPort refreshTokenRepository;
 
-  public final String defaultUsername = "test_user";
+  public final String defaultUsername = "testuser";
   public final String defaultPassword = "123456";
   public final String defaultFullName = "Usuário de Teste";
   public final String defaultPhone = "+558320548186";
@@ -99,11 +99,6 @@ public abstract class BaseTestContainersConfig {
 
   public User mockPersistUser() {
     return mockPersistUser(AccountStatus.ACTIVE);
-  }
-
-  public RefreshToken mockPersistRefreshToken(Long expirationTime, User user) {
-    RefreshToken refreshToken = RefreshToken.create(expirationTime, user);
-    return refreshTokenRepository.save(refreshToken);
   }
 
   public User mockPersistUser(AccountStatus status) {
@@ -157,6 +152,26 @@ public abstract class BaseTestContainersConfig {
     return userRepository.save(user);
   }
 
+  public User mockPersistUser(
+      String username,
+      String fullName,
+      String phone,
+      String password,
+      AccountStatus status,
+      RoleEnum role) {
+    String passwordEncoded = passwordEncoder.encode(password);
+    Instant now = Instant.now();
+    User user =
+        User.reconstitute(
+            UUID.randomUUID(), username, fullName, phone, passwordEncoded, status, role, now, now);
+    return userRepository.save(user);
+  }
+
+  public RefreshToken mockPersistRefreshToken(Long expirationTime, User user) {
+    RefreshToken refreshToken = RefreshToken.create(expirationTime, user);
+    return refreshTokenRepository.save(refreshToken);
+  }
+
   public void deleteMockUser(UUID uuid) {
     userRepository.findById(uuid).ifPresent(user -> userJpaRepository.deleteById(user.getId()));
   }
@@ -176,5 +191,96 @@ public abstract class BaseTestContainersConfig {
             user.getCreatedAt(),
             user.getUpdatedAt());
     userRepository.save(lockedUser);
+  }
+
+  public User mockPersistAdminUser() {
+    String passwordEncoded = passwordEncoder.encode(defaultPassword);
+    Instant now = Instant.now();
+    User adminUser =
+        User.reconstitute(
+            UUID.randomUUID(),
+            defaultUsername,
+            defaultFullName,
+            defaultPhone,
+            passwordEncoded,
+            AccountStatus.ACTIVE,
+            RoleEnum.ROLE_ADMIN,
+            now,
+            now);
+    return userRepository.save(adminUser);
+  }
+
+  public void mockPersistListOfUsers() {
+    // Usuários adicionais para testes de filtro e paginação
+    mockPersistUser(
+        "joao_silva",
+        "João da Silva",
+        "+5511999000001",
+        defaultPassword,
+        AccountStatus.ACTIVE,
+        RoleEnum.ROLE_USER);
+    mockPersistUser(
+        "maria_souza",
+        "Maria Souza",
+        "+5511999000002",
+        defaultPassword,
+        AccountStatus.PENDING_VERIFICATION,
+        RoleEnum.ROLE_USER);
+    mockPersistUser(
+        "carlos_pereira",
+        "Carlos Pereira",
+        "+5511999000003",
+        defaultPassword,
+        AccountStatus.LOCKED,
+        RoleEnum.ROLE_ADMIN);
+    mockPersistUser(
+        "ana_oliveira",
+        "Ana Oliveira",
+        "+5511999000004",
+        defaultPassword,
+        AccountStatus.DISABLED,
+        RoleEnum.ROLE_ADMIN);
+    mockPersistUser(
+        "bruno_ferreira",
+        "Bruno Ferreira",
+        "+5511999000005",
+        defaultPassword,
+        AccountStatus.ACTIVE,
+        RoleEnum.ROLE_DEVELOPER);
+    mockPersistUser(
+        "carla_gomes",
+        "Carla Gomes",
+        "+5511999000006",
+        defaultPassword,
+        AccountStatus.ACTIVE,
+        RoleEnum.ROLE_USER);
+    mockPersistUser(
+        "diego_rodrigues",
+        "Diego Rodrigues",
+        "+5511999000007",
+        defaultPassword,
+        AccountStatus.PENDING_VERIFICATION,
+        RoleEnum.ROLE_DEVELOPER);
+    mockPersistUser(
+        "elaine_martins",
+        "Elaine Martins",
+        "+5511999000008",
+        defaultPassword,
+        AccountStatus.LOCKED,
+        RoleEnum.ROLE_USER);
+    mockPersistUser(
+        "felipe_ribeiro",
+        "Felipe Ribeiro",
+        "+5511999000009",
+        defaultPassword,
+        AccountStatus.DISABLED,
+        RoleEnum.ROLE_ADMIN);
+    mockPersistUser(
+        "gabriela_alves",
+        "Gabriela Alves",
+        "+5511999000010",
+        defaultPassword,
+        AccountStatus.ACTIVE,
+        RoleEnum.ROLE_USER);
   }
 }

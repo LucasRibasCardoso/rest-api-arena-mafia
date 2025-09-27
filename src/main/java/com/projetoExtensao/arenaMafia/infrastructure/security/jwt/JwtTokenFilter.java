@@ -1,5 +1,6 @@
 package com.projetoExtensao.arenaMafia.infrastructure.security.jwt;
 
+import com.projetoExtensao.arenaMafia.infrastructure.web.exception.customHandlers.CustomUnauthorizedHandler;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -15,13 +16,13 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class JwtTokenFilter extends OncePerRequestFilter {
 
   private final JwtTokenProvider tokenProvider;
-  private final CustomAuthenticationEntryPointHandler customAuthenticationEntryPointHandler;
+  private final CustomUnauthorizedHandler customUnauthorizedHandler;
 
   public JwtTokenFilter(
       JwtTokenProvider tokenProvider,
-      CustomAuthenticationEntryPointHandler customAuthenticationEntryPointHandler) {
+      CustomUnauthorizedHandler customUnauthorizedHandler) {
     this.tokenProvider = tokenProvider;
-    this.customAuthenticationEntryPointHandler = customAuthenticationEntryPointHandler;
+    this.customUnauthorizedHandler = customUnauthorizedHandler;
   }
 
   @Override
@@ -37,7 +38,7 @@ public class JwtTokenFilter extends OncePerRequestFilter {
         SecurityContextHolder.getContext().setAuthentication(authentication);
       } catch (AuthenticationException exception) {
         SecurityContextHolder.clearContext();
-        customAuthenticationEntryPointHandler.commence(request, response, exception);
+        customUnauthorizedHandler.commence(request, response, exception);
         return;
       }
     }

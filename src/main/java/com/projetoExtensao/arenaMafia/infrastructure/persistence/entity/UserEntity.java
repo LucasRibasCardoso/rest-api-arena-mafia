@@ -7,7 +7,12 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "tb_users")
+@Table(
+    name = "tb_users",
+    indexes = {
+      @Index(name = "idx_users_full_name", columnList = "full_name"),
+      @Index(name = "idx_users_created_at", columnList = "created_at")
+    })
 public class UserEntity {
 
   @Id private UUID id;

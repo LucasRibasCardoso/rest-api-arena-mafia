@@ -11,16 +11,18 @@ import com.projetoExtensao.arenaMafia.infrastructure.web.exception.dto.ErrorResp
 import com.projetoExtensao.arenaMafia.infrastructure.web.exception.dto.FieldErrorResponseDto;
 import io.github.resilience4j.ratelimiter.RequestNotPermitted;
 import jakarta.servlet.http.HttpServletRequest;
+import java.lang.reflect.Field;
 import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.NestedExceptionUtils;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.mapping.PropertyReferenceException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -28,13 +30,12 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-
   private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
   @ExceptionHandler(ApplicationException.class)
   public ResponseEntity<ErrorResponseDto> handleApplicationException(
       ApplicationException e, HttpServletRequest request) {
-    return buildErrorResponseEntity(mapExceptionToStatus(e), e.getErrorCode(), request);
+    return buildGeneralErrorResponse(mapExceptionToStatus(e), e.getErrorCode(), request);
   }
 
   @ExceptionHandler(RequestNotPermitted.class)
@@ -43,9 +44,9 @@ public class GlobalExceptionHandler {
     final HttpStatus httpStatus = HttpStatus.TOO_MANY_REQUESTS;
 
     if (request.getRequestURI().equals("/api/auth/login")) {
-      return buildErrorResponseEntity(httpStatus, ErrorCode.TOO_MANY_LOGIN_ATTEMPTS, request);
+      return buildGeneralErrorResponse(httpStatus, ErrorCode.TOO_MANY_LOGIN_ATTEMPTS, request);
     }
-    return buildErrorResponseEntity(httpStatus, ErrorCode.TOO_MANY_REQUESTS, request);
+    return buildGeneralErrorResponse(httpStatus, ErrorCode.TOO_MANY_REQUESTS, request);
   }
 
   @ExceptionHandler(HttpMessageNotReadableException.class)
@@ -70,7 +71,7 @@ public class GlobalExceptionHandler {
     List<FieldErrorResponseDto> fieldErrors =
         List.of(new FieldErrorResponseDto(fieldName, errorCodeString, devMessage));
 
-    return buildErrorResponseEntity(fieldErrors, request);
+    return buildValidationErrorResponse(fieldErrors, request);
   }
 
   @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -80,21 +81,12 @@ public class GlobalExceptionHandler {
     List<FieldErrorResponseDto> fieldErrors =
         e.getBindingResult().getFieldErrors().stream()
             .map(
-                fieldError -> {
-                  String errorCodeString = fieldError.getDefaultMessage();
-                  String devMessage;
-                  try {
-                    ErrorCode errorCode = ErrorCode.valueOf(errorCodeString);
-                    devMessage = errorCode.getMessage();
-                  } catch (IllegalArgumentException ex) {
-                    devMessage = "Código de erro de validação não mapeado: " + errorCodeString;
-                  }
-                  return new FieldErrorResponseDto(
-                      fieldError.getField(), errorCodeString, devMessage);
-                })
+                fieldError ->
+                    fieldError.isBindingFailure()
+                        ? buildFieldErrorToMismatchException(fieldError, e)
+                        : buildFieldErrorToValidationException(fieldError))
             .toList();
-
-    return buildErrorResponseEntity(fieldErrors, request);
+    return buildValidationErrorResponse(fieldErrors, request);
   }
 
   @ExceptionHandler(MethodArgumentTypeMismatchException.class)
@@ -105,13 +97,15 @@ public class GlobalExceptionHandler {
     if (rootCause instanceof ApplicationException appException) {
       return handleApplicationException(appException, request);
     }
-    return buildErrorResponseEntity(
+    return buildGeneralErrorResponse(
         HttpStatus.BAD_REQUEST, ErrorCode.INVALID_REQUEST_PARAMETER, request);
   }
 
-  @ExceptionHandler(AccessDeniedException.class)
-  public ResponseEntity<ErrorResponseDto> handleAccessDeniedException(HttpServletRequest request) {
-    return buildErrorResponseEntity(HttpStatus.FORBIDDEN, ErrorCode.ACCESS_DENIED, request);
+  @ExceptionHandler(PropertyReferenceException.class)
+  public ResponseEntity<ErrorResponseDto> handlePropertyReferenceException(
+      HttpServletRequest request) {
+    return buildGeneralErrorResponse(
+        HttpStatus.BAD_REQUEST, ErrorCode.INVALID_SORT_PARAMETER, request);
   }
 
   @ExceptionHandler(AuthenticationException.class)
@@ -123,13 +117,13 @@ public class GlobalExceptionHandler {
     if (e instanceof UnauthorizedException customException) {
       errorCode = customException.getErrorCode();
     }
-    return buildErrorResponseEntity(HttpStatus.UNAUTHORIZED, errorCode, request);
+    return buildGeneralErrorResponse(HttpStatus.UNAUTHORIZED, errorCode, request);
   }
 
   @ExceptionHandler(DataIntegrityViolationException.class)
   public ResponseEntity<ErrorResponseDto> handleDataIntegrityViolationException(
       HttpServletRequest request) {
-    return buildErrorResponseEntity(
+    return buildGeneralErrorResponse(
         HttpStatus.CONFLICT, ErrorCode.DATA_INTEGRITY_VIOLATION, request);
   }
 
@@ -138,10 +132,16 @@ public class GlobalExceptionHandler {
       Exception e, HttpServletRequest request) {
 
     logger.error("Ocorreu um erro inesperado: ", e);
-    return buildErrorResponseEntity(
+    return buildGeneralErrorResponse(
         HttpStatus.INTERNAL_SERVER_ERROR, ErrorCode.UNEXPECTED_ERROR, request);
   }
 
+  /**
+   * Mapeia exceções de aplicação para status HTTP apropriados.
+   *
+   * @param e A exceção de aplicação a ser mapeada
+   * @return O status HTTP correspondente
+   */
   private HttpStatus mapExceptionToStatus(ApplicationException e) {
     if (e instanceof NotFoundException) return HttpStatus.NOT_FOUND;
     if (e instanceof ConflictException) return HttpStatus.CONFLICT;
@@ -149,17 +149,93 @@ public class GlobalExceptionHandler {
     return HttpStatus.BAD_REQUEST;
   }
 
-  private ResponseEntity<ErrorResponseDto> buildErrorResponseEntity(
+  /**
+   * Constrói uma ResponseEntity com um corpo de resposta de erro genérico.
+   *
+   * @param status Status HTTP a ser retornado
+   * @param errorCode Código de erro específico
+   * @param request Objeto HttpServletRequest para obter a URI da requisição
+   * @return ResponseEntity contendo o ErrorResponseDto
+   */
+  private ResponseEntity<ErrorResponseDto> buildGeneralErrorResponse(
       HttpStatus status, ErrorCode errorCode, HttpServletRequest request) {
     ErrorResponseDto responseBody =
         ErrorResponseDto.forGeneralError(status.value(), errorCode, request.getRequestURI());
     return ResponseEntity.status(status).body(responseBody);
   }
 
-  private ResponseEntity<ErrorResponseDto> buildErrorResponseEntity(
+  /**
+   * Constrói uma ResponseEntity com um corpo de resposta de erro de validação de DTOs de erro de
+   * campo.
+   *
+   * @param fieldErrors Lista de FieldErrorResponseDto representando os erros de validação
+   * @param request Objeto HttpServletRequest para obter a URI da requisição
+   * @return ResponseEntity contendo o ErrorResponseDto
+   */
+  private ResponseEntity<ErrorResponseDto> buildValidationErrorResponse(
       List<FieldErrorResponseDto> fieldErrors, HttpServletRequest request) {
     ErrorResponseDto responseBody =
         ErrorResponseDto.forValidationErrors(request.getRequestURI(), fieldErrors);
     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseBody);
+  }
+
+  /**
+   * Cria um FieldErrorResponseDto com o nome do campo, código de erro e mensagem.
+   *
+   * @param fieldName Nome do campo que gerou o erro
+   * @param errorCode Código de erro associado ao problema
+   * @return FieldErrorResponseDto contendo os detalhes do erro do campo
+   */
+  private FieldErrorResponseDto buildFieldError(String fieldName, ErrorCode errorCode) {
+    return new FieldErrorResponseDto(fieldName, errorCode.name(), errorCode.getMessage());
+  }
+
+  /**
+   * Converte um FieldError de falha de binding em um FieldErrorResponseDto apropriado. Tenta mapear
+   * o tipo do campo para um ErrorCode; se não for possível, cria um FieldErrorResponseDto genérico.
+   *
+   * @param fieldError O FieldError que representa o erro de binding
+   * @param exception A exceção MethodArgumentNotValidException que contém o FieldError
+   * @return FieldErrorResponseDto com detalhes do erro do campo
+   */
+  private FieldErrorResponseDto buildFieldErrorToMismatchException(
+      FieldError fieldError, MethodArgumentNotValidException exception) {
+
+    String fieldName = fieldError.getField();
+    Class<?> requestDtoClass = exception.getParameter().getParameterType();
+
+    try {
+      Field field = requestDtoClass.getDeclaredField(fieldName);
+      Class<?> fieldType = field.getType();
+
+      ErrorCode errorCode =
+          ErrorCode.getForEnumType(fieldType).orElse(ErrorCode.INVALID_REQUEST_PARAMETER);
+
+      return buildFieldError(fieldName, errorCode);
+
+    } catch (NoSuchFieldException e) {
+      logger.warn("Campo '{}' não encontrado no objeto de destino.", fieldName);
+    }
+    return buildFieldError(fieldName, ErrorCode.INVALID_REQUEST_PARAMETER);
+  }
+
+  /**
+   * Converte um FieldError de validação em um FieldErrorResponseDto apropriado. Tenta mapear o
+   * código de erro da mensagem padrão; se não for possível, cria um FieldErrorResponseDto genérico.
+   * Exemplo: se o campo for anotado com @NotNull(message = "REQUIRED_FIELD"), tenta mapear
+   * "REQUIRED_FIELD" para um ErrorCode.
+   *
+   * @param fieldError O FieldError que representa o erro de validação
+   * @return FieldErrorResponseDto com detalhes do erro do campo
+   */
+  private FieldErrorResponseDto buildFieldErrorToValidationException(FieldError fieldError) {
+    String errorCodeString = fieldError.getDefaultMessage();
+    try {
+      ErrorCode errorCode = ErrorCode.valueOf(errorCodeString);
+      return buildFieldError(fieldError.getField(), errorCode);
+    } catch (IllegalArgumentException ex) {
+      String devMessage = "Código de erro de validação não mapeado: " + errorCodeString;
+      return new FieldErrorResponseDto(fieldError.getField(), errorCodeString, devMessage);
+    }
   }
 }

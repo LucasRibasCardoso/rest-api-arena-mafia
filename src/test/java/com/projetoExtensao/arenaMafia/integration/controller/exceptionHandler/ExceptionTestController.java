@@ -24,12 +24,6 @@ public class ExceptionTestController {
     throw new RefreshTokenExpiredException();
   }
 
-  // --- Endpoints para 403 Forbidden ---
-  @GetMapping("/forbidden/access-denied")
-  public void throwAccessDenied() {
-    throw new AccessDeniedException("Acesso negado.");
-  }
-
   // --- Endpoints para 404 Not Found ---
   @GetMapping("/not-found/user-not-found")
   public void throwUserNotFound() {
