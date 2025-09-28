@@ -1,0 +1,2 @@
+type: string
+enum: [ ROLE_USER, ROLE_ADMIN, ROLE_DEVELOPER ]

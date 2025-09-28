@@ -41,6 +41,9 @@ tags:
   - name: 'Usuário - Minha Conta - Alteração de Telefone'
     description: Endpoints relacionados à alteração do número de telefone do usuário autenticado.
 
+  - name: 'Administração - Gerenciamento de Usuários'
+    description: Endpoints relacionados ao gerenciamento de usuários, acessíveis apenas por administradores.
+
 components:
   schemas:
     ErrorResponseDto:
@@ -71,6 +74,11 @@ components:
     SignupResponseDto:
       $ref: './components/schemas/auth/SignupResponseDto.yml'
 
+    AccountStatus:
+      $ref: './components/schemas/user/enuns/AccountStatus.yml'
+    Role:
+      $ref: './components/schemas/user/enuns/Role.yml'
+
     UserProfileResponseDto:
       $ref: './components/schemas/user/UserProfileResponseDto.yml'
     UpdateProfileRequestDto:
@@ -85,22 +93,32 @@ components:
     CompletePhoneChangeRequestDto:
       $ref: './components/schemas/user/CompletePhoneChangeRequestDto.yml'
 
+    PageOfUserAdminResponseDto:
+      $ref: './components/schemas/admin/PageOfUserAdminResponseDto.yml'
+    UserAdminResponseDto:
+      $ref: './components/schemas/admin/UserAdminResponseDto.yml'
+
   responses:
     InternalServerError:
       $ref: './components/responses/InternalServerError.yml'
     UnauthorizedError:
       $ref: './components/responses/UnauthorizedError.yml'
+    ForbiddenError:
+      $ref: './components/responses/ForbiddenError.yml'
+    TooManyRequestsError:
+      $ref: './components/responses/TooManyRequestsError.yml'
     AccountStatusForbidden:
       $ref: './components/responses/AccountStatusForbidden.yml'
 
   parameters:
     RefreshTokenCookie:
       $ref: './components/parameters/RefreshTokenCookie.yml'
+    UserPagination:
+      $ref: './components/parameters/UserPagination.yml'
 
   headers:
     Set-Cookie:
       $ref: './components/headers/SetCookie.yml'
-
 
   securitySchemes:
     BearerAuth:
@@ -149,3 +167,6 @@ paths:
 
   /api/users/me/disable:
     $ref: './paths/user/DisableAccount.yml'
+
+  /api/admin/users:
+    $ref: './paths/admin/GetUsers.yml'

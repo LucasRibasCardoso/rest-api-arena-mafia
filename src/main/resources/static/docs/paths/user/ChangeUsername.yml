@@ -62,5 +62,7 @@ patch:
                 errorCode: "USERNAME_ALREADY_EXISTS"
                 developerMessage: "Esse nome de usuário já está em uso."
                 path: "/api/users/me/username"
+    429:
+      $ref: '../../components/responses/TooManyRequestsError.yml'
     500:
       $ref: '../../components/responses/InternalServerError.yml'

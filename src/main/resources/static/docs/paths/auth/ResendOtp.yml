@@ -89,5 +89,7 @@ post:
                 errorCode: "USER_NOT_FOUND"
                 developerMessage: "Usuário não encontrado."
                 path: "/api/auth/resend-otp"
+    429:
+      $ref: '../../components/responses/TooManyRequestsError.yml'
     500:
       $ref: '../../components/responses/InternalServerError.yml'
