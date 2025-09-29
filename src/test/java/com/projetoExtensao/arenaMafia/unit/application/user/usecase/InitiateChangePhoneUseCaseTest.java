@@ -47,7 +47,7 @@ public class InitiateChangePhoneUseCaseTest {
     var request = new InitiateChangePhoneRequestDto(newPhone);
 
     when(phoneValidatorPort.formatToE164(newPhone)).thenReturn(newPhone);
-    when(userRepository.findById(idCurrentUser)).thenReturn(Optional.of(user));
+    when(userRepository.findByIdOrElseThrow(idCurrentUser)).thenReturn(user);
     when(userRepository.findByPhone(newPhone)).thenReturn(Optional.empty());
 
     // Act
@@ -118,7 +118,7 @@ public class InitiateChangePhoneUseCaseTest {
 
     when(phoneValidatorPort.formatToE164(newPhone)).thenReturn(newPhone);
     when(userRepository.findByPhone(newPhone)).thenReturn(Optional.of(user));
-    when(userRepository.findById(idCurrentUser)).thenReturn(Optional.empty());
+    doThrow(new UserNotFoundException()).when(userRepository).findByIdOrElseThrow(idCurrentUser);
 
     // Act & Assert
     assertThatThrownBy(() -> initiateChangePhoneUseCase.execute(idCurrentUser, request))

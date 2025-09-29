@@ -43,7 +43,7 @@ public class ChangePasswordUseCaseTest {
     String newPasswordHash = "hashedNewPassword";
     var request = new ChangePasswordRequestDto(defaultPassword, newPassword, newPassword);
 
-    when(userRepository.findById(idCurrentUser)).thenReturn(Optional.of(user));
+    when(userRepository.findByIdOrElseThrow(idCurrentUser)).thenReturn(user);
     when(passwordEncoder.matches(defaultPassword, user.getPasswordHash())).thenReturn(true);
     when(passwordEncoder.encode(newPassword)).thenReturn(newPasswordHash);
 
@@ -67,7 +67,7 @@ public class ChangePasswordUseCaseTest {
     UUID idCurrentUser = UUID.randomUUID();
     var request = new ChangePasswordRequestDto(defaultPassword, "newPassword", "newPassword");
 
-    when(userRepository.findById(idCurrentUser)).thenReturn(Optional.empty());
+    doThrow(new UserNotFoundException()).when(userRepository).findByIdOrElseThrow(idCurrentUser);
 
     // Act & Assert
     assertThatThrownBy(() -> changePasswordUseCase.execute(idCurrentUser, request))
@@ -93,7 +93,7 @@ public class ChangePasswordUseCaseTest {
     String wrongCurrentPassword = "wrongCurrentPassword";
     var request = new ChangePasswordRequestDto(wrongCurrentPassword, "newPassword", "newPassword");
 
-    when(userRepository.findById(idCurrentUser)).thenReturn(Optional.of(user));
+    when(userRepository.findByIdOrElseThrow(idCurrentUser)).thenReturn(user);
     when(passwordEncoder.matches(wrongCurrentPassword, user.getPasswordHash())).thenReturn(false);
 
     // Act & Assert

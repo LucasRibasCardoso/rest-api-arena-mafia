@@ -5,7 +5,6 @@ import com.projetoExtensao.arenaMafia.application.auth.usecase.passwordreset.Res
 import com.projetoExtensao.arenaMafia.application.security.port.gateway.PasswordEncoderPort;
 import com.projetoExtensao.arenaMafia.application.user.port.repository.UserRepositoryPort;
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidPasswordResetTokenException;
-import com.projetoExtensao.arenaMafia.domain.exception.notFound.UserNotFoundException;
 import com.projetoExtensao.arenaMafia.domain.model.User;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.ResetToken;
 import com.projetoExtensao.arenaMafia.infrastructure.web.auth.dto.request.ResetPasswordRequestDto;
@@ -34,7 +33,7 @@ public class ResetPasswordUseCaseImp implements ResetPasswordUseCase {
   public void execute(ResetPasswordRequestDto request) {
     ResetToken resetToken = request.passwordResetToken();
     UUID userId = getUserIdFromToken(resetToken);
-    User user = getUserById(userId);
+    User user = userRepositoryPort.findByIdOrElseThrow(userId);
     user.ensureAccountEnabled();
 
     String newPasswordHash = passwordEncoder.encode(request.newPassword());
@@ -48,9 +47,5 @@ public class ResetPasswordUseCaseImp implements ResetPasswordUseCase {
     return passwordResetTokenPort
         .findUserIdByResetToken(token)
         .orElseThrow(InvalidPasswordResetTokenException::new);
-  }
-
-  private User getUserById(UUID userId) {
-    return userRepositoryPort.findById(userId).orElseThrow(UserNotFoundException::new);
   }
 }

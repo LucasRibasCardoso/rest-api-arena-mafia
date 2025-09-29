@@ -60,7 +60,7 @@ public class ValidatePasswordResetOtpUseCaseTest {
     var request = new ValidateOtpRequestDto(otpSessionId, otpCode);
 
     when(otpSessionPort.findUserIdByOtpSessionId(otpSessionId)).thenReturn(Optional.of(userId));
-    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+    when(userRepository.findByIdOrElseThrow(userId)).thenReturn(user);
     when(passwordResetTokenPort.generateToken(userId)).thenReturn(resetToken);
 
     // Act
@@ -101,7 +101,7 @@ public class ValidatePasswordResetOtpUseCaseTest {
     var request = new ValidateOtpRequestDto(otpSessionId, otpCode);
 
     when(otpSessionPort.findUserIdByOtpSessionId(otpSessionId)).thenReturn(Optional.of(userId));
-    when(userRepository.findById(userId)).thenReturn(Optional.empty());
+    doThrow(new UserNotFoundException()).when(userRepository).findByIdOrElseThrow(userId);
 
     // Act & Assert
     assertThatThrownBy(() -> generatePasswordResetTokenUseCase.execute(request))
@@ -125,7 +125,7 @@ public class ValidatePasswordResetOtpUseCaseTest {
     var request = new ValidateOtpRequestDto(otpSessionId, otpCode);
 
     when(otpSessionPort.findUserIdByOtpSessionId(otpSessionId)).thenReturn(Optional.of(userId));
-    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+    when(userRepository.findByIdOrElseThrow(userId)).thenReturn(user);
 
     doThrow(new InvalidOtpException(ErrorCode.OTP_CODE_INCORRECT_OR_EXPIRED))
         .when(otpPort)
@@ -157,7 +157,7 @@ public class ValidatePasswordResetOtpUseCaseTest {
     var request = new ValidateOtpRequestDto(otpSessionId, otpCode);
 
     when(otpSessionPort.findUserIdByOtpSessionId(otpSessionId)).thenReturn(Optional.of(userId));
-    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+    when(userRepository.findByIdOrElseThrow(userId)).thenReturn(user);
 
     // Act & Assert
     assertThatThrownBy(() -> generatePasswordResetTokenUseCase.execute(request))

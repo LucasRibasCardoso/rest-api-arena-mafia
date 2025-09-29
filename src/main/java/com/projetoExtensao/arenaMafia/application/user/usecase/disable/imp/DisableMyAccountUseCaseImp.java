@@ -2,7 +2,6 @@ package com.projetoExtensao.arenaMafia.application.user.usecase.disable.imp;
 
 import com.projetoExtensao.arenaMafia.application.user.port.repository.UserRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.user.usecase.disable.DisableMyAccountUseCase;
-import com.projetoExtensao.arenaMafia.domain.exception.notFound.UserNotFoundException;
 import com.projetoExtensao.arenaMafia.domain.model.User;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
@@ -20,7 +19,7 @@ public class DisableMyAccountUseCaseImp implements DisableMyAccountUseCase {
 
   @Override
   public void execute(UUID idCurrentUser) {
-    User user = userRepository.findById(idCurrentUser).orElseThrow(UserNotFoundException::new);
+    User user = userRepository.findByIdOrElseThrow(idCurrentUser);
     user.disableAccount();
     userRepository.save(user);
   }

@@ -61,7 +61,7 @@ public class VerifyAccountUseCaseTest {
     var request = new ValidateOtpRequestDto(otpSessionId, otpCode);
 
     when(otpSessionPort.findUserIdByOtpSessionId(otpSessionId)).thenReturn(Optional.of(userId));
-    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+    when(userRepository.findByIdOrElseThrow(userId)).thenReturn(user);
     when(authPort.generateTokens(user)).thenReturn(authResult);
 
     // Act
@@ -111,7 +111,7 @@ public class VerifyAccountUseCaseTest {
     var request = new ValidateOtpRequestDto(otpSessionId, otpCode);
 
     when(otpSessionPort.findUserIdByOtpSessionId(otpSessionId)).thenReturn(Optional.of(userId));
-    when(userRepository.findById(userId)).thenReturn(Optional.empty());
+    doThrow(new UserNotFoundException()).when(userRepository).findByIdOrElseThrow(userId);
 
     // Act & Assert
     assertThatThrownBy(() -> verifyAccountUseCase.execute(request))
@@ -137,7 +137,7 @@ public class VerifyAccountUseCaseTest {
     var request = new ValidateOtpRequestDto(otpSessionId, invalidOtp);
 
     when(otpSessionPort.findUserIdByOtpSessionId(otpSessionId)).thenReturn(Optional.of(userId));
-    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+    when(userRepository.findByIdOrElseThrow(userId)).thenReturn(user);
 
     ErrorCode errorCode = ErrorCode.OTP_CODE_INCORRECT_OR_EXPIRED;
     doThrow(new InvalidOtpException(errorCode)).when(otpPort).validateOtp(user.getId(), invalidOtp);
@@ -171,7 +171,7 @@ public class VerifyAccountUseCaseTest {
     var request = new ValidateOtpRequestDto(otpSessionId, otpCode);
 
     when(otpSessionPort.findUserIdByOtpSessionId(otpSessionId)).thenReturn(Optional.of(userId));
-    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+    when(userRepository.findByIdOrElseThrow(userId)).thenReturn(user);
 
     // Act & Assert
     assertThatThrownBy(() -> verifyAccountUseCase.execute(request))

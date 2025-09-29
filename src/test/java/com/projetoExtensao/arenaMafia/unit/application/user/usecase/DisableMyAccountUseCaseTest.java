@@ -12,7 +12,6 @@ import com.projetoExtensao.arenaMafia.domain.exception.notFound.UserNotFoundExce
 import com.projetoExtensao.arenaMafia.domain.model.User;
 import com.projetoExtensao.arenaMafia.domain.model.enums.AccountStatus;
 import com.projetoExtensao.arenaMafia.unit.config.TestDataProvider;
-import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -37,7 +36,7 @@ public class DisableMyAccountUseCaseTest {
     User user = TestDataProvider.createActiveUser();
     UUID idCurrentUser = user.getId();
 
-    when(userRepository.findById(idCurrentUser)).thenReturn(Optional.of(user));
+    when(userRepository.findByIdOrElseThrow(idCurrentUser)).thenReturn(user);
     when(userRepository.save(user)).thenReturn(user);
 
     // Act
@@ -45,7 +44,7 @@ public class DisableMyAccountUseCaseTest {
 
     // Assert
     assertThat(user.isEnabled()).isFalse();
-    verify(userRepository, times(1)).findById(idCurrentUser);
+    verify(userRepository, times(1)).findByIdOrElseThrow(idCurrentUser);
     verify(userRepository, times(1)).save(user);
   }
 
@@ -55,7 +54,7 @@ public class DisableMyAccountUseCaseTest {
     // Arrange
     UUID idCurrentUser = UUID.randomUUID();
 
-    when(userRepository.findById(idCurrentUser)).thenReturn(Optional.empty());
+    doThrow(new UserNotFoundException()).when(userRepository).findByIdOrElseThrow(idCurrentUser);
 
     // Act & Assert
     assertThatThrownBy(() -> disableMyAccountUseCase.execute(idCurrentUser))
@@ -80,7 +79,7 @@ public class DisableMyAccountUseCaseTest {
     User user = TestDataProvider.UserBuilder.defaultUser().withStatus(status).build();
     UUID idCurrentUser = user.getId();
 
-    when(userRepository.findById(idCurrentUser)).thenReturn(Optional.of(user));
+    when(userRepository.findByIdOrElseThrow(idCurrentUser)).thenReturn(user);
 
     // Act & Assert
     assertThatThrownBy(() -> disableMyAccountUseCase.execute(idCurrentUser))

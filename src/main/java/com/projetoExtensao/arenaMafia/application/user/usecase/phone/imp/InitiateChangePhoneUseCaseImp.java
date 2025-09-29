@@ -7,7 +7,6 @@ import com.projetoExtensao.arenaMafia.application.user.port.repository.UserRepos
 import com.projetoExtensao.arenaMafia.application.user.usecase.phone.InitiateChangePhoneUseCase;
 import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 import com.projetoExtensao.arenaMafia.domain.exception.conflict.UserAlreadyExistsException;
-import com.projetoExtensao.arenaMafia.domain.exception.notFound.UserNotFoundException;
 import com.projetoExtensao.arenaMafia.domain.model.User;
 import com.projetoExtensao.arenaMafia.infrastructure.web.user.dto.request.InitiateChangePhoneRequestDto;
 import java.util.UUID;
@@ -40,14 +39,10 @@ public class InitiateChangePhoneUseCaseImp implements InitiateChangePhoneUseCase
     String formattedPhone = phoneValidatorPort.formatToE164(request.newPhone());
 
     checkIfPhoneAlreadyExists(idCurrentUser, formattedPhone);
-    User user = getUserOrElseThrow(idCurrentUser);
+    User user = userRepository.findByIdOrElseThrow(idCurrentUser);
 
     pendingPhoneChangePort.save(user.getId(), formattedPhone);
     eventPublisher.publishEvent((new OnVerificationRequiredEvent(user)));
-  }
-
-  private User getUserOrElseThrow(UUID idCurrentUser) {
-    return userRepository.findById(idCurrentUser).orElseThrow(UserNotFoundException::new);
   }
 
   private void checkIfPhoneAlreadyExists(UUID idCurrentUser, String newPhone) {

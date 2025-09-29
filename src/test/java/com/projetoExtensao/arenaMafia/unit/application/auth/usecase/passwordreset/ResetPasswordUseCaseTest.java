@@ -56,7 +56,7 @@ public class ResetPasswordUseCaseTest {
     var request = new ResetPasswordRequestDto(resetToken, newPassword, confirmPassword);
 
     when(passwordResetToken.findUserIdByResetToken(resetToken)).thenReturn(Optional.of(userId));
-    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+    when(userRepository.findByIdOrElseThrow(userId)).thenReturn(user);
     when(passwordEncoder.encode(newPassword)).thenReturn(newPasswordHash);
 
     // Act
@@ -102,7 +102,7 @@ public class ResetPasswordUseCaseTest {
     var request = new ResetPasswordRequestDto(resetToken, newPassword, confirmPassword);
 
     when(passwordResetToken.findUserIdByResetToken(resetToken)).thenReturn(Optional.of(userId));
-    when(userRepository.findById(userId)).thenReturn(Optional.empty());
+    doThrow(new UserNotFoundException()).when(userRepository).findByIdOrElseThrow(userId);
 
     // Act & Assert
     assertThatThrownBy(() -> resetPasswordUseCase.execute(request))
@@ -128,7 +128,7 @@ public class ResetPasswordUseCaseTest {
     var request = new ResetPasswordRequestDto(resetToken, confirmPassword, confirmPassword);
 
     when(passwordResetToken.findUserIdByResetToken(resetToken)).thenReturn(Optional.of(userId));
-    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+    when(userRepository.findByIdOrElseThrow(userId)).thenReturn(user);
     when(passwordEncoder.encode(confirmPassword)).thenReturn(invalidPasswordHash);
 
     // Act & Assert
@@ -153,7 +153,7 @@ public class ResetPasswordUseCaseTest {
     var request = new ResetPasswordRequestDto(resetToken, newPassword, confirmPassword);
 
     when(passwordResetToken.findUserIdByResetToken(resetToken)).thenReturn(Optional.of(userId));
-    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+    when(userRepository.findByIdOrElseThrow(userId)).thenReturn(user);
 
     // Act & Assert
     assertThatThrownBy(() -> resetPasswordUseCase.execute(request))

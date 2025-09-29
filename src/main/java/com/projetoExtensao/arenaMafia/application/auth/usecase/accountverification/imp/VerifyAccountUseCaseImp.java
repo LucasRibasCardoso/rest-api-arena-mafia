@@ -7,7 +7,6 @@ import com.projetoExtensao.arenaMafia.application.auth.usecase.accountverificati
 import com.projetoExtensao.arenaMafia.application.notification.gateway.OtpPort;
 import com.projetoExtensao.arenaMafia.application.user.port.repository.UserRepositoryPort;
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidOtpSessionException;
-import com.projetoExtensao.arenaMafia.domain.exception.notFound.UserNotFoundException;
 import com.projetoExtensao.arenaMafia.domain.model.User;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.OtpSessionId;
 import com.projetoExtensao.arenaMafia.infrastructure.web.auth.dto.request.ValidateOtpRequestDto;
@@ -38,7 +37,7 @@ public class VerifyAccountUseCaseImp implements VerifyAccountUseCase {
   @Override
   public AuthResult execute(ValidateOtpRequestDto request) {
     UUID userId = getUserIdFromOtpSession(request.otpSessionId());
-    User user = getUserById(userId);
+    User user = userRepository.findByIdOrElseThrow(userId);
 
     otpPort.validateOtp(user.getId(), request.otpCode());
     user.confirmVerification();
@@ -51,9 +50,5 @@ public class VerifyAccountUseCaseImp implements VerifyAccountUseCase {
     return otpSessionPort
         .findUserIdByOtpSessionId(otpSessionId)
         .orElseThrow(InvalidOtpSessionException::new);
-  }
-
-  private User getUserById(UUID userId) {
-    return userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
   }
 }

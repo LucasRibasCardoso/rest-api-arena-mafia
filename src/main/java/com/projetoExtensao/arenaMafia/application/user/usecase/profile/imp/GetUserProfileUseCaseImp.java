@@ -2,7 +2,6 @@ package com.projetoExtensao.arenaMafia.application.user.usecase.profile.imp;
 
 import com.projetoExtensao.arenaMafia.application.user.port.repository.UserRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.user.usecase.profile.GetUserProfileUseCase;
-import com.projetoExtensao.arenaMafia.domain.exception.notFound.UserNotFoundException;
 import com.projetoExtensao.arenaMafia.domain.model.User;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
@@ -20,6 +19,6 @@ public class GetUserProfileUseCaseImp implements GetUserProfileUseCase {
 
   @Override
   public User execute(UUID userId) {
-    return userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
+    return userRepository.findByIdOrElseThrow(userId);
   }
 }

@@ -4,7 +4,6 @@ import com.projetoExtensao.arenaMafia.application.security.port.gateway.Password
 import com.projetoExtensao.arenaMafia.application.user.port.repository.UserRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.user.usecase.password.ChangePasswordUseCase;
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.IncorrectCurrentPasswordException;
-import com.projetoExtensao.arenaMafia.domain.exception.notFound.UserNotFoundException;
 import com.projetoExtensao.arenaMafia.domain.model.User;
 import com.projetoExtensao.arenaMafia.infrastructure.web.user.dto.request.ChangePasswordRequestDto;
 import java.util.UUID;
@@ -26,16 +25,12 @@ public class ChangePasswordUseCaseImp implements ChangePasswordUseCase {
 
   @Override
   public void execute(UUID idCurrentUser, ChangePasswordRequestDto request) {
-    User user = getUserOrElseThrow(idCurrentUser);
+    User user = userRepository.findByIdOrElseThrow(idCurrentUser);
     verifyCurrentPassword(request.currentPassword(), user.getPasswordHash());
 
     String newPasswordHash = passwordEncoder.encode(request.newPassword());
     user.updatePasswordHash(newPasswordHash);
     userRepository.save(user);
-  }
-
-  private User getUserOrElseThrow(UUID idCurrentUser) {
-    return userRepository.findById(idCurrentUser).orElseThrow(UserNotFoundException::new);
   }
 
   private void verifyCurrentPassword(String rawPassword, String encodedPassword) {

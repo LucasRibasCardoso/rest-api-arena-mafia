@@ -41,7 +41,7 @@ public class ChangeUsernameUseCaseTest {
     UUID idCurrentUser = user.getId();
     var request = new ChangeUsernameRequestDto("newUsername");
 
-    when(userRepository.findById(idCurrentUser)).thenReturn(Optional.of(user));
+    when(userRepository.findByIdOrElseThrow(idCurrentUser)).thenReturn(user);
     when(userRepository.findByUsername(request.username())).thenReturn(Optional.of(user));
     when(userRepository.save(user)).thenReturn(user);
 
@@ -66,7 +66,7 @@ public class ChangeUsernameUseCaseTest {
     var request = new ChangeUsernameRequestDto(invalidUsername);
 
     when(userRepository.findByUsername(invalidUsername)).thenReturn(Optional.of(user));
-    when(userRepository.findById(idCurrentUser)).thenReturn(Optional.of(user));
+    when(userRepository.findByIdOrElseThrow(idCurrentUser)).thenReturn(user);
 
     // Act & Assert
     assertThatThrownBy(() -> changeUsernameUseCase.execute(idCurrentUser, request))
@@ -115,7 +115,7 @@ public class ChangeUsernameUseCaseTest {
     var request = new ChangeUsernameRequestDto("newUsername");
 
     when(userRepository.findByUsername(request.username())).thenReturn(Optional.of(user));
-    when(userRepository.findById(idCurrentUser)).thenReturn(Optional.empty());
+    doThrow(new UserNotFoundException()).when(userRepository).findByIdOrElseThrow(idCurrentUser);
 
     // Act & Assert
     assertThatThrownBy(() -> changeUsernameUseCase.execute(idCurrentUser, request))
