@@ -79,21 +79,6 @@ post:
                 errorCode: "OTP_CODE_INCORRECT_OR_EXPIRED"
                 developerMessage: "Código de verificação incorreto ou expirado."
                 path: "/api/auth/verify-account"
-    403:
-      description: Erro lançado quando o status da conta do usuário não está como pendente de verificação.
-      content:
-        application/json:
-          schema:
-            $ref: '../../components/schemas/error/ErrorResponseDto.yml'
-          examples:
-            AccountNotPendingVerification:
-              summary: Conta não está pendente de verificação
-              value:
-                timestamp: "2024-06-15T14:30:00Z"
-                status: 403
-                errorCode: "ACCOUNT_NOT_PENDING_VERIFICATION"
-                developerMessage: "Esta operação só pode ser executada em contas com verificação pendente."
-                path: "/api/auth/verify-account"
     404:
       description: Erro lançado quando o usuário associado ao OtpSessionId não for encontrado.
       content:
@@ -108,6 +93,21 @@ post:
                 status: 404
                 errorCode: "USER_NOT_FOUND"
                 developerMessage: "Usuário não encontrado."
+                path: "/api/auth/verify-account"
+    409:
+      description: Erro lançado quando o status da conta do usuário não está como pendente de verificação.
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/error/ErrorResponseDto.yml'
+          examples:
+            AccountNotPendingVerification:
+              summary: Conta não está pendente de verificação
+              value:
+                timestamp: "2024-06-15T14:30:00Z"
+                status: 409
+                errorCode: "ACCOUNT_NOT_PENDING_VERIFICATION"
+                developerMessage: "Esta operação só pode ser executada em contas com verificação pendente."
                 path: "/api/auth/verify-account"
     429:
       $ref: '../../components/responses/TooManyRequestsError.yml'

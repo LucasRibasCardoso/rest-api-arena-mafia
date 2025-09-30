@@ -7,6 +7,7 @@ import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidFormatF
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidFormatPhoneException;
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidPasswordHashException;
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidUsernameFormatException;
+import com.projetoExtensao.arenaMafia.domain.exception.conflict.AccountStatusConflictException;
 import com.projetoExtensao.arenaMafia.domain.exception.forbidden.AccountStatusForbiddenException;
 import com.projetoExtensao.arenaMafia.domain.model.User;
 import com.projetoExtensao.arenaMafia.domain.model.enums.AccountStatus;
@@ -216,7 +217,7 @@ public class UserTest {
         value = AccountStatus.class,
         names = {"LOCKED", "DISABLED", "ACTIVE"})
     @DisplayName(
-        "confirmVerification() deve lançar AccountStatusForbiddenException para status inválidos")
+        "confirmVerification() deve lançar AccountStatusConflictException para status inválidos")
     void confirmVerification_shouldThrowException_whenStatusIsInvalid(AccountStatus invalidStatus) {
       // Arrange
       User user = TestDataProvider.UserBuilder.defaultUser().withStatus(invalidStatus).build();
@@ -224,10 +225,10 @@ public class UserTest {
 
       // Act & Assert
       assertThatThrownBy(user::confirmVerification)
-          .isInstanceOf(AccountStatusForbiddenException.class)
+          .isInstanceOf(AccountStatusConflictException.class)
           .satisfies(
               ex -> {
-                AccountStatusForbiddenException exception = (AccountStatusForbiddenException) ex;
+                AccountStatusConflictException exception = (AccountStatusConflictException) ex;
                 assertThat(exception.getErrorCode())
                     .isEqualTo(ErrorCode.ACCOUNT_NOT_PENDING_VERIFICATION);
               });

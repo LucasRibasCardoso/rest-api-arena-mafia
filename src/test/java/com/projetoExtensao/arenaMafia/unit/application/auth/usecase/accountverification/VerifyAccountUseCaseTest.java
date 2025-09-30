@@ -14,6 +14,7 @@ import com.projetoExtensao.arenaMafia.application.user.port.repository.UserRepos
 import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidOtpException;
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidOtpSessionException;
+import com.projetoExtensao.arenaMafia.domain.exception.conflict.AccountStatusConflictException;
 import com.projetoExtensao.arenaMafia.domain.exception.forbidden.AccountStatusForbiddenException;
 import com.projetoExtensao.arenaMafia.domain.exception.notFound.UserNotFoundException;
 import com.projetoExtensao.arenaMafia.domain.model.User;
@@ -161,8 +162,8 @@ public class VerifyAccountUseCaseTest {
   @EnumSource(
       value = AccountStatus.class,
       names = {"ACTIVE", "LOCKED", "DISABLED"})
-  @DisplayName("Deve retornar AccountStatusForbiddenException quando o status da conta é inválido")
-  void execute_shouldThrowAccountStatusForbiddenException_whenAccountStatusIsInvalid(
+  @DisplayName("Deve retornar AccountStatusConflictException quando o status da conta é inválido")
+  void execute_shouldThrowAccountStatusConflictException_whenAccountStatusIsInvalid(
       AccountStatus invalidStatus) {
     // Arrange
     User user = TestDataProvider.UserBuilder.defaultUser().withStatus(invalidStatus).build();
@@ -175,10 +176,10 @@ public class VerifyAccountUseCaseTest {
 
     // Act & Assert
     assertThatThrownBy(() -> verifyAccountUseCase.execute(request))
-        .isInstanceOf(AccountStatusForbiddenException.class)
+        .isInstanceOf(AccountStatusConflictException.class)
         .satisfies(
             ex -> {
-              AccountStatusForbiddenException exception = (AccountStatusForbiddenException) ex;
+              AccountStatusConflictException exception = (AccountStatusConflictException) ex;
               assertThat(exception.getErrorCode())
                   .isEqualTo(ErrorCode.ACCOUNT_NOT_PENDING_VERIFICATION);
             });
