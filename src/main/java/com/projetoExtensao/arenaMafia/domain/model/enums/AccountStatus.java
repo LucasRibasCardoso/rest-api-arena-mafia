@@ -5,10 +5,10 @@ import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 import com.projetoExtensao.arenaMafia.domain.exception.forbidden.AccountStatusForbiddenException;
 
 public enum AccountStatus {
-  PENDING_VERIFICATION("pending_verification"),
-  ACTIVE("active"),
-  LOCKED("locked"),
-  DISABLED("disabled");
+  PENDING_VERIFICATION("PENDING_VERIFICATION"),
+  ACTIVE("ACTIVE"),
+  LOCKED("LOCKED"),
+  DISABLED("DISABLED");
 
   private final String value;
 

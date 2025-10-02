@@ -246,7 +246,7 @@ public abstract class BaseTestContainersConfig {
         "+5511999000005",
         defaultPassword,
         AccountStatus.ACTIVE,
-        RoleEnum.ROLE_DEVELOPER);
+        RoleEnum.ROLE_MODERATOR);
     mockPersistUser(
         "carla_gomes",
         "Carla Gomes",
@@ -260,7 +260,7 @@ public abstract class BaseTestContainersConfig {
         "+5511999000007",
         defaultPassword,
         AccountStatus.PENDING_VERIFICATION,
-        RoleEnum.ROLE_DEVELOPER);
+        RoleEnum.ROLE_MODERATOR);
     mockPersistUser(
         "elaine_martins",
         "Elaine Martins",

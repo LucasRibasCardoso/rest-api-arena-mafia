@@ -26,6 +26,6 @@ VALUES ('f6cec468-15ae-4d0c-8d9f-891de83d9b1a',
         '+5547923126659',
         '$2a$10$wep/d2Oy6ODRl6Ya7S1rtOEp6PTBbXzBHgTM0UL0fwdpoc2EgrRFq',
         'ACTIVE',
-        'ROLE_DEVELOPER',
+        'ROLE_MODERATOR',
         CURRENT_TIMESTAMP,
         CURRENT_TIMESTAMP);

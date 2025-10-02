@@ -97,6 +97,10 @@ components:
       $ref: './components/schemas/admin/PageOfUserAdminResponseDto.yml'
     UserAdminResponseDto:
       $ref: './components/schemas/admin/UserAdminResponseDto.yml'
+    UpdateUserStatusRequestDto:
+      $ref: './components/schemas/admin/UpdateUserStatusRequestDto.yml'
+    UpdateUserRoleRequestDto:
+      $ref: './components/schemas/admin/UpdateUserRoleRequestDto.yml'
 
   responses:
     InternalServerError:
@@ -170,3 +174,7 @@ paths:
 
   /api/admin/users:
     $ref: './paths/admin/GetUsers.yml'
+  /api/admin/users/{userId}/status:
+    $ref: './paths/admin/UpdateStatus.yml'
+  /api/admin/users/{userId}/role:
+    $ref: './paths/admin/UpdateRole.yml'

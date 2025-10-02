@@ -1183,8 +1183,8 @@ public class AuthControllerIntegrationTest extends WebIntegrationTestConfig {
     }
 
     @Test
-    @DisplayName("Deve retornar 403 Forbidden ao tentar ativar uma conta que já está ativa")
-    void verifyAccount_shouldReturn403_whenAccountIsAlreadyActive() {
+    @DisplayName("Deve retornar 409 Conflict ao tentar ativar uma conta que já está ativa")
+    void verifyAccount_shouldReturn409_whenAccountIsAlreadyActive() {
       // Arrange
       User mockUser = mockPersistUser(AccountStatus.ACTIVE);
       OtpCode otpCode = otpPort.generateOtpCode(mockUser.getId());
@@ -1200,14 +1200,14 @@ public class AuthControllerIntegrationTest extends WebIntegrationTestConfig {
               .when()
               .post("/verify-account")
               .then()
-              .statusCode(403)
+              .statusCode(409)
               .extract()
               .as(ErrorResponseDto.class);
 
       // Assert
       ErrorCode errorCode = ErrorCode.ACCOUNT_NOT_PENDING_VERIFICATION;
 
-      assertThat(response.status()).isEqualTo(403);
+      assertThat(response.status()).isEqualTo(409);
       assertThat(response.path()).isEqualTo("/api/auth/verify-account");
       assertThat(response.errorCode()).isEqualTo(errorCode.name());
       assertThat(response.developerMessage()).isEqualTo(errorCode.getMessage());

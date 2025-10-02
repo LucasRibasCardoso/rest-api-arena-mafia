@@ -16,6 +16,7 @@ public enum ErrorCode {
   VALIDATION_FAILED("A validação falhou. Verifique os detalhes dos campos para mais informações."),
   SESSION_EXPIRED("Sua sessão expirou. Por favor, faça login novamente."),
   INVALID_SORT_PARAMETER("O parâmetro de ordenação fornecido é inválido."),
+  INVALID_FIELD_VALUE("O valor fornecido para um campo é inválido."),
 
   TOO_MANY_REQUESTS("Limite de requisições excedido. Por favor, tente novamente mais tarde."),
   TOO_MANY_LOGIN_ATTEMPTS(
@@ -24,6 +25,8 @@ public enum ErrorCode {
   JWT_TOKEN_INVALID_OR_EXPIRED("Token JWT expirado ou inválido."),
   INVALID_CREDENTIALS("Credenciais inválidas. Por favor, verifique seu usuário e senha."),
 
+  ACCOUNT_STATUS_REQUIRED("O status da conta é obrigatório."),
+  INVALID_ACCOUNT_STATUS("O status da conta fornecido é inválido."),
   ACCOUNT_STATE_CONFLICT("O status atual da conta não permite essa operação."),
   ACCOUNT_PENDING_VERIFICATION("Você precisa ativar sua conta. Conclua o processo de cadastro."),
   ACCOUNT_LOCKED("Sua conta está bloqueada. Por favor, contate o suporte."),
@@ -31,13 +34,15 @@ public enum ErrorCode {
       "Sua conta está desativada e será deletada em breve. Entre em contato com o suporte para reativá-la."),
   ACCOUNT_NOT_PENDING_VERIFICATION(
       "Esta operação só pode ser executada em contas com verificação pendente."),
-  ACCOUNT_NOT_ACTIVE("Esta operação só pode ser executada em contas ativas."),
-  ACCOUNT_NOT_DISABLED("Esta operação só pode ser executada em contas desativadas."),
-  ACCOUNT_NOT_LOCKED("Esta operação só pode ser executada em contas bloqueadas."),
+  ACCOUNT_ALREADY_ACTIVE("A conta já está ativa."),
+  ACCOUNT_ALREADY_LOCKED("A conta já está bloqueada."),
+  ACCOUNT_ALREADY_DISABLED("A conta já está desativada."),
 
   USER_NOT_FOUND("Usuário não encontrado."),
   USERNAME_ALREADY_EXISTS("Esse nome de usuário já está em uso."),
   PHONE_ALREADY_EXISTS("Esse número de telefone já está em uso."),
+
+  ROLE_REQUIRED("O papel (role) do usuário é obrigatório."),
 
   USERNAME_REQUIRED("O nome de usuário é obrigatório."),
   USERNAME_INVALID_FORMAT("O nome de usuário pode conter apenas letras, números e underscore (_)."),
@@ -82,7 +87,16 @@ public enum ErrorCode {
   START_DATE_AFTER_END_DATE("A data de início não pode ser posterior à data de término."),
 
   INVALID_ROLE("O papel (role) fornecido é inválido."),
-  INVALID_ACCOUNT_STATUS("O status da conta fornecido é inválido.");
+
+  USER_ALREADY_ADMIN("O usuário já possui privilégios de administrador."),
+  USER_ALREADY_USER("O usuário já possui privilégios padrão."),
+
+  ADMIN_CANNOT_UPDATE_OWN_STATUS("Um administrador não pode alterar o próprio status."),
+  ADMIN_CANNOT_UPDATE_OWN_ROLE("Um administrador não pode alterar o próprio papel (role)."),
+  ADMIN_CANNOT_UPDATE_ROLE_OF_UNVERIFIED_USER(
+      "Não é possivel alterar a permissão de um usuário não verificado."),
+  ADMIN_CANNOT_UPDATE_STATUS_OF_UNVERIFIED_USER(
+      "Um administrador não pode alterar o status de um usuário não verificado.");
 
   private static final Map<Class<?>, ErrorCode> ENUM_ERROR_MAP = new HashMap<>();
 

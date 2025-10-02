@@ -3,8 +3,11 @@ package com.projetoExtensao.arenaMafia.unit.infrastructure.adapter;
 import static com.projetoExtensao.arenaMafia.unit.config.TestDataProvider.defaultPhone;
 import static com.projetoExtensao.arenaMafia.unit.config.TestDataProvider.defaultUsername;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
+import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
+import com.projetoExtensao.arenaMafia.domain.exception.notFound.UserNotFoundException;
 import com.projetoExtensao.arenaMafia.domain.model.User;
 import com.projetoExtensao.arenaMafia.infrastructure.adapter.repository.UserRepositoryAdapter;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.UserEntity;
@@ -180,6 +183,54 @@ public class UserRepositoryAdapterTest {
       // Assert
       assertThat(result).isNotNull();
       assertThat(result).isEmpty();
+
+      verify(userJpaRepository, times(1)).findById(userId);
+      verify(userMapper, never()).toDomain(any());
+    }
+  }
+
+  @Nested
+  @DisplayName("Testes para o método findByIdOrElseThrow")
+  class FindByIdOrElseThrowTests {
+
+    @Test
+    @DisplayName("Deve encontrar um userEntity pelo ID e retornar um User mapeado")
+    void findByIdOrElseThrow_shouldReturnUser() {
+      // Arrange
+      User user = TestDataProvider.createActiveUser();
+      UUID userId = user.getId();
+      UserEntity userEntity = new UserEntity();
+
+      when(userJpaRepository.findById(userId)).thenReturn(Optional.of(userEntity));
+      when(userMapper.toDomain(userEntity)).thenReturn(user);
+
+      // Act
+      User result = userRepositoryAdapter.findByIdOrElseThrow(userId);
+
+      // Assert
+      assertThat(result).isNotNull();
+      assertThat(result.getId()).isEqualTo(userId);
+
+      verify(userJpaRepository, times(1)).findById(userId);
+      verify(userMapper, times(1)).toDomain(userEntity);
+    }
+
+    @Test
+    @DisplayName("Deve lançar UserNotFoundException quando não encontrar um User pelo ID")
+    void findByIdOrElseThrow_shouldThrowExceptionWhenNotFound() {
+      // Arrange
+      UUID userId = UUID.randomUUID();
+
+      when(userJpaRepository.findById(userId)).thenReturn(Optional.empty());
+
+      // Act & Assert
+      assertThatThrownBy(() -> userRepositoryAdapter.findByIdOrElseThrow(userId))
+          .isInstanceOf(UserNotFoundException.class)
+          .satisfies(
+              ex -> {
+                UserNotFoundException exception = (UserNotFoundException) ex;
+                assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.USER_NOT_FOUND);
+              });
 
       verify(userJpaRepository, times(1)).findById(userId);
       verify(userMapper, never()).toDomain(any());

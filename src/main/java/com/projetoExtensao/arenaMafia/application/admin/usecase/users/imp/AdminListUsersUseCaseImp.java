@@ -1,12 +1,12 @@
-package com.projetoExtensao.arenaMafia.application.admin.usecase.imp;
+package com.projetoExtensao.arenaMafia.application.admin.usecase.users.imp;
 
 import com.projetoExtensao.arenaMafia.application.admin.port.repository.AdminUserRepositoryPort;
-import com.projetoExtensao.arenaMafia.application.admin.usecase.AdminListUsersUseCase;
+import com.projetoExtensao.arenaMafia.application.admin.usecase.users.AdminListUsersUseCase;
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidDateRangeException;
 import com.projetoExtensao.arenaMafia.domain.model.User;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.UserEntity;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.specification.UserSpecification;
-import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.request.AdminUserSearchRequest;
+import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.request.AdminUserSearchRequestDto;
 import java.time.Instant;
 import java.time.LocalTime;
 import java.time.ZoneId;
@@ -28,13 +28,13 @@ public class AdminListUsersUseCaseImp implements AdminListUsersUseCase {
   }
 
   @Override
-  public Page<User> execute(AdminUserSearchRequest criteria, Pageable pageable) {
+  public Page<User> execute(AdminUserSearchRequestDto criteria, Pageable pageable) {
     validateSearchCriteria(criteria);
     Specification<UserEntity> spec = buildSpecification(criteria);
     return adminUserRepository.search(spec, pageable);
   }
 
-  private Specification<UserEntity> buildSpecification(AdminUserSearchRequest criteria) {
+  private Specification<UserEntity> buildSpecification(AdminUserSearchRequestDto criteria) {
     Specification<UserEntity> specification = Specification.unrestricted();
 
     if (criteria.term() != null && !criteria.term().isEmpty()) {
@@ -67,7 +67,7 @@ public class AdminListUsersUseCaseImp implements AdminListUsersUseCase {
     return specification;
   }
 
-  private void validateSearchCriteria(AdminUserSearchRequest criteria) {
+  private void validateSearchCriteria(AdminUserSearchRequestDto criteria) {
     if (criteria.createdAtStart() != null
         && criteria.createdAtEnd() != null
         && criteria.createdAtStart().isAfter(criteria.createdAtEnd())) {

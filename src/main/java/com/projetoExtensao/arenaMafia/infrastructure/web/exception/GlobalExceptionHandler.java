@@ -1,6 +1,7 @@
 package com.projetoExtensao.arenaMafia.infrastructure.web.exception;
 
 import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.projetoExtensao.arenaMafia.domain.exception.ApplicationException;
 import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 import com.projetoExtensao.arenaMafia.domain.exception.conflict.ConflictException;
@@ -53,23 +54,31 @@ public class GlobalExceptionHandler {
   public ResponseEntity<ErrorResponseDto> handleHttpMessageNotReadable(
       HttpMessageNotReadableException e, HttpServletRequest request) {
 
-    String fieldName = "unknown";
-    String errorCodeString = ErrorCode.MALFORMED_JSON_REQUEST.name();
-    String devMessage = ErrorCode.MALFORMED_JSON_REQUEST.getMessage();
-
     Throwable rootCause = NestedExceptionUtils.getRootCause(e);
 
-    if (rootCause instanceof ApplicationException appException) {
-      errorCodeString = appException.getErrorCode().name();
-      devMessage = appException.getErrorCode().getMessage();
+    List<FieldErrorResponseDto> fieldErrors;
+    String fieldName = "unknown";
+
+    if (rootCause instanceof InvalidFormatException exception) {
+      if (!exception.getPath().isEmpty()) {
+        fieldName = exception.getPath().getLast().getFieldName();
+      }
+
+      fieldErrors = List.of(buildMismatchErrorForField(fieldName, exception.getTargetType()));
+
+    } else if (rootCause instanceof ApplicationException appException) {
+      String errorCodeString = appException.getErrorCode().name();
+      String devMessage = appException.getErrorCode().getMessage();
 
       if (e.getCause() instanceof JsonMappingException jme && !jme.getPath().isEmpty()) {
         fieldName = jme.getPath().getLast().getFieldName();
       }
+      fieldErrors = List.of(new FieldErrorResponseDto(fieldName, errorCodeString, devMessage));
+    } else {
+      String errorCodeString = ErrorCode.MALFORMED_JSON_REQUEST.name();
+      String devMessage = ErrorCode.MALFORMED_JSON_REQUEST.getMessage();
+      fieldErrors = List.of(new FieldErrorResponseDto(fieldName, errorCodeString, devMessage));
     }
-
-    List<FieldErrorResponseDto> fieldErrors =
-        List.of(new FieldErrorResponseDto(fieldName, errorCodeString, devMessage));
 
     return buildValidationErrorResponse(fieldErrors, request);
   }
@@ -206,17 +215,26 @@ public class GlobalExceptionHandler {
 
     try {
       Field field = requestDtoClass.getDeclaredField(fieldName);
-      Class<?> fieldType = field.getType();
-
-      ErrorCode errorCode =
-          ErrorCode.getForEnumType(fieldType).orElse(ErrorCode.INVALID_REQUEST_PARAMETER);
-
-      return buildFieldError(fieldName, errorCode);
+      return buildMismatchErrorForField(fieldName, field.getType());
 
     } catch (NoSuchFieldException e) {
       logger.warn("Campo '{}' não encontrado no objeto de destino.", fieldName);
     }
     return buildFieldError(fieldName, ErrorCode.INVALID_REQUEST_PARAMETER);
+  }
+
+  /**
+   * Mapeia o tipo da enum para seu respectivo ErrorCode de conversão. Se o tipo não for uma enum,
+   * retorna um ErrorCode genérico.
+   *
+   * @param fieldName nome do campo que gerou o erro
+   * @param fieldType tipo do campo que gerou o erro
+   * @return FieldErrorResponseDto com detalhes do erro do campo
+   */
+  private FieldErrorResponseDto buildMismatchErrorForField(String fieldName, Class<?> fieldType) {
+    ErrorCode errorCode =
+        ErrorCode.getForEnumType(fieldType).orElse(ErrorCode.INVALID_REQUEST_PARAMETER);
+    return buildFieldError(fieldName, errorCode);
   }
 
   /**
