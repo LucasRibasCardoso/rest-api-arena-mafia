@@ -49,7 +49,7 @@ public class CompleteChangePhoneUseCaseTest {
     var request = new CompletePhoneChangeRequestDto(otpCode);
 
     when(pendingPhoneChangePort.findPhoneByUserId(idCurrentUser)).thenReturn(Optional.of(newPhone));
-    when(userRepository.findById(idCurrentUser)).thenReturn(Optional.of(user));
+    when(userRepository.findByIdOrElseThrow(idCurrentUser)).thenReturn(user);
     when(userRepository.save(user)).thenReturn(user);
 
     // Act
@@ -72,7 +72,7 @@ public class CompleteChangePhoneUseCaseTest {
 
     when(pendingPhoneChangePort.findPhoneByUserId(idCurrentUser))
         .thenReturn(Optional.ofNullable(phone));
-    when(userRepository.findById(idCurrentUser)).thenReturn(Optional.of(user));
+    when(userRepository.findByIdOrElseThrow(idCurrentUser)).thenReturn(user);
 
     // Act & Assert
     assertThatThrownBy(() -> completeChangePhoneUseCase.execute(idCurrentUser, request))
@@ -145,7 +145,7 @@ public class CompleteChangePhoneUseCaseTest {
     var request = new CompletePhoneChangeRequestDto(otpCode);
 
     when(pendingPhoneChangePort.findPhoneByUserId(idCurrentUser)).thenReturn(Optional.of(newPhone));
-    when(userRepository.findById(idCurrentUser)).thenReturn(Optional.empty());
+    doThrow(new UserNotFoundException()).when(userRepository).findByIdOrElseThrow(idCurrentUser);
 
     // Act & Assert
     assertThatThrownBy(() -> completeChangePhoneUseCase.execute(idCurrentUser, request))

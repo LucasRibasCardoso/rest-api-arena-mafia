@@ -1,6 +1,7 @@
 package com.projetoExtensao.arenaMafia.infrastructure.adapter.repository;
 
 import com.projetoExtensao.arenaMafia.application.user.port.repository.UserRepositoryPort;
+import com.projetoExtensao.arenaMafia.domain.exception.notFound.UserNotFoundException;
 import com.projetoExtensao.arenaMafia.domain.model.User;
 import com.projetoExtensao.arenaMafia.domain.model.enums.AccountStatus;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.UserEntity;
@@ -38,6 +39,14 @@ public class UserRepositoryAdapter implements UserRepositoryPort {
   @Transactional(readOnly = true)
   public Optional<User> findById(UUID id) {
     return userJpaRepository.findById(id).map(userMapper::toDomain);
+  }
+
+  @Override
+  public User findByIdOrElseThrow(UUID id) {
+    return userJpaRepository
+        .findById(id)
+        .map(userMapper::toDomain)
+        .orElseThrow(UserNotFoundException::new);
   }
 
   @Override

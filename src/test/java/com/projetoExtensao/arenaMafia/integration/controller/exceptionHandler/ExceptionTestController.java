@@ -7,7 +7,6 @@ import com.projetoExtensao.arenaMafia.domain.exception.unauthorized.RefreshToken
 import com.projetoExtensao.arenaMafia.infrastructure.web.auth.dto.request.ResendOtpRequestDto;
 import jakarta.validation.Valid;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -22,12 +21,6 @@ public class ExceptionTestController {
   @GetMapping("/unauthorized/refresh-token-expired")
   public void throwRefreshTokenExpired() {
     throw new RefreshTokenExpiredException();
-  }
-
-  // --- Endpoints para 403 Forbidden ---
-  @GetMapping("/forbidden/access-denied")
-  public void throwAccessDenied() {
-    throw new AccessDeniedException("Acesso negado.");
   }
 
   // --- Endpoints para 404 Not Found ---

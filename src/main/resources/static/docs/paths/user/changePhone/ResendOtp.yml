@@ -25,5 +25,7 @@ post:
                 errorCode: "PHONE_CHANGE_NOT_INITIATED"
                 developerMessage: "Sua solicitação de alteração de telefone não foi encontrada ou já expirou. Por favor, inicie o processo novamente."
                 path: "/api/users/me/phone/verification/resend-otp"
+    429:
+      $ref: '../../../components/responses/TooManyRequestsError.yml'
     500:
       $ref: '../../../components/responses/InternalServerError.yml'

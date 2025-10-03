@@ -2,7 +2,6 @@ package com.projetoExtensao.arenaMafia.application.user.usecase.profile.imp;
 
 import com.projetoExtensao.arenaMafia.application.user.port.repository.UserRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.user.usecase.profile.UpdateProfileUseCase;
-import com.projetoExtensao.arenaMafia.domain.exception.notFound.UserNotFoundException;
 import com.projetoExtensao.arenaMafia.domain.model.User;
 import com.projetoExtensao.arenaMafia.infrastructure.web.user.dto.request.UpdateProfileRequestDto;
 import java.util.UUID;
@@ -21,12 +20,8 @@ public class UpdateProfileUseCaseImp implements UpdateProfileUseCase {
 
   @Override
   public User execute(UUID idCurrentUser, UpdateProfileRequestDto request) {
-    User user = getUserOrElseThrow(idCurrentUser);
+    User user = userRepository.findByIdOrElseThrow(idCurrentUser);
     user.updateFullName(request.fullName());
     return userRepository.save(user);
-  }
-
-  private User getUserOrElseThrow(UUID idCurrentUser) {
-    return userRepository.findById(idCurrentUser).orElseThrow(UserNotFoundException::new);
   }
 }

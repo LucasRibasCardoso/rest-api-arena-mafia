@@ -4,7 +4,6 @@ import com.projetoExtensao.arenaMafia.application.user.port.repository.UserRepos
 import com.projetoExtensao.arenaMafia.application.user.usecase.username.ChangeUsernameUseCase;
 import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 import com.projetoExtensao.arenaMafia.domain.exception.conflict.UserAlreadyExistsException;
-import com.projetoExtensao.arenaMafia.domain.exception.notFound.UserNotFoundException;
 import com.projetoExtensao.arenaMafia.domain.model.User;
 import com.projetoExtensao.arenaMafia.infrastructure.web.user.dto.request.ChangeUsernameRequestDto;
 import java.util.UUID;
@@ -24,7 +23,7 @@ public class ChangeUsernameUseCaseImp implements ChangeUsernameUseCase {
   @Override
   public User execute(UUID idCurrentUser, ChangeUsernameRequestDto request) {
     checkIfUsernameAlreadyExists(idCurrentUser, request.username());
-    User user = getUserOrElseThrow(idCurrentUser);
+    User user = userRepository.findByIdOrElseThrow(idCurrentUser);
     user.updateUsername(request.username());
     return userRepository.save(user);
   }
@@ -38,9 +37,5 @@ public class ChangeUsernameUseCaseImp implements ChangeUsernameUseCase {
                 throw new UserAlreadyExistsException(ErrorCode.USERNAME_ALREADY_EXISTS);
               }
             });
-  }
-
-  private User getUserOrElseThrow(UUID idCurrentUser) {
-    return userRepository.findById(idCurrentUser).orElseThrow(UserNotFoundException::new);
   }
 }

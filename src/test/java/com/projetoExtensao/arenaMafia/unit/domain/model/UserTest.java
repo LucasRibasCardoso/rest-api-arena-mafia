@@ -7,6 +7,7 @@ import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidFormatF
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidFormatPhoneException;
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidPasswordHashException;
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidUsernameFormatException;
+import com.projetoExtensao.arenaMafia.domain.exception.conflict.AccountStatusConflictException;
 import com.projetoExtensao.arenaMafia.domain.exception.forbidden.AccountStatusForbiddenException;
 import com.projetoExtensao.arenaMafia.domain.model.User;
 import com.projetoExtensao.arenaMafia.domain.model.enums.AccountStatus;
@@ -216,7 +217,7 @@ public class UserTest {
         value = AccountStatus.class,
         names = {"LOCKED", "DISABLED", "ACTIVE"})
     @DisplayName(
-        "confirmVerification() deve lançar AccountStatusForbiddenException para status inválidos")
+        "confirmVerification() deve lançar AccountStatusConflictException para status inválidos")
     void confirmVerification_shouldThrowException_whenStatusIsInvalid(AccountStatus invalidStatus) {
       // Arrange
       User user = TestDataProvider.UserBuilder.defaultUser().withStatus(invalidStatus).build();
@@ -224,10 +225,10 @@ public class UserTest {
 
       // Act & Assert
       assertThatThrownBy(user::confirmVerification)
-          .isInstanceOf(AccountStatusForbiddenException.class)
+          .isInstanceOf(AccountStatusConflictException.class)
           .satisfies(
               ex -> {
-                AccountStatusForbiddenException exception = (AccountStatusForbiddenException) ex;
+                AccountStatusConflictException exception = (AccountStatusConflictException) ex;
                 assertThat(exception.getErrorCode())
                     .isEqualTo(ErrorCode.ACCOUNT_NOT_PENDING_VERIFICATION);
               });
@@ -246,24 +247,20 @@ public class UserTest {
       assertThat(user.getStatus()).isEqualTo(AccountStatus.DISABLED);
     }
 
-    @ParameterizedTest
-    @EnumSource(
-        value = AccountStatus.class,
-        names = {"LOCKED", "DISABLED", "PENDING_VERIFICATION"})
-    @DisplayName(
-        "disableAccount() deve lançar AccountStatusForbiddenException para status inválidos")
-    void disableAccount_shouldThrowException_whenStatusIsInvalid(AccountStatus invalidStatus) {
+    @Test
+    @DisplayName("disableAccount() deve lançar AccountStatusConflictException para status inválido")
+    void disableAccount_shouldThrowException_whenStatusAlreadyDisabled() {
       // Arrange
-      User user = TestDataProvider.UserBuilder.defaultUser().withStatus(invalidStatus).build();
-      assertThat(user.getStatus()).isEqualTo(invalidStatus);
+      User user =
+          TestDataProvider.UserBuilder.defaultUser().withStatus(AccountStatus.DISABLED).build();
 
       // Act & Assert
       assertThatThrownBy(user::disableAccount)
-          .isInstanceOf(AccountStatusForbiddenException.class)
+          .isInstanceOf(AccountStatusConflictException.class)
           .satisfies(
               ex -> {
-                AccountStatusForbiddenException exception = (AccountStatusForbiddenException) ex;
-                assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.ACCOUNT_NOT_ACTIVE);
+                AccountStatusConflictException exception = (AccountStatusConflictException) ex;
+                assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.ACCOUNT_ALREADY_DISABLED);
               });
     }
 
@@ -275,29 +272,27 @@ public class UserTest {
           TestDataProvider.UserBuilder.defaultUser().withStatus(AccountStatus.DISABLED).build();
 
       // Act
-      user.enableAccount();
+      user.activateAccount();
 
       // Assert
       assertThat(user.getStatus()).isEqualTo(AccountStatus.ACTIVE);
     }
 
-    @ParameterizedTest
-    @EnumSource(
-        value = AccountStatus.class,
-        names = {"LOCKED", "ACTIVE", "PENDING_VERIFICATION"})
+    @Test
     @DisplayName(
-        "enableAccount() deve lançar AccountStatusForbiddenException para status inválidos")
-    void enableAccount_shouldThrowException_whenStatusIsInvalid(AccountStatus invalidStatus) {
+        "activateAccount() deve lançar AccountStatusConflictException para status inválido")
+    void activeAccount_shouldThrowException_whenStatusAlreadyEnabled() {
       // Arrange
-      User user = TestDataProvider.UserBuilder.defaultUser().withStatus(invalidStatus).build();
+      User user =
+          TestDataProvider.UserBuilder.defaultUser().withStatus(AccountStatus.ACTIVE).build();
 
       // Act & Assert
-      assertThatThrownBy(user::enableAccount)
-          .isInstanceOf(AccountStatusForbiddenException.class)
+      assertThatThrownBy(user::activateAccount)
+          .isInstanceOf(AccountStatusConflictException.class)
           .satisfies(
               ex -> {
-                AccountStatusForbiddenException exception = (AccountStatusForbiddenException) ex;
-                assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.ACCOUNT_NOT_DISABLED);
+                AccountStatusConflictException exception = (AccountStatusConflictException) ex;
+                assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.ACCOUNT_ALREADY_ACTIVE);
               });
     }
 
@@ -314,56 +309,20 @@ public class UserTest {
       assertThat(user.getStatus()).isEqualTo(AccountStatus.LOCKED);
     }
 
-    @ParameterizedTest
-    @EnumSource(
-        value = AccountStatus.class,
-        names = {"LOCKED", "DISABLED", "PENDING_VERIFICATION"})
-    @DisplayName("lockAccount() deve lançar AccountStatusForbiddenException para status inválidos")
-    void lockAccount_shouldThrowException_whenStatusIsInvalid(AccountStatus invalidStatus) {
-      // Arrange
-      User user = TestDataProvider.UserBuilder.defaultUser().withStatus(invalidStatus).build();
-
-      // Act & Assert
-      assertThatThrownBy(user::lockAccount)
-          .isInstanceOf(AccountStatusForbiddenException.class)
-          .satisfies(
-              ex -> {
-                AccountStatusForbiddenException exception = (AccountStatusForbiddenException) ex;
-                assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.ACCOUNT_NOT_ACTIVE);
-              });
-    }
-
     @Test
-    @DisplayName("unlockAccount() deve desbloquear uma conta bloqueada")
-    void unlockAccount_shouldUnlockAccount_whenAccountStatusIsLocked() {
+    @DisplayName("lockAccount() deve lançar AccountStatusConflictException para status inválido")
+    void lockAccount_shouldThrowException_whenStatusAlreadyLocked() {
       // Arrange
       User user =
           TestDataProvider.UserBuilder.defaultUser().withStatus(AccountStatus.LOCKED).build();
 
-      // Act
-      user.unlockAccount();
-
-      // Assert
-      assertThat(user.getStatus()).isEqualTo(AccountStatus.ACTIVE);
-    }
-
-    @ParameterizedTest
-    @EnumSource(
-        value = AccountStatus.class,
-        names = {"ACTIVE", "DISABLED", "PENDING_VERIFICATION"})
-    @DisplayName(
-        "unlockAccount() deve lançar AccountStatusForbiddenException para status inválidos")
-    void unlockAccount_shouldThrowException_whenStatusIsInvalid(AccountStatus invalidStatus) {
-      // Arrange
-      User user = TestDataProvider.UserBuilder.defaultUser().withStatus(invalidStatus).build();
-
       // Act & Assert
-      assertThatThrownBy(user::unlockAccount)
-          .isInstanceOf(AccountStatusForbiddenException.class)
+      assertThatThrownBy(user::lockAccount)
+          .isInstanceOf(AccountStatusConflictException.class)
           .satisfies(
               ex -> {
-                AccountStatusForbiddenException exception = (AccountStatusForbiddenException) ex;
-                assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.ACCOUNT_NOT_LOCKED);
+                AccountStatusConflictException exception = (AccountStatusConflictException) ex;
+                assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.ACCOUNT_ALREADY_LOCKED);
               });
     }
 

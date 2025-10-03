@@ -1,10 +1,13 @@
 package com.projetoExtensao.arenaMafia.infrastructure.security;
 
-import com.projetoExtensao.arenaMafia.infrastructure.security.jwt.CustomAuthenticationEntryPointHandler;
 import com.projetoExtensao.arenaMafia.infrastructure.security.jwt.JwtTokenFilter;
+import com.projetoExtensao.arenaMafia.infrastructure.web.exception.customHandlers.CustomAccessDeniedHandler;
+import com.projetoExtensao.arenaMafia.infrastructure.web.exception.customHandlers.CustomUnauthorizedHandler;
 import org.springframework.boot.actuate.autoconfigure.security.servlet.EndpointRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -21,13 +24,22 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 public class SecurityConfig {
 
-  private final CustomAuthenticationEntryPointHandler authenticationEntryPoint;
+  private final CustomAccessDeniedHandler accessDeniedHandler;
+  private final CustomUnauthorizedHandler unauthorizedHandler;
   private final JwtTokenFilter tokenFilter;
 
   public SecurityConfig(
-      CustomAuthenticationEntryPointHandler authenticationEntryPoint, JwtTokenFilter tokenFilter) {
-    this.authenticationEntryPoint = authenticationEntryPoint;
+      CustomAccessDeniedHandler accessDeniedHandler,
+      CustomUnauthorizedHandler unauthorizedHandler,
+      JwtTokenFilter tokenFilter) {
+    this.accessDeniedHandler = accessDeniedHandler;
+    this.unauthorizedHandler = unauthorizedHandler;
     this.tokenFilter = tokenFilter;
+  }
+
+  @Bean
+  public RoleHierarchy roleHierarchy() {
+    return RoleHierarchyImpl.fromHierarchy("ROLE_MODERATOR > ROLE_ADMIN > ROLE_USER");
   }
 
   @Bean
@@ -46,7 +58,10 @@ public class SecurityConfig {
 
         // Configura o ponto de entrada para erros de autenticação
         .exceptionHandling(
-            exception -> exception.authenticationEntryPoint(authenticationEntryPoint))
+            exceptions ->
+                exceptions
+                    .authenticationEntryPoint(unauthorizedHandler)
+                    .accessDeniedHandler(accessDeniedHandler))
 
         // Configura as requisições HTTP
         .authorizeHttpRequests(
@@ -71,9 +86,13 @@ public class SecurityConfig {
                         "/openapi.yml")
                     .permitAll()
 
+                    // Endpoints de administração de usuários restritos a administradores
+                    .requestMatchers("/api/admin/**")
+                    .hasRole("ADMIN")
+
                     // Restringe o acesso a endpoints de monitoramento
                     .requestMatchers(EndpointRequest.toAnyEndpoint())
-                    .hasRole("ADMIN")
+                    .hasRole("DEVELOPER")
 
                     // Exige autenticação para todas as outras requisições
                     .anyRequest()

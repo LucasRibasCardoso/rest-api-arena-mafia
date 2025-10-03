@@ -68,5 +68,7 @@ post:
                 path: "/api/auth/refresh-token"
     403:
       $ref: '../../components/responses/AccountStatusForbidden.yml'
+    429:
+      $ref: '../../components/responses/TooManyRequestsError.yml'
     500:
       $ref: '../../components/responses/InternalServerError.yml'

@@ -12,7 +12,6 @@ import com.projetoExtensao.arenaMafia.domain.exception.notFound.UserNotFoundExce
 import com.projetoExtensao.arenaMafia.domain.model.User;
 import com.projetoExtensao.arenaMafia.infrastructure.web.user.dto.request.UpdateProfileRequestDto;
 import com.projetoExtensao.arenaMafia.unit.config.TestDataProvider;
-import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -39,7 +38,7 @@ public class UpdateProfileUseCaseTest {
     UUID idCurrentUser = user.getId();
     var request = new UpdateProfileRequestDto(newFullName);
 
-    when(userRepository.findById(idCurrentUser)).thenReturn(Optional.of(user));
+    when(userRepository.findByIdOrElseThrow(idCurrentUser)).thenReturn(user);
     when(userRepository.save(user)).thenReturn(user);
 
     // Act
@@ -57,7 +56,7 @@ public class UpdateProfileUseCaseTest {
     UUID idCurrentUser = UUID.randomUUID();
     var request = new UpdateProfileRequestDto("Updated User");
 
-    when(userRepository.findById(idCurrentUser)).thenReturn(Optional.empty());
+    doThrow(new UserNotFoundException()).when(userRepository).findByIdOrElseThrow(idCurrentUser);
 
     // Act & Assert
     assertThatThrownBy(() -> updateProfileUseCase.execute(idCurrentUser, request))
@@ -82,7 +81,7 @@ public class UpdateProfileUseCaseTest {
     UUID idCurrentUser = user.getId();
     var request = new UpdateProfileRequestDto(invalidFullName);
 
-    when(userRepository.findById(idCurrentUser)).thenReturn(Optional.of(user));
+    when(userRepository.findByIdOrElseThrow(idCurrentUser)).thenReturn(user);
 
     // Act & Assert
     assertThatThrownBy(() -> updateProfileUseCase.execute(idCurrentUser, request))
@@ -93,7 +92,7 @@ public class UpdateProfileUseCaseTest {
               assertThat(exception.getErrorCode()).isEqualTo(expectedErrorCode);
             });
 
-    verify(userRepository, times(1)).findById(idCurrentUser);
+    verify(userRepository, times(1)).findByIdOrElseThrow(idCurrentUser);
     verify(userRepository, never()).save(any(User.class));
   }
 }

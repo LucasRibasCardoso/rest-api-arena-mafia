@@ -58,5 +58,7 @@ post:
             errorCode: "PHONE_ALREADY_EXISTS"
             developerMessage: "Esse número de telefone já está em uso."
             path: "/api/users/me/phone/verification"
+    429:
+      $ref: '../../../components/responses/TooManyRequestsError.yml'
     500:
       $ref: '../../../components/responses/InternalServerError.yml'

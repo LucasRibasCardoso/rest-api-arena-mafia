@@ -5,7 +5,6 @@ import com.projetoExtensao.arenaMafia.application.user.port.gateway.PendingPhone
 import com.projetoExtensao.arenaMafia.application.user.port.repository.UserRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.user.usecase.phone.CompleteChangePhoneUseCase;
 import com.projetoExtensao.arenaMafia.domain.exception.notFound.PhoneChangeNotInitiatedException;
-import com.projetoExtensao.arenaMafia.domain.exception.notFound.UserNotFoundException;
 import com.projetoExtensao.arenaMafia.domain.model.User;
 import com.projetoExtensao.arenaMafia.infrastructure.web.user.dto.request.CompletePhoneChangeRequestDto;
 import java.util.UUID;
@@ -36,7 +35,7 @@ public class CompleteChangePhoneUseCaseImp implements CompleteChangePhoneUseCase
     otpPort.validateOtp(idCurrentUser, request.otpCode());
     pendingPhoneChangePort.deleteByUserId(idCurrentUser);
 
-    User user = getUserOrElseThrow(idCurrentUser);
+    User user = userRepositoryPort.findByIdOrElseThrow(idCurrentUser);
     user.updatePhone(newPhone);
     return userRepositoryPort.save(user);
   }
@@ -45,9 +44,5 @@ public class CompleteChangePhoneUseCaseImp implements CompleteChangePhoneUseCase
     return pendingPhoneChangePort
         .findPhoneByUserId(idCurrentUser)
         .orElseThrow(PhoneChangeNotInitiatedException::new);
-  }
-
-  private User getUserOrElseThrow(UUID idCurrentUser) {
-    return userRepositoryPort.findById(idCurrentUser).orElseThrow(UserNotFoundException::new);
   }
 }

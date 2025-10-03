@@ -103,25 +103,6 @@ public class GlobalExceptionHandlerTest {
   }
 
   @Nested
-  @DisplayName("Testes para Erros 403 Forbidden")
-  class ForbiddenTests {
-    @Test
-    @DisplayName("Deve capturar AccessDeniedException")
-    void shouldHandleAccessDeniedException() throws Exception {
-      ErrorCode errorCode = ErrorCode.ACCESS_DENIED;
-      String expectedPath = BASE_URL + "/forbidden/access-denied";
-
-      mockMvc
-          .perform(get(expectedPath))
-          .andExpect(status().isForbidden())
-          .andExpect(jsonPath("$.status").value(403))
-          .andExpect(jsonPath("$.path").value(expectedPath))
-          .andExpect(jsonPath("$.errorCode").value(errorCode.name()))
-          .andExpect(jsonPath("$.developerMessage").value(errorCode.getMessage()));
-    }
-  }
-
-  @Nested
   @DisplayName("Testes para Erros 404 Not Found")
   class NotFoundTests {
     @Test

@@ -55,7 +55,7 @@ public class ResendOtpUseCaseTest {
     UUID userId = user.getId();
 
     when(otpSessionPort.findUserIdByOtpSessionId(otpSessionId)).thenReturn(Optional.of(userId));
-    when(userRepositoryPort.findById(userId)).thenReturn(Optional.of(user));
+    when(userRepositoryPort.findByIdOrElseThrow(userId)).thenReturn(user);
 
     // Act
     resendOtpUseCaseTest.execute(otpSessionId);
@@ -91,7 +91,7 @@ public class ResendOtpUseCaseTest {
     UUID userId = UUID.randomUUID();
 
     when(otpSessionPort.findUserIdByOtpSessionId(otpSessionId)).thenReturn(Optional.of(userId));
-    when(userRepositoryPort.findById(userId)).thenReturn(Optional.empty());
+    doThrow(new UserNotFoundException()).when(userRepositoryPort).findByIdOrElseThrow(userId);
 
     // Act & Assert
     assertThatThrownBy(() -> resendOtpUseCaseTest.execute(otpSessionId))
@@ -116,7 +116,7 @@ public class ResendOtpUseCaseTest {
     UUID userId = user.getId();
 
     when(otpSessionPort.findUserIdByOtpSessionId(otpSessionId)).thenReturn(Optional.of(userId));
-    when(userRepositoryPort.findById(userId)).thenReturn(Optional.of(user));
+    when(userRepositoryPort.findByIdOrElseThrow(userId)).thenReturn(user);
 
     // Act & Assert
     assertThatThrownBy(() -> resendOtpUseCaseTest.execute(otpSessionId))

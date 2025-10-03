@@ -5,7 +5,6 @@ import com.projetoExtensao.arenaMafia.application.auth.usecase.otp.ResendOtpUseC
 import com.projetoExtensao.arenaMafia.application.notification.event.OnVerificationRequiredEvent;
 import com.projetoExtensao.arenaMafia.application.user.port.repository.UserRepositoryPort;
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidOtpSessionException;
-import com.projetoExtensao.arenaMafia.domain.exception.notFound.UserNotFoundException;
 import com.projetoExtensao.arenaMafia.domain.model.User;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.OtpSessionId;
 import java.util.UUID;
@@ -33,7 +32,7 @@ public class ResendOtpUseCaseImp implements ResendOtpUseCase {
   @Override
   public void execute(OtpSessionId otpSessionId) {
     UUID userId = getUserIdFromOtpSession(otpSessionId);
-    User user = getUserById(userId);
+    User user = userRepository.findByIdOrElseThrow(userId);
 
     user.ensureCanRequestOtp();
     eventPublisher.publishEvent(new OnVerificationRequiredEvent(user));
@@ -43,9 +42,5 @@ public class ResendOtpUseCaseImp implements ResendOtpUseCase {
     return otpSessionPort
         .findUserIdByOtpSessionId(otpSessionId)
         .orElseThrow(InvalidOtpSessionException::new);
-  }
-
-  private User getUserById(UUID userId) {
-    return userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
   }
 }

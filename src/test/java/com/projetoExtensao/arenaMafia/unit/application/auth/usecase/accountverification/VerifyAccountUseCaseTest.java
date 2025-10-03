@@ -14,7 +14,7 @@ import com.projetoExtensao.arenaMafia.application.user.port.repository.UserRepos
 import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidOtpException;
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidOtpSessionException;
-import com.projetoExtensao.arenaMafia.domain.exception.forbidden.AccountStatusForbiddenException;
+import com.projetoExtensao.arenaMafia.domain.exception.conflict.AccountStatusConflictException;
 import com.projetoExtensao.arenaMafia.domain.exception.notFound.UserNotFoundException;
 import com.projetoExtensao.arenaMafia.domain.model.User;
 import com.projetoExtensao.arenaMafia.domain.model.enums.AccountStatus;
@@ -61,7 +61,7 @@ public class VerifyAccountUseCaseTest {
     var request = new ValidateOtpRequestDto(otpSessionId, otpCode);
 
     when(otpSessionPort.findUserIdByOtpSessionId(otpSessionId)).thenReturn(Optional.of(userId));
-    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+    when(userRepository.findByIdOrElseThrow(userId)).thenReturn(user);
     when(authPort.generateTokens(user)).thenReturn(authResult);
 
     // Act
@@ -111,7 +111,7 @@ public class VerifyAccountUseCaseTest {
     var request = new ValidateOtpRequestDto(otpSessionId, otpCode);
 
     when(otpSessionPort.findUserIdByOtpSessionId(otpSessionId)).thenReturn(Optional.of(userId));
-    when(userRepository.findById(userId)).thenReturn(Optional.empty());
+    doThrow(new UserNotFoundException()).when(userRepository).findByIdOrElseThrow(userId);
 
     // Act & Assert
     assertThatThrownBy(() -> verifyAccountUseCase.execute(request))
@@ -137,7 +137,7 @@ public class VerifyAccountUseCaseTest {
     var request = new ValidateOtpRequestDto(otpSessionId, invalidOtp);
 
     when(otpSessionPort.findUserIdByOtpSessionId(otpSessionId)).thenReturn(Optional.of(userId));
-    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+    when(userRepository.findByIdOrElseThrow(userId)).thenReturn(user);
 
     ErrorCode errorCode = ErrorCode.OTP_CODE_INCORRECT_OR_EXPIRED;
     doThrow(new InvalidOtpException(errorCode)).when(otpPort).validateOtp(user.getId(), invalidOtp);
@@ -161,8 +161,8 @@ public class VerifyAccountUseCaseTest {
   @EnumSource(
       value = AccountStatus.class,
       names = {"ACTIVE", "LOCKED", "DISABLED"})
-  @DisplayName("Deve retornar AccountStatusForbiddenException quando o status da conta é inválido")
-  void execute_shouldThrowAccountStatusForbiddenException_whenAccountStatusIsInvalid(
+  @DisplayName("Deve retornar AccountStatusConflictException quando o status da conta é inválido")
+  void execute_shouldThrowAccountStatusConflictException_whenAccountStatusIsInvalid(
       AccountStatus invalidStatus) {
     // Arrange
     User user = TestDataProvider.UserBuilder.defaultUser().withStatus(invalidStatus).build();
@@ -171,14 +171,14 @@ public class VerifyAccountUseCaseTest {
     var request = new ValidateOtpRequestDto(otpSessionId, otpCode);
 
     when(otpSessionPort.findUserIdByOtpSessionId(otpSessionId)).thenReturn(Optional.of(userId));
-    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+    when(userRepository.findByIdOrElseThrow(userId)).thenReturn(user);
 
     // Act & Assert
     assertThatThrownBy(() -> verifyAccountUseCase.execute(request))
-        .isInstanceOf(AccountStatusForbiddenException.class)
+        .isInstanceOf(AccountStatusConflictException.class)
         .satisfies(
             ex -> {
-              AccountStatusForbiddenException exception = (AccountStatusForbiddenException) ex;
+              AccountStatusConflictException exception = (AccountStatusConflictException) ex;
               assertThat(exception.getErrorCode())
                   .isEqualTo(ErrorCode.ACCOUNT_NOT_PENDING_VERIFICATION);
             });

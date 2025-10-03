@@ -40,5 +40,7 @@ patch:
                     developerMessage: "O nome completo deve ter entre 3 e 100 caracteres."
     401:
       $ref: '../../components/responses/UnauthorizedError.yml'
+    429:
+      $ref: '../../components/responses/TooManyRequestsError.yml'
     500:
       $ref: '../../components/responses/InternalServerError.yml'

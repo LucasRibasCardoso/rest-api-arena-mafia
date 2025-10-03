@@ -5,6 +5,7 @@ import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidFormatF
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidFormatPhoneException;
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidPasswordHashException;
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidUsernameFormatException;
+import com.projetoExtensao.arenaMafia.domain.exception.conflict.AccountStatusConflictException;
 import com.projetoExtensao.arenaMafia.domain.exception.forbidden.AccountStatusForbiddenException;
 import com.projetoExtensao.arenaMafia.domain.model.enums.AccountStatus;
 import com.projetoExtensao.arenaMafia.domain.model.enums.RoleEnum;
@@ -20,7 +21,7 @@ public class User {
   private String phone;
   private String passwordHash;
   private AccountStatus status;
-  private final RoleEnum role;
+  private RoleEnum role;
   private final Instant createdAt;
   private Instant updatedAt;
 
@@ -168,41 +169,70 @@ public class User {
   // Gerenciar status da conta
   public void confirmVerification() {
     if (this.status != AccountStatus.PENDING_VERIFICATION) {
-      throw new AccountStatusForbiddenException(ErrorCode.ACCOUNT_NOT_PENDING_VERIFICATION);
+      throw new AccountStatusConflictException(ErrorCode.ACCOUNT_NOT_PENDING_VERIFICATION);
     }
     this.status = AccountStatus.ACTIVE;
     markAsUpdated();
   }
 
   public void disableAccount() {
-    if (this.status != AccountStatus.ACTIVE) {
-      throw new AccountStatusForbiddenException(ErrorCode.ACCOUNT_NOT_ACTIVE);
+    if (this.status == AccountStatus.DISABLED) {
+      throw new AccountStatusConflictException(ErrorCode.ACCOUNT_ALREADY_DISABLED);
     }
     this.status = AccountStatus.DISABLED;
     markAsUpdated();
   }
 
-  public void enableAccount() {
-    if (this.status != AccountStatus.DISABLED) {
-      throw new AccountStatusForbiddenException(ErrorCode.ACCOUNT_NOT_DISABLED);
+  public void activateAccount() {
+    if (this.status == AccountStatus.ACTIVE) {
+      throw new AccountStatusConflictException(ErrorCode.ACCOUNT_ALREADY_ACTIVE);
     }
     this.status = AccountStatus.ACTIVE;
     markAsUpdated();
   }
 
   public void lockAccount() {
-    if (this.status != AccountStatus.ACTIVE) {
-      throw new AccountStatusForbiddenException(ErrorCode.ACCOUNT_NOT_ACTIVE);
+    if (this.status == AccountStatus.LOCKED) {
+      throw new AccountStatusConflictException(ErrorCode.ACCOUNT_ALREADY_LOCKED);
     }
     this.status = AccountStatus.LOCKED;
     markAsUpdated();
   }
 
-  public void unlockAccount() {
-    if (this.status != AccountStatus.LOCKED) {
-      throw new AccountStatusForbiddenException(ErrorCode.ACCOUNT_NOT_LOCKED);
+  // Métodos utilizados por administradores
+  public void adminUpdateStatus(AccountStatus newStatus) {
+    if (newStatus != AccountStatus.ACTIVE
+        && newStatus != AccountStatus.DISABLED
+        && newStatus != AccountStatus.LOCKED) {
+      throw new AccountStatusForbiddenException(ErrorCode.INVALID_ACCOUNT_STATUS);
     }
-    this.status = AccountStatus.ACTIVE;
+
+    if (this.status == newStatus) {
+      switch (newStatus) {
+        case ACTIVE -> throw new AccountStatusConflictException(ErrorCode.ACCOUNT_ALREADY_ACTIVE);
+        case LOCKED -> throw new AccountStatusConflictException(ErrorCode.ACCOUNT_ALREADY_LOCKED);
+        case DISABLED ->
+            throw new AccountStatusConflictException(ErrorCode.ACCOUNT_ALREADY_DISABLED);
+        default -> throw new AccountStatusConflictException(ErrorCode.ACCOUNT_STATE_CONFLICT);
+      }
+    }
+    this.status = newStatus;
+    markAsUpdated();
+  }
+
+  public void adminUpdateRole(RoleEnum newRole) {
+    if (newRole != RoleEnum.ROLE_ADMIN && newRole != RoleEnum.ROLE_USER) {
+      throw new AccountStatusForbiddenException(ErrorCode.INVALID_ROLE);
+    }
+
+    if (this.role == newRole) {
+      switch (newRole) {
+        case ROLE_ADMIN -> throw new AccountStatusConflictException(ErrorCode.USER_ALREADY_ADMIN);
+        case ROLE_USER -> throw new AccountStatusConflictException(ErrorCode.USER_ALREADY_USER);
+        default -> throw new AccountStatusConflictException(ErrorCode.ACCOUNT_STATE_CONFLICT);
+      }
+    }
+    this.role = newRole;
     markAsUpdated();
   }
 
@@ -213,6 +243,10 @@ public class User {
 
   public boolean isEnabled() {
     return this.status == AccountStatus.ACTIVE;
+  }
+
+  public boolean isPendingVerification() {
+    return this.status == AccountStatus.PENDING_VERIFICATION;
   }
 
   // Getters
