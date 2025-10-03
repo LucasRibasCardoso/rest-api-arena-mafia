@@ -21,8 +21,8 @@ properties:
       - ROLE_ADMIN
       - ROLE_USER
       - ROLE_MANAGER
-  required:
-    - username
-    - fullName
-    - phone
-    - role
+required:
+  - username
+  - fullName
+  - phone
+  - role

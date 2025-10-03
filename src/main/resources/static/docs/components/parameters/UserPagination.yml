@@ -13,7 +13,7 @@ status:
   description: "Filtra usuários por status da conta."
   required: false
   schema:
-    $ref: '../schemas/user/enuns/AccountStatus.yml'
+    $ref: "../schemas/user/enuns/AccountStatus.yml"
 
 role:
   name: role
@@ -21,7 +21,7 @@ role:
   description: "Filtra usuários por role (permissão)."
   required: false
   schema:
-    $ref: '../schemas/user/enuns/Role.yml'
+    $ref: "../schemas/user/enuns/Role.yml"
 
 createdAtStart:
   name: createdAtStart
