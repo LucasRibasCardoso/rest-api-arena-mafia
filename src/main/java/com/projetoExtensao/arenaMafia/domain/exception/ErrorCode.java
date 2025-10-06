@@ -121,20 +121,28 @@ public enum ErrorCode {
   MODALITY_NAME_REQUIRED("O nome da modalidade é obrigatório."),
   MODALITY_NAME_INVALID_LENGTH("O nome da modalidade deve ter entre 3 e 100 caracteres."),
   MODALITY_ALREADY_EXISTS("Essa modalidade já está cadastrada."),
-  MODALITY_IN_USE("Não é possível deletar esta modalidade pois ela está sendo utilizada por uma ou mais quadras."),
+  MODALITY_IN_USE(
+      "Não é possível deletar esta modalidade pois ela está sendo utilizada por uma ou mais"
+          + " quadras."),
 
   // ==================== ERROS DE QUADRA (COURT) ====================
   // Court - Geral
   COURT_NOT_FOUND("Quadra não encontrada."),
+  COURT_ALREADY_EXISTS("Essa quadra já está cadastrada."),
 
   // Court - Name
   COURT_NAME_REQUIRED("O nome da quadra é obrigatório."),
-  COURT_NAME_TOO_LONG("O nome da quadra não pode exceder 100 caracteres."),
+  COURT_NAME_INVALID_LENGTH("O nome da quadra deve ter entre 3 e 100 caracteres."),
+  COURT_MODALITY_REQUIRED("Ao menos uma modalidade é obrigatória."),
 
   // Court - Offset Minutes
   OFFSET_MINUTES_REQUIRED("O offset de minutos é obrigatório."),
   INVALID_OFFSET_MINUTES(
       "O valor de minutos de offset fornecido é inválido. Valores válidos: 0 ou 30."),
+
+  // Court - Status
+  COURT_ALREADY_DISABLED("A quadra já está desativada."),
+  COURT_ALREADY_ENABLED("A quadra já está ativada."),
 
   // ==================== ERROS DE HORÁRIO DE FUNCIONAMENTO (OPERATING HOURS) ====================
   // (Adicione aqui quando implementar)

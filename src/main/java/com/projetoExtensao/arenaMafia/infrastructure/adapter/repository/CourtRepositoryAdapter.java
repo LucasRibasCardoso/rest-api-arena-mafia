@@ -1,0 +1,75 @@
+package com.projetoExtensao.arenaMafia.infrastructure.adapter.repository;
+
+import com.projetoExtensao.arenaMafia.application.court.port.CourtRepositoryPort;
+import com.projetoExtensao.arenaMafia.domain.exception.notFound.CourtNotFoundException;
+import com.projetoExtensao.arenaMafia.domain.model.Court;
+import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.CourtEntity;
+import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.ModalityEntity;
+import com.projetoExtensao.arenaMafia.infrastructure.persistence.mapper.CourtMapper;
+import com.projetoExtensao.arenaMafia.infrastructure.persistence.repository.CourtJpaRepository;
+import com.projetoExtensao.arenaMafia.infrastructure.persistence.repository.ModalityJpaRepository;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
+
+@Repository
+public class CourtRepositoryAdapter implements CourtRepositoryPort {
+
+  private final CourtJpaRepository courtJpaRepository;
+  private final ModalityJpaRepository modalityJpaRepository;
+  private final CourtMapper courtMapper;
+
+  public CourtRepositoryAdapter(
+      CourtJpaRepository courtJpaRepository,
+      ModalityJpaRepository modalityJpaRepository,
+      CourtMapper courtMapper) {
+    this.courtJpaRepository = courtJpaRepository;
+    this.modalityJpaRepository = modalityJpaRepository;
+    this.courtMapper = courtMapper;
+  }
+
+  @Override
+  @Transactional
+  public Court save(Court court) {
+    CourtEntity entity = courtMapper.toEntity(court);
+
+    Set<ModalityEntity> managedModalities =
+        court.getModalityIds().stream()
+            .map(modalityJpaRepository::getReferenceById)
+            .collect(Collectors.toSet());
+
+    entity.setModalities(managedModalities);
+
+    CourtEntity savedEntity = courtJpaRepository.save(entity);
+    return courtMapper.toDomain(savedEntity);
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public Optional<Court> findById(UUID id) {
+    return courtJpaRepository.findById(id).map(courtMapper::toDomain);
+  }
+
+  @Override
+  public Court findByIdOrElseThrow(UUID id) {
+    return courtJpaRepository
+        .findById(id)
+        .map(courtMapper::toDomain)
+        .orElseThrow(CourtNotFoundException::new);
+  }
+
+  @Override
+  @Transactional
+  public void delete(Court court) {
+    CourtEntity entity = courtMapper.toEntity(court);
+    courtJpaRepository.delete(entity);
+  }
+
+  @Override
+  public boolean existsByName(String name) {
+    return courtJpaRepository.existsByName(name);
+  }
+}
