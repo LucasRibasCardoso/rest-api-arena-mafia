@@ -620,7 +620,8 @@ public class AuthControllerIntegrationTest extends WebIntegrationTestConfig {
       assertThat(response.otpSessionId().toString()).hasSize(36); // UUID
       assertThat(response.message())
           .isEqualTo(
-              "Conta criada com sucesso. Um código de verificação foi enviado para o seu telefone.");
+              "Conta criada com sucesso. Um código de verificação foi enviado para o seu"
+                  + " telefone.");
     }
 
     @Nested
@@ -1223,7 +1224,8 @@ public class AuthControllerIntegrationTest extends WebIntegrationTestConfig {
         value = AccountStatus.class,
         names = {"ACTIVE", "PENDING_VERIFICATION"})
     @DisplayName(
-        "Deve retornar 204 No Content quando o OTP for reenviado com sucesso para conta ativa ou pendente")
+        "Deve retornar 204 No Content quando o OTP for reenviado com sucesso para conta ativa ou"
+            + " pendente")
     void resendOtp_shouldReturn204_whenOtpIsResentSuccessfullyToActiveOrPendingAccount(
         AccountStatus status) {
       // Arrange

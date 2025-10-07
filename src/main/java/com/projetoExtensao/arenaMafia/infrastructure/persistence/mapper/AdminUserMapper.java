@@ -7,19 +7,11 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.mapstruct.Mappings;
 
 @Mapper(componentModel = "spring")
 public interface AdminUserMapper {
 
-  @Mappings({
-    @Mapping(source = "id", target = "userId"),
-    @Mapping(source = "username", target = "username"),
-    @Mapping(source = "fullName", target = "fullName"),
-    @Mapping(source = "phone", target = "phone"),
-    @Mapping(source = "status", target = "status"),
-    @Mapping(source = "role", target = "role"),
-  })
+  @Mapping(source = "id", target = "userId")
   UserAdminResponseDto toDto(User user);
 
   default LocalDate instantToLocalDate(Instant instant) {

@@ -1,5 +1,6 @@
 package com.projetoExtensao.arenaMafia.application.court.usecase.imp;
 
+import com.projetoExtensao.arenaMafia.application.court.dto.CourtWithModalitiesResult;
 import com.projetoExtensao.arenaMafia.application.court.port.CourtRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.court.usecase.CreateCourtUseCase;
 import com.projetoExtensao.arenaMafia.application.modality.port.ModalityRepositoryPort;
@@ -28,22 +29,26 @@ public class CreateCourtUseCaseImp implements CreateCourtUseCase {
   }
 
   @Override
-  public Court execute(CreateCourtRequestDto request) {
+  public CourtWithModalitiesResult execute(CreateCourtRequestDto request) {
     validateCourtAlreadyExists(request.name());
-    validateModalitiesExist(request.modalityIds());
+    List<Modality> modalities = validateAndRetrieveModalities(request.modalityIds());
+
     Court court =
         Court.create(
             request.name(), request.description(), request.offsetMinutes(), request.modalityIds());
 
-    return courtRepository.save(court);
+    Court savedCourt = courtRepository.save(court);
+    return new CourtWithModalitiesResult(savedCourt, modalities);
   }
 
-  private void validateModalitiesExist(Set<UUID> modalityIds) {
+  private List<Modality> validateAndRetrieveModalities(Set<UUID> modalityIds) {
     List<Modality> foundModalities = modalityRepository.findAllByIds(modalityIds);
 
     if (foundModalities.size() != modalityIds.size()) {
       throw new ModalityNotFoundException();
     }
+
+    return foundModalities;
   }
 
   private void validateCourtAlreadyExists(String name) {

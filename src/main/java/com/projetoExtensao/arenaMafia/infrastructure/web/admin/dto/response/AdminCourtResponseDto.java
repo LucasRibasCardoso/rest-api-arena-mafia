@@ -3,7 +3,7 @@ package com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.response;
 import com.projetoExtensao.arenaMafia.domain.model.Court;
 import com.projetoExtensao.arenaMafia.infrastructure.web.modality.dto.response.ModalityResponseDto;
 import java.time.Instant;
-import java.util.Set;
+import java.util.List;
 import java.util.UUID;
 
 public record AdminCourtResponseDto(
@@ -12,11 +12,11 @@ public record AdminCourtResponseDto(
     String description,
     int offsetMinutes,
     boolean isActive,
-    Set<ModalityResponseDto> modalities,
+    List<ModalityResponseDto> modalities,
     Instant createdAt) {
 
   public static AdminCourtResponseDto fromDomain(
-      Court domain, Set<ModalityResponseDto> modalities) {
+      Court domain, List<ModalityResponseDto> modalities) {
 
     return new AdminCourtResponseDto(
         domain.getId(),

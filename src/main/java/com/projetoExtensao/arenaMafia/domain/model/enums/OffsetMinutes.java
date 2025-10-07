@@ -19,14 +19,6 @@ public enum OffsetMinutes {
     return value;
   }
 
-  /**
-   * Converte um valor inteiro para o enum correspondente. Usado pelo Jackson para desserialização
-   * de JSON.
-   *
-   * @param value O valor em minutos (0 ou 30)
-   * @return O enum correspondente
-   * @throws InvalidOffsetMinutesException se o valor não for 0 ou 30
-   */
   @JsonCreator
   public static OffsetMinutes fromValue(int value) {
     for (OffsetMinutes offset : OffsetMinutes.values()) {
