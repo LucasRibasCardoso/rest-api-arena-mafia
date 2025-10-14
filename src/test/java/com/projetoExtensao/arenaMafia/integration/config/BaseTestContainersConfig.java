@@ -3,11 +3,16 @@ package com.projetoExtensao.arenaMafia.integration.config;
 import static io.restassured.RestAssured.given;
 
 import com.projetoExtensao.arenaMafia.application.auth.port.repository.RefreshTokenRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.court.port.CourtRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.modality.port.ModalityRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.security.port.gateway.PasswordEncoderPort;
 import com.projetoExtensao.arenaMafia.application.user.port.repository.UserRepositoryPort;
+import com.projetoExtensao.arenaMafia.domain.model.Court;
+import com.projetoExtensao.arenaMafia.domain.model.Modality;
 import com.projetoExtensao.arenaMafia.domain.model.RefreshToken;
 import com.projetoExtensao.arenaMafia.domain.model.User;
 import com.projetoExtensao.arenaMafia.domain.model.enums.AccountStatus;
+import com.projetoExtensao.arenaMafia.domain.model.enums.OffsetMinutes;
 import com.projetoExtensao.arenaMafia.domain.model.enums.RoleEnum;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.RefreshTokenVO;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.repository.UserJpaRepository;
@@ -16,7 +21,9 @@ import com.projetoExtensao.arenaMafia.infrastructure.web.auth.dto.response.AuthR
 import io.restassured.http.Cookie;
 import io.restassured.response.Response;
 import java.time.Instant;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.AfterEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -51,6 +58,8 @@ public abstract class BaseTestContainersConfig {
   @Autowired private UserRepositoryPort userRepository;
   @Autowired private UserJpaRepository userJpaRepository;
   @Autowired private RefreshTokenRepositoryPort refreshTokenRepository;
+  @Autowired private ModalityRepositoryPort modalityRepository;
+  @Autowired private CourtRepositoryPort courtRepository;
 
   public final String defaultUsername = "testuser";
   public final String defaultPassword = "123456";
@@ -71,7 +80,15 @@ public abstract class BaseTestContainersConfig {
 
   @AfterEach
   void cleanupAfterEach() {
-    JdbcTestUtils.deleteFromTables(jdbcTemplate, "tb_refresh_token", "tb_users");
+    JdbcTestUtils.deleteFromTables(
+        jdbcTemplate,
+        "tb_refresh_token",
+        "tb_court_modalities",
+        "tb_operating_hours",
+        "tb_price_rules",
+        "tb_courts",
+        "tb_modalities",
+        "tb_users");
     redisTemplate.getConnectionFactory().getConnection().serverCommands().flushAll();
   }
 
@@ -282,5 +299,47 @@ public abstract class BaseTestContainersConfig {
         defaultPassword,
         AccountStatus.ACTIVE,
         RoleEnum.ROLE_USER);
+  }
+
+  public void mockPersistListOfModalities() {
+    modalityRepository.save(Modality.create("Beach Tennis"));
+    modalityRepository.save(Modality.create("Futvolei"));
+    modalityRepository.save(Modality.create("Volei de Praia"));
+  }
+
+  public Modality mockPersistModality(String name) {
+    Modality modality = Modality.create(name);
+    return modalityRepository.save(modality);
+  }
+
+  public Court mockPersistCourt(String name, Modality modality) {
+    String description = "Quadra de " + name;
+    OffsetMinutes offset = OffsetMinutes.ZERO;
+
+    Court court = Court.create(name, description, offset, Set.of(modality.getId()));
+    courtRepository.save(court);
+    return court;
+  }
+
+  public Court mockPersistCourt(
+      String name, String description, OffsetMinutes offset, Set<Modality> modalities) {
+
+    Set<UUID> modalitiesUUID = modalities.stream().map(Modality::getId).collect(Collectors.toSet());
+    Court court = Court.create(name, description, offset, modalitiesUUID);
+    return courtRepository.save(court);
+  }
+
+  public Court mockPersistCourt(
+      String name,
+      String description,
+      OffsetMinutes offset,
+      Set<Modality> modalities,
+      boolean active) {
+
+    Set<UUID> modalitiesUUID = modalities.stream().map(Modality::getId).collect(Collectors.toSet());
+    Court court =
+        Court.reconstitute(
+            UUID.randomUUID(), name, description, offset, active, modalitiesUUID, Instant.now());
+    return courtRepository.save(court);
   }
 }

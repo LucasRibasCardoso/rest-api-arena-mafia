@@ -1,4 +1,4 @@
-package com.projetoExtensao.arenaMafia.integration.config.util;
+package com.projetoExtensao.arenaMafia.integration.config.util.user;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -11,5 +11,5 @@ import org.junit.jupiter.params.provider.MethodSource;
 @Target(ElementType.METHOD)
 @ParameterizedTest
 @MethodSource(
-    "com.projetoExtensao.arenaMafia.integration.config.util.TestDataProvider#invalidRefreshTokenProvider")
-public @interface InvalidRefreshTokenProvider {}
+    "com.projetoExtensao.arenaMafia.integration.config.util.TestDataProvider#invalidResetTokenProvider")
+public @interface InvalidResetTokenProvider {}

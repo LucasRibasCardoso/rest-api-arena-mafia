@@ -59,7 +59,7 @@ public class AdminUserControllerIntegrationTest extends WebIntegrationTestConfig
   }
 
   @Nested
-  @DisplayName("Testes para o endpoints /api/admin/users")
+  @DisplayName("Testes para o endpoint GET /api/admin/users")
   class ListUsersTests {
 
     @Test
@@ -819,7 +819,8 @@ public class AdminUserControllerIntegrationTest extends WebIntegrationTestConfig
 
     @Test
     @DisplayName(
-        "Deve retornar 403 Forbidden quando o admin tentar atualizar o status de um usuário com verificação pendente")
+        "Deve retornar 403 Forbidden quando o admin tentar atualizar o status de um usuário com"
+            + " verificação pendente")
     void shouldReturn403_whenAdminTryToUpdateStatusOfUserPending() {
       // Arrange
       User pendingUser =
@@ -857,7 +858,8 @@ public class AdminUserControllerIntegrationTest extends WebIntegrationTestConfig
 
     @Test
     @DisplayName(
-        "Deve retornar 403 Forbidden quando o admin tentar atualizar o status para PENDING_VERIFICATION")
+        "Deve retornar 403 Forbidden quando o admin tentar atualizar o status para"
+            + " PENDING_VERIFICATION")
     void shouldReturn403_whenTryToUpdateStatusToPendingVerification() {
       // Arrange
       User user =
@@ -1138,7 +1140,8 @@ public class AdminUserControllerIntegrationTest extends WebIntegrationTestConfig
 
     @Test
     @DisplayName(
-        "Deve retornar 403 Forbidden quando o admin tentar alterar a role para um nível superior ao seu")
+        "Deve retornar 403 Forbidden quando o admin tentar alterar a role para um nível superior ao"
+            + " seu")
     void shouldReturn403_whenAdminTryToChangeRoleToHigherLevel() {
       // Arrange
       User user =
@@ -1176,7 +1179,8 @@ public class AdminUserControllerIntegrationTest extends WebIntegrationTestConfig
 
     @Test
     @DisplayName(
-        "Deve retornar 403 Forbidden quando o admin tentar atualizar a permissão de um usuário com verificação pendente")
+        "Deve retornar 403 Forbidden quando o admin tentar atualizar a permissão de um usuário com"
+            + " verificação pendente")
     void shouldReturn403_whenAdminTryToChangeRoleFromUserNotVerified() {
       // Arrange
       User pendingUser =

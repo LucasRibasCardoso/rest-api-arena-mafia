@@ -11,13 +11,16 @@ info:
 
     | Código (`errorCode`) | Mensagem (`developerMessage`) | Descrição |
     |---|---|---|
-    | `UNEXPECTED_ERROR` | Ocorreu um erro inesperado. Tente novamente. | Erro lançado para falhas não previstas.
-    | `ACCESS_DENIED` | Acesso negado. Você não tem permissão. | Erro lançado quando o usuário autenticado não tem permissão para acessar o recurso.
-    | `SESSION_EXPIRED` | Sua sessão expirou. Faça login novamente. | Erro lançado quando o token de autenticação expirou.
-    | `VALIDATION_FAILED` | A validação falhou. Verifique os campos. | A resposta incluí detalhes adicionais no campo `fieldErrors`.
-    | `MALFORMED_JSON_REQUEST` | Requisição JSON malformada. | A resposta incluí detalhes adicionais no campo `fieldErrors`.
-    | `INVALID_REQUEST_PARAMETER`| Um parâmetro da requisição é inválido ou está malformado. | A resposta incluí detalhes adicionais no campo `fieldErrors`. 
-    | `TOO_MANY_REQUESTS` | Limite de requisições excedido. Por favor, tente novamente mais tarde. | Erro lançado quando o limite de requisições foi excedido.
+    | `MALFORMED_JSON_REQUEST` | Requisição JSON malformada. | A resposta incluí detalhes adicionais no campo `fieldErrors`. |
+    | `UNEXPECTED_ERROR` | Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. | Erro lançado para falhas não previstas. |
+    | `ACCESS_DENIED` | Acesso negado. Você não tem permissão para acessar este recurso. | Erro lançado quando o usuário autenticado não tem permissão para acessar o recurso. |
+    | `DATA_INTEGRITY_VIOLATION` | O recurso que você está tentando criar ou atualizar já existe. | Erro lançado quando há violação de integridade de dados (duplicação, etc). |
+    | `INVALID_REQUEST_PARAMETER` | Um parâmetro da requisição é inválido ou está malformado. | A resposta incluí detalhes adicionais no campo `fieldErrors`. |
+    | `VALIDATION_FAILED` | A validação falhou. Verifique os detalhes dos campos para mais informações. | A resposta incluí detalhes adicionais no campo `fieldErrors`. |
+    | `SESSION_EXPIRED` | Sua sessão expirou. Por favor, faça login novamente. | Erro lançado quando o token de autenticação expirou. |
+    | `INVALID_SORT_PARAMETER` | O parâmetro de ordenação fornecido é inválido. | Erro lançado quando o parâmetro de ordenação (sort) não é válido. |
+    | `INVALID_FIELD_VALUE` | O valor fornecido para um campo é inválido. | Erro lançado quando o valor de um campo específico não é válido. |
+    | `TOO_MANY_REQUESTS` | Limite de requisições excedido. Por favor, tente novamente mais tarde. | Erro lançado quando o limite de requisições (rate limit) foi excedido. |
 
 tags:
   - name: "Autenticação - Core"
@@ -42,6 +45,15 @@ tags:
 
   - name: "Administração - Gerenciamento de Usuários"
     description: Endpoints relacionados ao gerenciamento de usuários, acessíveis apenas por administradores.
+
+  - name: "Administração - Gerenciamento de Modalidades"
+    description: Endpoints relacionados ao gerenciamento de modalidades esportivas, acessíveis apenas por administradores.
+
+  - name: "Administração - Gerenciamento de Quadras"
+    description: Endpoints relacionados ao gerenciamento de quadras, acessíveis apenas por administradores.
+
+  - name: "Modalidades - Consulta Pública"
+    description: Endpoints públicos para consulta de modalidades esportivas.
 
 components:
   schemas:
@@ -100,6 +112,20 @@ components:
       $ref: "./components/schemas/admin/UpdateUserStatusRequestDto.yml"
     UpdateUserRoleRequestDto:
       $ref: "./components/schemas/admin/UpdateUserRoleRequestDto.yml"
+    CreateModalityRequestDto:
+      $ref: "./components/schemas/admin/CreateModalityRequestDto.yml"
+    UpdateModalityRequestDto:
+      $ref: "./components/schemas/admin/UpdateModalityRequestDto.yml"
+
+    ModalityResponseDto:
+      $ref: "./components/schemas/modality/ModalityResponseDto.yml"
+
+    CreateCourtRequestDto:
+      $ref: "./components/schemas/admin/CreateCourtRequestDto.yml"
+    UpdateCourtRequestDto:
+      $ref: "./components/schemas/admin/UpdateCourtRequestDto.yml"
+    AdminCourtResponseDto:
+      $ref: "./components/schemas/admin/AdminCourtResponseDto.yml"
 
   responses:
     InternalServerError:
@@ -112,12 +138,6 @@ components:
       $ref: "./components/responses/TooManyRequestsError.yml"
     AccountStatusForbidden:
       $ref: "./components/responses/AccountStatusForbidden.yml"
-
-  parameters:
-    RefreshTokenCookie:
-      $ref: "./components/parameters/RefreshTokenCookie.yml"
-    UserPagination:
-      $ref: "./components/parameters/UserPagination.yml"
 
   headers:
     Set-Cookie:
@@ -177,3 +197,20 @@ paths:
     $ref: "./paths/admin/UpdateStatus.yml"
   /api/admin/users/{userId}/role:
     $ref: "./paths/admin/UpdateRole.yml"
+
+  /api/admin/modalities:
+    $ref: "./paths/admin/CreateModality.yml"
+  /api/admin/modalities/{modalityId}:
+    $ref: "./paths/admin/ModalityById.yml"
+
+  /api/admin/courts:
+    $ref: "./paths/admin/Courts.yml"
+  /api/admin/courts/{courtId}:
+    $ref: "./paths/admin/CourtsById.yml"
+  /api/admin/courts/{courtId}/disable:
+    $ref: "./paths/admin/DisableCourt.yml"
+  /api/admin/courts/{courtId}/enable:
+    $ref: "./paths/admin/EnableCourt.yml"
+
+  /api/modalities:
+    $ref: "./paths/modality/GetAllModalities.yml"

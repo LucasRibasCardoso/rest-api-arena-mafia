@@ -15,7 +15,11 @@ import com.projetoExtensao.arenaMafia.infrastructure.web.exception.dto.FieldErro
 import com.projetoExtensao.arenaMafia.infrastructure.web.user.dto.request.*;
 import com.projetoExtensao.arenaMafia.infrastructure.web.user.dto.response.UserProfileResponseDto;
 import com.projetoExtensao.arenaMafia.integration.config.WebIntegrationTestConfig;
-import com.projetoExtensao.arenaMafia.integration.config.util.*;
+import com.projetoExtensao.arenaMafia.integration.config.util.user.InvalidFullNameProvider;
+import com.projetoExtensao.arenaMafia.integration.config.util.user.InvalidOtpCodeProvider;
+import com.projetoExtensao.arenaMafia.integration.config.util.user.InvalidPasswordProvider;
+import com.projetoExtensao.arenaMafia.integration.config.util.user.InvalidPhoneProvider;
+import com.projetoExtensao.arenaMafia.integration.config.util.user.InvalidUsernameProvider;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.specification.RequestSpecification;
 import java.util.HashMap;

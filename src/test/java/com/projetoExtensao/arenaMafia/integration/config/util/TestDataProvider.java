@@ -75,4 +75,20 @@ public final class TestDataProvider {
         Arguments.of("+123abc456", "PHONE_INVALID_FORMAT"),
         Arguments.of("+1 (234) 567-8900", "PHONE_INVALID_FORMAT"));
   }
+
+  public static Stream<Arguments> invalidModalityNameProvider() {
+    return Stream.of(
+        Arguments.of(null, "MODALITY_NAME_REQUIRED"),
+        Arguments.of("", "MODALITY_NAME_REQUIRED"),
+        Arguments.of("ab", "MODALITY_NAME_INVALID_LENGTH"),
+        Arguments.of("a".repeat(101), "MODALITY_NAME_INVALID_LENGTH"));
+  }
+
+  public static Stream<Arguments> invalidCourtNameProvider() {
+    return Stream.of(
+        Arguments.of(null, "COURT_NAME_REQUIRED"),
+        Arguments.of("", "COURT_NAME_REQUIRED"),
+        Arguments.of("ab", "COURT_NAME_INVALID_LENGTH"),
+        Arguments.of("a".repeat(101), "COURT_NAME_INVALID_LENGTH"));
+  }
 }

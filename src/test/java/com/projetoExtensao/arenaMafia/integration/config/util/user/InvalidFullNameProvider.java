@@ -1,4 +1,4 @@
-package com.projetoExtensao.arenaMafia.integration.config.util;
+package com.projetoExtensao.arenaMafia.integration.config.util.user;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

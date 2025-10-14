@@ -118,7 +118,9 @@ public class Court {
   }
 
   public void updateDescription(String description) {
-    this.description = description;
+    if (description != null) {
+      this.description = description;
+    }
   }
 
   public void updateOffsetMinutes(OffsetMinutes offsetMinutes) {

@@ -1,0 +1,99 @@
+get:
+  operationId: getAllCourts
+  tags: [Administração - Gerenciamento de Quadras]
+  summary: Listar todas as quadras
+  description: |
+    Lista todas as quadras cadastradas no sistema. É possível filtrar por status 
+    (ativas ou inativas) usando o parâmetro de query `isActive`.
+  security:
+    - bearerAuth: []
+  parameters:
+    - name: isActive
+      in: query
+      required: false
+      description: |
+        Filtro opcional para buscar quadras por status:
+        - `true`: retorna apenas quadras ativas
+        - `false`: retorna apenas quadras inativas
+        - Se omitido: retorna todas as quadras (ativas e inativas)
+      schema:
+        type: boolean
+      examples:
+        active:
+          summary: Buscar apenas quadras ativas
+          value: true
+        inactive:
+          summary: Buscar apenas quadras inativas
+          value: false
+  responses:
+    200:
+      description: |
+        Lista de quadras retornada com sucesso. Retorna um array vazio se não houver 
+        quadras cadastradas ou se nenhuma quadra corresponder ao filtro aplicado.
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: "../../components/schemas/admin/AdminCourtResponseDto.yml"
+          examples:
+            allCourts:
+              summary: Todas as quadras (sem filtro)
+              value:
+                - id: "550e8400-e29b-41d4-a716-446655440000"
+                  name: "Quadra A"
+                  description: "Quadra de Futebol"
+                  offsetMinutes: 0
+                  isActive: true
+                  modalities:
+                    - id: "6ba7b810-9dad-11d1-80b4-00c04fd430c8"
+                      name: "Futebol"
+                      createdAt: "2024-10-08T10:30:00Z"
+                  createdAt: "2024-10-08T09:00:00Z"
+                - id: "7c9e6679-7425-40de-944b-e07fc1f90ae7"
+                  name: "Quadra B"
+                  description: "Quadra de Basquete"
+                  offsetMinutes: 30
+                  isActive: false
+                  modalities:
+                    - id: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                      name: "Basquete"
+                      createdAt: "2024-10-08T11:00:00Z"
+                  createdAt: "2024-10-08T09:30:00Z"
+            activeCourts:
+              summary: Apenas quadras ativas (isActive=true)
+              value:
+                - id: "550e8400-e29b-41d4-a716-446655440000"
+                  name: "Quadra A"
+                  description: "Quadra de Futebol"
+                  offsetMinutes: 0
+                  isActive: true
+                  modalities:
+                    - id: "6ba7b810-9dad-11d1-80b4-00c04fd430c8"
+                      name: "Futebol"
+                      createdAt: "2024-10-08T10:30:00Z"
+                  createdAt: "2024-10-08T09:00:00Z"
+            inactiveCourts:
+              summary: Apenas quadras inativas (isActive=false)
+              value:
+                - id: "7c9e6679-7425-40de-944b-e07fc1f90ae7"
+                  name: "Quadra B"
+                  description: "Quadra de Basquete"
+                  offsetMinutes: 30
+                  isActive: false
+                  modalities:
+                    - id: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                      name: "Basquete"
+                      createdAt: "2024-10-08T11:00:00Z"
+                  createdAt: "2024-10-08T09:30:00Z"
+            emptyList:
+              summary: Lista vazia (sem quadras cadastradas)
+              value: []
+    401:
+      $ref: "../../components/responses/UnauthorizedError.yml"
+    403:
+      $ref: "../../components/responses/ForbiddenError.yml"
+    429:
+      $ref: "../../components/responses/TooManyRequestsError.yml"
+    500:
+      $ref: "../../components/responses/InternalServerError.yml"

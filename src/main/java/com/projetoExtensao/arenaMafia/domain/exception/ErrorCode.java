@@ -133,7 +133,7 @@ public enum ErrorCode {
   // Court - Name
   COURT_NAME_REQUIRED("O nome da quadra é obrigatório."),
   COURT_NAME_INVALID_LENGTH("O nome da quadra deve ter entre 3 e 100 caracteres."),
-  COURT_MODALITY_REQUIRED("Ao menos uma modalidade é obrigatória."),
+  COURT_MODALITY_REQUIRED("Ao menos uma modalidade é necessária ser informada."),
 
   // Court - Offset Minutes
   OFFSET_MINUTES_REQUIRED("O offset de minutos é obrigatório."),

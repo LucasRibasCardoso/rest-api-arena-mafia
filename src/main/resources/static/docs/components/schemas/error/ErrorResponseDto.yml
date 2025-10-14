@@ -1,5 +1,5 @@
 type: object
-required: [ timestamp, status, errorCode, developerMessage, path ]
+required: [timestamp, status, errorCode, developerMessage, path]
 properties:
   timestamp:
     type: string
@@ -21,4 +21,4 @@ properties:
     type: array
     nullable: true
     items:
-      $ref: './FieldErrorDto.yml'
+      $ref: "./FieldErrorDto.yml"

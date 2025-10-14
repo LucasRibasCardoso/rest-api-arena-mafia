@@ -6,6 +6,7 @@ import com.projetoExtensao.arenaMafia.application.modality.usecase.FindByIdModal
 import com.projetoExtensao.arenaMafia.application.modality.usecase.UpdateModalityUseCase;
 import com.projetoExtensao.arenaMafia.domain.model.Modality;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.mapper.ModalityMapper;
+import com.projetoExtensao.arenaMafia.infrastructure.security.rateLimit.CustomRateLimiter;
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.request.CreateModalityRequestDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.request.UpdateModalityRequestDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.modality.dto.response.ModalityResponseDto;
@@ -49,6 +50,7 @@ public class AdminModalityController {
   }
 
   @PostMapping
+  @CustomRateLimiter(limiterName = "globalLimiter")
   public ResponseEntity<ModalityResponseDto> create(
       @RequestBody @Valid CreateModalityRequestDto request) {
 
@@ -65,6 +67,7 @@ public class AdminModalityController {
   }
 
   @GetMapping("/{modalityId}")
+  @CustomRateLimiter(limiterName = "globalLimiter")
   public ResponseEntity<ModalityResponseDto> getById(@PathVariable UUID modalityId) {
     Modality modality = findByIdModalityUseCase.execute(modalityId);
     ModalityResponseDto response = modalityMapper.toResponseDto(modality);
@@ -72,6 +75,7 @@ public class AdminModalityController {
   }
 
   @PutMapping("/{modalityId}")
+  @CustomRateLimiter(limiterName = "globalLimiter")
   public ResponseEntity<ModalityResponseDto> update(
       @PathVariable UUID modalityId, @RequestBody @Valid UpdateModalityRequestDto request) {
 
@@ -81,6 +85,7 @@ public class AdminModalityController {
   }
 
   @DeleteMapping("/{modalityId}")
+  @CustomRateLimiter(limiterName = "globalLimiter")
   public ResponseEntity<Void> delete(@PathVariable UUID modalityId) {
     deleteModalityUseCase.execute(modalityId);
     return ResponseEntity.noContent().build();

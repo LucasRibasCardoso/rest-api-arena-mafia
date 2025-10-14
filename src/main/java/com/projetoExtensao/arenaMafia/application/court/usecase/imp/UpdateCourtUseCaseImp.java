@@ -36,7 +36,6 @@ public class UpdateCourtUseCaseImp implements UpdateCourtUseCase {
     Court updatedCourt = courtRepositoryPort.save(court);
 
     List<Modality> modalities = modalityRepositoryPort.findAllByIds(updatedCourt.getModalityIds());
-
     return new CourtWithModalitiesResult(updatedCourt, modalities);
   }
 
@@ -46,13 +45,8 @@ public class UpdateCourtUseCaseImp implements UpdateCourtUseCase {
       court.updateName(request.name());
     }
 
-    if (request.description() != null) {
-      court.updateDescription(request.description());
-    }
-
-    if (request.offsetMinutes() != null) {
-      court.updateOffsetMinutes(request.offsetMinutes());
-    }
+    court.updateDescription(request.description());
+    court.updateOffsetMinutes(request.offsetMinutes());
 
     if (request.modalityIds() != null && !request.modalityIds().isEmpty()) {
       validateModalitiesExist(request.modalityIds());

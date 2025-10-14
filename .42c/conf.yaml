@@ -1,0 +1,3 @@
+apis:
+  src/main/resources/static/docs/openapi.yml:
+    alias: api-rest-backend-arena-mafia

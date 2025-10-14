@@ -8,6 +8,7 @@ import com.projetoExtensao.arenaMafia.application.court.usecase.FindAllCourtUseC
 import com.projetoExtensao.arenaMafia.application.court.usecase.FindCourtByIdUseCase;
 import com.projetoExtensao.arenaMafia.application.court.usecase.UpdateCourtUseCase;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.mapper.ModalityMapper;
+import com.projetoExtensao.arenaMafia.infrastructure.security.rateLimit.CustomRateLimiter;
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.request.CreateCourtRequestDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.request.UpdateCourtRequestDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.response.AdminCourtResponseDto;
@@ -19,8 +20,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -61,6 +62,7 @@ public class AdminCourtController {
   }
 
   @PostMapping
+  @CustomRateLimiter(limiterName = "globalLimiter")
   public ResponseEntity<AdminCourtResponseDto> create(
       @Valid @RequestBody CreateCourtRequestDto request) {
 
@@ -76,6 +78,7 @@ public class AdminCourtController {
   }
 
   @GetMapping
+  @CustomRateLimiter(limiterName = "globalLimiter")
   public ResponseEntity<List<AdminCourtResponseDto>> getAll(
       @RequestParam(required = false) Boolean isActive) {
     List<CourtWithModalitiesResult> courts = findAllCourtUseCase.execute(isActive);
@@ -85,25 +88,29 @@ public class AdminCourtController {
   }
 
   @GetMapping("/{courtId}")
+  @CustomRateLimiter(limiterName = "globalLimiter")
   public ResponseEntity<AdminCourtResponseDto> getById(@PathVariable UUID courtId) {
     CourtWithModalitiesResult result = findCourtByIdUseCase.execute(courtId);
     AdminCourtResponseDto response = mapToResponse(result);
     return ResponseEntity.ok(response);
   }
 
-  @DeleteMapping("/{courtId}/disable")
+  @PatchMapping("/{courtId}/disable")
+  @CustomRateLimiter(limiterName = "globalLimiter")
   public ResponseEntity<Void> disable(@PathVariable UUID courtId) {
     deleteCourtUseCase.execute(courtId);
     return ResponseEntity.noContent().build();
   }
 
-  @PostMapping("/{courtId}/enable")
+  @PatchMapping("/{courtId}/enable")
+  @CustomRateLimiter(limiterName = "globalLimiter")
   public ResponseEntity<Void> enable(@PathVariable UUID courtId) {
     enableCourtUseCase.execute(courtId);
     return ResponseEntity.noContent().build();
   }
 
   @PutMapping("/{courtId}")
+  @CustomRateLimiter(limiterName = "globalLimiter")
   public ResponseEntity<AdminCourtResponseDto> update(
       @PathVariable UUID courtId, @Valid @RequestBody UpdateCourtRequestDto request) {
     CourtWithModalitiesResult result = updateCourtUseCase.execute(courtId, request);
