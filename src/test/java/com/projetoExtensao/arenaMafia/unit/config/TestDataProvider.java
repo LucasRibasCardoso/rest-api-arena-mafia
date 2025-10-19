@@ -163,4 +163,10 @@ public final class TestDataProvider {
         Arguments.of("not-a-uuid", ErrorCode.RESET_TOKEN_INVALID_FORMAT),
         Arguments.of("12345", ErrorCode.RESET_TOKEN_INVALID_FORMAT));
   }
+
+  public static Stream<Arguments> accountStatusNonActiveOrPending() {
+    return Stream.of(
+        Arguments.of(AccountStatus.LOCKED, ErrorCode.ACCOUNT_LOCKED),
+        Arguments.of(AccountStatus.DISABLED, ErrorCode.ACCOUNT_DISABLED));
+  }
 }
