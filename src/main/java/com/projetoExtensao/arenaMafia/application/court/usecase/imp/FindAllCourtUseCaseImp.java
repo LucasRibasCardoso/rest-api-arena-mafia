@@ -33,7 +33,7 @@ public class FindAllCourtUseCaseImp implements FindAllCourtUseCase {
 
   @Override
   public List<CourtWithModalitiesResult> execute(Boolean isActive) {
-    Specification<CourtEntity> spec = buildSpecification(isActive);
+    Specification<CourtEntity> spec = CourtSpecification.byActiveStatus(isActive);
     List<Court> courts = courtRepositoryPort.findAll(spec);
 
     if (courts.isEmpty()) {
@@ -42,16 +42,6 @@ public class FindAllCourtUseCaseImp implements FindAllCourtUseCase {
     Map<UUID, Modality> modalityMap = loadAllModalitiesAsMap(courts);
 
     return enrichCourtsWithModalities(courts, modalityMap);
-  }
-
-  private Specification<CourtEntity> buildSpecification(Boolean isActive) {
-    Specification<CourtEntity> specification = Specification.anyOf();
-
-    if (isActive != null) {
-      specification = specification.and(CourtSpecification.byActiveStatus(isActive));
-    }
-
-    return specification;
   }
 
   private Map<UUID, Modality> loadAllModalitiesAsMap(List<Court> courts) {
