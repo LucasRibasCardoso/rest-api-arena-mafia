@@ -19,7 +19,5 @@ public interface CourtRepositoryPort {
 
   Optional<Court> findByName(String name);
 
-  void delete(Court court);
-
   boolean existsByName(String name);
 }

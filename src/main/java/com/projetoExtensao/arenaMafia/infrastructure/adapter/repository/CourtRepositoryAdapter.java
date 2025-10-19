@@ -77,13 +77,6 @@ public class CourtRepositoryAdapter implements CourtRepositoryPort {
   }
 
   @Override
-  @Transactional
-  public void delete(Court court) {
-    CourtEntity entity = courtMapper.toEntity(court);
-    courtJpaRepository.delete(entity);
-  }
-
-  @Override
   public boolean existsByName(String name) {
     return courtJpaRepository.existsByName(name);
   }
