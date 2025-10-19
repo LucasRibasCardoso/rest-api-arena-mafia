@@ -137,21 +137,38 @@ public enum ErrorCode {
 
   // Court - Offset Minutes
   OFFSET_MINUTES_REQUIRED("O offset de minutos é obrigatório."),
-  INVALID_OFFSET_MINUTES(
+  OFFSET_MINUTES_INVALID(
       "O valor de minutos de offset fornecido é inválido. Valores válidos: 0 ou 30."),
 
   // Court - Status
   COURT_ALREADY_DISABLED("A quadra já está desativada."),
   COURT_ALREADY_ENABLED("A quadra já está ativada."),
 
+  // ==================== ERROS DE DIA DA SEMANA ====================
+  DAY_OF_WEEK_REQUIRED("O dia da semana é obrigatório."),
+  DAY_OF_WEEK_INVALID(
+      "O dia da semana fornecido é inválido. Valores válidos: 'MONDAY', 'TUESDAY', 'WEDNESDAY',"
+          + " 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'."),
+
+  // =================== ERROS DE TIME INTERVAL ====================
+  TIME_INTERVAL_REQUIRED("O intervalo de tempo é obrigatório."),
+  TIME_INTERVAL_OPEN_AFTER_CLOSE(
+      "O horário de abertura deve ser anterior ao horário de fechamento."),
+  TIME_INTERVAL_INVALID_MINUTES(
+      "Os minutos do horário de abertura ou fechamento são inválidos. Valores válidos: 0 ou 30."),
+  TIME_INTERVAL_OVERLAP("Já existe um intervalo de tempo que se sobrepõe a este."),
+
   // ==================== ERROS DE HORÁRIO DE FUNCIONAMENTO (OPERATING HOURS) ====================
-  // (Adicione aqui quando implementar)
+  OPERATING_HOURS_ALREADY_EXISTS(
+      "Já existe um horário de funcionamento ativo para este dia da semana."),
+  OPERATING_HOURS_ALREADY_DISABLED("O horário de funcionamento já está desativado."),
+  OPERATING_HOURS_ALREADY_ENABLED("O horário de funcionamento já está ativado."),
+  OPERATING_HOURS_NOT_FOUND("Horário de funcionamento não encontrado."),
 
   // ==================== ERROS DE REGRAS DE PREÇO (PRICE RULES) ====================
   // (Adicione aqui quando implementar)
 
   // ==================== ERROS DE ENUMS ====================
-  INVALID_DAY_NUMBER("O número do dia fornecido é inválido. Valores válidos: 1-7."),
 
   // ==================== ERROS DE BUSCA E VALIDAÇÃO ====================
   TERM_TOO_LONG("O termo de busca é muito longo. O máximo permitido é 100 caracteres."),

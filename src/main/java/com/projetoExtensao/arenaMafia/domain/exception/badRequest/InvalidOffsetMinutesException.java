@@ -5,6 +5,6 @@ import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 public class InvalidOffsetMinutesException extends BadRequestException {
 
   public InvalidOffsetMinutesException() {
-    super(ErrorCode.INVALID_OFFSET_MINUTES);
+    super(ErrorCode.OFFSET_MINUTES_INVALID);
   }
 }

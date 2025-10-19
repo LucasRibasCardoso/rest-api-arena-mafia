@@ -5,6 +5,6 @@ import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 public class InvalidDayNumberException extends BadRequestException {
 
   public InvalidDayNumberException() {
-    super(ErrorCode.INVALID_DAY_NUMBER);
+    super(ErrorCode.DAY_OF_WEEK_INVALID);
   }
 }

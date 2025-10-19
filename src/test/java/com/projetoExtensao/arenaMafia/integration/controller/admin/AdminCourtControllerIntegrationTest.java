@@ -232,7 +232,7 @@ public class AdminCourtControllerIntegrationTest extends WebIntegrationTestConfi
               .extract()
               .as(ErrorResponseDto.class);
 
-      ErrorCode error = ErrorCode.INVALID_OFFSET_MINUTES;
+      ErrorCode error = ErrorCode.OFFSET_MINUTES_INVALID;
       List<FieldErrorResponseDto> fieldErrors = response.fieldErrors();
 
       assertThat(response.status()).isEqualTo(400);
@@ -567,7 +567,7 @@ public class AdminCourtControllerIntegrationTest extends WebIntegrationTestConfi
               .extract()
               .as(ErrorResponseDto.class);
 
-      ErrorCode error = ErrorCode.INVALID_OFFSET_MINUTES;
+      ErrorCode error = ErrorCode.OFFSET_MINUTES_INVALID;
       List<FieldErrorResponseDto> fieldErrors = response.fieldErrors();
 
       assertThat(response.status()).isEqualTo(400);
