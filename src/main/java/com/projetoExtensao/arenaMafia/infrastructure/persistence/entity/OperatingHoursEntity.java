@@ -1,9 +1,10 @@
 package com.projetoExtensao.arenaMafia.infrastructure.persistence.entity;
 
 import com.projetoExtensao.arenaMafia.domain.model.enums.DayOfWeek;
+import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
+import com.projetoExtensao.arenaMafia.infrastructure.persistence.embeddable.TimeIntervalEmbeddable;
 import jakarta.persistence.*;
 import java.time.Instant;
-import java.time.LocalTime;
 import java.util.UUID;
 
 @Entity
@@ -20,14 +21,10 @@ public class OperatingHoursEntity {
   @Id private UUID id;
 
   @Enumerated(EnumType.STRING)
-  @Column(name = "day_of_week", nullable = false)
+  @Column(name = "day_of_week", nullable = false, length = 10)
   private DayOfWeek dayOfWeek;
 
-  @Column(name = "open_time", nullable = false)
-  private LocalTime openTime;
-
-  @Column(name = "close_time", nullable = false)
-  private LocalTime closeTime;
+  @Embedded private TimeIntervalEmbeddable timeInterval;
 
   @Column(name = "is_active", nullable = false)
   private boolean isActive;
@@ -55,20 +52,12 @@ public class OperatingHoursEntity {
     this.dayOfWeek = dayOfWeek;
   }
 
-  public LocalTime getOpenTime() {
-    return openTime;
+  public TimeInterval getTimeInterval() {
+    return timeInterval != null ? timeInterval.toDomain() : null;
   }
 
-  public void setOpenTime(LocalTime openTime) {
-    this.openTime = openTime;
-  }
-
-  public LocalTime getCloseTime() {
-    return closeTime;
-  }
-
-  public void setCloseTime(LocalTime closeTime) {
-    this.closeTime = closeTime;
+  public void setTimeInterval(TimeInterval timeInterval) {
+    this.timeInterval = TimeIntervalEmbeddable.fromDomain(timeInterval);
   }
 
   public boolean isActive() {
