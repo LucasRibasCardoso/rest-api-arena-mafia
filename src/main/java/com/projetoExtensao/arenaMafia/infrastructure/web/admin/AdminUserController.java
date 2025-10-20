@@ -8,7 +8,7 @@ import com.projetoExtensao.arenaMafia.infrastructure.security.userDetails.UserDe
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.request.AdminUserSearchRequestDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.request.UpdateUserRoleRequestDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.request.UpdateUserStatusRequestDto;
-import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.response.UserAdminResponseDto;
+import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.response.AdminUserResponseDto;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
@@ -41,11 +41,11 @@ public class AdminUserController {
 
   @GetMapping
   @CustomRateLimiter(limiterName = "globalLimiter")
-  public ResponseEntity<Page<UserAdminResponseDto>> listUsers(
+  public ResponseEntity<Page<AdminUserResponseDto>> listUsers(
       @Valid AdminUserSearchRequestDto request, Pageable pageable) {
 
     Page<User> users = adminListUsersUseCase.execute(request, pageable);
-    Page<UserAdminResponseDto> responseDtoPage = users.map(adminUserMapper::toDto);
+    Page<AdminUserResponseDto> responseDtoPage = users.map(adminUserMapper::toDto);
     return ResponseEntity.ok(responseDtoPage);
   }
 

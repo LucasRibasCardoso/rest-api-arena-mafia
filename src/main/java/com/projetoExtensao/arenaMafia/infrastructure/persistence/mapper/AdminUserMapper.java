@@ -1,7 +1,8 @@
 package com.projetoExtensao.arenaMafia.infrastructure.persistence.mapper;
 
 import com.projetoExtensao.arenaMafia.domain.model.User;
-import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.response.UserAdminResponseDto;
+import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.response.AdminUserResponseDto;
+
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -12,7 +13,7 @@ import org.mapstruct.Mapping;
 public interface AdminUserMapper {
 
   @Mapping(source = "id", target = "userId")
-  UserAdminResponseDto toDto(User user);
+  AdminUserResponseDto toDto(User user);
 
   default LocalDate instantToLocalDate(Instant instant) {
     if (instant == null) {

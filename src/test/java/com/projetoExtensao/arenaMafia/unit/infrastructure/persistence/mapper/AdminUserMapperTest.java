@@ -6,7 +6,7 @@ import com.projetoExtensao.arenaMafia.domain.model.User;
 import com.projetoExtensao.arenaMafia.domain.model.enums.AccountStatus;
 import com.projetoExtensao.arenaMafia.domain.model.enums.RoleEnum;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.mapper.AdminUserMapper;
-import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.response.UserAdminResponseDto;
+import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.response.AdminUserResponseDto;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -50,7 +50,7 @@ class AdminUserMapperTest {
               now);
 
       // Act
-      UserAdminResponseDto dto = adminUserMapper.toDto(user);
+      AdminUserResponseDto dto = adminUserMapper.toDto(user);
 
       // Assert
       assertThat(dto).isNotNull();
@@ -69,7 +69,7 @@ class AdminUserMapperTest {
       User user = null;
 
       // Act
-      UserAdminResponseDto dto = adminUserMapper.toDto(user);
+      AdminUserResponseDto dto = adminUserMapper.toDto(user);
 
       // Assert
       assertThat(dto).isNull();
@@ -94,7 +94,7 @@ class AdminUserMapperTest {
               now);
 
       // Act
-      UserAdminResponseDto dto = adminUserMapper.toDto(user);
+      AdminUserResponseDto dto = adminUserMapper.toDto(user);
 
       // Assert
       assertThat(dto).isNotNull();
@@ -120,7 +120,7 @@ class AdminUserMapperTest {
               now);
 
       // Act
-      UserAdminResponseDto dto = adminUserMapper.toDto(user);
+      AdminUserResponseDto dto = adminUserMapper.toDto(user);
 
       // Assert
       assertThat(dto).isNotNull();
@@ -146,7 +146,7 @@ class AdminUserMapperTest {
               now);
 
       // Act
-      UserAdminResponseDto dto = adminUserMapper.toDto(user);
+      AdminUserResponseDto dto = adminUserMapper.toDto(user);
 
       // Assert
       assertThat(dto).isNotNull();
@@ -172,7 +172,7 @@ class AdminUserMapperTest {
               now);
 
       // Act
-      UserAdminResponseDto dto = adminUserMapper.toDto(user);
+      AdminUserResponseDto dto = adminUserMapper.toDto(user);
 
       // Assert
       assertThat(dto).isNotNull();
@@ -198,7 +198,7 @@ class AdminUserMapperTest {
               now);
 
       // Act
-      UserAdminResponseDto dto = adminUserMapper.toDto(user);
+      AdminUserResponseDto dto = adminUserMapper.toDto(user);
 
       // Assert
       assertThat(dto).isNotNull();
@@ -225,7 +225,7 @@ class AdminUserMapperTest {
               updatedAt);
 
       // Act
-      UserAdminResponseDto dto = adminUserMapper.toDto(user);
+      AdminUserResponseDto dto = adminUserMapper.toDto(user);
 
       // Assert
       assertThat(dto).isNotNull();
@@ -356,7 +356,7 @@ class AdminUserMapperTest {
               now);
 
       // Act
-      UserAdminResponseDto dto = adminUserMapper.toDto(user);
+      AdminUserResponseDto dto = adminUserMapper.toDto(user);
 
       // Assert
       assertThat(dto).isNotNull();
@@ -382,7 +382,7 @@ class AdminUserMapperTest {
               now);
 
       // Act
-      UserAdminResponseDto dto = adminUserMapper.toDto(user);
+      AdminUserResponseDto dto = adminUserMapper.toDto(user);
 
       // Assert
       assertThat(dto).isNotNull();
