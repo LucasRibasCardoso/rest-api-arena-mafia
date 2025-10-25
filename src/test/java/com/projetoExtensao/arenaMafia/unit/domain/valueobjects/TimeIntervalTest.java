@@ -29,7 +29,7 @@ class TimeIntervalTest {
       TimeInterval interval = new TimeInterval(TEN_AM, NOON);
       TimeInterval overlapping = new TimeInterval(ELEVEN_AM, LocalTime.of(13, 30));
 
-      assertThatThrownBy(() -> interval.validateNoOverlap(overlapping))
+      assertThatThrownBy(() -> interval.validateNoOverlapWith(overlapping))
           .isInstanceOf(InvalidTimeIntervalException.class)
           .satisfies(
               throwable ->
@@ -43,7 +43,7 @@ class TimeIntervalTest {
       TimeInterval interval = new TimeInterval(TEN_AM, ELEVEN_AM);
       TimeInterval nonOverlapping = new TimeInterval(LocalTime.of(12, 30), LocalTime.of(14, 0));
 
-      assertThatCode(() -> interval.validateNoOverlap(nonOverlapping)).doesNotThrowAnyException();
+      assertThatCode(() -> interval.validateNoOverlapWith(nonOverlapping)).doesNotThrowAnyException();
     }
 
     @Test
@@ -52,8 +52,8 @@ class TimeIntervalTest {
       TimeInterval interval = new TimeInterval(TEN_AM, ELEVEN_AM);
       TimeInterval adjacent = new TimeInterval(ELEVEN_AM, NOON);
 
-      assertThatCode(() -> interval.validateNoOverlap(adjacent)).doesNotThrowAnyException();
-      assertThatCode(() -> adjacent.validateNoOverlap(interval)).doesNotThrowAnyException();
+      assertThatCode(() -> interval.validateNoOverlapWith(adjacent)).doesNotThrowAnyException();
+      assertThatCode(() -> adjacent.validateNoOverlapWith(interval)).doesNotThrowAnyException();
     }
 
     @Test
@@ -61,7 +61,7 @@ class TimeIntervalTest {
     void validateNoOverlap_shouldThrowException_whenOtherIsNull() {
       TimeInterval interval = new TimeInterval(TEN_AM, NOON);
 
-      assertThatThrownBy(() -> interval.validateNoOverlap(null))
+      assertThatThrownBy(() -> interval.validateNoOverlapWith(null))
           .isInstanceOf(InvalidTimeIntervalException.class)
           .satisfies(
               throwable ->

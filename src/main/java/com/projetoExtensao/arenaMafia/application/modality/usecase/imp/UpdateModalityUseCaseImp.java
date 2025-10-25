@@ -23,15 +23,20 @@ public class UpdateModalityUseCaseImp implements UpdateModalityUseCase {
     Modality modality = modalityRepositoryPort.findByIdOrElseThrow(id);
 
     if (!modality.getName().equalsIgnoreCase(newName)) {
-      validateIfModalityNameAlreadyExists(newName);
+      validateIfModalityAlreadyExists(newName, modality.getId());
       modality.updateName(newName);
     }
     return modalityRepositoryPort.save(modality);
   }
 
-  private void validateIfModalityNameAlreadyExists(String name) {
-    if (modalityRepositoryPort.existsByName(name)) {
-      throw new ModalityAlreadyExistsException();
-    }
+  private void validateIfModalityAlreadyExists(String name, UUID currentModalityId) {
+    modalityRepositoryPort
+        .findByName(name)
+        .ifPresent(
+            existingModality -> {
+              if (!existingModality.getId().equals(currentModalityId)) {
+                throw new ModalityAlreadyExistsException();
+              }
+            });
   }
 }

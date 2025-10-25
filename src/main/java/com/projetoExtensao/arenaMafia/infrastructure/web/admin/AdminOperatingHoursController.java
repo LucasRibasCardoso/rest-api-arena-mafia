@@ -59,7 +59,7 @@ public class AdminOperatingHoursController {
       @RequestBody @Valid CreateOperatingHoursRequestDto request) {
 
     OperatingHours operatingHours = createOperatingHoursUseCase.execute(request);
-    OperatingHoursResponseDto response = operatingHoursMapper.toResponseDto(operatingHours);
+    OperatingHoursResponseDto response = operatingHoursMapper.toDto(operatingHours);
 
     URI location =
         ServletUriComponentsBuilder.fromCurrentRequest()
@@ -77,7 +77,7 @@ public class AdminOperatingHoursController {
 
     List<OperatingHoursResponseDto> operatingHours =
         findAllOperatingHoursUseCase.execute(isActive).stream()
-            .map(operatingHoursMapper::toResponseDto)
+            .map(operatingHoursMapper::toDto)
             .toList();
 
     return ResponseEntity.ok(operatingHours);
@@ -87,9 +87,8 @@ public class AdminOperatingHoursController {
   @CustomRateLimiter(limiterName = "globalLimiter")
   public ResponseEntity<OperatingHoursResponseDto> getOperatingHoursById(
       @PathVariable UUID hourId) {
-
     OperatingHours operatingHours = getOperatingHoursByIdUseCase.execute(hourId);
-    OperatingHoursResponseDto response = operatingHoursMapper.toResponseDto(operatingHours);
+    OperatingHoursResponseDto response = operatingHoursMapper.toDto(operatingHours);
     return ResponseEntity.ok().body(response);
   }
 

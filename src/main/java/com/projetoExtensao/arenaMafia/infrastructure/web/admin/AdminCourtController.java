@@ -68,6 +68,7 @@ public class AdminCourtController {
 
     CourtWithModalitiesResult result = createCourtUseCase.execute(request);
     AdminCourtResponseDto response = mapToResponse(result);
+
     URI location =
         ServletUriComponentsBuilder.fromCurrentRequest()
             .path("/{id}")
@@ -137,7 +138,7 @@ public class AdminCourtController {
   private AdminCourtResponseDto mapToResponse(CourtWithModalitiesResult result) {
     List<ModalityResponseDto> modalityResponses =
         result.modalities().stream()
-            .map(modalityMapper::toResponseDto)
+            .map(modalityMapper::toDto)
             .collect(Collectors.toList());
     return AdminCourtResponseDto.fromDomain(result.court(), modalityResponses);
   }

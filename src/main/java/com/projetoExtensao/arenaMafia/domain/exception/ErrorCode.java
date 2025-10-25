@@ -156,7 +156,9 @@ public enum ErrorCode {
       "O horário de abertura deve ser anterior ao horário de fechamento."),
   TIME_INTERVAL_INVALID_MINUTES(
       "Os minutos do horário de abertura ou fechamento são inválidos. Valores válidos: 0 ou 30."),
-  TIME_INTERVAL_OVERLAP("Já existe um intervalo de tempo que se sobrepõe a este."),
+  TIME_INTERVAL_OVERLAP("Este intervalo de tempo sobrepõe-se a um intervalo existente."),
+  TIME_INTERVAL_SAME_TIME("O horário de abertura não pode ser igual ao horário de fechamento."),
+  TIME_INTERVAL_EXCEEDS_24_HOURS("O intervalo de tempo não pode exceder 24 horas."),
 
   // ==================== ERROS DE HORÁRIO DE FUNCIONAMENTO (OPERATING HOURS) ====================
   OPERATING_HOURS_ALREADY_EXISTS(
@@ -166,7 +168,20 @@ public enum ErrorCode {
   OPERATING_HOURS_NOT_FOUND("Horário de funcionamento não encontrado."),
 
   // ==================== ERROS DE REGRAS DE PREÇO (PRICE RULES) ====================
-  // (Adicione aqui quando implementar)
+  PRICE_RULE_NAME_REQUIRED("O nome da regra de preço é obrigatório."),
+  PRICE_RULE_PRICE_INVALID("O preço deve ser um valor positivo."),
+  PRICE_RULE_PRICE_REQUIRED("O preço da regra de preço é obrigatório."),
+  PRICE_RULE_PRIORITY_REQUIRED("A prioridade da regra de preço é obrigatória."),
+  PRICE_RULE_PRIORITY_INVALID("O valor de prioridade deve ser um valor positivo."),
+  PRICE_RULE_ALREADY_DISABLED("A regra de preço já está desativada."),
+  PRICE_RULE_CANNOT_DISABLE_DEFAULT("A regra de preço padrão não pode ser desativada."),
+  PRICE_RULE_ALREADY_ENABLED("A regra de preço já está ativada."),
+  PRICE_RULE_DEFAULT_NOT_FOUND("A regra de preço padrão não foi encontrada."),
+  PRICE_RULE_NOT_FOUND("Regra de preço não encontrada."),
+  PRICE_RULE_ALREADY_EXISTS("Essa regra de preço já está cadastrada."),
+  PRICE_RULE_OVERLAP(
+      "A nova regra de preço conflita com uma regra existente. "
+          + "Há sobreposição de dias, horários e mesma prioridade."),
 
   // ==================== ERROS DE ENUMS ====================
 

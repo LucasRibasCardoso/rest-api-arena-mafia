@@ -4,23 +4,19 @@ import com.projetoExtensao.arenaMafia.domain.model.Modality;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.ModalityEntity;
 import com.projetoExtensao.arenaMafia.infrastructure.web.modality.dto.response.ModalityResponseDto;
 import org.mapstruct.Mapper;
+import org.mapstruct.ObjectFactory;
 
 @Mapper(componentModel = "spring")
 public interface ModalityMapper {
 
   ModalityEntity toEntity(Modality modality);
 
-  default Modality toDomain(ModalityEntity entity) {
-    if (entity == null) {
-      return null;
-    }
-    return Modality.reconstitute(entity.getId(), entity.getName(), entity.getCreatedAt());
-  }
+  Modality toDomain(ModalityEntity entity);
 
-  default ModalityResponseDto toResponseDto(Modality modality) {
-    if (modality == null) {
-      return null;
-    }
-    return new ModalityResponseDto(modality.getId(), modality.getName(), modality.getCreatedAt());
+  ModalityResponseDto toDto(Modality modality);
+
+  @ObjectFactory
+  default Modality createModality(ModalityEntity entity) {
+    return Modality.reconstitute(entity.getId(), entity.getName(), entity.getCreatedAt());
   }
 }

@@ -72,7 +72,11 @@ public class SecurityConfig {
                     .authenticated()
 
                     // Endpoints públicos
-                    .requestMatchers("/api/auth/**", "/api/modalities")
+                    .requestMatchers(
+                        "/api/auth/**",
+                        "/api/modalities",
+                        "/api/operating-hours",
+                        "/api/price-rules")
                     .permitAll()
 
                     // Endpoints públicos para desenvolvimento

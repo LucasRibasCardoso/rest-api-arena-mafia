@@ -1,6 +1,7 @@
 package com.projetoExtensao.arenaMafia.domain.model;
 
 import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
+import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidDayOfWeekException;
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidTimeIntervalException;
 import com.projetoExtensao.arenaMafia.domain.exception.conflict.OperatingHoursStatusConflictException;
 import com.projetoExtensao.arenaMafia.domain.model.enums.DayOfWeek;
@@ -69,7 +70,7 @@ public class OperatingHours {
   // --- Validações ---
   public static void validateDayOfWeek(DayOfWeek dayOfWeek) {
     if (dayOfWeek == null) {
-      throw new InvalidTimeIntervalException(ErrorCode.DAY_OF_WEEK_REQUIRED);
+      throw new InvalidDayOfWeekException(ErrorCode.DAY_OF_WEEK_REQUIRED);
     }
   }
 
@@ -102,7 +103,7 @@ public class OperatingHours {
    */
   public void validateNoOverlapWithSameDay(OperatingHours other) {
     if (other != null && this.dayOfWeek == other.dayOfWeek) {
-      this.timeInterval.validateNoOverlap(other.timeInterval);
+      this.timeInterval.validateNoOverlapWith(other.timeInterval);
     }
   }
 

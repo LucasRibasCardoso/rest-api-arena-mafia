@@ -4,6 +4,7 @@ import com.projetoExtensao.arenaMafia.domain.model.RefreshToken;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.RefreshTokenVO;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.RefreshTokenEntity;
 import org.mapstruct.Mapper;
+import org.mapstruct.ObjectFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Mapper(
@@ -15,11 +16,10 @@ public abstract class RefreshTokenMapper {
 
   public abstract RefreshTokenEntity toEntity(RefreshToken domain);
 
-  public RefreshToken toDomain(RefreshTokenEntity entity) {
-    if (entity == null) {
-      return null;
-    }
+  public abstract RefreshToken toDomain(RefreshTokenEntity entity);
 
+  @ObjectFactory
+  public RefreshToken createRefreshToken(RefreshTokenEntity entity) {
     var userDomain = userMapper.toDomain(entity.getUser());
     var tokenVO = RefreshTokenVO.fromString(entity.getToken());
 

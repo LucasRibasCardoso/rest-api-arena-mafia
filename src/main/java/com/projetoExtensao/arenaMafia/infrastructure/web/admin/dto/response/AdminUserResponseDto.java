@@ -2,7 +2,7 @@ package com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.response;
 
 import java.time.Instant;
 
-public record UserAdminResponseDto(
+public record AdminUserResponseDto(
     String userId,
     String username,
     String fullName,

@@ -1,46 +1,49 @@
 package com.projetoExtensao.arenaMafia.infrastructure.persistence.entity;
 
 import com.projetoExtensao.arenaMafia.domain.model.enums.DayOfWeek;
+import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
+import com.projetoExtensao.arenaMafia.infrastructure.persistence.embeddable.TimeIntervalEmbeddable;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.time.LocalTime;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
 @Table(
     name = "tb_price_rules",
     indexes = {
-      @Index(name = "idx_price_rules_day_of_week", columnList = "day_of_week"),
       @Index(name = "idx_price_rules_is_active", columnList = "is_active"),
       @Index(name = "idx_price_rules_is_default", columnList = "is_default"),
       @Index(name = "idx_price_rules_priority", columnList = "priority"),
       @Index(name = "idx_price_rules_start_time", columnList = "start_time"),
-      @Index(name = "idx_price_rules_end_time", columnList = "end_time"),
-      @Index(name = "idx_price_rules_unique_default", columnList = "is_default")
+      @Index(name = "idx_price_rules_end_time", columnList = "end_time")
     })
-public class PriceRulesEntity {
+public class PriceRuleEntity {
 
   @Id private UUID id;
 
   @Column(nullable = false, length = 100)
   private String name;
 
-  @Column(name = "description", columnDefinition = "TEXT")
-  private String description;
-
+  @ElementCollection(targetClass = DayOfWeek.class, fetch = FetchType.EAGER)
+  @CollectionTable(name = "tb_price_rule_days", joinColumns = @JoinColumn(name = "price_rule_id"))
   @Enumerated(EnumType.STRING)
-  @Column(name = "day_of_week", length = 10)
-  private DayOfWeek dayOfWeek;
+  @Column(name = "day_of_week", nullable = false)
+  private Set<DayOfWeek> daysOfWeek;
 
-  @Column(name = "start_time")
-  private LocalTime startTime;
-
-  @Column(name = "end_time")
-  private LocalTime endTime;
+  @Embedded
+  @AttributeOverrides({
+    @AttributeOverride(name = "openTime", column = @Column(name = "start_time")),
+    @AttributeOverride(name = "closeTime", column = @Column(name = "end_time"))
+  })
+  private TimeIntervalEmbeddable timeInterval;
 
   @Column(nullable = false)
   private BigDecimal price;
+
+  @Column(name = "priority", nullable = false)
+  private int priority;
 
   @Column(name = "is_active", nullable = false)
   private boolean isActive;
@@ -48,14 +51,11 @@ public class PriceRulesEntity {
   @Column(name = "is_default", nullable = false)
   private boolean isDefault;
 
-  @Column(name = "priority", nullable = false)
-  private int priority;
-
   @Column(name = "created_at", nullable = false)
   private Instant createdAt;
 
   // Construtor padrão necessário para JPA
-  public PriceRulesEntity() {}
+  public PriceRuleEntity() {}
 
   // --- Getters e Setters ---
   public UUID getId() {
@@ -74,36 +74,20 @@ public class PriceRulesEntity {
     this.name = name;
   }
 
-  public String getDescription() {
-    return description;
+  public void setDaysOfWeek(Set<DayOfWeek> daysOfWeek) {
+    this.daysOfWeek = daysOfWeek;
   }
 
-  public void setDescription(String description) {
-    this.description = description;
+  public Set<DayOfWeek> getDaysOfWeek() {
+    return this.daysOfWeek;
   }
 
-  public DayOfWeek getDayOfWeek() {
-    return dayOfWeek;
+  public TimeInterval getTimeInterval() {
+    return timeInterval != null ? timeInterval.toDomain() : null;
   }
 
-  public void setDayOfWeek(DayOfWeek dayOfWeek) {
-    this.dayOfWeek = dayOfWeek;
-  }
-
-  public LocalTime getStartTime() {
-    return startTime;
-  }
-
-  public void setStartTime(LocalTime startTime) {
-    this.startTime = startTime;
-  }
-
-  public LocalTime getEndTime() {
-    return endTime;
-  }
-
-  public void setEndTime(LocalTime endTime) {
-    this.endTime = endTime;
+  public void setTimeInterval(TimeInterval timeInterval) {
+    this.timeInterval = TimeIntervalEmbeddable.fromDomain(timeInterval);
   }
 
   public BigDecimal getPrice() {
@@ -118,16 +102,16 @@ public class PriceRulesEntity {
     return isActive;
   }
 
-  public void setActive(boolean active) {
-    isActive = active;
+  public void setIsActive(boolean isActive) {
+    this.isActive = isActive;
   }
 
   public boolean isDefault() {
     return isDefault;
   }
 
-  public void setDefault(boolean aDefault) {
-    isDefault = aDefault;
+  public void setIsDefault(boolean isDefault) {
+    this.isDefault = isDefault;
   }
 
   public int getPriority() {

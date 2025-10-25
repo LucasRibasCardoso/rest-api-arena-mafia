@@ -14,25 +14,24 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/operating-hours")
 public class OperatingHoursController {
 
-  private final FindAllOperatingHoursUseCase findAllOperatingHoursUseCase;
   private final OperatingHoursMapper operatingHoursMapper;
+  private final FindAllOperatingHoursUseCase findAllOperatingHoursUseCase;
 
   public OperatingHoursController(
-      FindAllOperatingHoursUseCase findAllOperatingHoursUseCase,
-      OperatingHoursMapper operatingHoursMapper) {
-    this.findAllOperatingHoursUseCase = findAllOperatingHoursUseCase;
+      OperatingHoursMapper operatingHoursMapper,
+      FindAllOperatingHoursUseCase findAllOperatingHoursUseCase) {
     this.operatingHoursMapper = operatingHoursMapper;
+    this.findAllOperatingHoursUseCase = findAllOperatingHoursUseCase;
   }
 
   @GetMapping
   @CustomRateLimiter(limiterName = "globalLimiter")
   public ResponseEntity<List<OperatingHoursResponseDto>> getAllActiveOperatingHours() {
-
-    List<OperatingHoursResponseDto> operatingHours =
-        findAllOperatingHoursUseCase.execute(true).stream()
-            .map(operatingHoursMapper::toResponseDto)
+    boolean isActive = true;
+    List<OperatingHoursResponseDto> response =
+        findAllOperatingHoursUseCase.execute(isActive).stream()
+            .map(operatingHoursMapper::toDto)
             .toList();
-
-    return ResponseEntity.ok(operatingHours);
+    return ResponseEntity.ok(response);
   }
 }

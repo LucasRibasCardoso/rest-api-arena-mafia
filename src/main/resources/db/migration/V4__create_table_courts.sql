@@ -5,7 +5,7 @@ CREATE TABLE tb_courts
     description    TEXT,
     offset_minutes INTEGER      NOT NULL CHECK (offset_minutes IN (0, 30)),
     is_active      BOOLEAN      NOT NULL DEFAULT TRUE,
-    created_at     TIMESTAMP    NOT NULL
+    created_at     TIMESTAMP WITH TIME ZONE NOT NULL
 );
 
 CREATE INDEX idx_courts_name ON tb_courts (name);

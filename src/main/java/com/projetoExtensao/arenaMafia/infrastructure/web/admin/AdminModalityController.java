@@ -55,7 +55,7 @@ public class AdminModalityController {
       @RequestBody @Valid CreateModalityRequestDto request) {
 
     Modality modality = createModalityUseCase.execute(request.name());
-    ModalityResponseDto response = modalityMapper.toResponseDto(modality);
+    ModalityResponseDto response = modalityMapper.toDto(modality);
 
     URI location =
         ServletUriComponentsBuilder.fromCurrentRequest()
@@ -70,7 +70,7 @@ public class AdminModalityController {
   @CustomRateLimiter(limiterName = "globalLimiter")
   public ResponseEntity<ModalityResponseDto> getById(@PathVariable UUID modalityId) {
     Modality modality = findByIdModalityUseCase.execute(modalityId);
-    ModalityResponseDto response = modalityMapper.toResponseDto(modality);
+    ModalityResponseDto response = modalityMapper.toDto(modality);
     return ResponseEntity.ok(response);
   }
 
@@ -80,7 +80,7 @@ public class AdminModalityController {
       @PathVariable UUID modalityId, @RequestBody @Valid UpdateModalityRequestDto request) {
 
     Modality modality = updateModalityUseCase.execute(modalityId, request.name());
-    ModalityResponseDto response = modalityMapper.toResponseDto(modality);
+    ModalityResponseDto response = modalityMapper.toDto(modality);
     return ResponseEntity.ok(response);
   }
 

@@ -8,21 +8,19 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
+import org.mapstruct.ObjectFactory;
 
 @Mapper(
     componentModel = "spring",
     uses = {OffsetMinutesMapper.class})
 public abstract class CourtMapper {
 
-  @Mapping(target = "modalities", ignore = true)
   public abstract CourtEntity toEntity(Court court);
 
-  public Court toDomain(CourtEntity entity) {
-    if (entity == null) {
-      return null;
-    }
+  public abstract Court toDomain(CourtEntity entity);
 
+  @ObjectFactory
+  public Court createCourt(CourtEntity entity) {
     Set<UUID> modalityIds =
         entity.getModalities().stream().map(ModalityEntity::getId).collect(Collectors.toSet());
 
