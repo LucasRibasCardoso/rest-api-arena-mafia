@@ -27,7 +27,7 @@ public class Modality {
 
   /**
    * Factory Method para RECONSTRUIR uma modalidade a partir de dados existentes do banco. Esse
-   * método é usado pelo MapStruct para mapear uma entidade para Modality.
+   * metodo é usado pelo MapStruct para mapear uma entidade para Modality.
    *
    * @param id id da modalidade
    * @param name nome da modalidade

@@ -9,6 +9,7 @@ import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.Operatin
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.mapper.OperatingHoursMapper;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.repository.OperatingHoursJpaRepository;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
@@ -34,8 +35,9 @@ public class OperatingHoursRepositoryAdapter implements OperatingHoursRepository
   }
 
   @Override
-  public List<OperatingHours> findByDayOfWeek(DayOfWeek dayOfWeek) {
-    List<OperatingHoursEntity> entities = operatingHoursJpaRepository.findByDayOfWeek(dayOfWeek);
+  public List<OperatingHours> findByDaysOfWeek(Set<DayOfWeek> daysOfWeek) {
+    List<OperatingHoursEntity> entities =
+        operatingHoursJpaRepository.findByDaysOfWeekIn(daysOfWeek);
     return entities.stream().map(operatingHoursMapper::toDomain).toList();
   }
 

@@ -4,6 +4,7 @@ import com.projetoExtensao.arenaMafia.domain.model.OperatingHours;
 import com.projetoExtensao.arenaMafia.domain.model.enums.DayOfWeek;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.OperatingHoursEntity;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -11,7 +12,7 @@ public interface OperatingHoursRepositoryPort {
 
   OperatingHours save(OperatingHours operatingHours);
 
-  List<OperatingHours> findByDayOfWeek(DayOfWeek dayOfWeek);
+  List<OperatingHours> findByDaysOfWeek(Set<DayOfWeek> daysOfWeek);
 
   OperatingHours findByIdOrElseThrow(UUID id);
 

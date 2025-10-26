@@ -8,12 +8,13 @@ import com.projetoExtensao.arenaMafia.domain.model.enums.DayOfWeek;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
 import java.time.Instant;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 
 public class OperatingHours {
 
   private final UUID id;
-  private final DayOfWeek dayOfWeek;
+  private final Set<DayOfWeek> daysOfWeek;
   private final TimeInterval timeInterval;
   private boolean isActive;
   private final Instant createdAt;
@@ -21,15 +22,15 @@ public class OperatingHours {
   /**
    * Cria uma nova instância de OperatingHours com um ID gerado, ativo por padrão.
    *
-   * @param dayOfWeek dia da semana
+   * @param daysOfWeek dias da semana aplicáveis
    * @param timeInterval slot de horário de funcionamento (inicio e fim)
    * @return nova instância de OperatingHours
    */
-  public static OperatingHours create(DayOfWeek dayOfWeek, TimeInterval timeInterval) {
+  public static OperatingHours create(Set<DayOfWeek> daysOfWeek, TimeInterval timeInterval) {
     UUID id = UUID.randomUUID();
     Instant now = Instant.now();
     boolean isActive = true;
-    return new OperatingHours(id, dayOfWeek, timeInterval, isActive, now);
+    return new OperatingHours(id, daysOfWeek, timeInterval, isActive, now);
   }
 
   /**
@@ -37,7 +38,7 @@ public class OperatingHours {
    * para reconstruir objetos a partir de dados persistidos ou MapStruct.
    *
    * @param id identificador único
-   * @param dayOfWeek dia da semana
+   * @param daysOfWeek dias da semana aplicáveis
    * @param timeInterval slot de horário de funcionamento (inicio e fim)
    * @param isActive indica se o horário de funcionamento está ativo
    * @param createdAt data de criação do horário
@@ -45,31 +46,31 @@ public class OperatingHours {
    */
   public static OperatingHours reconstitute(
       UUID id,
-      DayOfWeek dayOfWeek,
+      Set<DayOfWeek> daysOfWeek,
       TimeInterval timeInterval,
       boolean isActive,
       Instant createdAt) {
-    return new OperatingHours(id, dayOfWeek, timeInterval, isActive, createdAt);
+    return new OperatingHours(id, daysOfWeek, timeInterval, isActive, createdAt);
   }
 
   private OperatingHours(
       UUID id,
-      DayOfWeek dayOfWeek,
+      Set<DayOfWeek> daysOfWeek,
       TimeInterval timeInterval,
       boolean isActive,
       Instant createdAt) {
-    validateDayOfWeek(dayOfWeek);
+    validateDaysOfWeek(daysOfWeek);
     validateTimeInterval(timeInterval);
     this.id = id;
-    this.dayOfWeek = dayOfWeek;
+    this.daysOfWeek = daysOfWeek;
     this.timeInterval = timeInterval;
     this.isActive = isActive;
     this.createdAt = createdAt;
   }
 
   // --- Validações ---
-  public static void validateDayOfWeek(DayOfWeek dayOfWeek) {
-    if (dayOfWeek == null) {
+  public static void validateDaysOfWeek(Set<DayOfWeek> daysOfWeek) {
+    if (daysOfWeek == null || daysOfWeek.isEmpty()) {
       throw new InvalidDayOfWeekException(ErrorCode.DAY_OF_WEEK_REQUIRED);
     }
   }
@@ -96,15 +97,25 @@ public class OperatingHours {
   }
 
   /**
-   * Valida se este horário não sobrepõe outro horário do mesmo dia.
+   * Valida se este horário não sobrepõe outro horário nos mesmos dias da semana.
    *
    * @param other outro horário de funcionamento
-   * @throws InvalidTimeIntervalException se houver sobreposição de horários
+   * @throws InvalidTimeIntervalException se houver sobreposição de horários nos mesmos dias
    */
   public void validateNoOverlapWithSameDay(OperatingHours other) {
-    if (other != null && this.dayOfWeek == other.dayOfWeek) {
+    if (other != null && hasCommonDay(other)) {
       this.timeInterval.validateNoOverlapWith(other.timeInterval);
     }
+  }
+
+  /**
+   * Verifica se há interseção de dias da semana entre este horário e outro.
+   *
+   * @param other outro horário de funcionamento
+   * @return true se há pelo menos um dia em comum
+   */
+  private boolean hasCommonDay(OperatingHours other) {
+    return this.daysOfWeek.stream().anyMatch(other.daysOfWeek::contains);
   }
 
   // --- Getters ---
@@ -112,8 +123,8 @@ public class OperatingHours {
     return id;
   }
 
-  public DayOfWeek getDayOfWeek() {
-    return dayOfWeek;
+  public Set<DayOfWeek> getDaysOfWeek() {
+    return daysOfWeek;
   }
 
   public TimeInterval getTimeInterval() {

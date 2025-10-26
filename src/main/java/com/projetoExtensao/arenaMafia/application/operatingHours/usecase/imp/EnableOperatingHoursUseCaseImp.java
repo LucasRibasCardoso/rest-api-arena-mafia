@@ -18,8 +18,13 @@ public class EnableOperatingHoursUseCaseImp implements EnableOperatingHoursUseCa
 
   @Override
   public void execute(UUID hourId) {
-    var operatingHours = operatingHoursRepository.findByIdOrElseThrow(hourId);
-    operatingHours.enable();
-    operatingHoursRepository.save(operatingHours);
+    var operatingHoursToEnable = operatingHoursRepository.findByIdOrElseThrow(hourId);
+
+    operatingHoursRepository.findByDaysOfWeek(operatingHoursToEnable.getDaysOfWeek()).stream()
+        .filter(existing -> !existing.getId().equals(hourId))
+        .forEach(operatingHoursToEnable::validateNoOverlapWithSameDay);
+
+    operatingHoursToEnable.enable();
+    operatingHoursRepository.save(operatingHoursToEnable);
   }
 }

@@ -5,13 +5,13 @@ import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.embeddable.TimeIntervalEmbeddable;
 import jakarta.persistence.*;
 import java.time.Instant;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
 @Table(
     name = "tb_operating_hours",
     indexes = {
-      @Index(name = "idx_operating_hours_day_of_week", columnList = "day_of_week"),
       @Index(name = "idx_operating_hours_is_active", columnList = "is_active"),
       @Index(name = "idx_operating_hours_open_time", columnList = "open_time"),
       @Index(name = "idx_operating_hours_close_time", columnList = "close_time")
@@ -20,9 +20,11 @@ public class OperatingHoursEntity {
 
   @Id private UUID id;
 
+  @ElementCollection(targetClass = DayOfWeek.class, fetch = FetchType.EAGER)
+  @CollectionTable(name = "tb_operating_hours_days", joinColumns = @JoinColumn(name = "operating_hours_id"))
   @Enumerated(EnumType.STRING)
-  @Column(name = "day_of_week", nullable = false, length = 10)
-  private DayOfWeek dayOfWeek;
+  @Column(name = "day_of_week", nullable = false, length = 20)
+  private Set<DayOfWeek> daysOfWeek;
 
   @Embedded private TimeIntervalEmbeddable timeInterval;
 
@@ -44,12 +46,12 @@ public class OperatingHoursEntity {
     this.id = id;
   }
 
-  public DayOfWeek getDayOfWeek() {
-    return dayOfWeek;
+  public Set<DayOfWeek> getDaysOfWeek() {
+    return daysOfWeek;
   }
 
-  public void setDayOfWeek(DayOfWeek dayOfWeek) {
-    this.dayOfWeek = dayOfWeek;
+  public void setDaysOfWeek(Set<DayOfWeek> daysOfWeek) {
+    this.daysOfWeek = daysOfWeek;
   }
 
   public TimeInterval getTimeInterval() {

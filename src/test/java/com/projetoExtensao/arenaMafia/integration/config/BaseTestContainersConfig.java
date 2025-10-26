@@ -5,12 +5,10 @@ import static io.restassured.RestAssured.given;
 import com.projetoExtensao.arenaMafia.application.auth.port.repository.RefreshTokenRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.court.port.CourtRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.modality.port.ModalityRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.operatingHours.ports.OperatingHoursRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.security.port.gateway.PasswordEncoderPort;
 import com.projetoExtensao.arenaMafia.application.user.port.repository.UserRepositoryPort;
-import com.projetoExtensao.arenaMafia.domain.model.Court;
-import com.projetoExtensao.arenaMafia.domain.model.Modality;
-import com.projetoExtensao.arenaMafia.domain.model.RefreshToken;
-import com.projetoExtensao.arenaMafia.domain.model.User;
+import com.projetoExtensao.arenaMafia.domain.model.*;
 import com.projetoExtensao.arenaMafia.domain.model.enums.AccountStatus;
 import com.projetoExtensao.arenaMafia.domain.model.enums.OffsetMinutes;
 import com.projetoExtensao.arenaMafia.domain.model.enums.RoleEnum;
@@ -60,6 +58,7 @@ public abstract class BaseTestContainersConfig {
   @Autowired private RefreshTokenRepositoryPort refreshTokenRepository;
   @Autowired private ModalityRepositoryPort modalityRepository;
   @Autowired private CourtRepositoryPort courtRepository;
+  @Autowired private OperatingHoursRepositoryPort operatingHoursRepository;
 
   public final String defaultUsername = "testuser";
   public final String defaultPassword = "123456";
@@ -341,5 +340,9 @@ public abstract class BaseTestContainersConfig {
         Court.reconstitute(
             UUID.randomUUID(), name, description, offset, active, modalitiesUUID, Instant.now());
     return courtRepository.save(court);
+  }
+
+  public void mockPersistOperatingHours() {
+    System.out.println();
   }
 }
