@@ -9,25 +9,25 @@ import java.time.Duration;
 import java.time.LocalTime;
 
 public record TimeInterval(
-    @JsonProperty("openTime") LocalTime openTime, @JsonProperty("closeTime") LocalTime closeTime) {
+    @JsonProperty("startTime") LocalTime startTime, @JsonProperty("endTime") LocalTime endTime) {
 
   public TimeInterval {
-    if (openTime == null || closeTime == null) {
+    if (startTime == null || endTime == null) {
       throw new InvalidTimeIntervalException(ErrorCode.TIME_INTERVAL_REQUIRED);
     }
 
-    if (openTime.equals(closeTime)) {
+    if (startTime.equals(endTime)) {
       throw new InvalidTimeIntervalException(ErrorCode.TIME_INTERVAL_SAME_TIME);
     }
 
     try {
-      OffsetMinutes.fromValue(openTime.getMinute());
-      OffsetMinutes.fromValue(closeTime.getMinute());
+      OffsetMinutes.fromValue(startTime.getMinute());
+      OffsetMinutes.fromValue(endTime.getMinute());
     } catch (InvalidOffsetMinutesException e) {
       throw new InvalidTimeIntervalException(ErrorCode.TIME_INTERVAL_INVALID_MINUTES);
     }
 
-    validateDuration(openTime, closeTime);
+    validateDuration(startTime, endTime);
   }
 
   /**
@@ -52,7 +52,7 @@ public record TimeInterval(
 
   /**
    * Verifica se um horário específico está contido dentro deste intervalo de tempo. O intervalo é
-   * considerado inclusivo no início e exclusivo no fim [openTime, closeTime). Considera intervalos
+   * considerado inclusivo no início e exclusivo no fim [startTime, endTime). Considera intervalos
    * que atravessam a meia-noite.
    *
    * <p>Exemplo: um intervalo de 09:00 a 10:00 contém 09:00 e 09:30, mas não contém 10:00.
@@ -69,83 +69,56 @@ public record TimeInterval(
     }
 
     if (crossesMidnight()) {
-      // Se atravessa a meia-noite: o horário está contido se for >= openTime OU < closeTime
-      return !timeToTest.isBefore(openTime) || timeToTest.isBefore(closeTime);
+      // Se atravessa a meia-noite: o horário está contido se for >= startTime OU < endTime
+      return !timeToTest.isBefore(startTime) || timeToTest.isBefore(endTime);
     } else {
       // Não atravessa a meia-noite: validação normal
-      return !timeToTest.isBefore(openTime) && timeToTest.isBefore(closeTime);
+      return !timeToTest.isBefore(startTime) && timeToTest.isBefore(endTime);
     }
   }
 
-  /**
-   * Valida se a duração do intervalo não excede 24 horas.
-   *
-   * @param openTime Horário de abertura.
-   * @param closeTime Horário de fechamento.
-   * @throws InvalidTimeIntervalException se a duração exceder 24 horas.
-   */
-  private void validateDuration(LocalTime openTime, LocalTime closeTime) {
-    long durationInMinutes = calculateDurationInMinutes(openTime, closeTime);
+  private void validateDuration(LocalTime startTime, LocalTime endTime) {
+    long durationInMinutes = calculateDurationInMinutes(startTime, endTime);
 
     if (durationInMinutes >= 24 * 60) {
       throw new InvalidTimeIntervalException(ErrorCode.TIME_INTERVAL_EXCEEDS_24_HOURS);
     }
   }
 
-  /**
-   * Calcula a duração do intervalo em minutos, considerando se o intervalo atravessa a meia-noite.
-   *
-   * @param openTime Horário de abertura.
-   * @param closeTime Horário de fechamento.
-   * @return Duração do intervalo em minutos.
-   */
-  private long calculateDurationInMinutes(LocalTime openTime, LocalTime closeTime) {
-    if (closeTime.isAfter(openTime)) {
-      return Duration.between(openTime, closeTime).toMinutes();
+  private long calculateDurationInMinutes(LocalTime startTime, LocalTime endTime) {
+    if (endTime.isAfter(startTime)) {
+      return Duration.between(startTime, endTime).toMinutes();
     } else {
-      long minutesUntilMidnight = Duration.between(openTime, LocalTime.MAX).toMinutes() + 1;
-      long minutesFromMidnight = Duration.between(LocalTime.MIN, closeTime).toMinutes();
+      long minutesUntilMidnight = Duration.between(startTime, LocalTime.MAX).toMinutes() + 1;
+      long minutesFromMidnight = Duration.between(LocalTime.MIN, endTime).toMinutes();
       return minutesUntilMidnight + minutesFromMidnight;
     }
   }
 
-  /**
-   * Verifica se o intervalo de tempo atravessa a meia-noite.
-   *
-   * @return true se atravessa a meia-noite, false caso contrário.
-   */
   private boolean crossesMidnight() {
-    return closeTime.isBefore(openTime);
+    return endTime.isBefore(startTime);
   }
 
-  /**
-   * Verifica se dois intervalos de tempo se sobrepõem, considerando intervalos que atravessam a
-   * meia-noite.
-   *
-   * @param interval1 Intervalo 1
-   * @param interval2 Intervalo 2
-   * @return true se os intervalos se sobrepõem, false caso contrário.
-   */
   private boolean checkOverlap(TimeInterval interval1, TimeInterval interval2) {
     boolean interval1CrossesMidnight = interval1.crossesMidnight();
     boolean interval2CrossesMidnight = interval2.crossesMidnight();
 
     // Ambos os intervalos não atravessam a meia-noite
     if (!interval1CrossesMidnight && !interval2CrossesMidnight) {
-      return (interval1.openTime.isBefore(interval2.closeTime))
-          && (interval2.openTime.isBefore(interval1.closeTime));
+      return (interval1.startTime.isBefore(interval2.endTime))
+          && (interval2.startTime.isBefore(interval1.endTime));
     }
 
     // Apenas o primeiro intervalo atravessa a meia-noite
     if (interval1CrossesMidnight && !interval2CrossesMidnight) {
-      return !(interval2.openTime().isAfter(interval1.closeTime())
-          && interval2.closeTime().isBefore(interval1.openTime()));
+      return !(interval2.startTime().isAfter(interval1.endTime())
+          && interval2.endTime().isBefore(interval1.startTime()));
     }
 
     // Apenas o segundo intervalo atravessa a meia-noite
     if (!interval1CrossesMidnight) {
-      return !(interval1.openTime.isAfter(interval2.closeTime)
-          && interval1.closeTime.isBefore(interval2.openTime));
+      return !(interval1.startTime.isAfter(interval2.endTime)
+          && interval1.endTime.isBefore(interval2.startTime));
     }
 
     // Ambos os intervalos atravessam a meia-noite e sempre se sobrepõem

@@ -43,7 +43,8 @@ class TimeIntervalTest {
       TimeInterval interval = new TimeInterval(TEN_AM, ELEVEN_AM);
       TimeInterval nonOverlapping = new TimeInterval(LocalTime.of(12, 30), LocalTime.of(14, 0));
 
-      assertThatCode(() -> interval.validateNoOverlapWith(nonOverlapping)).doesNotThrowAnyException();
+      assertThatCode(() -> interval.validateNoOverlapWith(nonOverlapping))
+          .doesNotThrowAnyException();
     }
 
     @Test

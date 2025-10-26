@@ -137,9 +137,7 @@ public class AdminCourtController {
    */
   private AdminCourtResponseDto mapToResponse(CourtWithModalitiesResult result) {
     List<ModalityResponseDto> modalityResponses =
-        result.modalities().stream()
-            .map(modalityMapper::toDto)
-            .collect(Collectors.toList());
+        result.modalities().stream().map(modalityMapper::toDto).collect(Collectors.toList());
     return AdminCourtResponseDto.fromDomain(result.court(), modalityResponses);
   }
 }

@@ -107,7 +107,7 @@ public class PriceRule {
 
     validateName(name);
     validatePrice(price);
-    validatePriority(priority);
+    validatePriority(priority, isDefault);
     this.id = id;
     this.name = name;
     this.daysOfWeek = daysOfWeek;
@@ -127,13 +127,17 @@ public class PriceRule {
   }
 
   public static void validatePrice(BigDecimal price) {
-    if (price == null || price.compareTo(BigDecimal.ZERO) < 0) {
+    if (price == null) {
+      throw new InvalidPriceException(ErrorCode.PRICE_RULE_PRICE_REQUIRED);
+    }
+
+    if (price.compareTo(BigDecimal.ZERO) < 0) {
       throw new InvalidPriceException(ErrorCode.PRICE_RULE_PRICE_INVALID);
     }
   }
 
-  public static void validatePriority(int priority) {
-    if (priority < 0) {
+  public static void validatePriority(int priority, boolean isDefault) {
+    if (priority <= 0 && !isDefault) {
       throw new InvalidPriceException(ErrorCode.PRICE_RULE_PRIORITY_INVALID);
     }
   }
@@ -206,7 +210,7 @@ public class PriceRule {
 
     boolean hasOverlap = this.daysOfWeek.stream().anyMatch(daysOfWeek::contains);
     if (hasOverlap) {
-      throw new PriceRuleConflictException();
+      throw new PriceRuleConflictException(ErrorCode.PRICE_RULE_OVERLAP);
     }
   }
 

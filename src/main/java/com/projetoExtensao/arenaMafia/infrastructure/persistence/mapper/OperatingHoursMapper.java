@@ -18,15 +18,16 @@ public interface OperatingHoursMapper {
   OperatingHoursEntity toEntity(OperatingHours operatingHours);
 
   @Mapping(target = "daysOfWeek", ignore = true)
+  @Mapping(target = "timeInterval", ignore = true)
   OperatingHours toDomain(OperatingHoursEntity entity);
 
-  @Mapping(target = "isActive", expression = "java(operatingHours.isActive())")
   @Mapping(
       target = "timeInterval",
       expression = "java(toTimeIntervalDto(operatingHours.getTimeInterval()))")
   @Mapping(
       target = "daysOfWeek",
-      expression = "java(extractDayOfWeekNames(operatingHours.getDaysOfWeek()))")
+      expression = "java(getDaysOfWeek(operatingHours.getDaysOfWeek()))")
+  @Mapping(target = "isActive", source = "active")
   OperatingHoursResponseDto toDto(OperatingHours operatingHours);
 
   @ObjectFactory
@@ -39,8 +40,8 @@ public interface OperatingHoursMapper {
         entity.getCreatedAt());
   }
 
-  default Set<String> extractDayOfWeekNames(Set<DayOfWeek> daysOfWeek) {
-    if (daysOfWeek == null) {
+  default Set<String> getDaysOfWeek(Set<DayOfWeek> daysOfWeek) {
+    if (daysOfWeek == null || daysOfWeek.isEmpty()) {
       return null;
     }
     return daysOfWeek.stream().map(DayOfWeek::getDayName).collect(Collectors.toSet());
@@ -50,6 +51,6 @@ public interface OperatingHoursMapper {
     if (timeInterval == null) {
       return null;
     }
-    return new TimeIntervalDto(timeInterval.openTime(), timeInterval.closeTime());
+    return new TimeIntervalDto(timeInterval.startTime(), timeInterval.endTime());
   }
 }

@@ -25,7 +25,7 @@ public class TimeIntervalEmbeddable {
     if (interval == null) {
       return null;
     }
-    return new TimeIntervalEmbeddable(interval.openTime(), interval.closeTime());
+    return new TimeIntervalEmbeddable(interval.startTime(), interval.endTime());
   }
 
   public TimeInterval toDomain() {

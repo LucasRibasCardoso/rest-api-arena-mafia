@@ -16,77 +16,52 @@ public final class TestPriceRuleDataProvider {
 
   private TestPriceRuleDataProvider() {}
 
-  public static final String defaultName = "Regra Padrão";
-  public static final BigDecimal defaultPrice = new BigDecimal("100.00");
-  public static final int defaultPriority = 1;
+  public static final String defaultName = "Preço Horário Nobre";
   public static final Set<DayOfWeek> defaultDaysOfWeek =
-      Set.of(DayOfWeek.MONDAY, DayOfWeek.TUESDAY);
+      Set.of(DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY);
   public static final TimeInterval defaultTimeInterval =
-      new TimeInterval(LocalTime.of(8, 0), LocalTime.of(18, 0));
+      new TimeInterval(LocalTime.of(19, 0), LocalTime.of(23, 0));
+  public static final BigDecimal defaultPrice = new BigDecimal("80.00");
+  public static final int defaultPriority = 1;
 
-  /**
-   * Cria uma regra de preço ativa com valores padrão
-   *
-   * @return PriceRule ativa
-   */
   public static PriceRule createActivePriceRule() {
     return PriceRuleBuilder.defaultPriceRule().withIsActive(true).build();
   }
 
-  /**
-   * Cria uma regra de preço desativada com valores padrão
-   *
-   * @return PriceRule desativada
-   */
   public static PriceRule createDisabledPriceRule() {
     return PriceRuleBuilder.defaultPriceRule().withIsActive(false).build();
   }
 
-  /**
-   * Cria uma regra de preço padrão (default) com preço específico
-   *
-   * @param price preço da regra
-   * @return PriceRule padrão
-   */
+  public static PriceRule createDefaultPriceRule() {
+    return PriceRule.createDefault(new BigDecimal("50.00"));
+  }
+
   public static PriceRule createDefaultPriceRule(BigDecimal price) {
+    return PriceRule.createDefault(price);
+  }
+
+  public static PriceRule createWeekendPriceRule() {
     return PriceRuleBuilder.defaultPriceRule()
-        .withIsDefault(true)
-        .withPrice(price)
-        .withPriority(0)
+        .withName("Preço Final de Semana")
+        .withDaysOfWeek(Set.of(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY))
+        .withPrice(new BigDecimal("100.00"))
+        .build();
+  }
+
+  public static PriceRule createAllDayPriceRule() {
+    return PriceRuleBuilder.defaultPriceRule()
+        .withName("Preço Dia Inteiro")
         .withDaysOfWeek(null)
         .withTimeInterval(null)
         .build();
   }
 
-  /**
-   * Cria uma regra de preço aplicável a todos os dias
-   *
-   * @return PriceRule para todos os dias
-   */
-  public static PriceRule createAllDaysPriceRule() {
-    return PriceRuleBuilder.defaultPriceRule().withDaysOfWeek(null).build();
-  }
-
-  /**
-   * Cria uma regra de preço aplicável ao dia inteiro
-   *
-   * @return PriceRule para dia inteiro
-   */
   public static PriceRule createFullDayPriceRule() {
-    return PriceRuleBuilder.defaultPriceRule().withTimeInterval(null).build();
+    return createAllDayPriceRule();
   }
 
-  /**
-   * Cria uma regra de preço para fins de semana
-   *
-   * @return PriceRule para fins de semana
-   */
-  public static PriceRule createWeekendPriceRule() {
-    return PriceRuleBuilder.defaultPriceRule()
-        .withName("Fim de Semana")
-        .withDaysOfWeek(Set.of(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY))
-        .withPrice(new BigDecimal("150.00"))
-        .build();
+  public static PriceRule createAllDaysPriceRule() {
+    return createAllDayPriceRule();
   }
 
   public static class PriceRuleBuilder {
@@ -155,7 +130,7 @@ public final class TestPriceRuleDataProvider {
     }
   }
 
-  public static Stream<Arguments> invalidPriceRuleNameProvider() {
+  public static Stream<Arguments> invalidNameProvider() {
     return Stream.of(
         Arguments.of(null, ErrorCode.PRICE_RULE_NAME_REQUIRED),
         Arguments.of("", ErrorCode.PRICE_RULE_NAME_REQUIRED));
@@ -163,15 +138,13 @@ public final class TestPriceRuleDataProvider {
 
   public static Stream<Arguments> invalidPriceProvider() {
     return Stream.of(
-        Arguments.of(null, ErrorCode.PRICE_RULE_PRICE_INVALID),
-        Arguments.of(new BigDecimal("-1"), ErrorCode.PRICE_RULE_PRICE_INVALID),
-        Arguments.of(new BigDecimal("-100.00"), ErrorCode.PRICE_RULE_PRICE_INVALID));
+        Arguments.of(null, ErrorCode.PRICE_RULE_PRICE_REQUIRED),
+        Arguments.of(new BigDecimal("-10.00"), ErrorCode.PRICE_RULE_PRICE_INVALID));
   }
 
   public static Stream<Arguments> invalidPriorityProvider() {
     return Stream.of(
-        Arguments.of(-1, ErrorCode.PRICE_RULE_PRIORITY_INVALID),
-        Arguments.of(-10, ErrorCode.PRICE_RULE_PRIORITY_INVALID),
-        Arguments.of(-100, ErrorCode.PRICE_RULE_PRIORITY_INVALID));
+        Arguments.of(0, ErrorCode.PRICE_RULE_PRIORITY_INVALID),
+        Arguments.of(-1, ErrorCode.PRICE_RULE_PRIORITY_INVALID));
   }
 }

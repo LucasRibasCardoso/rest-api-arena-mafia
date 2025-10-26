@@ -32,8 +32,6 @@ public final class TestCourtDataProvider {
         .build();
   }
 
-
-
   public static Court createCourtWithMultipleModalities(int modalityCount) {
     Set<UUID> modalityIds = Set.of();
     for (int i = 0; i < modalityCount; i++) {

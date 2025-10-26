@@ -120,8 +120,8 @@ class OperatingHoursMapperTest {
 
       // Assert
       assertThat(entity).isNotNull();
-      assertThat(entity.getTimeInterval().openTime().getMinute()).isEqualTo(30);
-      assertThat(entity.getTimeInterval().closeTime().getMinute()).isEqualTo(30);
+      assertThat(entity.getTimeInterval().startTime().getMinute()).isEqualTo(30);
+      assertThat(entity.getTimeInterval().endTime().getMinute()).isEqualTo(30);
     }
   }
 
@@ -237,8 +237,8 @@ class OperatingHoursMapperTest {
 
       // Assert
       assertThat(operatingHours).isNotNull();
-      assertThat(operatingHours.getTimeInterval().openTime().getMinute()).isEqualTo(30);
-      assertThat(operatingHours.getTimeInterval().closeTime().getMinute()).isEqualTo(30);
+      assertThat(operatingHours.getTimeInterval().startTime().getMinute()).isEqualTo(30);
+      assertThat(operatingHours.getTimeInterval().endTime().getMinute()).isEqualTo(30);
     }
   }
 

@@ -172,16 +172,18 @@ public enum ErrorCode {
   PRICE_RULE_PRICE_INVALID("O preço deve ser um valor positivo."),
   PRICE_RULE_PRICE_REQUIRED("O preço da regra de preço é obrigatório."),
   PRICE_RULE_PRIORITY_REQUIRED("A prioridade da regra de preço é obrigatória."),
-  PRICE_RULE_PRIORITY_INVALID("O valor de prioridade deve ser um valor positivo."),
+  PRICE_RULE_PRIORITY_INVALID("O valor de prioridade deve ser um valor maior que 0."),
   PRICE_RULE_ALREADY_DISABLED("A regra de preço já está desativada."),
   PRICE_RULE_CANNOT_DISABLE_DEFAULT("A regra de preço padrão não pode ser desativada."),
   PRICE_RULE_ALREADY_ENABLED("A regra de preço já está ativada."),
   PRICE_RULE_DEFAULT_NOT_FOUND("A regra de preço padrão não foi encontrada."),
   PRICE_RULE_NOT_FOUND("Regra de preço não encontrada."),
   PRICE_RULE_ALREADY_EXISTS("Essa regra de preço já está cadastrada."),
+
   PRICE_RULE_OVERLAP(
       "A nova regra de preço conflita com uma regra existente. "
-          + "Há sobreposição de dias, horários e mesma prioridade."),
+          + "Há sobreposição de dias e horários."),
+  PRICE_RULE_PRIORITY_OVERLAP("Já existe uma regra de preço com essa prioridade."),
 
   // ==================== ERROS DE ENUMS ====================
 

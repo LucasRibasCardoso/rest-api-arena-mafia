@@ -34,8 +34,8 @@ public class PriceRuleEntity {
 
   @Embedded
   @AttributeOverrides({
-    @AttributeOverride(name = "openTime", column = @Column(name = "start_time")),
-    @AttributeOverride(name = "closeTime", column = @Column(name = "end_time"))
+    @AttributeOverride(name = "startTime", column = @Column(name = "start_time")),
+    @AttributeOverride(name = "endTime", column = @Column(name = "end_time"))
   })
   private TimeIntervalEmbeddable timeInterval;
 
@@ -102,7 +102,7 @@ public class PriceRuleEntity {
     return isActive;
   }
 
-  public void setIsActive(boolean isActive) {
+  public void setActive(boolean isActive) {
     this.isActive = isActive;
   }
 
@@ -110,7 +110,7 @@ public class PriceRuleEntity {
     return isDefault;
   }
 
-  public void setIsDefault(boolean isDefault) {
+  public void setDefault(boolean isDefault) {
     this.isDefault = isDefault;
   }
 

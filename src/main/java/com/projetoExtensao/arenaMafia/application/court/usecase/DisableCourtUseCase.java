@@ -4,5 +4,5 @@ import java.util.UUID;
 
 public interface DisableCourtUseCase {
 
-    void execute(UUID courtId);
+  void execute(UUID courtId);
 }

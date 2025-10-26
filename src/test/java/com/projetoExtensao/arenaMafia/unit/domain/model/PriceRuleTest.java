@@ -126,7 +126,7 @@ public class PriceRuleTest {
 
       @ParameterizedTest
       @MethodSource(
-          "com.projetoExtensao.arenaMafia.unit.config.TestPriceRuleDataProvider#invalidPriceRuleNameProvider")
+          "com.projetoExtensao.arenaMafia.unit.config.TestPriceRuleDataProvider#invalidNameProvider")
       @DisplayName("create() deve lançar InvalidPriceRuleNameFormatException para nomes inválidos")
       void create_shouldThrowException_whenNameIsInvalid(String invalidName, ErrorCode errorCode) {
         // Act & Assert
@@ -480,9 +480,9 @@ public class PriceRuleTest {
     @DisplayName("validatePriority() não deve lançar exceção para prioridades válidas")
     void validatePriority_shouldNotThrowException_whenPriorityIsValid() {
       // Act & Assert
-      assertDoesNotThrow(() -> PriceRule.validatePriority(0));
-      assertDoesNotThrow(() -> PriceRule.validatePriority(1));
-      assertDoesNotThrow(() -> PriceRule.validatePriority(100));
+      assertDoesNotThrow(() -> PriceRule.validatePriority(0, true));
+      assertDoesNotThrow(() -> PriceRule.validatePriority(1, false));
+      assertDoesNotThrow(() -> PriceRule.validatePriority(100, false));
     }
 
     @ParameterizedTest
@@ -492,7 +492,7 @@ public class PriceRuleTest {
     void validatePriority_shouldThrowException_whenPriorityIsInvalid(
         int invalidPriority, ErrorCode errorCode) {
       // Act & Assert
-      assertThatThrownBy(() -> PriceRule.validatePriority(invalidPriority))
+      assertThatThrownBy(() -> PriceRule.validatePriority(invalidPriority, false))
           .isInstanceOf(InvalidPriceException.class)
           .satisfies(
               ex -> {

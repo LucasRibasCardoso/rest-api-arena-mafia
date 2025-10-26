@@ -21,8 +21,8 @@ public interface UpdateCourtUseCase {
    *     quadra não for encontrada
    * @throws com.projetoExtensao.arenaMafia.domain.exception.notFound.ModalityNotFoundException se
    *     alguma modalidade especificada não existir
-   * @throws com.projetoExtensao.arenaMafia.domain.exception.conflict.CourtAlreadyExistsException
-   *     se o novo nome já estiver em uso por outra quadra
+   * @throws com.projetoExtensao.arenaMafia.domain.exception.conflict.CourtAlreadyExistsException se
+   *     o novo nome já estiver em uso por outra quadra
    */
   CourtWithModalitiesResult execute(UUID courtId, UpdateCourtRequestDto request);
 }

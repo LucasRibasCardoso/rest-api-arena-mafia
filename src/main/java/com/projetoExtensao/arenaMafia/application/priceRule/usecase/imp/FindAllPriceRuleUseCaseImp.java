@@ -4,10 +4,9 @@ import com.projetoExtensao.arenaMafia.application.priceRule.ports.PriceRuleRepos
 import com.projetoExtensao.arenaMafia.application.priceRule.usecase.FindAllPriceRuleUseCase;
 import com.projetoExtensao.arenaMafia.domain.model.PriceRule;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.specification.PriceRuleSpecification;
+import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Service
 @Transactional

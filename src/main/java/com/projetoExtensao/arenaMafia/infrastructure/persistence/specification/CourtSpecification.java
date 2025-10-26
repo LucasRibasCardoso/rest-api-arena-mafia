@@ -9,7 +9,7 @@ public class CourtSpecification {
     if (isActive == null) {
       return null;
     }
-    
+
     return (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("isActive"), isActive);
   }
 }

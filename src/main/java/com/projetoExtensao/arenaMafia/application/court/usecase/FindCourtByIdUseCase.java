@@ -1,9 +1,8 @@
 package com.projetoExtensao.arenaMafia.application.court.usecase;
 
+import com.projetoExtensao.arenaMafia.application.court.dto.CourtWithModalitiesResult;
 import java.util.UUID;
 
-import com.projetoExtensao.arenaMafia.application.court.dto.CourtWithModalitiesResult;
-
 public interface FindCourtByIdUseCase {
-    CourtWithModalitiesResult execute (UUID courtId);
+  CourtWithModalitiesResult execute(UUID courtId);
 }
