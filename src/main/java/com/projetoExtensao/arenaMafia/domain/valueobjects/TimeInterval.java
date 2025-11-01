@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidOffsetMinutesException;
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidTimeIntervalException;
+import com.projetoExtensao.arenaMafia.domain.exception.conflict.TimeIntervalOverlapException;
 import com.projetoExtensao.arenaMafia.domain.model.enums.OffsetMinutes;
 import java.time.Duration;
 import java.time.LocalTime;
@@ -36,7 +37,7 @@ public record TimeInterval(
    *
    * @param other O outro intervalo de tempo a ser comparado.
    * @throws InvalidTimeIntervalException se o outro intervalo for nulo.
-   * @throws InvalidTimeIntervalException se os intervalos se sobrepõem.
+   * @throws TimeIntervalOverlapException se os intervalos se sobrepõem.
    */
   public void validateNoOverlapWith(TimeInterval other) {
     if (other == null) {
@@ -46,7 +47,7 @@ public record TimeInterval(
     boolean overlaps = checkOverlap(this, other);
 
     if (overlaps) {
-      throw new InvalidTimeIntervalException(ErrorCode.TIME_INTERVAL_OVERLAP);
+      throw new TimeIntervalOverlapException(ErrorCode.TIME_INTERVAL_OVERLAP);
     }
   }
 

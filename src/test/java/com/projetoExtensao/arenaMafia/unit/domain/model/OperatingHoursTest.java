@@ -8,6 +8,7 @@ import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidDayOfWeekException;
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidTimeIntervalException;
 import com.projetoExtensao.arenaMafia.domain.exception.conflict.OperatingHoursStatusConflictException;
+import com.projetoExtensao.arenaMafia.domain.exception.conflict.TimeIntervalOverlapException;
 import com.projetoExtensao.arenaMafia.domain.model.OperatingHours;
 import com.projetoExtensao.arenaMafia.domain.model.enums.DayOfWeek;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
@@ -64,6 +65,22 @@ public class OperatingHoursTest {
       // Assert
       assertThat(operatingHours).isNotNull();
       assertThat(operatingHours.getDaysOfWeek()).isEqualTo(Set.of(dayOfWeek));
+      assertThat(operatingHours.isActive()).isTrue();
+    }
+
+    @Test
+    @DisplayName(
+        "create() deve criar horário de funcionamento com daysOfWeek nulo (aplica-se a todos os"
+            + " dias)")
+    void create_shouldCreateOperatingHoursWithNullDaysOfWeek() {
+      // Act
+      OperatingHours operatingHours = OperatingHours.create(null, defaultTimeInterval);
+
+      // Assert
+      assertThat(operatingHours).isNotNull();
+      assertThat(operatingHours.getId()).isNotNull();
+      assertThat(operatingHours.getDaysOfWeek()).isNull();
+      assertThat(operatingHours.getTimeInterval()).isEqualTo(defaultTimeInterval);
       assertThat(operatingHours.isActive()).isTrue();
     }
 
@@ -234,10 +251,10 @@ public class OperatingHoursTest {
 
       // Act & Assert
       assertThatThrownBy(() -> firstHours.validateNoOverlapWithSameDay(secondHours))
-          .isInstanceOf(InvalidTimeIntervalException.class)
+          .isInstanceOf(TimeIntervalOverlapException.class)
           .satisfies(
               ex -> {
-                InvalidTimeIntervalException exception = (InvalidTimeIntervalException) ex;
+                TimeIntervalOverlapException exception = (TimeIntervalOverlapException) ex;
                 assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.TIME_INTERVAL_OVERLAP);
               });
     }
@@ -280,6 +297,44 @@ public class OperatingHoursTest {
       // Act & Assert
       assertDoesNotThrow(() -> morningHours.validateNoOverlapWithSameDay(afternoonHours));
     }
+
+    @Test
+    @DisplayName(
+        "validateNoOverlapWithSameDay() deve lançar exceção quando um horário tem daysOfWeek nulo"
+            + " e os intervalos se sobrepõem")
+    void validateNoOverlapWithSameDay_shouldThrowException_whenOneHasNullDaysAndOverlaps() {
+      // Arrange
+      TimeInterval first = new TimeInterval(LocalTime.of(8, 0), LocalTime.of(14, 0));
+      TimeInterval second = new TimeInterval(LocalTime.of(12, 0), LocalTime.of(18, 0));
+
+      OperatingHours allDaysHours = OperatingHours.create(null, first);
+      OperatingHours mondayHours = OperatingHours.create(Set.of(DayOfWeek.MONDAY), second);
+
+      // Act & Assert
+      assertThatThrownBy(() -> allDaysHours.validateNoOverlapWithSameDay(mondayHours))
+          .isInstanceOf(TimeIntervalOverlapException.class)
+          .satisfies(
+              ex -> {
+                TimeIntervalOverlapException exception = (TimeIntervalOverlapException) ex;
+                assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.TIME_INTERVAL_OVERLAP);
+              });
+    }
+
+    @Test
+    @DisplayName(
+        "validateNoOverlapWithSameDay() não deve lançar exceção quando um horário tem daysOfWeek"
+            + " nulo mas os intervalos não se sobrepõem")
+    void validateNoOverlapWithSameDay_shouldNotThrowException_whenOneHasNullDaysButNoOverlap() {
+      // Arrange
+      TimeInterval morning = new TimeInterval(LocalTime.of(8, 0), LocalTime.of(12, 0));
+      TimeInterval afternoon = new TimeInterval(LocalTime.of(14, 0), LocalTime.of(18, 0));
+
+      OperatingHours allDaysHours = OperatingHours.create(null, morning);
+      OperatingHours mondayHours = OperatingHours.create(Set.of(DayOfWeek.MONDAY), afternoon);
+
+      // Act & Assert
+      assertDoesNotThrow(() -> allDaysHours.validateNoOverlapWithSameDay(mondayHours));
+    }
   }
 
   @Nested
@@ -298,12 +353,20 @@ public class OperatingHoursTest {
         "validateDayOfWeek() deve lançar InvalidDayOfWeekException quando dayOfWeek é null")
     void validateDayOfWeek_shouldThrowException_whenDayOfWeekIsNull() {
       // Act & Assert
-      assertThatThrownBy(() -> OperatingHours.validateDaysOfWeek(null))
+      assertDoesNotThrow(() -> OperatingHours.validateDaysOfWeek(null));
+    }
+
+    @Test
+    @DisplayName(
+        "validateDayOfWeek() deve lançar InvalidDayOfWeekException quando dayOfWeek é vazio")
+    void validateDayOfWeek_shouldThrowException_whenDayOfWeekIsEmpty() {
+      // Act & Assert
+      assertThatThrownBy(() -> OperatingHours.validateDaysOfWeek(Set.of()))
           .isInstanceOf(InvalidDayOfWeekException.class)
           .satisfies(
               ex -> {
                 InvalidDayOfWeekException exception = (InvalidDayOfWeekException) ex;
-                assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.DAY_OF_WEEK_REQUIRED);
+                assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.DAY_OF_WEEK_EMPTY);
               });
     }
 

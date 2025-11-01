@@ -29,7 +29,7 @@ public class PriceRuleEntity {
   @ElementCollection(targetClass = DayOfWeek.class, fetch = FetchType.EAGER)
   @CollectionTable(name = "tb_price_rule_days", joinColumns = @JoinColumn(name = "price_rule_id"))
   @Enumerated(EnumType.STRING)
-  @Column(name = "day_of_week", nullable = false, length = 20)
+  @Column(name = "day_of_week", length = 20)
   private Set<DayOfWeek> daysOfWeek;
 
   @Embedded

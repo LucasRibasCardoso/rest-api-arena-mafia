@@ -70,8 +70,8 @@ public class OperatingHours {
 
   // --- Validações ---
   public static void validateDaysOfWeek(Set<DayOfWeek> daysOfWeek) {
-    if (daysOfWeek == null || daysOfWeek.isEmpty()) {
-      throw new InvalidDayOfWeekException(ErrorCode.DAY_OF_WEEK_REQUIRED);
+    if (daysOfWeek != null && daysOfWeek.isEmpty()) {
+      throw new InvalidDayOfWeekException(ErrorCode.DAY_OF_WEEK_EMPTY);
     }
   }
 
@@ -115,6 +115,9 @@ public class OperatingHours {
    * @return true se há pelo menos um dia em comum
    */
   private boolean hasCommonDay(OperatingHours other) {
+    if (this.daysOfWeek == null || other.daysOfWeek == null) {
+      return true;
+    }
     return this.daysOfWeek.stream().anyMatch(other.daysOfWeek::contains);
   }
 

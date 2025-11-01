@@ -25,7 +25,7 @@ public class OperatingHoursEntity {
       name = "tb_operating_hours_days",
       joinColumns = @JoinColumn(name = "operating_hours_id"))
   @Enumerated(EnumType.STRING)
-  @Column(name = "day_of_week", nullable = false, length = 20)
+  @Column(name = "day_of_week", length = 20)
   private Set<DayOfWeek> daysOfWeek;
 
   @Embedded

@@ -43,10 +43,7 @@ public class EnablePriceRuleUseCaseImp implements EnablePriceRuleUseCase {
         throw new PriceRuleAlreadyExistsException();
       }
 
-      // Valida sobreposição (regras padrão não participam da validação)
-      if (!existingRule.isDefault()) {
-        priceRuleToEnable.validateOverlapWith(existingRule);
-      }
+      priceRuleToEnable.validateOverlapWith(existingRule);
     }
   }
 }

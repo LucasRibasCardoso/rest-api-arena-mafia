@@ -55,23 +55,21 @@ public class GlobalExceptionHandler {
       HttpMessageNotReadableException e, HttpServletRequest request) {
 
     Throwable rootCause = NestedExceptionUtils.getRootCause(e);
+    Throwable immediateCause = e.getCause();
 
     List<FieldErrorResponseDto> fieldErrors;
     String fieldName = "unknown";
 
     if (rootCause instanceof InvalidFormatException exception) {
-      if (!exception.getPath().isEmpty()) {
-        fieldName = exception.getPath().getLast().getFieldName();
-      }
-
+      fieldName = extractFieldNameFromPath(exception);
       fieldErrors = List.of(buildMismatchErrorForField(fieldName, exception.getTargetType()));
 
     } else if (rootCause instanceof ApplicationException appException) {
       String errorCodeString = appException.getErrorCode().name();
       String devMessage = appException.getErrorCode().getMessage();
 
-      if (e.getCause() instanceof JsonMappingException jme && !jme.getPath().isEmpty()) {
-        fieldName = jme.getPath().getLast().getFieldName();
+      if (immediateCause instanceof JsonMappingException jme && !jme.getPath().isEmpty()) {
+        fieldName = extractFieldNameFromJsonMappingException(jme);
       }
       fieldErrors = List.of(new FieldErrorResponseDto(fieldName, errorCodeString, devMessage));
     } else {
@@ -156,6 +154,53 @@ public class GlobalExceptionHandler {
     if (e instanceof ConflictException) return HttpStatus.CONFLICT;
     if (e instanceof ForbiddenException) return HttpStatus.FORBIDDEN;
     return HttpStatus.BAD_REQUEST;
+  }
+
+  /**
+   * Extrai o nome do campo a partir do path de uma InvalidFormatException. Percorre o path da
+   * exceção do início para o fim para encontrar o primeiro elemento que contenha um fieldName
+   * não-nulo.
+   *
+   * @param exception A InvalidFormatException que contém o path
+   * @return O nome do campo onde ocorreu o erro, ou "unknown" se não for possível determinar
+   */
+  private String extractFieldNameFromPath(InvalidFormatException exception) {
+    if (exception.getPath() == null || exception.getPath().isEmpty()) {
+      return "unknown";
+    }
+
+    // Percorre o path do início para o fim para encontrar o primeiro fieldName não-nulo
+    // No caso de Set<DayOfWeek>, o path[0] contém o fieldName correto, path[1] é null
+    for (JsonMappingException.Reference reference : exception.getPath()) {
+      if (reference.getFieldName() != null) {
+        return reference.getFieldName();
+      }
+    }
+
+    return "unknown";
+  }
+
+  /**
+   * Extrai o nome do campo a partir do path de uma JsonMappingException. Percorre o path da
+   * exceção do início para o fim para encontrar o primeiro elemento que contenha um fieldName
+   * não-nulo.
+   *
+   * @param exception A JsonMappingException que contém o path
+   * @return O nome do campo onde ocorreu o erro, ou "unknown" se não for possível determinar
+   */
+  private String extractFieldNameFromJsonMappingException(JsonMappingException exception) {
+    if (exception.getPath() == null || exception.getPath().isEmpty()) {
+      return "unknown";
+    }
+
+    // Percorre o path do início para o fim para encontrar o primeiro fieldName não-nulo
+    for (JsonMappingException.Reference reference : exception.getPath()) {
+      if (reference.getFieldName() != null) {
+        return reference.getFieldName();
+      }
+    }
+
+    return "unknown";
   }
 
   /**

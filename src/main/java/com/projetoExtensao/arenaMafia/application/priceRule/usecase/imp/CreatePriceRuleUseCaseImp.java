@@ -2,9 +2,7 @@ package com.projetoExtensao.arenaMafia.application.priceRule.usecase.imp;
 
 import com.projetoExtensao.arenaMafia.application.priceRule.ports.PriceRuleRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.priceRule.usecase.CreatePriceRuleUseCase;
-import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 import com.projetoExtensao.arenaMafia.domain.exception.conflict.PriceRuleAlreadyExistsException;
-import com.projetoExtensao.arenaMafia.domain.exception.conflict.PriceRuleConflictException;
 import com.projetoExtensao.arenaMafia.domain.model.PriceRule;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.specification.PriceRuleSpecification;
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.request.CreatePriceRuleRequestDto;
@@ -48,15 +46,8 @@ public class CreatePriceRuleUseCaseImp implements CreatePriceRuleUseCase {
         throw new PriceRuleAlreadyExistsException();
       }
 
-      // Verifica se já existe uma regra com a mesma prioridade
-      if (existingRule.getPriority() == newPriceRule.getPriority()) {
-        throw new PriceRuleConflictException(ErrorCode.PRICE_RULE_PRIORITY_OVERLAP);
-      }
-
-      // Verifica sobreposição de regras, ignorando a regra padrão
-      if (!existingRule.isDefault()) {
-        newPriceRule.validateOverlapWith(existingRule);
-      }
+      // Verifica se há conflito de regras já existentes
+      newPriceRule.validateOverlapWith(existingRule);
     }
   }
 }

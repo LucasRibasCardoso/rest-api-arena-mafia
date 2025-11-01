@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidTimeIntervalException;
+import com.projetoExtensao.arenaMafia.domain.exception.conflict.TimeIntervalOverlapException;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
 import java.time.LocalTime;
 import org.junit.jupiter.api.DisplayName;
@@ -30,10 +31,10 @@ class TimeIntervalTest {
       TimeInterval overlapping = new TimeInterval(ELEVEN_AM, LocalTime.of(13, 30));
 
       assertThatThrownBy(() -> interval.validateNoOverlapWith(overlapping))
-          .isInstanceOf(InvalidTimeIntervalException.class)
+          .isInstanceOf(TimeIntervalOverlapException.class)
           .satisfies(
               throwable ->
-                  assertThat(((InvalidTimeIntervalException) throwable).getErrorCode())
+                  assertThat(((TimeIntervalOverlapException) throwable).getErrorCode())
                       .isEqualTo(ErrorCode.TIME_INTERVAL_OVERLAP));
     }
 

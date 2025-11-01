@@ -1,13 +1,10 @@
 package com.projetoExtensao.arenaMafia.infrastructure.persistence.mapper;
 
 import com.projetoExtensao.arenaMafia.domain.model.OperatingHours;
-import com.projetoExtensao.arenaMafia.domain.model.enums.DayOfWeek;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.OperatingHoursEntity;
 import com.projetoExtensao.arenaMafia.infrastructure.web.operatingHours.dto.response.OperatingHoursResponseDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.operatingHours.dto.response.TimeIntervalDto;
-import java.util.Set;
-import java.util.stream.Collectors;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.ObjectFactory;
@@ -24,9 +21,6 @@ public interface OperatingHoursMapper {
   @Mapping(
       target = "timeInterval",
       expression = "java(toTimeIntervalDto(operatingHours.getTimeInterval()))")
-  @Mapping(
-      target = "daysOfWeek",
-      expression = "java(getDaysOfWeek(operatingHours.getDaysOfWeek()))")
   @Mapping(target = "isActive", source = "active")
   OperatingHoursResponseDto toDto(OperatingHours operatingHours);
 
@@ -38,13 +32,6 @@ public interface OperatingHoursMapper {
         entity.getTimeInterval(),
         entity.isActive(),
         entity.getCreatedAt());
-  }
-
-  default Set<String> getDaysOfWeek(Set<DayOfWeek> daysOfWeek) {
-    if (daysOfWeek == null || daysOfWeek.isEmpty()) {
-      return null;
-    }
-    return daysOfWeek.stream().map(DayOfWeek::getDayName).collect(Collectors.toSet());
   }
 
   default TimeIntervalDto toTimeIntervalDto(TimeInterval timeInterval) {

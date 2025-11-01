@@ -62,345 +62,362 @@ public class AdminCourtControllerIntegrationTest extends WebIntegrationTestConfi
   @DisplayName("Testes para o endopoint POST /api/admin/courts")
   class CreateCourtTests {
 
-    @Test
-    @DisplayName("Deve retornar 201 Created e criar com sucesso uma quadra com offset 0")
-    void create_shouldReturn201_whenCourtIsCreatedSuccessfully() {
-      // Arrange
-      var modality = mockPersistModality("Futebol");
-      String name = "Quadra A";
-      String description = "Quadra de Futebol";
-      OffsetMinutes offsetMinutes = OffsetMinutes.ZERO;
-      Set<UUID> modalityIds = Set.of(modality.getId());
-      var request = new CreateCourtRequestDto(name, description, offsetMinutes, modalityIds);
+    @Nested
+    @DisplayName("Cenários de sucesso - 201 Created")
+    class CreateCourtSuccessScenarios {
+      @Test
+      @DisplayName("Deve criar com sucesso uma quadra com offset 0")
+      void create_shouldReturn201_whenCourtIsCreatedSuccessfully() {
+        // Arrange
+        var modality = mockPersistModality("Futebol");
+        String name = "Quadra A";
+        String description = "Quadra de Futebol";
+        OffsetMinutes offsetMinutes = OffsetMinutes.ZERO;
+        Set<UUID> modalityIds = Set.of(modality.getId());
+        var request = new CreateCourtRequestDto(name, description, offsetMinutes, modalityIds);
 
-      // Act
-      var response =
-          given()
-              .spec(specification)
-              .header("Authorization", accessToken)
-              .body(request)
-              .when()
-              .post()
-              .then()
-              .statusCode(201)
-              .extract()
-              .as(AdminCourtResponseDto.class);
-      // Assert
-      assertThat(response.name()).isEqualTo(name);
-      assertThat(response.description()).isEqualTo(description);
-      assertThat(response.offsetMinutes()).isEqualTo(offsetMinutes.getValue());
-      assertThat(response.isActive()).isTrue();
-      assertThat(response.modalities()).hasSize(1);
-      assertThat(response.modalities().get(0).id()).isEqualTo(modality.getId());
-      assertThat(response.modalities().get(0).name()).isEqualTo(modality.getName());
+        // Act
+        var response =
+            given()
+                .spec(specification)
+                .header("Authorization", accessToken)
+                .body(request)
+                .when()
+                .post()
+                .then()
+                .statusCode(201)
+                .extract()
+                .as(AdminCourtResponseDto.class);
+        // Assert
+        assertThat(response.name()).isEqualTo(name);
+        assertThat(response.description()).isEqualTo(description);
+        assertThat(response.offsetMinutes()).isEqualTo(offsetMinutes.getValue());
+        assertThat(response.isActive()).isTrue();
+        assertThat(response.modalities()).hasSize(1);
+        assertThat(response.modalities().get(0).id()).isEqualTo(modality.getId());
+        assertThat(response.modalities().get(0).name()).isEqualTo(modality.getName());
+      }
+
+      @Test
+      @DisplayName("Deve criar com sucesso uma quadra com offset 30")
+      void create_shouldReturn201_whenCourtIsCreatedSuccessfully_withOffset30() {
+        // Arrange
+        var modality = mockPersistModality("Basquete");
+        String name = "Quadra B";
+        String description = "Quadra de Basquete";
+        OffsetMinutes offsetMinutes = OffsetMinutes.THIRTY;
+        Set<UUID> modalityIds = Set.of(modality.getId());
+        var request = new CreateCourtRequestDto(name, description, offsetMinutes, modalityIds);
+
+        // Act
+        var response =
+            given()
+                .spec(specification)
+                .header("Authorization", accessToken)
+                .body(request)
+                .when()
+                .post()
+                .then()
+                .statusCode(201)
+                .extract()
+                .as(AdminCourtResponseDto.class);
+
+        // Assert
+        assertThat(response.name()).isEqualTo(name);
+        assertThat(response.description()).isEqualTo(description);
+        assertThat(response.offsetMinutes()).isEqualTo(offsetMinutes.getValue());
+        assertThat(response.isActive()).isTrue();
+        assertThat(response.modalities()).hasSize(1);
+        assertThat(response.modalities().get(0).id()).isEqualTo(modality.getId());
+        assertThat(response.modalities().get(0).name()).isEqualTo(modality.getName());
+      }
+
+      @Test
+      @DisplayName("Deve criar com sucesso uma quadra sem descrição")
+      void create_shouldReturn201Created_whenCourtIsCreatedSuccessfully_withoutDescription() {
+        // Arrange
+        var modality = mockPersistModality("Vôlei");
+        String name = "Quadra C";
+        String description = null;
+        OffsetMinutes offsetMinutes = OffsetMinutes.ZERO;
+        Set<UUID> modalityIds = Set.of(modality.getId());
+        var request = new CreateCourtRequestDto(name, description, offsetMinutes, modalityIds);
+
+        // Act
+        var response =
+            given()
+                .spec(specification)
+                .header("Authorization", accessToken)
+                .body(request)
+                .when()
+                .post()
+                .then()
+                .statusCode(201)
+                .extract()
+                .as(AdminCourtResponseDto.class);
+
+        // Assert
+        assertThat(response.name()).isEqualTo(name);
+        assertThat(response.description()).isNull();
+        assertThat(response.offsetMinutes()).isEqualTo(offsetMinutes.getValue());
+        assertThat(response.isActive()).isTrue();
+        assertThat(response.modalities()).hasSize(1);
+        assertThat(response.modalities().get(0).id()).isEqualTo(modality.getId());
+        assertThat(response.modalities().get(0).name()).isEqualTo(modality.getName());
+      }
     }
 
-    @Test
-    @DisplayName("Deve retornar 201 Created e criar com sucesso uma quadra com offset 30")
-    void create_shouldReturn201_whenCourtIsCreatedSuccessfully_withOffset30() {
-      // Arrange
-      var modality = mockPersistModality("Basquete");
-      String name = "Quadra B";
-      String description = "Quadra de Basquete";
-      OffsetMinutes offsetMinutes = OffsetMinutes.THIRTY;
-      Set<UUID> modalityIds = Set.of(modality.getId());
-      var request = new CreateCourtRequestDto(name, description, offsetMinutes, modalityIds);
+    @Nested
+    @DisplayName("Cenários de falha - 400 Bad Request")
+    class CreateCourtFailureScenarios {
+      @InvalidCourtNameProvider
+      @DisplayName("Tenta criar uma quadra com nome inválido")
+      void create_shouldReturn400BadRequest_whenInvalidData(
+          String invalidName, String invalidErrorCode) {
+        // Arrange
+        var modality = mockPersistModality("Tênis");
+        String description = "Quadra de Tênis";
+        OffsetMinutes offsetMinutes = OffsetMinutes.ZERO;
+        Set<UUID> modalityIds = Set.of(modality.getId());
+        var request =
+            new CreateCourtRequestDto(invalidName, description, offsetMinutes, modalityIds);
 
-      // Act
-      var response =
-          given()
-              .spec(specification)
-              .header("Authorization", accessToken)
-              .body(request)
-              .when()
-              .post()
-              .then()
-              .statusCode(201)
-              .extract()
-              .as(AdminCourtResponseDto.class);
+        // Act & Assert
+        var response =
+            given()
+                .spec(specification)
+                .header("Authorization", accessToken)
+                .body(request)
+                .when()
+                .post()
+                .then()
+                .statusCode(400)
+                .extract()
+                .as(ErrorResponseDto.class);
 
-      // Assert
-      assertThat(response.name()).isEqualTo(name);
-      assertThat(response.description()).isEqualTo(description);
-      assertThat(response.offsetMinutes()).isEqualTo(offsetMinutes.getValue());
-      assertThat(response.isActive()).isTrue();
-      assertThat(response.modalities()).hasSize(1);
-      assertThat(response.modalities().get(0).id()).isEqualTo(modality.getId());
-      assertThat(response.modalities().get(0).name()).isEqualTo(modality.getName());
+        ErrorCode errorCode = ErrorCode.valueOf(invalidErrorCode);
+        List<FieldErrorResponseDto> fieldErrors = response.fieldErrors();
+
+        assertThat(response.status()).isEqualTo(400);
+        assertThat(response.path()).isEqualTo("/api/admin/courts");
+        assertThat(response.errorCode()).isEqualTo(ErrorCode.VALIDATION_FAILED.name());
+        assertThat(response.developerMessage()).isEqualTo(ErrorCode.VALIDATION_FAILED.getMessage());
+
+        assertThat(fieldErrors).isNotEmpty();
+        assertThat(fieldErrors)
+            .anyMatch(
+                fieldError ->
+                    fieldError.fieldName().equals("name")
+                        && fieldError.errorCode().equals(errorCode.name())
+                        && fieldError.developerMessage().equals(errorCode.getMessage()));
+      }
+
+      @Test
+      @DisplayName("Tenta criar uma quadra com offsetMinutes inválido")
+      void create_shouldReturn400BadRequest_whenOffsetMinutesIsInvalid()
+          throws JsonProcessingException {
+        // Arrange
+        String name = "Quadra A - Atualizada";
+        String description = "Quadra de Futebol - Atualizada";
+        Set<UUID> modalityIds = Set.of(UUID.randomUUID());
+        Map<String, String> request = new HashMap<>();
+        request.put("name", name);
+        request.put("description", description);
+        request.put("offsetMinutes", "45");
+        request.put("modalityIds", modalityIds.toString());
+        String jsonRequest = objectMapper.writeValueAsString(request);
+
+        // Act & Assert
+        var response =
+            given()
+                .spec(specification)
+                .header("Authorization", accessToken)
+                .body(jsonRequest)
+                .when()
+                .post()
+                .then()
+                .statusCode(400)
+                .extract()
+                .as(ErrorResponseDto.class);
+
+        ErrorCode error = ErrorCode.OFFSET_MINUTES_INVALID;
+        List<FieldErrorResponseDto> fieldErrors = response.fieldErrors();
+
+        assertThat(response.status()).isEqualTo(400);
+        assertThat(response.path()).isEqualTo("/api/admin/courts");
+        assertThat(response.errorCode()).isEqualTo(ErrorCode.VALIDATION_FAILED.name());
+        assertThat(response.developerMessage()).isEqualTo(ErrorCode.VALIDATION_FAILED.getMessage());
+
+        assertThat(fieldErrors).isNotEmpty();
+        assertThat(fieldErrors)
+            .anyMatch(
+                fieldError ->
+                    fieldError.fieldName().equals("offsetMinutes")
+                        && fieldError.errorCode().equals(error.name())
+                        && fieldError.developerMessage().equals(error.getMessage()));
+      }
+
+      @Test
+      @DisplayName("Tenta criar uma quadra com offsetMinutes nulo")
+      void create_shouldReturn400BadRequest_whenOffsetMinutesIsNull() {
+        // Arrange
+        var modality = mockPersistModality("Handebol");
+        String name = "Quadra D";
+        String description = "Quadra de Handebol";
+        Set<UUID> modalityIds = Set.of(modality.getId());
+        var request = new CreateCourtRequestDto(name, description, null, modalityIds);
+
+        // Act & Assert
+        var response =
+            given()
+                .spec(specification)
+                .header("Authorization", accessToken)
+                .body(request)
+                .when()
+                .post()
+                .then()
+                .statusCode(400)
+                .extract()
+                .as(ErrorResponseDto.class);
+
+        List<FieldErrorResponseDto> fieldErrors = response.fieldErrors();
+
+        assertThat(response.status()).isEqualTo(400);
+        assertThat(response.path()).isEqualTo("/api/admin/courts");
+        assertThat(response.errorCode()).isEqualTo(ErrorCode.VALIDATION_FAILED.name());
+        assertThat(response.developerMessage()).isEqualTo(ErrorCode.VALIDATION_FAILED.getMessage());
+
+        assertThat(fieldErrors).isNotEmpty();
+        assertThat(fieldErrors)
+            .anyMatch(
+                fieldError ->
+                    fieldError.fieldName().equals("offsetMinutes")
+                        && fieldError.errorCode().equals(ErrorCode.OFFSET_MINUTES_REQUIRED.name())
+                        && fieldError
+                            .developerMessage()
+                            .equals(ErrorCode.OFFSET_MINUTES_REQUIRED.getMessage()));
+      }
+
+      @ParameterizedTest
+      @ValueSource(strings = {"null", "[]"})
+      @DisplayName("Tenta criar uma quadra sem informar nenhuma modalidade")
+      void create_shouldReturn400BadRequest_whenModalityIdsIsNullOrEmpty(String modalityIdsValue) {
+        // Arrange
+        String jsonRequest =
+            """
+            {
+              "name": "Quadra D",
+              "description": "Quadra de Handebol",
+              "offsetMinutes": 0,
+              "modalityIds": %s
+            }
+            """
+                .formatted(modalityIdsValue);
+
+        // Act & Assert
+        var response =
+            given()
+                .spec(specification)
+                .header("Authorization", accessToken)
+                .body(jsonRequest)
+                .when()
+                .post()
+                .then()
+                .statusCode(400)
+                .extract()
+                .as(ErrorResponseDto.class);
+
+        List<FieldErrorResponseDto> fieldErrors = response.fieldErrors();
+
+        assertThat(response.status()).isEqualTo(400);
+        assertThat(response.path()).isEqualTo("/api/admin/courts");
+        assertThat(response.errorCode()).isEqualTo(ErrorCode.VALIDATION_FAILED.name());
+        assertThat(response.developerMessage()).isEqualTo(ErrorCode.VALIDATION_FAILED.getMessage());
+
+        assertThat(fieldErrors).isNotEmpty();
+        assertThat(fieldErrors)
+            .anyMatch(
+                fieldError ->
+                    fieldError.fieldName().equals("modalityIds")
+                        && fieldError.errorCode().equals(ErrorCode.COURT_MODALITY_REQUIRED.name())
+                        && fieldError
+                            .developerMessage()
+                            .equals(ErrorCode.COURT_MODALITY_REQUIRED.getMessage()));
+      }
     }
 
-    @Test
-    @DisplayName("Deve retornar 201 Created e criar com sucesso uma quadra sem descrição")
-    void create_shouldReturn201Created_whenCourtIsCreatedSuccessfully_withoutDescription() {
-      // Arrange
-      var modality = mockPersistModality("Vôlei");
-      String name = "Quadra C";
-      String description = null;
-      OffsetMinutes offsetMinutes = OffsetMinutes.ZERO;
-      Set<UUID> modalityIds = Set.of(modality.getId());
-      var request = new CreateCourtRequestDto(name, description, offsetMinutes, modalityIds);
+    @Nested
+    @DisplayName("Cenários de falha - 404 Not Found")
+    class CreateCourtNotFoundScenarios {
+      @Test
+      @DisplayName("Tenta criar uma quadra quando uma das modalidades não existir")
+      void create_shouldReturn404NotFound_whenOneOfTheModalitiesDoesNotExist() {
+        // Arrange
+        UUID nonExistentModalityId = UUID.randomUUID();
+        String name = "Quadra F";
+        String description = "Quadra de Rugby";
+        OffsetMinutes offsetMinutes = OffsetMinutes.ZERO;
+        Set<UUID> modalityIds = Set.of(nonExistentModalityId);
+        var request = new CreateCourtRequestDto(name, description, offsetMinutes, modalityIds);
 
-      // Act
-      var response =
-          given()
-              .spec(specification)
-              .header("Authorization", accessToken)
-              .body(request)
-              .when()
-              .post()
-              .then()
-              .statusCode(201)
-              .extract()
-              .as(AdminCourtResponseDto.class);
+        // Act & Assert
+        var response =
+            given()
+                .spec(specification)
+                .header("Authorization", accessToken)
+                .body(request)
+                .when()
+                .post()
+                .then()
+                .statusCode(404)
+                .extract()
+                .as(ErrorResponseDto.class);
 
-      // Assert
-      assertThat(response.name()).isEqualTo(name);
-      assertThat(response.description()).isNull();
-      assertThat(response.offsetMinutes()).isEqualTo(offsetMinutes.getValue());
-      assertThat(response.isActive()).isTrue();
-      assertThat(response.modalities()).hasSize(1);
-      assertThat(response.modalities().get(0).id()).isEqualTo(modality.getId());
-      assertThat(response.modalities().get(0).name()).isEqualTo(modality.getName());
+        ErrorCode errorCode = ErrorCode.MODALITY_NOT_FOUND;
+
+        assertThat(response.status()).isEqualTo(404);
+        assertThat(response.path()).isEqualTo("/api/admin/courts");
+        assertThat(response.errorCode()).isEqualTo(errorCode.name());
+        assertThat(response.developerMessage()).isEqualTo(errorCode.getMessage());
+      }
     }
 
-    @InvalidCourtNameProvider
-    @DisplayName("Deve retornar 400 Bad Request quando o nome for inválido ")
-    void create_shouldReturn400BadRequest_whenInvalidData(
-        String invalidName, String invalidErrorCode) {
-      // Arrange
-      var modality = mockPersistModality("Tênis");
-      String description = "Quadra de Tênis";
-      OffsetMinutes offsetMinutes = OffsetMinutes.ZERO;
-      Set<UUID> modalityIds = Set.of(modality.getId());
-      var request = new CreateCourtRequestDto(invalidName, description, offsetMinutes, modalityIds);
+    @Nested
+    @DisplayName("Cenários de falha - 409 Conflict")
+    class CreateCourtConflictScenarios {
+      @Test
+      @DisplayName("Tenta criar uma quadra com nome já existente")
+      void create_shouldReturn409Conflict_whenCourtWithSameNameAlreadyExists() {
+        // Arrange
+        var modality = mockPersistModality("Rugby");
+        String name = "Quadra E";
+        String description = "Quadra de Rugby";
+        OffsetMinutes offsetMinutes = OffsetMinutes.ZERO;
+        Set<UUID> modalityIds = Set.of(modality.getId());
+        var request = new CreateCourtRequestDto(name, description, offsetMinutes, modalityIds);
 
-      // Act & Assert
-      var response =
-          given()
-              .spec(specification)
-              .header("Authorization", accessToken)
-              .body(request)
-              .when()
-              .post()
-              .then()
-              .statusCode(400)
-              .extract()
-              .as(ErrorResponseDto.class);
+        mockPersistCourt(name, description, offsetMinutes, Set.of(modality));
 
-      ErrorCode errorCode = ErrorCode.valueOf(invalidErrorCode);
-      List<FieldErrorResponseDto> fieldErrors = response.fieldErrors();
+        // Act & Assert
+        var response =
+            given()
+                .spec(specification)
+                .header("Authorization", accessToken)
+                .body(request)
+                .when()
+                .post()
+                .then()
+                .statusCode(409)
+                .extract()
+                .as(ErrorResponseDto.class);
 
-      assertThat(response.status()).isEqualTo(400);
-      assertThat(response.path()).isEqualTo("/api/admin/courts");
-      assertThat(response.errorCode()).isEqualTo(ErrorCode.VALIDATION_FAILED.name());
-      assertThat(response.developerMessage()).isEqualTo(ErrorCode.VALIDATION_FAILED.getMessage());
+        ErrorCode errorCode = ErrorCode.COURT_ALREADY_EXISTS;
 
-      assertThat(fieldErrors).isNotEmpty();
-      assertThat(fieldErrors)
-          .anyMatch(
-              fieldError ->
-                  fieldError.fieldName().equals("name")
-                      && fieldError.errorCode().equals(errorCode.name())
-                      && fieldError.developerMessage().equals(errorCode.getMessage()));
-    }
-
-    @Test
-    @DisplayName("Deve retornar 400 Bad Request quando o OffsetMinutes for inválido")
-    void create_shouldReturn400BadRequest_whenOffsetMinutesIsInvalid()
-        throws JsonProcessingException {
-      // Arrange
-      String name = "Quadra A - Atualizada";
-      String description = "Quadra de Futebol - Atualizada";
-      Set<UUID> modalityIds = Set.of(UUID.randomUUID());
-      Map<String, String> request = new HashMap<>();
-      request.put("name", name);
-      request.put("description", description);
-      request.put("offsetMinutes", "45");
-      request.put("modalityIds", modalityIds.toString());
-      String jsonRequest = objectMapper.writeValueAsString(request);
-
-      // Act & Assert
-      var response =
-          given()
-              .spec(specification)
-              .header("Authorization", accessToken)
-              .body(jsonRequest)
-              .when()
-              .post()
-              .then()
-              .statusCode(400)
-              .extract()
-              .as(ErrorResponseDto.class);
-
-      ErrorCode error = ErrorCode.OFFSET_MINUTES_INVALID;
-      List<FieldErrorResponseDto> fieldErrors = response.fieldErrors();
-
-      assertThat(response.status()).isEqualTo(400);
-      assertThat(response.path()).isEqualTo("/api/admin/courts");
-      assertThat(response.errorCode()).isEqualTo(ErrorCode.VALIDATION_FAILED.name());
-      assertThat(response.developerMessage()).isEqualTo(ErrorCode.VALIDATION_FAILED.getMessage());
-
-      assertThat(fieldErrors).isNotEmpty();
-      assertThat(fieldErrors)
-          .anyMatch(
-              fieldError ->
-                  fieldError.fieldName().equals("offsetMinutes")
-                      && fieldError.errorCode().equals(error.name())
-                      && fieldError.developerMessage().equals(error.getMessage()));
-    }
-
-    @Test
-    @DisplayName("Deve retornar 400 Bad Request quando o offsetMinutes for null")
-    void create_shouldReturn400BadRequest_whenOffsetMinutesIsNull() {
-      // Arrange
-      var modality = mockPersistModality("Handebol");
-      String name = "Quadra D";
-      String description = "Quadra de Handebol";
-      Set<UUID> modalityIds = Set.of(modality.getId());
-      var request = new CreateCourtRequestDto(name, description, null, modalityIds);
-
-      // Act & Assert
-      var response =
-          given()
-              .spec(specification)
-              .header("Authorization", accessToken)
-              .body(request)
-              .when()
-              .post()
-              .then()
-              .statusCode(400)
-              .extract()
-              .as(ErrorResponseDto.class);
-
-      List<FieldErrorResponseDto> fieldErrors = response.fieldErrors();
-
-      assertThat(response.status()).isEqualTo(400);
-      assertThat(response.path()).isEqualTo("/api/admin/courts");
-      assertThat(response.errorCode()).isEqualTo(ErrorCode.VALIDATION_FAILED.name());
-      assertThat(response.developerMessage()).isEqualTo(ErrorCode.VALIDATION_FAILED.getMessage());
-
-      assertThat(fieldErrors).isNotEmpty();
-      assertThat(fieldErrors)
-          .anyMatch(
-              fieldError ->
-                  fieldError.fieldName().equals("offsetMinutes")
-                      && fieldError.errorCode().equals(ErrorCode.OFFSET_MINUTES_REQUIRED.name())
-                      && fieldError
-                          .developerMessage()
-                          .equals(ErrorCode.OFFSET_MINUTES_REQUIRED.getMessage()));
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = {"null", "[]"})
-    @DisplayName("Deve retornar 400 Bad Request quando modalityIds for null ou vazio")
-    void create_shouldReturn400BadRequest_whenModalityIdsIsNullOrEmpty(String modalityIdsValue) {
-      // Arrange
-      String jsonRequest =
-          """
-          {
-            "name": "Quadra D",
-            "description": "Quadra de Handebol",
-            "offsetMinutes": 0,
-            "modalityIds": %s
-          }
-          """
-              .formatted(modalityIdsValue);
-
-      // Act & Assert
-      var response =
-          given()
-              .spec(specification)
-              .header("Authorization", accessToken)
-              .body(jsonRequest)
-              .when()
-              .post()
-              .then()
-              .statusCode(400)
-              .extract()
-              .as(ErrorResponseDto.class);
-
-      List<FieldErrorResponseDto> fieldErrors = response.fieldErrors();
-
-      assertThat(response.status()).isEqualTo(400);
-      assertThat(response.path()).isEqualTo("/api/admin/courts");
-      assertThat(response.errorCode()).isEqualTo(ErrorCode.VALIDATION_FAILED.name());
-      assertThat(response.developerMessage()).isEqualTo(ErrorCode.VALIDATION_FAILED.getMessage());
-
-      assertThat(fieldErrors).isNotEmpty();
-      assertThat(fieldErrors)
-          .anyMatch(
-              fieldError ->
-                  fieldError.fieldName().equals("modalityIds")
-                      && fieldError.errorCode().equals(ErrorCode.COURT_MODALITY_REQUIRED.name())
-                      && fieldError
-                          .developerMessage()
-                          .equals(ErrorCode.COURT_MODALITY_REQUIRED.getMessage()));
-    }
-
-    @Test
-    @DisplayName("Deve retornar 404 Not Found quando uma das modalidades não existir")
-    void create_shouldReturn404NotFound_whenOneOfTheModalitiesDoesNotExist() {
-      // Arrange
-      UUID nonExistentModalityId = UUID.randomUUID();
-      String name = "Quadra F";
-      String description = "Quadra de Rugby";
-      OffsetMinutes offsetMinutes = OffsetMinutes.ZERO;
-      Set<UUID> modalityIds = Set.of(nonExistentModalityId);
-      var request = new CreateCourtRequestDto(name, description, offsetMinutes, modalityIds);
-
-      // Act & Assert
-      var response =
-          given()
-              .spec(specification)
-              .header("Authorization", accessToken)
-              .body(request)
-              .when()
-              .post()
-              .then()
-              .statusCode(404)
-              .extract()
-              .as(ErrorResponseDto.class);
-
-      ErrorCode errorCode = ErrorCode.MODALITY_NOT_FOUND;
-
-      assertThat(response.status()).isEqualTo(404);
-      assertThat(response.path()).isEqualTo("/api/admin/courts");
-      assertThat(response.errorCode()).isEqualTo(errorCode.name());
-      assertThat(response.developerMessage()).isEqualTo(errorCode.getMessage());
-    }
-
-    @Test
-    @DisplayName("Deve retornar 409 Conflict quando já existir uma quadra com o mesmo nome")
-    void create_shouldReturn409Conflict_whenCourtWithSameNameAlreadyExists() {
-      // Arrange
-      var modality = mockPersistModality("Rugby");
-      String name = "Quadra E";
-      String description = "Quadra de Rugby";
-      OffsetMinutes offsetMinutes = OffsetMinutes.ZERO;
-      Set<UUID> modalityIds = Set.of(modality.getId());
-      var request = new CreateCourtRequestDto(name, description, offsetMinutes, modalityIds);
-
-      mockPersistCourt(name, description, offsetMinutes, Set.of(modality));
-
-      // Act & Assert
-      var response =
-          given()
-              .spec(specification)
-              .header("Authorization", accessToken)
-              .body(request)
-              .when()
-              .post()
-              .then()
-              .statusCode(409)
-              .extract()
-              .as(ErrorResponseDto.class);
-
-      ErrorCode errorCode = ErrorCode.COURT_ALREADY_EXISTS;
-
-      assertThat(response.status()).isEqualTo(409);
-      assertThat(response.path()).isEqualTo("/api/admin/courts");
-      assertThat(response.errorCode()).isEqualTo(errorCode.name());
-      assertThat(response.developerMessage()).isEqualTo(errorCode.getMessage());
+        assertThat(response.status()).isEqualTo(409);
+        assertThat(response.path()).isEqualTo("/api/admin/courts");
+        assertThat(response.errorCode()).isEqualTo(errorCode.name());
+        assertThat(response.developerMessage()).isEqualTo(errorCode.getMessage());
+      }
     }
   }
 
@@ -408,378 +425,408 @@ public class AdminCourtControllerIntegrationTest extends WebIntegrationTestConfi
   @DisplayName("Testes para o endpoint PUT /api/admin/courts/{courtId}")
   class UpdateCourtTests {
 
-    @Test
-    @DisplayName("Deve retornar 200 OK e atualizar com sucesso uma quadra")
-    void update_shouldReturn200_whenCourtIsUpdatedSuccessfully() {
-      // Arrange
-      var modality1 = mockPersistModality("Futebol");
-      var modality2 = mockPersistModality("Basquete");
-      String originalName = "Quadra A";
-      String originalDescription = "Quadra de Futebol";
-      OffsetMinutes originalOffset = OffsetMinutes.ZERO;
-      Court court =
-          mockPersistCourt(originalName, originalDescription, originalOffset, Set.of(modality1));
+    @Nested
+    @DisplayName("Cenários de sucesso - 200 OK")
+    class UpdateCourtSuccessScenarios {
+      @Test
+      @DisplayName("Deve atualizar com sucesso uma quadra")
+      void update_shouldReturn200_whenCourtIsUpdatedSuccessfully() {
+        // Arrange
+        var modality1 = mockPersistModality("Futebol");
+        var modality2 = mockPersistModality("Basquete");
+        String originalName = "Quadra A";
+        String originalDescription = "Quadra de Futebol";
+        OffsetMinutes originalOffset = OffsetMinutes.ZERO;
+        Court court =
+            mockPersistCourt(originalName, originalDescription, originalOffset, Set.of(modality1));
 
-      String updatedName = "Quadra A - Atualizada";
-      String updatedDescription = "Quadra de Futebol - Atualizada";
-      OffsetMinutes updatedOffset = OffsetMinutes.THIRTY;
-      Set<UUID> updatedModalityIds = Set.of(modality1.getId(), modality2.getId());
-      var updateRequest =
-          new UpdateCourtRequestDto(
-              updatedName, updatedDescription, updatedOffset, updatedModalityIds);
+        String updatedName = "Quadra A - Atualizada";
+        String updatedDescription = "Quadra de Futebol - Atualizada";
+        OffsetMinutes updatedOffset = OffsetMinutes.THIRTY;
+        Set<UUID> updatedModalityIds = Set.of(modality1.getId(), modality2.getId());
+        var updateRequest =
+            new UpdateCourtRequestDto(
+                updatedName, updatedDescription, updatedOffset, updatedModalityIds);
 
-      // Act
-      var response =
-          given()
-              .spec(specification)
-              .header("Authorization", accessToken)
-              .body(updateRequest)
-              .when()
-              .put("/{courtId}", court.getId())
-              .then()
-              .statusCode(200)
-              .extract()
-              .as(AdminCourtResponseDto.class);
+        // Act
+        var response =
+            given()
+                .spec(specification)
+                .header("Authorization", accessToken)
+                .body(updateRequest)
+                .when()
+                .put("/{courtId}", court.getId())
+                .then()
+                .statusCode(200)
+                .extract()
+                .as(AdminCourtResponseDto.class);
 
-      // Assert
-      assertThat(response.name()).isEqualTo(updatedName);
-      assertThat(response.description()).isEqualTo(updatedDescription);
-      assertThat(response.offsetMinutes()).isEqualTo(updatedOffset.getValue());
-      assertThat(response.isActive()).isTrue();
-      assertThat(response.modalities()).hasSize(2);
-      assertThat(response.modalities())
-          .anyMatch(
-              modalityResponse ->
-                  modalityResponse.id().equals(modality1.getId())
-                      && modalityResponse.name().equals(modality1.getName()));
-      assertThat(response.modalities())
-          .anyMatch(
-              modalityResponse ->
-                  modalityResponse.id().equals(modality2.getId())
-                      && modalityResponse.name().equals(modality2.getName()));
+        // Assert
+        assertThat(response.name()).isEqualTo(updatedName);
+        assertThat(response.description()).isEqualTo(updatedDescription);
+        assertThat(response.offsetMinutes()).isEqualTo(updatedOffset.getValue());
+        assertThat(response.isActive()).isTrue();
+        assertThat(response.modalities()).hasSize(2);
+        assertThat(response.modalities())
+            .anyMatch(
+                modalityResponse ->
+                    modalityResponse.id().equals(modality1.getId())
+                        && modalityResponse.name().equals(modality1.getName()));
+        assertThat(response.modalities())
+            .anyMatch(
+                modalityResponse ->
+                    modalityResponse.id().equals(modality2.getId())
+                        && modalityResponse.name().equals(modality2.getName()));
+      }
     }
 
-    @Test
-    @DisplayName("Deve retornar 400 Bad Request quando o nome for curto demais")
-    void update_shouldReturn400BadRequest_whenInvalidName() {
-      // Arrange
-      UUID courtId = UUID.randomUUID();
-      String description = "Quadra de Futebol - Atualizada";
-      OffsetMinutes offsetMinutes = OffsetMinutes.THIRTY;
-      Set<UUID> modalityIds = Set.of(UUID.randomUUID());
-      var updateRequest = new UpdateCourtRequestDto("AB", description, offsetMinutes, modalityIds);
+    @Nested
+    @DisplayName("Cenários de falha - 400 Bad Request")
+    class UpdateCourtFailScenarios {
+      @Test
+      @DisplayName("Tenta atualizar uma quadra com nome inválido")
+      void update_shouldReturn400BadRequest_whenInvalidName() {
+        // Arrange
+        UUID courtId = UUID.randomUUID();
+        String description = "Quadra de Futebol - Atualizada";
+        OffsetMinutes offsetMinutes = OffsetMinutes.THIRTY;
+        Set<UUID> modalityIds = Set.of(UUID.randomUUID());
+        var updateRequest =
+            new UpdateCourtRequestDto("AB", description, offsetMinutes, modalityIds);
 
-      // Act & Assert
-      var response =
-          given()
-              .spec(specification)
-              .header("Authorization", accessToken)
-              .body(updateRequest)
-              .when()
-              .put("/{courtId}", courtId)
-              .then()
-              .statusCode(400)
-              .extract()
-              .as(ErrorResponseDto.class);
+        // Act & Assert
+        var response =
+            given()
+                .spec(specification)
+                .header("Authorization", accessToken)
+                .body(updateRequest)
+                .when()
+                .put("/{courtId}", courtId)
+                .then()
+                .statusCode(400)
+                .extract()
+                .as(ErrorResponseDto.class);
 
-      ErrorCode error = ErrorCode.COURT_NAME_INVALID_LENGTH;
-      List<FieldErrorResponseDto> fieldErrors = response.fieldErrors();
+        ErrorCode error = ErrorCode.COURT_NAME_INVALID_LENGTH;
+        List<FieldErrorResponseDto> fieldErrors = response.fieldErrors();
 
-      assertThat(response.status()).isEqualTo(400);
-      assertThat(response.path()).isEqualTo("/api/admin/courts/" + courtId);
-      assertThat(response.errorCode()).isEqualTo(ErrorCode.VALIDATION_FAILED.name());
-      assertThat(response.developerMessage()).isEqualTo(ErrorCode.VALIDATION_FAILED.getMessage());
+        assertThat(response.status()).isEqualTo(400);
+        assertThat(response.path()).isEqualTo("/api/admin/courts/" + courtId);
+        assertThat(response.errorCode()).isEqualTo(ErrorCode.VALIDATION_FAILED.name());
+        assertThat(response.developerMessage()).isEqualTo(ErrorCode.VALIDATION_FAILED.getMessage());
 
-      assertThat(fieldErrors).isNotEmpty();
-      assertThat(fieldErrors)
-          .anyMatch(
-              fieldError ->
-                  fieldError.fieldName().equals("name")
-                      && fieldError.errorCode().equals(error.name())
-                      && fieldError.developerMessage().equals(error.getMessage()));
+        assertThat(fieldErrors).isNotEmpty();
+        assertThat(fieldErrors)
+            .anyMatch(
+                fieldError ->
+                    fieldError.fieldName().equals("name")
+                        && fieldError.errorCode().equals(error.name())
+                        && fieldError.developerMessage().equals(error.getMessage()));
+      }
+
+      @Test
+      @DisplayName("Tenta atualizar uma quadra sem informar nenhuma modalidade")
+      void update_shouldReturn400BadRequest_whenModalityIdsIsEmpty() {
+        // Arrange
+        UUID courtId = UUID.randomUUID();
+        String name = "Quadra A - Atualizada";
+        String description = "Quadra de Futebol - Atualizada";
+        OffsetMinutes offsetMinutes = OffsetMinutes.THIRTY;
+        var updateRequest = new UpdateCourtRequestDto(name, description, offsetMinutes, Set.of());
+
+        // Act & Assert
+        var response =
+            given()
+                .spec(specification)
+                .header("Authorization", accessToken)
+                .body(updateRequest)
+                .when()
+                .put("/{courtId}", courtId)
+                .then()
+                .statusCode(400)
+                .extract()
+                .as(ErrorResponseDto.class);
+
+        ErrorCode error = ErrorCode.COURT_MODALITY_REQUIRED;
+        List<FieldErrorResponseDto> fieldErrors = response.fieldErrors();
+
+        assertThat(response.status()).isEqualTo(400);
+        assertThat(response.path()).isEqualTo("/api/admin/courts/" + courtId);
+        assertThat(response.errorCode()).isEqualTo(ErrorCode.VALIDATION_FAILED.name());
+        assertThat(response.developerMessage()).isEqualTo(ErrorCode.VALIDATION_FAILED.getMessage());
+
+        assertThat(fieldErrors).isNotEmpty();
+        assertThat(fieldErrors)
+            .anyMatch(
+                fieldError ->
+                    fieldError.fieldName().equals("modalityIds")
+                        && fieldError.errorCode().equals(error.name())
+                        && fieldError.developerMessage().equals(error.getMessage()));
+      }
+
+      @Test
+      @DisplayName("Tenta atualizar uma quadra com offsetMinutes inválido")
+      void update_shouldReturn400BadRequest_whenOffsetMinutesIsInvalid()
+          throws JsonProcessingException {
+        // Arrange
+        UUID courtId = UUID.randomUUID();
+        String name = "Quadra A - Atualizada";
+        String description = "Quadra de Futebol - Atualizada";
+        Set<UUID> modalityIds = Set.of(UUID.randomUUID());
+        Map<String, String> request = new HashMap<>();
+        request.put("name", name);
+        request.put("description", description);
+        request.put("offsetMinutes", "45");
+        request.put("modalityIds", modalityIds.toString());
+        String jsonRequest = objectMapper.writeValueAsString(request);
+        // Act & Assert
+        var response =
+            given()
+                .spec(specification)
+                .header("Authorization", accessToken)
+                .body(jsonRequest)
+                .when()
+                .put("/{courtId}", courtId)
+                .then()
+                .statusCode(400)
+                .extract()
+                .as(ErrorResponseDto.class);
+
+        ErrorCode error = ErrorCode.OFFSET_MINUTES_INVALID;
+        List<FieldErrorResponseDto> fieldErrors = response.fieldErrors();
+
+        assertThat(response.status()).isEqualTo(400);
+        assertThat(response.path()).isEqualTo("/api/admin/courts/" + courtId);
+        assertThat(response.errorCode()).isEqualTo(ErrorCode.VALIDATION_FAILED.name());
+        assertThat(response.developerMessage()).isEqualTo(ErrorCode.VALIDATION_FAILED.getMessage());
+
+        assertThat(fieldErrors).isNotEmpty();
+        assertThat(fieldErrors)
+            .anyMatch(
+                fieldError ->
+                    fieldError.fieldName().equals("offsetMinutes")
+                        && fieldError.errorCode().equals(error.name())
+                        && fieldError.developerMessage().equals(error.getMessage()));
+      }
     }
 
-    @Test
-    @DisplayName("Deve retornar 400 Bad Request quando o não for informado nenhuma modalidade")
-    void update_shouldReturn400BadRequest_whenModalityIdsIsEmpty() {
-      // Arrange
-      UUID courtId = UUID.randomUUID();
-      String name = "Quadra A - Atualizada";
-      String description = "Quadra de Futebol - Atualizada";
-      OffsetMinutes offsetMinutes = OffsetMinutes.THIRTY;
-      var updateRequest = new UpdateCourtRequestDto(name, description, offsetMinutes, Set.of());
+    @Nested
+    @DisplayName("Cenários de falha - 404 Not Found")
+    class UpdateCourtNotFoundScenarios {
+      @Test
+      @DisplayName("Tenta atualizar uma quadra que não existe")
+      void update_shouldReturn404NotFound_whenCourtDoesNotExist() {
+        // Arrange
+        UUID nonExistentCourtId = UUID.randomUUID();
+        String name = "Quadra X";
+        String description = "Quadra de Tênis";
+        OffsetMinutes offsetMinutes = OffsetMinutes.ZERO;
+        Set<UUID> modalityIds = Set.of(UUID.randomUUID());
+        var updateRequest =
+            new UpdateCourtRequestDto(name, description, offsetMinutes, modalityIds);
 
-      // Act & Assert
-      var response =
-          given()
-              .spec(specification)
-              .header("Authorization", accessToken)
-              .body(updateRequest)
-              .when()
-              .put("/{courtId}", courtId)
-              .then()
-              .statusCode(400)
-              .extract()
-              .as(ErrorResponseDto.class);
+        // Act & Assert
+        var response =
+            given()
+                .spec(specification)
+                .header("Authorization", accessToken)
+                .body(updateRequest)
+                .when()
+                .put("/{courtId}", nonExistentCourtId)
+                .then()
+                .statusCode(404)
+                .extract()
+                .as(ErrorResponseDto.class);
 
-      ErrorCode error = ErrorCode.COURT_MODALITY_REQUIRED;
-      List<FieldErrorResponseDto> fieldErrors = response.fieldErrors();
+        ErrorCode errorCode = ErrorCode.COURT_NOT_FOUND;
 
-      assertThat(response.status()).isEqualTo(400);
-      assertThat(response.path()).isEqualTo("/api/admin/courts/" + courtId);
-      assertThat(response.errorCode()).isEqualTo(ErrorCode.VALIDATION_FAILED.name());
-      assertThat(response.developerMessage()).isEqualTo(ErrorCode.VALIDATION_FAILED.getMessage());
+        assertThat(response.status()).isEqualTo(404);
+        assertThat(response.path()).isEqualTo("/api/admin/courts/" + nonExistentCourtId);
+        assertThat(response.errorCode()).isEqualTo(errorCode.name());
+        assertThat(response.developerMessage()).isEqualTo(errorCode.getMessage());
+      }
 
-      assertThat(fieldErrors).isNotEmpty();
-      assertThat(fieldErrors)
-          .anyMatch(
-              fieldError ->
-                  fieldError.fieldName().equals("modalityIds")
-                      && fieldError.errorCode().equals(error.name())
-                      && fieldError.developerMessage().equals(error.getMessage()));
+      @Test
+      @DisplayName("Tenta atualizar uma quadra quando uma das modalidades não existir")
+      void update_shouldReturn404NotFound_whenOneOfTheModalitiesDoesNotExist() {
+        // Arrange
+        var modality = mockPersistModality("Futebol");
+        String originalName = "Quadra A";
+        String originalDescription = "Quadra de Futebol";
+        OffsetMinutes originalOffset = OffsetMinutes.ZERO;
+        Court court =
+            mockPersistCourt(originalName, originalDescription, originalOffset, Set.of(modality));
+
+        UUID nonExistentModalityId = UUID.randomUUID();
+        String newName = "Quadra A - Atualizada";
+        String newDescription = "Quadra de Futebol - Atualizada";
+        OffsetMinutes newOffset = OffsetMinutes.THIRTY;
+        Set<UUID> newModalityIds = Set.of(modality.getId(), nonExistentModalityId);
+        var request = new UpdateCourtRequestDto(newName, newDescription, newOffset, newModalityIds);
+
+        // Act & Assert
+        var response =
+            given()
+                .spec(specification)
+                .header("Authorization", accessToken)
+                .body(request)
+                .when()
+                .put("/{courtId}", court.getId())
+                .then()
+                .statusCode(404)
+                .extract()
+                .as(ErrorResponseDto.class);
+
+        ErrorCode errorCode = ErrorCode.MODALITY_NOT_FOUND;
+
+        assertThat(response.status()).isEqualTo(404);
+        assertThat(response.path()).isEqualTo("/api/admin/courts/" + court.getId());
+        assertThat(response.errorCode()).isEqualTo(errorCode.name());
+        assertThat(response.developerMessage()).isEqualTo(errorCode.getMessage());
+      }
     }
 
-    @Test
-    @DisplayName("Deve retornar 400 Bad Request quando o offsetMinutes for invalido")
-    void update_shouldReturn400BadRequest_whenOffsetMinutesIsInvalid()
-        throws JsonProcessingException {
-      // Arrange
-      UUID courtId = UUID.randomUUID();
-      String name = "Quadra A - Atualizada";
-      String description = "Quadra de Futebol - Atualizada";
-      Set<UUID> modalityIds = Set.of(UUID.randomUUID());
-      Map<String, String> request = new HashMap<>();
-      request.put("name", name);
-      request.put("description", description);
-      request.put("offsetMinutes", "45");
-      request.put("modalityIds", modalityIds.toString());
-      String jsonRequest = objectMapper.writeValueAsString(request);
-      // Act & Assert
-      var response =
-          given()
-              .spec(specification)
-              .header("Authorization", accessToken)
-              .body(jsonRequest)
-              .when()
-              .put("/{courtId}", courtId)
-              .then()
-              .statusCode(400)
-              .extract()
-              .as(ErrorResponseDto.class);
+    @Nested
+    @DisplayName("Cenários de falha - 409 Conflict")
+    class UpdateCourtConflictScenarios {
+      @Test
+      @DisplayName("Tenta atualizar uma quadra com nome já existente")
+      void update_shouldReturn409Conflict_whenCourtWithSameNameAlreadyExists() {
+        // Arrange
+        var modality = mockPersistModality("Futebol");
+        String existingName = "Quadra Existente";
+        String existingDescription = "Quadra de Futebol";
+        OffsetMinutes existingOffset = OffsetMinutes.ZERO;
+        mockPersistCourt(existingName, existingDescription, existingOffset, Set.of(modality));
 
-      ErrorCode error = ErrorCode.OFFSET_MINUTES_INVALID;
-      List<FieldErrorResponseDto> fieldErrors = response.fieldErrors();
+        String originalName = "Quadra A";
+        String originalDescription = "Quadra de Basquete";
+        OffsetMinutes originalOffset = OffsetMinutes.ZERO;
+        Court court =
+            mockPersistCourt(originalName, originalDescription, originalOffset, Set.of(modality));
 
-      assertThat(response.status()).isEqualTo(400);
-      assertThat(response.path()).isEqualTo("/api/admin/courts/" + courtId);
-      assertThat(response.errorCode()).isEqualTo(ErrorCode.VALIDATION_FAILED.name());
-      assertThat(response.developerMessage()).isEqualTo(ErrorCode.VALIDATION_FAILED.getMessage());
+        String newDescription = "Nova Descrição";
+        OffsetMinutes newOffset = OffsetMinutes.THIRTY;
+        Set<UUID> newModalityIds = Set.of(modality.getId());
+        var request =
+            new UpdateCourtRequestDto(existingName, newDescription, newOffset, newModalityIds);
 
-      assertThat(fieldErrors).isNotEmpty();
-      assertThat(fieldErrors)
-          .anyMatch(
-              fieldError ->
-                  fieldError.fieldName().equals("offsetMinutes")
-                      && fieldError.errorCode().equals(error.name())
-                      && fieldError.developerMessage().equals(error.getMessage()));
-    }
+        // Act & Assert
+        var response =
+            given()
+                .spec(specification)
+                .header("Authorization", accessToken)
+                .body(request)
+                .when()
+                .put("/{courtId}", court.getId())
+                .then()
+                .statusCode(409)
+                .extract()
+                .as(ErrorResponseDto.class);
 
-    @Test
-    @DisplayName("Deve retornar 404 Not Found quando a quadra não existir")
-    void update_shouldReturn404NotFound_whenCourtDoesNotExist() {
-      // Arrange
-      UUID nonExistentCourtId = UUID.randomUUID();
-      String name = "Quadra X";
-      String description = "Quadra de Tênis";
-      OffsetMinutes offsetMinutes = OffsetMinutes.ZERO;
-      Set<UUID> modalityIds = Set.of(UUID.randomUUID());
-      var updateRequest = new UpdateCourtRequestDto(name, description, offsetMinutes, modalityIds);
+        ErrorCode errorCode = ErrorCode.COURT_ALREADY_EXISTS;
 
-      // Act & Assert
-      var response =
-          given()
-              .spec(specification)
-              .header("Authorization", accessToken)
-              .body(updateRequest)
-              .when()
-              .put("/{courtId}", nonExistentCourtId)
-              .then()
-              .statusCode(404)
-              .extract()
-              .as(ErrorResponseDto.class);
-
-      ErrorCode errorCode = ErrorCode.COURT_NOT_FOUND;
-
-      assertThat(response.status()).isEqualTo(404);
-      assertThat(response.path()).isEqualTo("/api/admin/courts/" + nonExistentCourtId);
-      assertThat(response.errorCode()).isEqualTo(errorCode.name());
-      assertThat(response.developerMessage()).isEqualTo(errorCode.getMessage());
-    }
-
-    @Test
-    @DisplayName("Deve retornar 404 Not Found quando uma das modalidades não existir")
-    void update_shouldReturn404NotFound_whenOneOfTheModalitiesDoesNotExist() {
-      // Arrange
-      var modality = mockPersistModality("Futebol");
-      String originalName = "Quadra A";
-      String originalDescription = "Quadra de Futebol";
-      OffsetMinutes originalOffset = OffsetMinutes.ZERO;
-      Court court =
-          mockPersistCourt(originalName, originalDescription, originalOffset, Set.of(modality));
-
-      UUID nonExistentModalityId = UUID.randomUUID();
-      String newName = "Quadra A - Atualizada";
-      String newDescription = "Quadra de Futebol - Atualizada";
-      OffsetMinutes newOffset = OffsetMinutes.THIRTY;
-      Set<UUID> newModalityIds = Set.of(modality.getId(), nonExistentModalityId);
-      var request = new UpdateCourtRequestDto(newName, newDescription, newOffset, newModalityIds);
-
-      // Act & Assert
-      var response =
-          given()
-              .spec(specification)
-              .header("Authorization", accessToken)
-              .body(request)
-              .when()
-              .put("/{courtId}", court.getId())
-              .then()
-              .statusCode(404)
-              .extract()
-              .as(ErrorResponseDto.class);
-
-      ErrorCode errorCode = ErrorCode.MODALITY_NOT_FOUND;
-
-      assertThat(response.status()).isEqualTo(404);
-      assertThat(response.path()).isEqualTo("/api/admin/courts/" + court.getId());
-      assertThat(response.errorCode()).isEqualTo(errorCode.name());
-      assertThat(response.developerMessage()).isEqualTo(errorCode.getMessage());
-    }
-
-    @Test
-    @DisplayName("Deve retornar 409 Conflict quando já existir uma quadra com o mesmo nome")
-    void update_shouldReturn409Conflict_whenCourtWithSameNameAlreadyExists() {
-      // Arrange
-      var modality = mockPersistModality("Futebol");
-      String existingName = "Quadra Existente";
-      String existingDescription = "Quadra de Futebol";
-      OffsetMinutes existingOffset = OffsetMinutes.ZERO;
-      mockPersistCourt(existingName, existingDescription, existingOffset, Set.of(modality));
-
-      String originalName = "Quadra A";
-      String originalDescription = "Quadra de Basquete";
-      OffsetMinutes originalOffset = OffsetMinutes.ZERO;
-      Court court =
-          mockPersistCourt(originalName, originalDescription, originalOffset, Set.of(modality));
-
-      String newDescription = "Nova Descrição";
-      OffsetMinutes newOffset = OffsetMinutes.THIRTY;
-      Set<UUID> newModalityIds = Set.of(modality.getId());
-      var request =
-          new UpdateCourtRequestDto(existingName, newDescription, newOffset, newModalityIds);
-
-      // Act & Assert
-      var response =
-          given()
-              .spec(specification)
-              .header("Authorization", accessToken)
-              .body(request)
-              .when()
-              .put("/{courtId}", court.getId())
-              .then()
-              .statusCode(409)
-              .extract()
-              .as(ErrorResponseDto.class);
-
-      ErrorCode errorCode = ErrorCode.COURT_ALREADY_EXISTS;
-
-      assertThat(response.status()).isEqualTo(409);
-      assertThat(response.path()).isEqualTo("/api/admin/courts/" + court.getId());
-      assertThat(response.errorCode()).isEqualTo(errorCode.name());
-      assertThat(response.developerMessage()).isEqualTo(errorCode.getMessage());
+        assertThat(response.status()).isEqualTo(409);
+        assertThat(response.path()).isEqualTo("/api/admin/courts/" + court.getId());
+        assertThat(response.errorCode()).isEqualTo(errorCode.name());
+        assertThat(response.developerMessage()).isEqualTo(errorCode.getMessage());
+      }
     }
   }
 
   @Nested
   @DisplayName("Testes para o endpoint PATCH /api/admin/courts/{courtId}/enable")
   class EnableCourtTests {
+    @Nested
+    @DisplayName("Cenários de sucesso - 204 No Content")
+    class EnableCourtSuccessScenarios {
+      @Test
+      @DisplayName("Deve habilitar com sucesso uma quadra")
+      void enable_shouldReturn204NoContent_whenCourtIsEnabledSuccessfully() {
+        // Arrange
+        var modality = mockPersistModality("Futebol");
+        String name = "Quadra A";
+        String description = "Quadra de Futebol";
+        OffsetMinutes offsetMinutes = OffsetMinutes.ZERO;
+        Court court = mockPersistCourt(name, description, offsetMinutes, Set.of(modality), false);
 
-    @Test
-    @DisplayName("Deve retornar 204 No Content e habilitar com sucesso uma quadra")
-    void enable_shouldReturn204NoContent_whenCourtIsEnabledSuccessfully() {
-      // Arrange
-      var modality = mockPersistModality("Futebol");
-      String name = "Quadra A";
-      String description = "Quadra de Futebol";
-      OffsetMinutes offsetMinutes = OffsetMinutes.ZERO;
-      Court court = mockPersistCourt(name, description, offsetMinutes, Set.of(modality), false);
+        // Act & Assert
+        given()
+            .spec(specification)
+            .header("Authorization", accessToken)
+            .when()
+            .patch("/{courtId}/enable", court.getId())
+            .then()
+            .statusCode(204);
 
-      // Act & Assert
-      given()
-          .spec(specification)
-          .header("Authorization", accessToken)
-          .when()
-          .patch("/{courtId}/enable", court.getId())
-          .then()
-          .statusCode(204);
-
-      Court enabledCourt = courtRepository.findById(court.getId()).orElseThrow();
-      assertThat(enabledCourt.isActive()).isTrue();
+        Court enabledCourt = courtRepository.findById(court.getId()).orElseThrow();
+        assertThat(enabledCourt.isActive()).isTrue();
+      }
     }
 
-    @Test
-    @DisplayName("Deve retornar 404 Not Found quando a quadra não existir")
-    void enable_shouldReturn404NotFound_whenCourtDoesNotExist() {
-      // Arrange
-      UUID nonExistentCourtId = UUID.randomUUID();
+    @Nested
+    @DisplayName("Cenários de falha - 400 Bad Request")
+    class EnableCourtFailScenarios {
+      @Test
+      @DisplayName("Tenta habilitar uma quadra que não existe")
+      void enable_shouldReturn404NotFound_whenCourtDoesNotExist() {
+        // Arrange
+        UUID nonExistentCourtId = UUID.randomUUID();
 
-      // Act & Assert
-      var response =
-          given()
-              .spec(specification)
-              .header("Authorization", accessToken)
-              .when()
-              .patch("/{courtId}/enable", nonExistentCourtId)
-              .then()
-              .statusCode(404)
-              .extract()
-              .as(ErrorResponseDto.class);
+        // Act & Assert
+        var response =
+            given()
+                .spec(specification)
+                .header("Authorization", accessToken)
+                .when()
+                .patch("/{courtId}/enable", nonExistentCourtId)
+                .then()
+                .statusCode(404)
+                .extract()
+                .as(ErrorResponseDto.class);
 
-      ErrorCode errorCode = ErrorCode.COURT_NOT_FOUND;
+        ErrorCode errorCode = ErrorCode.COURT_NOT_FOUND;
 
-      assertThat(response.status()).isEqualTo(404);
-      assertThat(response.path()).isEqualTo("/api/admin/courts/" + nonExistentCourtId + "/enable");
-      assertThat(response.errorCode()).isEqualTo(errorCode.name());
-      assertThat(response.developerMessage()).isEqualTo(errorCode.getMessage());
+        assertThat(response.status()).isEqualTo(404);
+        assertThat(response.path())
+            .isEqualTo("/api/admin/courts/" + nonExistentCourtId + "/enable");
+        assertThat(response.errorCode()).isEqualTo(errorCode.name());
+        assertThat(response.developerMessage()).isEqualTo(errorCode.getMessage());
+      }
     }
 
-    @Test
-    @DisplayName("Deve retornar 409 Conflict quando a quadra já estiver habilitada")
-    void enable_shouldReturn409Conflict_whenCourtIsAlreadyEnabled() {
-      // Arrange
-      var modality = mockPersistModality("Futebol");
-      String name = "Quadra A";
-      String description = "Quadra de Futebol";
-      OffsetMinutes offsetMinutes = OffsetMinutes.ZERO;
-      Court court = mockPersistCourt(name, description, offsetMinutes, Set.of(modality), true);
+    @Nested
+    @DisplayName("Cenários de falha - 409 Conflict")
+    class EnableCourtConflictScenarios {
+      @Test
+      @DisplayName("Tenta ativar uma quadra que já está ativada")
+      void enable_shouldReturn409Conflict_whenCourtIsAlreadyEnabled() {
+        // Arrange
+        var modality = mockPersistModality("Futebol");
+        String name = "Quadra A";
+        String description = "Quadra de Futebol";
+        OffsetMinutes offsetMinutes = OffsetMinutes.ZERO;
+        Court court = mockPersistCourt(name, description, offsetMinutes, Set.of(modality), true);
 
-      // Act & Assert
-      var response =
-          given()
-              .spec(specification)
-              .header("Authorization", accessToken)
-              .when()
-              .patch("/{courtId}/enable", court.getId())
-              .then()
-              .statusCode(409)
-              .extract()
-              .as(ErrorResponseDto.class);
+        // Act & Assert
+        var response =
+            given()
+                .spec(specification)
+                .header("Authorization", accessToken)
+                .when()
+                .patch("/{courtId}/enable", court.getId())
+                .then()
+                .statusCode(409)
+                .extract()
+                .as(ErrorResponseDto.class);
 
-      ErrorCode errorCode = ErrorCode.COURT_ALREADY_ENABLED;
+        ErrorCode errorCode = ErrorCode.COURT_ALREADY_ENABLED;
 
-      assertThat(response.status()).isEqualTo(409);
-      assertThat(response.path()).isEqualTo("/api/admin/courts/" + court.getId() + "/enable");
-      assertThat(response.errorCode()).isEqualTo(errorCode.name());
-      assertThat(response.developerMessage()).isEqualTo(errorCode.getMessage());
+        assertThat(response.status()).isEqualTo(409);
+        assertThat(response.path()).isEqualTo("/api/admin/courts/" + court.getId() + "/enable");
+        assertThat(response.errorCode()).isEqualTo(errorCode.name());
+        assertThat(response.developerMessage()).isEqualTo(errorCode.getMessage());
+      }
     }
   }
 
@@ -787,83 +834,96 @@ public class AdminCourtControllerIntegrationTest extends WebIntegrationTestConfi
   @DisplayName("Testes para o endpoint PATCH /api/admin/courts/{courtId}/disable")
   class DisableCourtTests {
 
-    @Test
-    @DisplayName("Deve retornar 204 No Content e desabilitar com sucesso uma quadra")
-    void disable_shouldReturn204NoContent_whenCourtIsDisabledSuccessfully() {
-      // Arrange
-      var modality = mockPersistModality("Futebol");
-      String name = "Quadra A";
-      String description = "Quadra de Futebol";
-      OffsetMinutes offsetMinutes = OffsetMinutes.ZERO;
-      Court court = mockPersistCourt(name, description, offsetMinutes, Set.of(modality), true);
+    @Nested
+    @DisplayName("Cenários de sucesso - 204 No Content")
+    class DisableCourtSuccessScenarios {
+      @Test
+      @DisplayName("Deve desabilitar com sucesso uma quadra")
+      void disable_shouldReturn204NoContent_whenCourtIsDisabledSuccessfully() {
+        // Arrange
+        var modality = mockPersistModality("Futebol");
+        String name = "Quadra A";
+        String description = "Quadra de Futebol";
+        OffsetMinutes offsetMinutes = OffsetMinutes.ZERO;
+        Court court = mockPersistCourt(name, description, offsetMinutes, Set.of(modality), true);
 
-      // Act & Assert
-      given()
-          .spec(specification)
-          .header("Authorization", accessToken)
-          .when()
-          .patch("/{courtId}/disable", court.getId())
-          .then()
-          .statusCode(204);
+        // Act & Assert
+        given()
+            .spec(specification)
+            .header("Authorization", accessToken)
+            .when()
+            .patch("/{courtId}/disable", court.getId())
+            .then()
+            .statusCode(204);
 
-      Court disabledCourt = courtRepository.findById(court.getId()).orElseThrow();
-      assertThat(disabledCourt.isActive()).isFalse();
+        Court disabledCourt = courtRepository.findById(court.getId()).orElseThrow();
+        assertThat(disabledCourt.isActive()).isFalse();
+      }
     }
 
-    @Test
-    @DisplayName("Deve retornar 404 Not Found quando a quadra não existir")
-    void disable_shouldReturn404NotFound_whenCourtDoesNotExist() {
-      // Arrange
-      UUID nonExistentCourtId = UUID.randomUUID();
+    @Nested
+    @DisplayName("Cenários de falha - 404 Not Found")
+    class DisableCourtFailScenarios {
+      @Test
+      @DisplayName("Tenta desabilitar uma quadra que não existe")
+      void disable_shouldReturn404NotFound_whenCourtDoesNotExist() {
+        // Arrange
+        UUID nonExistentCourtId = UUID.randomUUID();
 
-      // Act & Assert
-      var response =
-          given()
-              .spec(specification)
-              .header("Authorization", accessToken)
-              .when()
-              .patch("/{courtId}/disable", nonExistentCourtId)
-              .then()
-              .statusCode(404)
-              .extract()
-              .as(ErrorResponseDto.class);
+        // Act & Assert
+        var response =
+            given()
+                .spec(specification)
+                .header("Authorization", accessToken)
+                .when()
+                .patch("/{courtId}/disable", nonExistentCourtId)
+                .then()
+                .statusCode(404)
+                .extract()
+                .as(ErrorResponseDto.class);
 
-      ErrorCode errorCode = ErrorCode.COURT_NOT_FOUND;
+        ErrorCode errorCode = ErrorCode.COURT_NOT_FOUND;
 
-      assertThat(response.status()).isEqualTo(404);
-      assertThat(response.path()).isEqualTo("/api/admin/courts/" + nonExistentCourtId + "/disable");
-      assertThat(response.errorCode()).isEqualTo(errorCode.name());
-      assertThat(response.developerMessage()).isEqualTo(errorCode.getMessage());
+        assertThat(response.status()).isEqualTo(404);
+        assertThat(response.path())
+            .isEqualTo("/api/admin/courts/" + nonExistentCourtId + "/disable");
+        assertThat(response.errorCode()).isEqualTo(errorCode.name());
+        assertThat(response.developerMessage()).isEqualTo(errorCode.getMessage());
+      }
     }
 
-    @Test
-    @DisplayName("Deve retornar 409 Conflict quando a quadra já estiver desabilitada")
-    void disable_shouldReturn409Conflict_whenCourtIsAlreadyDisabled() {
-      // Arrange
-      var modality = mockPersistModality("Futebol");
-      String name = "Quadra A";
-      String description = "Quadra de Futebol";
-      OffsetMinutes offsetMinutes = OffsetMinutes.ZERO;
-      Court court = mockPersistCourt(name, description, offsetMinutes, Set.of(modality), false);
+    @Nested
+    @DisplayName("Cenários de falha - 409 Conflict")
+    class DisableCourtConflictScenarios {
+      @Test
+      @DisplayName("Tenta desabilitar uma quadra que já está desabilitada")
+      void disable_shouldReturn409Conflict_whenCourtIsAlreadyDisabled() {
+        // Arrange
+        var modality = mockPersistModality("Futebol");
+        String name = "Quadra A";
+        String description = "Quadra de Futebol";
+        OffsetMinutes offsetMinutes = OffsetMinutes.ZERO;
+        Court court = mockPersistCourt(name, description, offsetMinutes, Set.of(modality), false);
 
-      // Act & Assert
-      var response =
-          given()
-              .spec(specification)
-              .header("Authorization", accessToken)
-              .when()
-              .patch("/{courtId}/disable", court.getId())
-              .then()
-              .statusCode(409)
-              .extract()
-              .as(ErrorResponseDto.class);
+        // Act & Assert
+        var response =
+            given()
+                .spec(specification)
+                .header("Authorization", accessToken)
+                .when()
+                .patch("/{courtId}/disable", court.getId())
+                .then()
+                .statusCode(409)
+                .extract()
+                .as(ErrorResponseDto.class);
 
-      ErrorCode errorCode = ErrorCode.COURT_ALREADY_DISABLED;
+        ErrorCode errorCode = ErrorCode.COURT_ALREADY_DISABLED;
 
-      assertThat(response.status()).isEqualTo(409);
-      assertThat(response.path()).isEqualTo("/api/admin/courts/" + court.getId() + "/disable");
-      assertThat(response.errorCode()).isEqualTo(errorCode.name());
-      assertThat(response.developerMessage()).isEqualTo(errorCode.getMessage());
+        assertThat(response.status()).isEqualTo(409);
+        assertThat(response.path()).isEqualTo("/api/admin/courts/" + court.getId() + "/disable");
+        assertThat(response.errorCode()).isEqualTo(errorCode.name());
+        assertThat(response.developerMessage()).isEqualTo(errorCode.getMessage());
+      }
     }
   }
 

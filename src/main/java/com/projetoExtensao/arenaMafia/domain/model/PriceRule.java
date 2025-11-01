@@ -5,6 +5,7 @@ import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidPriceEx
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidPriceRuleNameFormatException;
 import com.projetoExtensao.arenaMafia.domain.exception.conflict.PriceRuleConflictException;
 import com.projetoExtensao.arenaMafia.domain.exception.conflict.PriceRuleStatusConflictException;
+import com.projetoExtensao.arenaMafia.domain.exception.conflict.TimeIntervalOverlapException;
 import com.projetoExtensao.arenaMafia.domain.model.enums.DayOfWeek;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
 import java.math.BigDecimal;
@@ -59,7 +60,7 @@ public class PriceRule {
     UUID id = UUID.randomUUID();
     Instant now = Instant.now();
 
-    String name = "Preço Base";
+    String name = "Regra de Preço Padrão";
     int priority = 0;
 
     return new PriceRule(id, name, null, null, price, priority, true, true, now);
@@ -123,6 +124,10 @@ public class PriceRule {
   public static void validateName(String name) {
     if (name == null || name.isEmpty()) {
       throw new InvalidPriceRuleNameFormatException(ErrorCode.PRICE_RULE_NAME_REQUIRED);
+    }
+
+    if (name.length() > 100) {
+      throw new InvalidPriceRuleNameFormatException(ErrorCode.PRICE_RULE_NAME_INVALID_LENGTH);
     }
   }
 
@@ -198,20 +203,27 @@ public class PriceRule {
     if (this.priority != otherRule.priority) {
       return;
     }
-    validateDaysOfWeekOverlapWith(otherRule.getDaysOfWeek());
-    validateTimeIntervalOverlapWith(otherRule.getTimeInterval());
-  }
 
-  // --- Métodos Auxiliares ---
-  private void validateDaysOfWeekOverlapWith(Set<DayOfWeek> daysOfWeek) {
-    if (this.daysOfWeek == null || daysOfWeek == null) {
+    boolean hasDaysOverlap = checkDaysOfWeekOverlapWith(otherRule.getDaysOfWeek());
+
+    if (!hasDaysOverlap) {
       return;
     }
 
-    boolean hasOverlap = this.daysOfWeek.stream().anyMatch(daysOfWeek::contains);
-    if (hasOverlap) {
-      throw new PriceRuleConflictException(ErrorCode.PRICE_RULE_OVERLAP);
+    try {
+      validateTimeIntervalOverlapWith(otherRule.getTimeInterval());
+    } catch (TimeIntervalOverlapException e) {
+      throw new PriceRuleConflictException(ErrorCode.PRICE_RULE_PRIORITY_OVERLAP);
     }
+  }
+
+  // --- Métodos Auxiliares ---
+  private boolean checkDaysOfWeekOverlapWith(Set<DayOfWeek> daysOfWeek) {
+    if (this.daysOfWeek == null || daysOfWeek == null) {
+      return true;
+    }
+
+    return this.daysOfWeek.stream().anyMatch(daysOfWeek::contains);
   }
 
   private void validateTimeIntervalOverlapWith(TimeInterval timeInterval) {

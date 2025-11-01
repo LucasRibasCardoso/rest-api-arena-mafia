@@ -8,17 +8,17 @@ import java.time.LocalTime;
 @Embeddable
 public class TimeIntervalEmbeddable {
 
-  @Column(name = "open_time", nullable = false)
-  private LocalTime openTime;
+  @Column(name = "start_time", nullable = false)
+  private LocalTime startTime;
 
-  @Column(name = "close_time", nullable = false)
-  private LocalTime closeTime;
+  @Column(name = "end_time", nullable = false)
+  private LocalTime endTime;
 
   protected TimeIntervalEmbeddable() {}
 
-  private TimeIntervalEmbeddable(LocalTime openTime, LocalTime closeTime) {
-    this.openTime = openTime;
-    this.closeTime = closeTime;
+  private TimeIntervalEmbeddable(LocalTime startTime, LocalTime endTime) {
+    this.startTime = startTime;
+    this.endTime = endTime;
   }
 
   public static TimeIntervalEmbeddable fromDomain(TimeInterval interval) {
@@ -29,15 +29,15 @@ public class TimeIntervalEmbeddable {
   }
 
   public TimeInterval toDomain() {
-    return new TimeInterval(openTime, closeTime);
+    return new TimeInterval(startTime, endTime);
   }
 
   // Getters para o JPA
-  public LocalTime getOpenTime() {
-    return openTime;
+  public LocalTime getStartTime() {
+    return startTime;
   }
 
-  public LocalTime getCloseTime() {
-    return closeTime;
+  public LocalTime getEndTime() {
+    return endTime;
   }
 }

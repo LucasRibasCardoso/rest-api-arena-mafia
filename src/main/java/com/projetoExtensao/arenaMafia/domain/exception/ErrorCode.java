@@ -146,6 +146,7 @@ public enum ErrorCode {
 
   // ==================== ERROS DE DIA DA SEMANA ====================
   DAY_OF_WEEK_REQUIRED("O dia da semana é obrigatório."),
+  DAY_OF_WEEK_EMPTY("A lista de dias da semana não pode estar vazia."),
   DAY_OF_WEEK_INVALID(
       "O dia da semana fornecido é inválido. Valores válidos: 'MONDAY', 'TUESDAY', 'WEDNESDAY',"
           + " 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'."),
@@ -156,7 +157,7 @@ public enum ErrorCode {
       "O horário de abertura deve ser anterior ao horário de fechamento."),
   TIME_INTERVAL_INVALID_MINUTES(
       "Os minutos do horário de abertura ou fechamento são inválidos. Valores válidos: 0 ou 30."),
-  TIME_INTERVAL_OVERLAP("Este intervalo de tempo sobrepõe-se a um intervalo existente."),
+  TIME_INTERVAL_OVERLAP("Este intervalo de horário sobrepõe-se a um intervalo existente."),
   TIME_INTERVAL_SAME_TIME("O horário de abertura não pode ser igual ao horário de fechamento."),
   TIME_INTERVAL_EXCEEDS_24_HOURS("O intervalo de tempo não pode exceder 24 horas."),
 
@@ -169,6 +170,7 @@ public enum ErrorCode {
 
   // ==================== ERROS DE REGRAS DE PREÇO (PRICE RULES) ====================
   PRICE_RULE_NAME_REQUIRED("O nome da regra de preço é obrigatório."),
+  PRICE_RULE_NAME_INVALID_LENGTH("O nome da regra de preço deve ter entre 1 e 100 caracteres."),
   PRICE_RULE_PRICE_INVALID("O preço deve ser um valor positivo."),
   PRICE_RULE_PRICE_REQUIRED("O preço da regra de preço é obrigatório."),
   PRICE_RULE_PRIORITY_REQUIRED("A prioridade da regra de preço é obrigatória."),
@@ -179,10 +181,6 @@ public enum ErrorCode {
   PRICE_RULE_DEFAULT_NOT_FOUND("A regra de preço padrão não foi encontrada."),
   PRICE_RULE_NOT_FOUND("Regra de preço não encontrada."),
   PRICE_RULE_ALREADY_EXISTS("Essa regra de preço já está cadastrada."),
-
-  PRICE_RULE_OVERLAP(
-      "A nova regra de preço conflita com uma regra existente. "
-          + "Há sobreposição de dias e horários."),
   PRICE_RULE_PRIORITY_OVERLAP("Já existe uma regra de preço com essa prioridade."),
 
   // ==================== ERROS DE ENUMS ====================

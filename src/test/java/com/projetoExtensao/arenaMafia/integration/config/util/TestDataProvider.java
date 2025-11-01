@@ -1,5 +1,6 @@
 package com.projetoExtensao.arenaMafia.integration.config.util;
 
+import java.math.BigDecimal;
 import java.util.stream.Stream;
 import org.junit.jupiter.params.provider.Arguments;
 
@@ -90,5 +91,39 @@ public final class TestDataProvider {
         Arguments.of("", "COURT_NAME_REQUIRED"),
         Arguments.of("ab", "COURT_NAME_INVALID_LENGTH"),
         Arguments.of("a".repeat(101), "COURT_NAME_INVALID_LENGTH"));
+  }
+
+  public static Stream<Arguments> invalidDaysOfWeekProvider() {
+    return Stream.of(Arguments.of(new String[] {"MONDAY", "INVALID_DAY"}, "DAY_OF_WEEK_INVALID"));
+  }
+
+  public static Stream<Arguments> invalidTimeIntervalProvider() {
+    return Stream.of(
+        Arguments.of(null, null, "TIME_INTERVAL_REQUIRED"),
+        Arguments.of("08:00", null, "TIME_INTERVAL_REQUIRED"),
+        Arguments.of(null, "18:00", "TIME_INTERVAL_REQUIRED"),
+        Arguments.of("10:00", "10:00", "TIME_INTERVAL_SAME_TIME"),
+        Arguments.of("08:15", "18:00", "TIME_INTERVAL_INVALID_MINUTES"),
+        Arguments.of("08:00", "18:15", "TIME_INTERVAL_INVALID_MINUTES"));
+  }
+
+  public static Stream<Arguments> invalidPriceRuleNameProvider() {
+    return Stream.of(
+        Arguments.of(null, "PRICE_RULE_NAME_REQUIRED"),
+        Arguments.of("", "PRICE_RULE_NAME_REQUIRED"),
+        Arguments.of("  ", "PRICE_RULE_NAME_REQUIRED"),
+        Arguments.of("a".repeat(101), "PRICE_RULE_NAME_INVALID_LENGTH"));
+  }
+
+  public static Stream<Arguments> invalidPriceProvider() {
+    return Stream.of(
+        Arguments.of(null, "PRICE_RULE_PRICE_REQUIRED"),
+        Arguments.of(BigDecimal.valueOf(-1), "PRICE_RULE_PRICE_INVALID"));
+  }
+
+  public static Stream<Arguments> invalidPriorityProvider() {
+    return Stream.of(
+        Arguments.of(null, "PRICE_RULE_PRIORITY_REQUIRED"),
+        Arguments.of(-1, "PRICE_RULE_PRIORITY_INVALID"));
   }
 }

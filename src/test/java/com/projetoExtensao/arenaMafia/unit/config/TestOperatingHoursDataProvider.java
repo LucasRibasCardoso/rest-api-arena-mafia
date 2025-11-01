@@ -79,12 +79,10 @@ public final class TestOperatingHoursDataProvider {
   }
 
   public static Stream<Arguments> invalidDaysOfWeekProvider() {
-    return Stream.of(
-        Arguments.of((Set<DayOfWeek>) null, ErrorCode.DAY_OF_WEEK_REQUIRED),
-        Arguments.of(Set.of(), ErrorCode.DAY_OF_WEEK_REQUIRED));
+    return Stream.of(Arguments.of(Set.of(), ErrorCode.DAY_OF_WEEK_EMPTY));
   }
 
   public static Stream<Arguments> invalidTimeIntervalProvider() {
-    return Stream.of(Arguments.of((TimeInterval) null, ErrorCode.TIME_INTERVAL_REQUIRED));
+    return Stream.of(Arguments.of(null, ErrorCode.TIME_INTERVAL_REQUIRED));
   }
 }

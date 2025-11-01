@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidPriceException;
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidPriceRuleNameFormatException;
-import com.projetoExtensao.arenaMafia.domain.exception.conflict.PriceRuleConflictException;
 import com.projetoExtensao.arenaMafia.domain.exception.conflict.PriceRuleStatusConflictException;
 import com.projetoExtensao.arenaMafia.domain.model.PriceRule;
 import com.projetoExtensao.arenaMafia.domain.model.enums.DayOfWeek;
@@ -77,7 +76,7 @@ public class PriceRuleTest {
       // Assert
       assertThat(priceRule).isNotNull();
       assertThat(priceRule.getId()).isNotNull();
-      assertThat(priceRule.getName()).isEqualTo("Preço Base");
+      assertThat(priceRule.getName()).isEqualTo("Regra de Preço Padrão");
       assertThat(priceRule.getDaysOfWeek()).isNull();
       assertThat(priceRule.getTimeInterval()).isNull();
       assertThat(priceRule.getPrice()).isEqualByComparingTo(basePrice);
@@ -641,28 +640,7 @@ public class PriceRuleTest {
       assertDoesNotThrow(() -> rule1.validateOverlapWith(rule2));
     }
 
-    @Test
-    @DisplayName(
-        "validateOverlapWith() deve lançar exceção quando há sobreposição de dias com mesma prioridade")
-    void validateOverlapWith_shouldThrowException_whenDaysOverlapWithSamePriority() {
-      // Arrange
-      PriceRule rule1 =
-          TestPriceRuleDataProvider.PriceRuleBuilder.defaultPriceRule()
-              .withPriority(1)
-              .withDaysOfWeek(Set.of(DayOfWeek.MONDAY, DayOfWeek.TUESDAY))
-              .withTimeInterval(null)
-              .build();
-      PriceRule rule2 =
-          TestPriceRuleDataProvider.PriceRuleBuilder.defaultPriceRule()
-              .withPriority(1)
-              .withDaysOfWeek(Set.of(DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY))
-              .withTimeInterval(null)
-              .build();
-
-      // Act & Assert
-      assertThatThrownBy(() -> rule1.validateOverlapWith(rule2))
-          .isInstanceOf(PriceRuleConflictException.class);
-    }
+    
 
     @Test
     @DisplayName(
