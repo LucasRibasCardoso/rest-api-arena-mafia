@@ -21,6 +21,9 @@ public class ModalityEntity {
   @Column(nullable = false, unique = true, length = 100)
   private String name;
 
+  @Column(name = "is_active", nullable = false, columnDefinition = "BOOLEAN DEFAULT TRUE")
+  private boolean isActive;
+
   @Column(name = "created_at", nullable = false)
   private Instant createdAt;
 
@@ -42,6 +45,14 @@ public class ModalityEntity {
 
   public void setName(String name) {
     this.name = name;
+  }
+
+  public boolean isActive() {
+    return isActive;
+  }
+
+  public void setActive(boolean active) {
+    isActive = active;
   }
 
   public Instant getCreatedAt() {

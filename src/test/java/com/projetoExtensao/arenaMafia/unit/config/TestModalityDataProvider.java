@@ -17,6 +17,14 @@ public final class TestModalityDataProvider {
     return ModalityBuilder.defaultModality().build();
   }
 
+  public static Modality createActiveModality() {
+    return ModalityBuilder.defaultModality().withActive(true).build();
+  }
+
+  public static Modality createInactiveModality() {
+    return ModalityBuilder.defaultModality().withActive(false).build();
+  }
+
   public static Modality createModalityWithName(String name) {
     return ModalityBuilder.defaultModality().withName(name).build();
   }
@@ -28,6 +36,7 @@ public final class TestModalityDataProvider {
   public static class ModalityBuilder {
     private UUID id = UUID.randomUUID();
     private String name = defaultName;
+    private boolean isActive = true;
     private Instant createdAt = Instant.now();
 
     public static ModalityBuilder defaultModality() {
@@ -44,13 +53,18 @@ public final class TestModalityDataProvider {
       return this;
     }
 
+    public ModalityBuilder withActive(boolean isActive) {
+      this.isActive = isActive;
+      return this;
+    }
+
     public ModalityBuilder withCreatedAt(Instant createdAt) {
       this.createdAt = createdAt;
       return this;
     }
 
     public Modality build() {
-      return Modality.reconstitute(id, name, createdAt);
+      return Modality.reconstitute(id, name, isActive, createdAt);
     }
   }
 

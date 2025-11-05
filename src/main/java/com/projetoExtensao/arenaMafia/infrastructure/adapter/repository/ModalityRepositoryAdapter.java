@@ -27,7 +27,7 @@ public class ModalityRepositoryAdapter implements ModalityRepositoryPort {
 
   @Override
   public boolean existsByName(String name) {
-    return modalityJpaRepository.existsByName(name);
+    return modalityJpaRepository.existsByNameAndIsActiveTrue(name);
   }
 
   @Override
@@ -43,21 +43,15 @@ public class ModalityRepositoryAdapter implements ModalityRepositoryPort {
   }
 
   @Override
-  public void delete(Modality modality) {
-    ModalityEntity entity = modalityMapper.toEntity(modality);
-    modalityJpaRepository.delete(entity);
-  }
-
-  @Override
   @Transactional(readOnly = true)
   public Optional<Modality> findById(UUID id) {
-    return modalityJpaRepository.findById(id).map(modalityMapper::toDomain);
+    return modalityJpaRepository.findByIdAndIsActiveTrue(id).map(modalityMapper::toDomain);
   }
 
   @Override
   public Modality findByIdOrElseThrow(UUID id) {
     return modalityJpaRepository
-        .findById(id)
+        .findByIdAndIsActiveTrue(id)
         .map(modalityMapper::toDomain)
         .orElseThrow(ModalityNotFoundException::new);
   }
@@ -65,17 +59,21 @@ public class ModalityRepositoryAdapter implements ModalityRepositoryPort {
   @Override
   @Transactional(readOnly = true)
   public Optional<Modality> findByName(String name) {
-    return modalityJpaRepository.findByName(name).map(modalityMapper::toDomain);
+    return modalityJpaRepository.findByNameAndIsActiveTrue(name).map(modalityMapper::toDomain);
   }
 
   @Override
   @Transactional(readOnly = true)
   public List<Modality> findAll() {
-    return modalityJpaRepository.findAll().stream().map(modalityMapper::toDomain).toList();
+    return modalityJpaRepository.findAllByIsActiveTrue().stream()
+        .map(modalityMapper::toDomain)
+        .toList();
   }
 
   @Override
   public List<Modality> findAllByIds(Set<UUID> ids) {
-    return modalityJpaRepository.findAllById(ids).stream().map(modalityMapper::toDomain).toList();
+    return modalityJpaRepository.findAllByIdInAndIsActiveTrue(ids).stream()
+        .map(modalityMapper::toDomain)
+        .toList();
   }
 }

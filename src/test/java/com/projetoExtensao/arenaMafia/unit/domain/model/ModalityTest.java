@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidModalityNameFormatException;
+import com.projetoExtensao.arenaMafia.domain.exception.conflict.ModalityStatusConflictException;
 import com.projetoExtensao.arenaMafia.domain.model.Modality;
 import com.projetoExtensao.arenaMafia.unit.config.TestModalityDataProvider;
 import java.time.Instant;
@@ -39,6 +40,7 @@ public class ModalityTest {
       assertThat(modality).isNotNull();
       assertThat(modality.getId()).isNotNull();
       assertThat(modality.getName()).isEqualTo(name);
+      assertThat(modality.isActive()).isTrue();
       assertThat(modality.getCreatedAt())
           .isAfterOrEqualTo(startTime)
           .isBeforeOrEqualTo(Instant.now());
@@ -51,14 +53,16 @@ public class ModalityTest {
       // Arrange
       UUID id = UUID.randomUUID();
       String name = "Vôlei";
+      boolean isActive = true;
       Instant createdAt = Instant.now().minusSeconds(3600);
 
       // Act
-      Modality modality = Modality.reconstitute(id, name, createdAt);
+      Modality modality = Modality.reconstitute(id, name, isActive, createdAt);
 
       // Assert
       assertThat(modality.getId()).isEqualTo(id);
       assertThat(modality.getName()).isEqualTo(name);
+      assertThat(modality.isActive()).isEqualTo(isActive);
       assertThat(modality.getCreatedAt()).isEqualTo(createdAt);
     }
 
@@ -192,6 +196,61 @@ public class ModalityTest {
   }
 
   @Nested
+  @DisplayName("Testes para Soft Delete (disable/enable)")
+  class SoftDeleteTests {
+
+    @Test
+    @DisplayName("disable() deve desativar uma modalidade ativa")
+    void disable_shouldDeactivateActiveModality() {
+      // Arrange
+      Modality modality = TestModalityDataProvider.createActiveModality();
+      assertThat(modality.isActive()).isTrue();
+
+      // Act
+      modality.disable();
+
+      // Assert
+      assertThat(modality.isActive()).isFalse();
+    }
+
+    @Test
+    @DisplayName("disable() deve lançar exceção ao tentar desativar modalidade já inativa")
+    void disable_shouldThrowException_whenModalityAlreadyDisabled() {
+      // Arrange
+      Modality modality = TestModalityDataProvider.createInactiveModality();
+      assertThat(modality.isActive()).isFalse();
+
+      // Act & Assert
+      assertThatThrownBy(modality::disable)
+          .isInstanceOf(ModalityStatusConflictException.class)
+          .satisfies(
+              ex -> {
+                ModalityStatusConflictException exception = (ModalityStatusConflictException) ex;
+                assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.MODALITY_ALREADY_DISABLE);
+              });
+    }
+
+    @Test
+    @DisplayName("disable() não deve afetar outros atributos da modalidade")
+    void disable_shouldNotAffectOtherAttributes() {
+      // Arrange
+      Modality modality = TestModalityDataProvider.createActiveModality();
+      UUID originalId = modality.getId();
+      String originalName = modality.getName();
+      Instant originalCreatedAt = modality.getCreatedAt();
+
+      // Act
+      modality.disable();
+
+      // Assert
+      assertThat(modality.getId()).isEqualTo(originalId);
+      assertThat(modality.getName()).isEqualTo(originalName);
+      assertThat(modality.getCreatedAt()).isEqualTo(originalCreatedAt);
+      assertThat(modality.isActive()).isFalse();
+    }
+  }
+
+  @Nested
   @DisplayName("Testes para Métodos de Validação Estáticos")
   class StaticValidationTests {
 
@@ -266,8 +325,8 @@ public class ModalityTest {
     void equals_shouldReturnTrue_whenModalitiesHaveSameId() {
       // Arrange
       UUID id = UUID.randomUUID();
-      Modality modality1 = Modality.reconstitute(id, "Futebol", Instant.now());
-      Modality modality2 = Modality.reconstitute(id, "Vôlei", Instant.now());
+      Modality modality1 = Modality.reconstitute(id, "Futebol", true, Instant.now());
+      Modality modality2 = Modality.reconstitute(id, "Vôlei", true, Instant.now());
 
       // Act & Assert
       assertThat(modality1).isEqualTo(modality2);
@@ -289,8 +348,8 @@ public class ModalityTest {
     void hashCode_shouldReturnSameValue_whenModalitiesHaveSameId() {
       // Arrange
       UUID id = UUID.randomUUID();
-      Modality modality1 = Modality.reconstitute(id, "Futebol", Instant.now());
-      Modality modality2 = Modality.reconstitute(id, "Vôlei", Instant.now());
+      Modality modality1 = Modality.reconstitute(id, "Futebol", true, Instant.now());
+      Modality modality2 = Modality.reconstitute(id, "Vôlei", false, Instant.now());
 
       // Act & Assert
       assertThat(modality1.hashCode()).isEqualTo(modality2.hashCode());
@@ -436,6 +495,53 @@ public class ModalityTest {
       assertThat(modality.getId()).isEqualTo(originalId);
       assertThat(modality.getCreatedAt()).isEqualTo(originalCreatedAt);
       assertThat(modality.getName()).isEqualTo("Novo Nome");
+    }
+
+    @Test
+    @DisplayName("Deve reconstituir modalidade inativa corretamente")
+    void shouldReconstituteInactiveModalityCorrectly() {
+      // Arrange
+      UUID id = UUID.randomUUID();
+      String name = "Modalidade Antiga";
+      boolean isActive = false;
+      Instant createdAt = Instant.now().minusSeconds(86400);
+
+      // Act
+      Modality modality = Modality.reconstitute(id, name, isActive, createdAt);
+
+      // Assert
+      assertThat(modality.getId()).isEqualTo(id);
+      assertThat(modality.getName()).isEqualTo(name);
+      assertThat(modality.isActive()).isFalse();
+      assertThat(modality.getCreatedAt()).isEqualTo(createdAt);
+    }
+
+    @Test
+    @DisplayName("Deve criar modalidade com isActive = true por padrão usando Builder")
+    void shouldCreateModalityWithDefaultActiveStatus() {
+      // Act
+      Modality modality =
+          TestModalityDataProvider.ModalityBuilder.defaultModality()
+              .withName("Nova Modalidade")
+              .build();
+
+      // Assert
+      assertThat(modality.isActive()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Deve permitir atualizar nome de modalidade inativa")
+    void shouldAllowUpdateNameOfInactiveModality() {
+      // Arrange
+      Modality modality = TestModalityDataProvider.createInactiveModality();
+      String newName = "Nome Atualizado";
+
+      // Act
+      modality.updateName(newName);
+
+      // Assert
+      assertThat(modality.getName()).isEqualTo(newName);
+      assertThat(modality.isActive()).isFalse();
     }
   }
 }

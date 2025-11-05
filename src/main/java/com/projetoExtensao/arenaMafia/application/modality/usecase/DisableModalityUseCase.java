@@ -2,7 +2,7 @@ package com.projetoExtensao.arenaMafia.application.modality.usecase;
 
 import java.util.UUID;
 
-public interface DeleteModalityUseCase {
+public interface DisableModalityUseCase {
 
   void execute(UUID id);
 }

@@ -6,6 +6,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.projetoExtensao.arenaMafia.application.modality.port.ModalityRepositoryPort;
 import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 import com.projetoExtensao.arenaMafia.domain.model.Modality;
+import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.ModalityEntity;
+import com.projetoExtensao.arenaMafia.infrastructure.persistence.mapper.ModalityMapper;
+import com.projetoExtensao.arenaMafia.infrastructure.persistence.repository.ModalityJpaRepository;
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.request.CreateModalityRequestDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.exception.dto.ErrorResponseDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.exception.dto.FieldErrorResponseDto;
@@ -29,9 +32,9 @@ import org.springframework.test.annotation.DirtiesContext;
 @DisplayName("Testes de integração para AdminModalityController")
 public class AdminModalityControllerIntegrationTest extends WebIntegrationTestConfig {
 
-  @Autowired private ModalityRepositoryPort modalityRepository;
   private RequestSpecification specification;
   private String accessToken;
+  @Autowired private ModalityJpaRepository modalityJpaRepository;
 
   @BeforeEach
   void setup() {
@@ -438,17 +441,17 @@ public class AdminModalityControllerIntegrationTest extends WebIntegrationTestCo
   }
 
   @Nested
-  @DisplayName("Testes para o endpoint DELETE /api/admin/modalities/{modalityId}")
-  class DeleteModalityTests {
+  @DisplayName("Testes para o endpoint PATCH /api/admin/modalities/{modalityId}")
+  class DisableModalityTests {
 
     @Nested
     @DisplayName("Cenários de sucesso - 204 No Content")
-    class DeleteModalitySuccessScenarios {
+    class DisableModalitySuccessScenarios {
       @Test
-      @DisplayName("Deve deletar uma modalidade com sucesso")
-      void delete_shouldReturn204_whenDeleteModalitySuccessfully() {
+      @DisplayName("Deve desativar uma modalidade com sucesso (soft delete)")
+      void disable_shouldReturn204_whenDisableModalitySuccessfully() {
         // Arrange
-        Modality modality = mockPersistModality("Modalidade Para Deletar");
+        Modality modality = mockPersistModality("Modalidade Para Desativar");
 
         // Act
         given()
@@ -456,21 +459,22 @@ public class AdminModalityControllerIntegrationTest extends WebIntegrationTestCo
             .header("Authorization", accessToken)
             .pathParam("modalityId", modality.getId())
             .when()
-            .delete("/{modalityId}")
+            .patch("/{modalityId}/disable")
             .then()
             .statusCode(204);
 
-        // Assert
-        assertThat(modalityRepository.findById(modality.getId())).isEmpty();
+        ModalityEntity disabledModality =
+            modalityJpaRepository.findById(modality.getId()).orElseThrow();
+        assertThat(disabledModality.isActive()).isFalse();
       }
     }
 
     @Nested
     @DisplayName("Cenários de erro - 400 Bad Request")
-    class DeleteModalityError400Scenarios {
+    class DisableModalityError400Scenarios {
       @Test
-      @DisplayName("Tenta deletar uma modalidade com ID inválido")
-      void delete_shouldReturn400_whenModalityIdIsInvalid() {
+      @DisplayName("Tenta desativar uma modalidade com ID inválido")
+      void disable_shouldReturn400_whenModalityIdIsInvalid() {
         // Arrange
         String invalidModalityId = "invalid-uuid";
 
@@ -480,7 +484,7 @@ public class AdminModalityControllerIntegrationTest extends WebIntegrationTestCo
                 .header("Authorization", accessToken)
                 .pathParam("modalityId", invalidModalityId)
                 .when()
-                .delete("/{modalityId}")
+                .patch("/{modalityId}/disable")
                 .then()
                 .statusCode(400)
                 .extract()
@@ -490,7 +494,7 @@ public class AdminModalityControllerIntegrationTest extends WebIntegrationTestCo
 
         // Assert
         assertThat(response.status()).isEqualTo(400);
-        assertThat(response.path()).isEqualTo("/api/admin/modalities/" + invalidModalityId);
+        assertThat(response.path()).isEqualTo("/api/admin/modalities/" + invalidModalityId + "/disable");
         assertThat(response.errorCode()).isEqualTo(errorCode.name());
         assertThat(response.developerMessage()).isEqualTo(errorCode.getMessage());
       }
@@ -498,10 +502,10 @@ public class AdminModalityControllerIntegrationTest extends WebIntegrationTestCo
 
     @Nested
     @DisplayName("Cenários de erro - 404 Not Found")
-    class DeleteModalityError404Scenarios {
+    class DisableModalityError404Scenarios {
       @Test
-      @DisplayName("Tenta deletar uma modalidade inexistente")
-      void delete_shouldReturn404_whenModalityDoesNotExist() {
+      @DisplayName("Tenta desativar uma modalidade inexistente")
+      void disable_shouldReturn404_whenModalityDoesNotExist() {
         // Arrange
         String nonExistentModalityId = UUID.randomUUID().toString();
 
@@ -511,7 +515,7 @@ public class AdminModalityControllerIntegrationTest extends WebIntegrationTestCo
                 .header("Authorization", accessToken)
                 .pathParam("modalityId", nonExistentModalityId)
                 .when()
-                .delete("/{modalityId}")
+                .patch("/{modalityId}/disable")
                 .then()
                 .statusCode(404)
                 .extract()
@@ -521,7 +525,7 @@ public class AdminModalityControllerIntegrationTest extends WebIntegrationTestCo
 
         // Assert
         assertThat(response.status()).isEqualTo(404);
-        assertThat(response.path()).isEqualTo("/api/admin/modalities/" + nonExistentModalityId);
+        assertThat(response.path()).isEqualTo("/api/admin/modalities/" + nonExistentModalityId + "/disable");
         assertThat(response.errorCode()).isEqualTo(errorCode.name());
         assertThat(response.developerMessage()).isEqualTo(errorCode.getMessage());
       }
@@ -529,10 +533,10 @@ public class AdminModalityControllerIntegrationTest extends WebIntegrationTestCo
 
     @Nested
     @DisplayName("Cenários de erro - 409 Conflict")
-    class DeleteModalityError409Scenarios {
+    class DisableModalityError409Scenarios {
       @Test
-      @DisplayName("Tenta deletar uma modalidade que está em uso")
-      void delete_shouldReturn409_whenModalityIsInUse() {
+      @DisplayName("Tenta desativar uma modalidade que está em uso")
+      void disable_shouldReturn409_whenModalityIsInUse() {
         // Arrange
         Modality modalityInUse = mockPersistModality("Modalidade Em Uso");
         mockPersistCourt("Quadra 1", modalityInUse);
@@ -543,7 +547,7 @@ public class AdminModalityControllerIntegrationTest extends WebIntegrationTestCo
                 .header("Authorization", accessToken)
                 .pathParam("modalityId", modalityInUse.getId())
                 .when()
-                .delete("/{modalityId}")
+                .patch("/{modalityId}/disable")
                 .then()
                 .statusCode(409)
                 .extract()
@@ -553,7 +557,7 @@ public class AdminModalityControllerIntegrationTest extends WebIntegrationTestCo
 
         // Assert
         assertThat(response.status()).isEqualTo(409);
-        assertThat(response.path()).isEqualTo("/api/admin/modalities/" + modalityInUse.getId());
+        assertThat(response.path()).isEqualTo("/api/admin/modalities/" + modalityInUse.getId() + "/disable");
         assertThat(response.errorCode()).isEqualTo(errorCode.name());
         assertThat(response.developerMessage()).isEqualTo(errorCode.getMessage());
       }

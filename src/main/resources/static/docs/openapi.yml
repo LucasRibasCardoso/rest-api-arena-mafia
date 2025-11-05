@@ -202,6 +202,8 @@ paths:
     $ref: "./paths/admin/CreateModality.yml"
   /api/admin/modalities/{modalityId}:
     $ref: "./paths/admin/ModalityById.yml"
+  /api/admin/modalities/{modalityId}/disable:
+    $ref: "./paths/admin/DisableModality.yml"
 
   /api/admin/courts:
     $ref: "./paths/admin/Courts.yml"

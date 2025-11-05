@@ -17,6 +17,7 @@ public interface ModalityMapper {
 
   @ObjectFactory
   default Modality createModality(ModalityEntity entity) {
-    return Modality.reconstitute(entity.getId(), entity.getName(), entity.getCreatedAt());
+    return Modality.reconstitute(
+        entity.getId(), entity.getName(), entity.isActive(), entity.getCreatedAt());
   }
 }

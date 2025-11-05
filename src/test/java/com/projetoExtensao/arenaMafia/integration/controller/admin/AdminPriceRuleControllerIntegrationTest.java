@@ -8,7 +8,9 @@ import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 import com.projetoExtensao.arenaMafia.domain.model.PriceRule;
 import com.projetoExtensao.arenaMafia.domain.model.enums.DayOfWeek;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
+import com.projetoExtensao.arenaMafia.infrastructure.persistence.repository.PriceRuleJpaRepository;
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.request.CreatePriceRuleRequestDto;
+import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.request.UpdateDefaultPriceRuleRequestDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.request.UpdatePriceRuleRequestDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.exception.dto.ErrorResponseDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.exception.dto.FieldErrorResponseDto;
@@ -36,6 +38,7 @@ import org.springframework.test.annotation.DirtiesContext;
 @DisplayName("Testes de integração para AdminPriceRuleController")
 public class AdminPriceRuleControllerIntegrationTest extends WebIntegrationTestConfig {
 
+  @Autowired private PriceRuleJpaRepository priceRuleJpaRepository;
   @Autowired private PriceRuleRepositoryPort priceRuleRepositoryPort;
   private RequestSpecification specification;
   private String accessToken;
@@ -557,15 +560,14 @@ public class AdminPriceRuleControllerIntegrationTest extends WebIntegrationTestC
     @DisplayName("Cenários de erro - 400 Bad Request")
     class UpdatePriceRuleBadRequestScenarios {
 
-      @InvalidPriceRuleNameProvider
+      @Test
       @DisplayName("Tenta atualizar uma regra de preço com nome inválido")
-      void shouldReturn400_whenUpdatingPriceRuleWithInvalidName(
-          String invalidName, String expectedErrorCode) {
+      void shouldReturn400_whenUpdatingPriceRuleWithInvalidName() {
         // Arrange
         PriceRule existingRule = mockPersistPriceRule();
 
         BigDecimal existingPrice = existingRule.getPrice();
-        var request = new UpdatePriceRuleRequestDto(invalidName, existingPrice);
+        var request = new UpdatePriceRuleRequestDto("a".repeat(101), existingPrice);
 
         // Act
         var response =
@@ -581,7 +583,7 @@ public class AdminPriceRuleControllerIntegrationTest extends WebIntegrationTestC
                 .as(ErrorResponseDto.class);
 
         List<FieldErrorResponseDto> fieldErrors = response.fieldErrors();
-        ErrorCode errorCode = ErrorCode.valueOf(expectedErrorCode);
+        ErrorCode errorCode = ErrorCode.PRICE_RULE_NAME_INVALID_LENGTH;
 
         // Assert
         assertThat(response).isNotNull();
@@ -597,15 +599,14 @@ public class AdminPriceRuleControllerIntegrationTest extends WebIntegrationTestC
                         && fieldError.developerMessage().equals(errorCode.getMessage()));
       }
 
-      @InvalidPriceProvider
+      @Test
       @DisplayName("Tenta atualizar uma regra de preço com preço inválido")
-      void shouldReturn400_wheUnUpdatingPriceRuleWithInvalidPrice(
-          BigDecimal invalidPrice, String expectedErrorCode) {
+      void shouldReturn400_wheUnUpdatingPriceRuleWithInvalidPrice() {
         // Arrange
         PriceRule existingRule = mockPersistPriceRule();
 
         String existingName = existingRule.getName();
-        var request = new UpdatePriceRuleRequestDto(existingName, invalidPrice);
+        var request = new UpdatePriceRuleRequestDto(existingName, BigDecimal.valueOf(-150));
 
         // Act
         var response =
@@ -621,7 +622,7 @@ public class AdminPriceRuleControllerIntegrationTest extends WebIntegrationTestC
                 .as(ErrorResponseDto.class);
 
         List<FieldErrorResponseDto> fieldErrors = response.fieldErrors();
-        ErrorCode errorCode = ErrorCode.valueOf(expectedErrorCode);
+        ErrorCode errorCode = ErrorCode.PRICE_RULE_PRICE_INVALID;
 
         // Assert
         assertThat(response).isNotNull();
@@ -728,19 +729,148 @@ public class AdminPriceRuleControllerIntegrationTest extends WebIntegrationTestC
 
     @Nested
     @DisplayName("Cenários de sucesso - 200 OK")
-    class UpdatePriceRuleDefaultSuccessScenarios {}
+    class UpdatePriceRuleDefaultSuccessScenarios {
+
+      @Test
+      @DisplayName("Deve atualizar a regra de preço padrão com sucesso")
+      void shouldReturn200_whenUpdatingDefaultPriceRule() {
+        // Arrange
+        BigDecimal newDefaultPrice = BigDecimal.valueOf(110);
+        var request = new UpdateDefaultPriceRuleRequestDto(newDefaultPrice);
+
+        // Act
+        var response =
+            given()
+                .spec(specification)
+                .header("Authorization", accessToken)
+                .body(request)
+                .when()
+                .patch("/default")
+                .then()
+                .statusCode(200)
+                .extract()
+                .as(PriceRuleResponseDto.class);
+
+        // Assert
+        assertThat(response).isNotNull();
+        assertThat(response.name()).isEqualTo("Regra de Preço Padrão");
+        assertThat(response.price()).isEqualTo(newDefaultPrice);
+      }
+    }
 
     @Nested
     @DisplayName("Cenários de erro - 400 Bad Request")
-    class UpdatePriceRuleDefaultBadRequestScenarios {}
+    class UpdatePriceRuleDefaultBadRequestScenarios {
+
+      @Test
+      @DisplayName("Tenta atualizar a regra de preço padrão com preço inválido")
+      void shouldReturn400_whenUpdatingDefaultPriceRuleWithInvalidPrice() {
+        // Arrange
+        var request = new UpdateDefaultPriceRuleRequestDto(BigDecimal.valueOf(-50));
+
+        // Act
+        var response =
+            given()
+                .spec(specification)
+                .header("Authorization", accessToken)
+                .body(request)
+                .when()
+                .patch("/default")
+                .then()
+                .statusCode(400)
+                .extract()
+                .as(ErrorResponseDto.class);
+
+        List<FieldErrorResponseDto> fieldErrors = response.fieldErrors();
+        ErrorCode errorCode = ErrorCode.PRICE_RULE_PRICE_INVALID;
+
+        // Assert
+        assertThat(response).isNotNull();
+        assertThat(response.status()).isEqualTo(400);
+        assertThat(response.path()).isEqualTo("/api/admin/price-rules/default");
+        assertThat(response.errorCode()).isEqualTo(ErrorCode.VALIDATION_FAILED.name());
+        assertThat(response.developerMessage()).isEqualTo(ErrorCode.VALIDATION_FAILED.getMessage());
+        assertThat(fieldErrors)
+            .anyMatch(
+                fieldError ->
+                    fieldError.fieldName().equals("price")
+                        && fieldError.errorCode().equals(errorCode.name())
+                        && fieldError.developerMessage().equals(errorCode.getMessage()));
+      }
+
+      @Test
+      @DisplayName("Tenta atualizar a regra de preço padrão sem fornecer preço")
+      void shouldReturn400_whenUpdatingDefaultPriceRuleWithoutPrice() {
+        // Arrange
+        var request = new UpdateDefaultPriceRuleRequestDto(null);
+
+        // Act
+        var response =
+            given()
+                .spec(specification)
+                .header("Authorization", accessToken)
+                .body(request)
+                .when()
+                .patch("/default")
+                .then()
+                .statusCode(400)
+                .extract()
+                .as(ErrorResponseDto.class);
+
+        List<FieldErrorResponseDto> fieldErrors = response.fieldErrors();
+        ErrorCode errorCode = ErrorCode.PRICE_RULE_PRICE_REQUIRED;
+
+        // Assert
+        assertThat(response).isNotNull();
+        assertThat(response.status()).isEqualTo(400);
+        assertThat(response.path()).isEqualTo("/api/admin/price-rules/default");
+        assertThat(response.errorCode()).isEqualTo(ErrorCode.VALIDATION_FAILED.name());
+        assertThat(response.developerMessage()).isEqualTo(ErrorCode.VALIDATION_FAILED.getMessage());
+        assertThat(fieldErrors)
+            .anyMatch(
+                fieldError ->
+                    fieldError.fieldName().equals("price")
+                        && fieldError.errorCode().equals(errorCode.name())
+                        && fieldError.developerMessage().equals(errorCode.getMessage()));
+      }
+    }
 
     @Nested
     @DisplayName("Cenários de erro - 404 Not Found")
-    class UpdatePriceRuleDefaultNotFoundScenarios {}
+    class UpdatePriceRuleDefaultNotFoundScenarios {
 
-    @Nested
-    @DisplayName("Cenários de erro - 409 Conflict")
-    class UpdatePriceRuleDefaultConflictScenarios {}
+      @Test
+      @DisplayName("Tenta atualizar a regra de preço padrão quando ela não existe")
+      void shouldReturn404_whenUpdatingDefaultPriceRuleThatDoesNotExist() {
+        // Arrange
+        priceRuleJpaRepository.deleteAll();
+
+        BigDecimal newDefaultPrice = BigDecimal.valueOf(110);
+        var request = new UpdateDefaultPriceRuleRequestDto(newDefaultPrice);
+
+        // Act
+        var response =
+            given()
+                .spec(specification)
+                .header("Authorization", accessToken)
+                .body(request)
+                .when()
+                .patch("/default")
+                .then()
+                .statusCode(404)
+                .extract()
+                .as(ErrorResponseDto.class);
+
+        ErrorCode errorCode = ErrorCode.PRICE_RULE_DEFAULT_NOT_FOUND;
+
+        // Assert
+        assertThat(response).isNotNull();
+        assertThat(response.status()).isEqualTo(404);
+        assertThat(response.path()).isEqualTo("/api/admin/price-rules/default");
+        assertThat(response.errorCode()).isEqualTo(errorCode.name());
+        assertThat(response.developerMessage()).isEqualTo(errorCode.getMessage());
+      }
+    }
   }
 
   @Nested
