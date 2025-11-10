@@ -52,8 +52,8 @@ tags:
   - name: "Administração - Gerenciamento de Quadras"
     description: Endpoints relacionados ao gerenciamento de quadras, acessíveis apenas por administradores.
 
-  - name: "Modalidades - Consulta Pública"
-    description: Endpoints públicos para consulta de modalidades esportivas.
+  - name: "Endpoints Públicos"
+    description: Endpoints públicos para consultas. Dados utilizados por clientes sem necessidade de autenticação.
 
 components:
   schemas:
@@ -119,6 +119,15 @@ components:
 
     ModalityResponseDto:
       $ref: "./components/schemas/modality/ModalityResponseDto.yml"
+
+    PriceRuleResponseDto:
+      $ref: "./components/schemas/priceRule/PriceRuleResponseDto.yml"
+
+    OperatingHoursResponseDto:
+      $ref: "./components/schemas/operatingHours/OperatingHoursResponseDto.yml"
+
+    HomePageDataResponseDto:
+      $ref: "./components/schemas/homepage/HomePageDataResponseDto.yml"
 
     CreateCourtRequestDto:
       $ref: "./components/schemas/admin/CreateCourtRequestDto.yml"
@@ -199,11 +208,13 @@ paths:
     $ref: "./paths/admin/UpdateRole.yml"
 
   /api/admin/modalities:
-    $ref: "./paths/admin/CreateModality.yml"
+    $ref: "./paths/admin/Modalities.yml"
   /api/admin/modalities/{modalityId}:
     $ref: "./paths/admin/ModalityById.yml"
   /api/admin/modalities/{modalityId}/disable:
     $ref: "./paths/admin/DisableModality.yml"
+  /api/admin/modalities/{modalityId}/enable:
+    $ref: "./paths/admin/EnableModality.yml"
 
   /api/admin/courts:
     $ref: "./paths/admin/Courts.yml"
@@ -216,3 +227,10 @@ paths:
 
   /api/modalities:
     $ref: "./paths/modality/GetAllModalities.yml"
+  /api/price-rules:
+    $ref: "./paths/priceRule/GetAllPriceRules.yml"
+  /api/operating-rules:
+    $ref: "./paths/operatingHours/GetAllOperatingHours.yml"
+  /api/homepage:
+    $ref: "./paths/homepage/GetHomePageData.yml"
+

@@ -5,5 +5,5 @@ import java.util.List;
 
 public interface FindAllModalitiesUseCase {
 
-  List<Modality> execute();
+  List<Modality> execute(Boolean isActive);
 }

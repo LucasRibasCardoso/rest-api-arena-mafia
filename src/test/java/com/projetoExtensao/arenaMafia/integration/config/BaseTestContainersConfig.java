@@ -317,6 +317,12 @@ public abstract class BaseTestContainersConfig {
     return modalityRepository.save(modality);
   }
 
+  public Modality mockPersistDisableModality(String name) {
+    Modality modality = Modality.create(name);
+    modality.disable();
+    return modalityRepository.save(modality);
+  }
+
   public Court mockPersistCourt(String name, Modality modality) {
     String description = "Quadra de " + name;
     OffsetMinutes offset = OffsetMinutes.ZERO;

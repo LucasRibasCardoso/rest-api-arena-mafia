@@ -1,0 +1,56 @@
+type: object
+description: Representa os dados de uma regra de precificação retornada pela API.
+required:
+  - id
+  - name
+  - timeInterval
+  - price
+  - priority
+  - isDefault
+  - isActive
+properties:
+  id:
+    type: string
+    format: uuid
+    description: Identificador único da regra de preço.
+    example: "7c8d9e10-1a2b-3c4d-5e6f-7890abcdef12"
+  name:
+    type: string
+    description: Nome descritivo da regra de preço.
+    example: "Horário de Pico - Fim de Semana"
+  daysOfWeek:
+    type: array
+    nullable: true
+    description: Lista de dias da semana em que a regra é aplicável. Se null ou vazio, a regra é válida para todos os dias da semana.
+    items:
+      type: string
+      enum:
+        - MONDAY
+        - TUESDAY
+        - WEDNESDAY
+        - THURSDAY
+        - FRIDAY
+        - SATURDAY
+        - SUNDAY
+    example: ["SATURDAY", "SUNDAY"]
+  timeInterval:
+    $ref: "../timeInterval/TimeIntervalDto.yml"
+  price:
+    type: number
+    format: decimal
+    description: Valor do preço aplicado pela regra.
+    example: 150.00
+  priority:
+    type: integer
+    format: int32
+    description: Prioridade da regra. Valores maiores indicam maior prioridade na aplicação.
+    example: 10
+  isDefault:
+    type: boolean
+    description: Indica se esta é a regra de preço padrão utilizada quando nenhuma outra regra se aplica.
+    example: false
+  isActive:
+    type: boolean
+    description: Indica se a regra de preço está ativa no sistema.
+    example: true
+

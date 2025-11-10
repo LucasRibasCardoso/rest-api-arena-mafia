@@ -76,7 +76,8 @@ public class SecurityConfig {
                         "/api/auth/**",
                         "/api/modalities",
                         "/api/operating-hours",
-                        "/api/price-rules")
+                        "/api/price-rules",
+                        "/api/home")
                     .permitAll()
 
                     // Endpoints públicos para desenvolvimento

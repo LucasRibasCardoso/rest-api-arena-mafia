@@ -3,11 +3,9 @@ package com.projetoExtensao.arenaMafia.integration.controller.admin;
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.projetoExtensao.arenaMafia.application.modality.port.ModalityRepositoryPort;
 import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 import com.projetoExtensao.arenaMafia.domain.model.Modality;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.ModalityEntity;
-import com.projetoExtensao.arenaMafia.infrastructure.persistence.mapper.ModalityMapper;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.repository.ModalityJpaRepository;
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.request.CreateModalityRequestDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.exception.dto.ErrorResponseDto;
@@ -161,6 +159,87 @@ public class AdminModalityControllerIntegrationTest extends WebIntegrationTestCo
         assertThat(response.errorCode()).isEqualTo(errorCode.name());
         assertThat(response.developerMessage()).isEqualTo(errorCode.getMessage());
       }
+    }
+  }
+
+  @Nested
+  @DisplayName("Testes para endpoint GET /api/admin/modalities")
+  class GetAllModalitiesTests {
+
+    @Test
+    @DisplayName("Deve buscar todas as modalidades sem filtro")
+    void getAll_shouldReturn200_whenNoFilterIsApplied() {
+      // Arrange
+      mockPersistModality("Modalidade 1");
+      mockPersistModality("Modalidade 2");
+      mockPersistDisableModality("Modalidade 3");
+
+      // Act
+      ModalityResponseDto[] response =
+          given()
+              .spec(specification)
+              .header("Authorization", accessToken)
+              .when()
+              .get()
+              .then()
+              .statusCode(200)
+              .extract()
+              .as(ModalityResponseDto[].class);
+
+      // Assert
+      assertThat(response.length).isGreaterThanOrEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Deve buscar apenas as modalidades ativas")
+    void getAll_shouldReturn200_whenFilterByActiveModalities() {
+      // Arrange
+      mockPersistModality("Modalidade Ativa 1");
+      mockPersistModality("Modalidade Ativa 2");
+      mockPersistDisableModality("Modalidade Inativa 1");
+
+      // Act
+      ModalityResponseDto[] response =
+          given()
+              .spec(specification)
+              .header("Authorization", accessToken)
+              .queryParam("isActive", true)
+              .when()
+              .get()
+              .then()
+              .statusCode(200)
+              .log()
+              .all()
+              .extract()
+              .as(ModalityResponseDto[].class);
+
+      // Assert
+      assertThat(response).allMatch(ModalityResponseDto::isActive);
+    }
+
+    @Test
+    @DisplayName("Deve buscar apenas as modalidades inativas")
+    void getAll_shouldReturn200_whenFilterByInactiveModalities() {
+      // Arrange
+      mockPersistModality("Modalidade Ativa 1");
+      mockPersistDisableModality("Modalidade Inativa 1");
+      mockPersistDisableModality("Modalidade Inativa 2");
+
+      // Act
+      ModalityResponseDto[] response =
+          given()
+              .spec(specification)
+              .header("Authorization", accessToken)
+              .queryParam("isActive", false)
+              .when()
+              .get()
+              .then()
+              .statusCode(200)
+              .extract()
+              .as(ModalityResponseDto[].class);
+
+      // Assert
+      assertThat(response).allMatch(modality -> !modality.isActive());
     }
   }
 
@@ -494,7 +573,8 @@ public class AdminModalityControllerIntegrationTest extends WebIntegrationTestCo
 
         // Assert
         assertThat(response.status()).isEqualTo(400);
-        assertThat(response.path()).isEqualTo("/api/admin/modalities/" + invalidModalityId + "/disable");
+        assertThat(response.path())
+            .isEqualTo("/api/admin/modalities/" + invalidModalityId + "/disable");
         assertThat(response.errorCode()).isEqualTo(errorCode.name());
         assertThat(response.developerMessage()).isEqualTo(errorCode.getMessage());
       }
@@ -525,7 +605,8 @@ public class AdminModalityControllerIntegrationTest extends WebIntegrationTestCo
 
         // Assert
         assertThat(response.status()).isEqualTo(404);
-        assertThat(response.path()).isEqualTo("/api/admin/modalities/" + nonExistentModalityId + "/disable");
+        assertThat(response.path())
+            .isEqualTo("/api/admin/modalities/" + nonExistentModalityId + "/disable");
         assertThat(response.errorCode()).isEqualTo(errorCode.name());
         assertThat(response.developerMessage()).isEqualTo(errorCode.getMessage());
       }
@@ -557,7 +638,137 @@ public class AdminModalityControllerIntegrationTest extends WebIntegrationTestCo
 
         // Assert
         assertThat(response.status()).isEqualTo(409);
-        assertThat(response.path()).isEqualTo("/api/admin/modalities/" + modalityInUse.getId() + "/disable");
+        assertThat(response.path())
+            .isEqualTo("/api/admin/modalities/" + modalityInUse.getId() + "/disable");
+        assertThat(response.errorCode()).isEqualTo(errorCode.name());
+        assertThat(response.developerMessage()).isEqualTo(errorCode.getMessage());
+      }
+    }
+  }
+
+  @Nested
+  @DisplayName("Testes para o endpoint PATCH /api/admin/modalities/{modalityId}/enable")
+  class EnableModalityTests {
+
+    @Nested
+    @DisplayName("Cenários de sucesso - 204 No Content")
+    class EnableModalitySuccessScenarios {
+      @Test
+      @DisplayName("Deve ativar uma modalidade com sucesso")
+      void enable_shouldReturn204_whenEnableModalitySuccessfully() {
+        // Arrange
+        Modality modality = mockPersistDisableModality("Modalidade Para Ativar");
+
+        // Act
+        given()
+            .spec(specification)
+            .header("Authorization", accessToken)
+            .pathParam("modalityId", modality.getId())
+            .when()
+            .patch("/{modalityId}/enable")
+            .then()
+            .statusCode(204);
+
+        ModalityEntity enabledModality =
+            modalityJpaRepository.findById(modality.getId()).orElseThrow();
+        assertThat(enabledModality.isActive()).isTrue();
+      }
+    }
+
+    @Nested
+    @DisplayName("Cenários de erro - 400 Bad Request")
+    class EnableModalityError400Scenarios {
+
+      @Test
+      @DisplayName("Tenta ativar uma modalidade com ID inválido")
+      void enable_shouldReturn400_whenModalityIdIsInvalid() {
+        // Arrange
+        String invalidModalityId = "invalid-uuid";
+
+        ErrorResponseDto response =
+            given()
+                .spec(specification)
+                .header("Authorization", accessToken)
+                .pathParam("modalityId", invalidModalityId)
+                .when()
+                .patch("/{modalityId}/enable")
+                .then()
+                .statusCode(400)
+                .extract()
+                .as(ErrorResponseDto.class);
+
+        ErrorCode errorCode = ErrorCode.INVALID_REQUEST_PARAMETER;
+
+        // Assert
+        assertThat(response.status()).isEqualTo(400);
+        assertThat(response.path())
+            .isEqualTo("/api/admin/modalities/" + invalidModalityId + "/enable");
+        assertThat(response.errorCode()).isEqualTo(errorCode.name());
+        assertThat(response.developerMessage()).isEqualTo(errorCode.getMessage());
+      }
+    }
+
+    @Nested
+    @DisplayName("Cenários de erro - 404 Not Found")
+    class EnableModalityError404Scenarios {
+
+      @Test
+      @DisplayName("Tenta ativar uma modalidade inexistente")
+      void enable_shouldReturn404_whenModalityDoesNotExist() {
+        // Arrange
+        String nonExistentModalityId = UUID.randomUUID().toString();
+
+        ErrorResponseDto response =
+            given()
+                .spec(specification)
+                .header("Authorization", accessToken)
+                .pathParam("modalityId", nonExistentModalityId)
+                .when()
+                .patch("/{modalityId}/enable")
+                .then()
+                .statusCode(404)
+                .extract()
+                .as(ErrorResponseDto.class);
+
+        ErrorCode errorCode = ErrorCode.MODALITY_NOT_FOUND;
+
+        // Assert
+        assertThat(response.status()).isEqualTo(404);
+        assertThat(response.path())
+            .isEqualTo("/api/admin/modalities/" + nonExistentModalityId + "/enable");
+        assertThat(response.errorCode()).isEqualTo(errorCode.name());
+        assertThat(response.developerMessage()).isEqualTo(errorCode.getMessage());
+      }
+    }
+
+    @Nested
+    @DisplayName("Cenários de erro - 409 Conflict")
+    class EnableModalityError409Scenarios {
+
+      @Test
+      @DisplayName("Tenta ativar uma modalidade que já está ativa")
+      void enable_shouldReturn409_whenModalityIsAlreadyActive() {
+        // Arrange
+        Modality activeModality = mockPersistModality("Modalidade Já Ativa");
+
+        ErrorResponseDto response =
+            given()
+                .spec(specification)
+                .header("Authorization", accessToken)
+                .pathParam("modalityId", activeModality.getId())
+                .when()
+                .patch("/{modalityId}/enable")
+                .then()
+                .statusCode(409)
+                .extract()
+                .as(ErrorResponseDto.class);
+
+        ErrorCode errorCode = ErrorCode.MODALITY_ALREADY_ENABLE;
+
+        // Assert
+        assertThat(response.status()).isEqualTo(409);
+        assertThat(response.path())
+            .isEqualTo("/api/admin/modalities/" + activeModality.getId() + "/enable");
         assertThat(response.errorCode()).isEqualTo(errorCode.name());
         assertThat(response.developerMessage()).isEqualTo(errorCode.getMessage());
       }

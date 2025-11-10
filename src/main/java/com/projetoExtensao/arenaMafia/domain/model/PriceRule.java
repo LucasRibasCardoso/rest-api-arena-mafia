@@ -8,6 +8,7 @@ import com.projetoExtensao.arenaMafia.domain.exception.conflict.PriceRuleStatusC
 import com.projetoExtensao.arenaMafia.domain.exception.conflict.TimeIntervalOverlapException;
 import com.projetoExtensao.arenaMafia.domain.model.enums.DayOfWeek;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
+
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalTime;

@@ -14,6 +14,10 @@ properties:
     type: string
     description: Nome da modalidade esportiva.
     example: "Futebol"
+  isActive:
+    type: boolean
+    description: Indica se a modalidade está ativa no sistema.
+    example: true
   createdAt:
     type: string
     format: date-time

@@ -1,0 +1,23 @@
+type: object
+description: Agregação de dados necessários para a página inicial, incluindo modalidades, horários de funcionamento e regras de preços.
+required:
+  - operatingHours
+  - modalities
+  - priceRules
+properties:
+  operatingHours:
+    type: array
+    description: Lista de todos os horários de funcionamento ativos no sistema.
+    items:
+      $ref: "../operatingHours/OperatingHoursResponseDto.yml"
+  modalities:
+    type: array
+    description: Lista de todas as modalidades esportivas ativas no sistema.
+    items:
+      $ref: "../modality/ModalityResponseDto.yml"
+  priceRules:
+    type: array
+    description: Lista de todas as regras de preços ativas no sistema.
+    items:
+      $ref: "../priceRule/PriceRuleResponseDto.yml"
+

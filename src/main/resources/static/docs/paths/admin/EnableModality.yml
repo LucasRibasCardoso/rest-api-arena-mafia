@@ -1,18 +1,17 @@
 patch:
-  operationId: enableCourt
-  tags: [Administração - Gerenciamento de Quadras]
-  summary: Ativar uma quadra
-  description: |
-    Ativa uma quadra que está atualmente desativada. Após a ativação, 
-    a quadra estará disponível para novos agendamentos.
+  operationId: enableModality
+  summary: Habilitar uma modalidade
+  description: Habilita uma modalidade que atualmente esta desativada. Após a habilitação, a modalidade estará disponível para novos cadastros de quadras.
   security:
-    - bearerAuth: []
+    - bearerAuth: [ ]
+  tags:
+    - "Administração - Gerenciamento de Modalidades"
   parameters:
-    - $ref: "../../components/parameters/CourtId.yml"
+    - $ref: "../../components/parameters/ModalityId.yml"
   responses:
     204:
       description: |
-        Quadra ativada com sucesso. Não retorna nenhum conteúdo no corpo da resposta.
+        Modalidade habilitada com sucesso. Não retorna nenhum conteúdo no corpo da resposta.
     400:
       description: Requisição inválida. O ID fornecido não está em um formato UUID válido.
       content:
@@ -21,48 +20,48 @@ patch:
             $ref: "../../components/schemas/error/ErrorResponseDto.yml"
           examples:
             InvalidModalityId:
-              summary: ID da quadra inválido
+              summary: ID de modalidade inválido
               value:
                 timestamp: "2024-06-15T14:30:00Z"
                 status: 400
                 errorCode: "INVALID_REQUEST_PARAMETER"
                 developerMessage: "Um parâmetro da requisição é inválido ou está malformado."
-                path: "/api/admin/courts/{courtId}/enable"
+                path: "/api/admin/modalities/{modalityId}/enable"
     401:
       $ref: "../../components/responses/UnauthorizedError.yml"
     403:
       $ref: "../../components/responses/ForbiddenError.yml"
     404:
-      description: Quadra não encontrada.
+      description: Modalidade não encontrada com o ID fornecido.
       content:
         application/json:
           schema:
             $ref: "../../components/schemas/error/ErrorResponseDto.yml"
           examples:
-            CourtNotFound:
-              summary: Quadra não encontrada
+            ModalityNotFound:
+              summary: Modalidade não encontrada
               value:
                 timestamp: "2024-06-15T14:30:00Z"
                 status: 404
-                errorCode: "COURT_NOT_FOUND"
-                developerMessage: "Quadra não encontrada."
-                path: "/api/admin/courts/{courtId}/enable"
+                errorCode: "MODALITY_NOT_FOUND"
+                developerMessage: "Modalidade não encontrada."
+                path: "/api/admin/modalities/{modalityId}/enable"
     409:
       description: |
-        Conflito ao ativar a quadra. Retornado quando a quadra já está ativada.
+        Conflito ao habilitar a modalidade. Isso pode ocorrer se a modalidade já estiver habilitada.
       content:
         application/json:
           schema:
             $ref: "../../components/schemas/error/ErrorResponseDto.yml"
           examples:
-            CourtAlreadyEnabled:
-              summary: Quadra já está ativada
+            ModalityAlreadyEnabled:
+              summary: Modalidade já habilitada
               value:
                 timestamp: "2024-06-15T14:30:00Z"
                 status: 409
-                errorCode: "COURT_ALREADY_ENABLED"
-                developerMessage: "A quadra já está ativada."
-                path: "/api/admin/courts/{courtId}/enable"
+                errorCode: "MODALITY_ALREADY_ENABLE"
+                developerMessage: "Essa modalidade já está ativada."
+                path: "/api/admin/modalities/{modalityId}/enable"
     429:
       $ref: "../../components/responses/TooManyRequestsError.yml"
     500:

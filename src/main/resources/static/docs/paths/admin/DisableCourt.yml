@@ -13,6 +13,21 @@ patch:
     204:
       description: |
         Quadra desativada com sucesso. Não retorna nenhum conteúdo no corpo da resposta.
+    400:
+      description: Requisição inválida. O ID fornecido não está em um formato UUID válido.
+      content:
+        application/json:
+          schema:
+            $ref: "../../components/schemas/error/ErrorResponseDto.yml"
+          examples:
+            InvalidModalityId:
+              summary: ID da quadra inválido
+              value:
+                timestamp: "2024-06-15T14:30:00Z"
+                status: 400
+                errorCode: "INVALID_REQUEST_PARAMETER"
+                developerMessage: "Um parâmetro da requisição é inválido ou está malformado."
+                path: "/api/admin/courts/{courtId}/disable"
     401:
       $ref: "../../components/responses/UnauthorizedError.yml"
     403:

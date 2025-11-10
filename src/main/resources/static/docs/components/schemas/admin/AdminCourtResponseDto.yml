@@ -29,7 +29,7 @@ properties:
     example: "Quadra coberta com grama sintética, próxima ao estacionamento principal"
   offsetMinutes:
     type: integer
-    enum: [0, 30]
+    enum: [ 0, 30 ]
     description: |
       Deslocamento em minutos para o horário de funcionamento da quadra.
 
@@ -51,14 +51,16 @@ properties:
       Lista de modalidades esportivas suportadas pela quadra.
       Cada modalidade inclui seu ID, nome e data de criação.
     items:
-      $ref: "./ModalityResponseDto.yml"
-    example:
-      - id: "6ba7b810-9dad-11d1-80b4-00c04fd430c8"
-        name: "Futebol"
-        createdAt: "2024-10-08T10:30:00Z"
-      - id: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
-        name: "Futsal"
-        createdAt: "2024-10-08T11:00:00Z"
+      $ref: "../modality/ModalityResponseDto.yml"
+      example:
+        - id: "6ba7b810-9dad-11d1-80b4-00c04fd430c8"
+          name: "Futebol"
+          isActive: true
+          createdAt: "2024-10-08T10:30:00Z"
+        - id: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          name: "Futsal"
+          isActive: true
+          createdAt: "2024-10-08T11:00:00Z"
   createdAt:
     type: string
     format: date-time

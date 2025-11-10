@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,7 +29,7 @@ public class ModalityRepositoryAdapter implements ModalityRepositoryPort {
 
   @Override
   public boolean existsByName(String name) {
-    return modalityJpaRepository.existsByNameAndIsActiveTrue(name);
+    return modalityJpaRepository.existsByName(name);
   }
 
   @Override
@@ -45,13 +47,13 @@ public class ModalityRepositoryAdapter implements ModalityRepositoryPort {
   @Override
   @Transactional(readOnly = true)
   public Optional<Modality> findById(UUID id) {
-    return modalityJpaRepository.findByIdAndIsActiveTrue(id).map(modalityMapper::toDomain);
+    return modalityJpaRepository.findById(id).map(modalityMapper::toDomain);
   }
 
   @Override
   public Modality findByIdOrElseThrow(UUID id) {
     return modalityJpaRepository
-        .findByIdAndIsActiveTrue(id)
+        .findById(id)
         .map(modalityMapper::toDomain)
         .orElseThrow(ModalityNotFoundException::new);
   }
@@ -59,21 +61,19 @@ public class ModalityRepositoryAdapter implements ModalityRepositoryPort {
   @Override
   @Transactional(readOnly = true)
   public Optional<Modality> findByName(String name) {
-    return modalityJpaRepository.findByNameAndIsActiveTrue(name).map(modalityMapper::toDomain);
+    return modalityJpaRepository.findByName(name).map(modalityMapper::toDomain);
   }
 
   @Override
   @Transactional(readOnly = true)
-  public List<Modality> findAll() {
-    return modalityJpaRepository.findAllByIsActiveTrue().stream()
+  public List<Modality> findAll(Specification<ModalityEntity> specification) {
+    return modalityJpaRepository.findAll(specification).stream()
         .map(modalityMapper::toDomain)
         .toList();
   }
 
   @Override
   public List<Modality> findAllByIds(Set<UUID> ids) {
-    return modalityJpaRepository.findAllByIdInAndIsActiveTrue(ids).stream()
-        .map(modalityMapper::toDomain)
-        .toList();
+    return modalityJpaRepository.findAllById(ids).stream().map(modalityMapper::toDomain).toList();
   }
 }

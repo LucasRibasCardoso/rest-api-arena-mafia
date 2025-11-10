@@ -1,9 +1,6 @@
 package com.projetoExtensao.arenaMafia.infrastructure.web.admin;
 
-import com.projetoExtensao.arenaMafia.application.modality.usecase.CreateModalityUseCase;
-import com.projetoExtensao.arenaMafia.application.modality.usecase.DisableModalityUseCase;
-import com.projetoExtensao.arenaMafia.application.modality.usecase.FindByIdModalityUseCase;
-import com.projetoExtensao.arenaMafia.application.modality.usecase.UpdateModalityUseCase;
+import com.projetoExtensao.arenaMafia.application.modality.usecase.*;
 import com.projetoExtensao.arenaMafia.domain.model.Modality;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.mapper.ModalityMapper;
 import com.projetoExtensao.arenaMafia.infrastructure.security.rateLimit.CustomRateLimiter;
@@ -12,6 +9,7 @@ import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.request.Updat
 import com.projetoExtensao.arenaMafia.infrastructure.web.modality.dto.response.ModalityResponseDto;
 import jakarta.validation.Valid;
 import java.net.URI;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -25,21 +23,27 @@ public class AdminModalityController {
 
   private final ModalityMapper modalityMapper;
   private final CreateModalityUseCase createModalityUseCase;
+  private final EnableModalityUseCase enableModalityUseCase;
   private final DisableModalityUseCase disableModalityUseCase;
   private final UpdateModalityUseCase updateModalityUseCase;
   private final FindByIdModalityUseCase findByIdModalityUseCase;
+  private final FindAllModalitiesUseCase findAllModalitiesUseCase;
 
   public AdminModalityController(
       ModalityMapper modalityMapper,
       CreateModalityUseCase createModalityUseCase,
+      EnableModalityUseCase enableModalityUseCase,
       DisableModalityUseCase disableModalityUseCase,
       UpdateModalityUseCase updateModalityUseCase,
-      FindByIdModalityUseCase findByIdModalityUseCase) {
+      FindByIdModalityUseCase findByIdModalityUseCase,
+      FindAllModalitiesUseCase findAllModalitiesUseCase) {
     this.modalityMapper = modalityMapper;
     this.createModalityUseCase = createModalityUseCase;
+    this.enableModalityUseCase = enableModalityUseCase;
     this.disableModalityUseCase = disableModalityUseCase;
     this.updateModalityUseCase = updateModalityUseCase;
     this.findByIdModalityUseCase = findByIdModalityUseCase;
+    this.findAllModalitiesUseCase = findAllModalitiesUseCase;
   }
 
   @PostMapping
@@ -57,6 +61,15 @@ public class AdminModalityController {
             .toUri();
 
     return ResponseEntity.created(location).body(response);
+  }
+
+  @GetMapping
+  @CustomRateLimiter(limiterName = "globalLimiter")
+  public ResponseEntity<List<ModalityResponseDto>> findAll(
+      @RequestParam(required = false) Boolean isActive) {
+    List<Modality> modalities = findAllModalitiesUseCase.execute(isActive);
+    List<ModalityResponseDto> response = modalities.stream().map(modalityMapper::toDto).toList();
+    return ResponseEntity.ok(response);
   }
 
   @GetMapping("/{modalityId}")
@@ -81,6 +94,13 @@ public class AdminModalityController {
   @CustomRateLimiter(limiterName = "globalLimiter")
   public ResponseEntity<Void> disable(@PathVariable UUID modalityId) {
     disableModalityUseCase.execute(modalityId);
+    return ResponseEntity.noContent().build();
+  }
+
+  @PatchMapping("/{modalityId}/enable")
+  @CustomRateLimiter(limiterName = "globalLimiter")
+  public ResponseEntity<Void> enable(@PathVariable UUID modalityId) {
+    enableModalityUseCase.execute(modalityId);
     return ResponseEntity.noContent().build();
   }
 }

@@ -6,6 +6,7 @@ import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidTimeInt
 import com.projetoExtensao.arenaMafia.domain.exception.conflict.OperatingHoursStatusConflictException;
 import com.projetoExtensao.arenaMafia.domain.model.enums.DayOfWeek;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
+
 import java.time.Instant;
 import java.util.Objects;
 import java.util.Set;

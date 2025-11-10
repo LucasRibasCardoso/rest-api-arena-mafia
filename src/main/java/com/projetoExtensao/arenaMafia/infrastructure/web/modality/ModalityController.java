@@ -27,7 +27,8 @@ public class ModalityController {
   @GetMapping
   @CustomRateLimiter(limiterName = "globalLimiter")
   public ResponseEntity<List<ModalityResponseDto>> findAll() {
-    List<Modality> modalities = findAllModalitiesUseCase.execute();
+    boolean isActive = true;
+    List<Modality> modalities = findAllModalitiesUseCase.execute(isActive);
     var response = modalities.stream().map(modalityMapper::toDto).toList();
     return ResponseEntity.ok(response);
   }

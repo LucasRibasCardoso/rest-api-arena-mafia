@@ -4,6 +4,7 @@ import com.projetoExtensao.arenaMafia.domain.model.Modality;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.ModalityEntity;
 import com.projetoExtensao.arenaMafia.infrastructure.web.modality.dto.response.ModalityResponseDto;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import org.mapstruct.ObjectFactory;
 
 @Mapper(componentModel = "spring")
@@ -13,6 +14,7 @@ public interface ModalityMapper {
 
   Modality toDomain(ModalityEntity entity);
 
+  @Mapping(target = "isActive", source = "active")
   ModalityResponseDto toDto(Modality modality);
 
   @ObjectFactory
