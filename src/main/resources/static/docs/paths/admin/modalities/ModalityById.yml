@@ -8,14 +8,14 @@ put:
   security:
     - BearerAuth: [ ]
   parameters:
-    - $ref: "../../components/parameters/ModalityId.yml"
+    - $ref: "../../../components/parameters/ModalityId.yml"
   requestBody:
     description: Dados para atualização da modalidade. O nome deve ter entre 3 e 100 caracteres e ser único.
     required: true
     content:
       application/json:
         schema:
-          $ref: "../../components/schemas/admin/UpdateModalityRequestDto.yml"
+          $ref: "../../../components/schemas/modality/UpdateModalityRequestDto.yml"
         example:
           name: "Futvolei"
   responses:
@@ -24,7 +24,7 @@ put:
       content:
         application/json:
           schema:
-            $ref: "../../components/schemas/modality/ModalityResponseDto.yml"
+            $ref: "../../../components/schemas/modality/ModalityResponseDto.yml"
           example:
             id: "550e8400-e29b-41d4-a716-446655440000"
             name: "Futvolei"
@@ -34,7 +34,7 @@ put:
       content:
         application/json:
           schema:
-            $ref: "../../components/schemas/error/ErrorResponseDto.yml"
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
           examples:
             InvalidFormatName:
               summary: Nome inválido
@@ -60,15 +60,15 @@ put:
                 developerMessage: "Um parâmetro da requisição é inválido ou está malformado."
                 path: "/api/admin/modalities/invalid-uuid"
     401:
-      $ref: "../../components/responses/UnauthorizedError.yml"
+      $ref: "../../../components/responses/UnauthorizedError.yml"
     403:
-      $ref: "../../components/responses/ForbiddenError.yml"
+      $ref: "../../../components/responses/ForbiddenError.yml"
     404:
       description: Não encontrado. A modalidade com o ID especificado não existe no sistema.
       content:
         application/json:
           schema:
-            $ref: "../../components/schemas/error/ErrorResponseDto.yml"
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
           example:
             timestamp: "2025-10-09T12:30:00Z"
             status: 404
@@ -80,7 +80,7 @@ put:
       content:
         application/json:
           schema:
-            $ref: "../../components/schemas/error/ErrorResponseDto.yml"
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
           example:
             timestamp: "2025-10-09T12:30:00Z"
             status: 409
@@ -88,10 +88,9 @@ put:
             developerMessage: "Essa modalidade já está cadastrada."
             path: "/api/admin/modalities/550e8400-e29b-41d4-a716-446655440000"
     429:
-      $ref: "../../components/responses/TooManyRequestsError.yml"
+      $ref: "../../../components/responses/TooManyRequestsError.yml"
     500:
-      $ref: "../../components/responses/InternalServerError.yml"
-
+      $ref: "../../../components/responses/InternalServerError.yml"
 
 get:
   operationId: getModalityById
@@ -103,24 +102,20 @@ get:
   security:
     - BearerAuth: [ ]
   parameters:
-    - $ref: "../../components/parameters/ModalityId.yml"
+    - $ref: "../../../components/parameters/ModalityId.yml"
   responses:
     200:
       description: Operação bem-sucedida. Retorna os dados da modalidade.
       content:
         application/json:
           schema:
-            $ref: "../../components/schemas/modality/ModalityResponseDto.yml"
-          example:
-            id: "550e8400-e29b-41d4-a716-446655440000"
-            name: "Beach Tennis"
-            createdAt: "2024-10-08T10:30:00Z"
+            $ref: "../../../components/schemas/modality/ModalityResponseDto.yml"
     400:
       description: Requisição inválida. O ID fornecido não está em um formato UUID válido.
       content:
         application/json:
           schema:
-            $ref: "../../components/schemas/error/ErrorResponseDto.yml"
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
           example:
             timestamp: "2025-10-09T12:30:00Z"
             status: 400
@@ -128,15 +123,15 @@ get:
             developerMessage: "Um parâmetro da requisição é inválido ou está malformado."
             path: "/api/admin/modalities/invalid-uuid"
     401:
-      $ref: "../../components/responses/UnauthorizedError.yml"
+      $ref: "../../../components/responses/UnauthorizedError.yml"
     403:
-      $ref: "../../components/responses/ForbiddenError.yml"
+      $ref: "../../../components/responses/ForbiddenError.yml"
     404:
       description: Não encontrado. A modalidade com o ID especificado não existe no sistema.
       content:
         application/json:
           schema:
-            $ref: "../../components/schemas/error/ErrorResponseDto.yml"
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
           example:
             timestamp: "2025-10-09T12:30:00Z"
             status: 404
@@ -144,6 +139,6 @@ get:
             developerMessage: "Modalidade não encontrada."
             path: "/api/admin/modalities/550e8400-e29b-41d4-a716-446655440000"
     429:
-      $ref: "../../components/responses/TooManyRequestsError.yml"
+      $ref: "../../../components/responses/TooManyRequestsError.yml"
     500:
-      $ref: "../../components/responses/InternalServerError.yml"
+      $ref: "../../../components/responses/InternalServerError.yml"

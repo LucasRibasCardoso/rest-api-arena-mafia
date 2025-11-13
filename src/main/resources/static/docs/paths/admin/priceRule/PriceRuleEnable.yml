@@ -1,0 +1,66 @@
+patch:
+  operationId: enablePriceRule
+  summary: Habilitar uma regra de preço
+  description: Habilita uma regra de preço que atualmente esta desativada.
+  security:
+    - bearerAuth: [ ]
+  tags:
+    - "Administração - Gerenciamento de Regras de Preço"
+  parameters:
+    - $ref: "../../../components/parameters/PriceRuleId.yml"
+  responses:
+    204:
+      description: |
+        Regra de Preço habilitada com sucesso. Não retorna nenhum conteúdo no corpo da resposta.
+    401:
+      $ref: "../../../components/responses/UnauthorizedError.yml"
+    403:
+      $ref: "../../../components/responses/ForbiddenError.yml"
+    404:
+      description: Não encontrado. A regra de preço com o ID especificado não existe no sistema.
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
+          example:
+            timestamp: "2025-10-09T12:30:00Z"
+            status: 404
+            errorCode: "PRICE_RULE_NOT_FOUND"
+            developerMessage: "Regra de preço não encontrada."
+            path: "/api/admin/price-rules/550e8400-e29b-41d4-a716-446655440000"
+    409:
+      description: |
+        Conflito ao habilitar a regra de preço. Isso pode ocorrer se a regra já estiver habilitada.
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
+          examples:
+            RuleAlreadyEnabled:
+              summary: Regra de Preço já habilitada
+              value:
+                timestamp: "2024-06-15T14:30:00Z"
+                status: 409
+                errorCode: "PRICE_RULE_ALREADY_ENABLED"
+                developerMessage: "A regra de preço já está ativada."
+                path: "/api/admin/price-rules/{ruleId}/enable"
+            PriceRuleNameAlreadyExists:
+              summary: Já existe uma regra ativa com esse nome
+              value:
+                timestamp: "2024-06-15T14:30:00Z"
+                status: 409
+                errorCode: "PRICE_RULE_ALREADY_EXISTS"
+                developerMessage: "Essa regra de preço já está cadastrada."
+                path: "/api/admin/price-rules/{ruleId}/enable"
+            PriceRuleOverlap:
+              summary: Sobreposição de horário em relação a outra regra de preço
+              value:
+                timestamp: "2024-06-15T14:30:00Z"
+                status: 409
+                errorCode: "PRICE_RULE_PRIORITY_OVERLAP"
+                developerMessage: "Já existe uma regra de preço com essa prioridade."
+                path: "/api/admin/price-rules/{ruleId}/enable"
+    429:
+      $ref: "../../../components/responses/TooManyRequestsError.yml"
+    500:
+      $ref: "../../../components/responses/InternalServerError.yml"

@@ -35,7 +35,7 @@ get:
           schema:
             type: array
             items:
-              $ref: "../../components/schemas/modality/ModalityResponseDto.yml"
+              $ref: "../../../components/schemas/modality/ModalityResponseDto.yml"
           examples:
             allModalities:
               summary: Todas as modalidades (sem filtro)
@@ -74,13 +74,13 @@ get:
               summary: Lista vazia (sem modalidades cadastradas)
               value: [ ]
     401:
-      $ref: "../../components/responses/UnauthorizedError.yml"
+      $ref: "../../../components/responses/UnauthorizedError.yml"
     403:
-      $ref: "../../components/responses/ForbiddenError.yml"
+      $ref: "../../../components/responses/ForbiddenError.yml"
     429:
-      $ref: "../../components/responses/TooManyRequestsError.yml"
+      $ref: "../../../components/responses/TooManyRequestsError.yml"
     500:
-      $ref: "../../components/responses/InternalServerError.yml"
+      $ref: "../../../components/responses/InternalServerError.yml"
 
 post:
   operationId: createModality
@@ -98,20 +98,20 @@ post:
     content:
       application/json:
         schema:
-          $ref: "../../components/schemas/admin/CreateModalityRequestDto.yml"
+          $ref: "../../../components/schemas/modality/CreateModalityRequestDto.yml"
   responses:
     201:
       description: Modalidade criada com sucesso.
       content:
         application/json:
           schema:
-            $ref: "../../components/schemas/modality/ModalityResponseDto.yml"
+            $ref: "../../../components/schemas/modality/ModalityResponseDto.yml"
     400:
       description: Requisição inválida devido a dados mal formatados ou validação falhou.
       content:
         application/json:
           schema:
-            $ref: "../../components/schemas/error/ErrorResponseDto.yml"
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
           examples:
             InvalidFormatName:
               summary: Nome inválido
@@ -129,16 +129,16 @@ post:
                     errorCode: "MODALITY_NAME_REQUIRED"
                     developerMessage: "O nome da modalidade é obrigatório."
     401:
-      $ref: "../../components/responses/UnauthorizedError.yml"
+      $ref: "../../../components/responses/UnauthorizedError.yml"
     403:
-      $ref: "../../components/responses/ForbiddenError.yml"
+      $ref: "../../../components/responses/ForbiddenError.yml"
     409:
       description: |
         Conflito. Já existe uma modalidade cadastrada com o nome fornecido.
       content:
         application/json:
           schema:
-            $ref: "../../components/schemas/error/ErrorResponseDto.yml"
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
           example:
             timestamp: "2025-10-09T00:35:05Z"
             status: 409
@@ -146,6 +146,6 @@ post:
             developerMessage: "Essa modalidade já está cadastrada."
             path: "/api/admin/modalities"
     429:
-      $ref: "../../components/responses/TooManyRequestsError.yml"
+      $ref: "../../../components/responses/TooManyRequestsError.yml"
     500:
-      $ref: "../../components/responses/InternalServerError.yml"
+      $ref: "../../../components/responses/InternalServerError.yml"

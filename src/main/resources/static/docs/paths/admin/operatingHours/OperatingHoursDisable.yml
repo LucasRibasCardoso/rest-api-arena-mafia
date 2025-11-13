@@ -1,0 +1,49 @@
+patch:
+  operationId: disableOperatingHours
+  summary: Desabilita um horário de funcionamento
+  description: Desabilita um horário de funcionamento específico
+  tags: [ Administração - Gerenciamento de Horários de Funcionamento ]
+  parameters:
+    - $ref: "../../../components/parameters/OperatingHoursId.yml"
+  responses:
+    204:
+      description: |
+        Horário de funcionamento desabilitado com sucesso. Não retorna nenhum conteúdo no corpo da resposta.
+    400:
+      $ref: "../../../components/responses/BadRequestInvalidUUID.yml"
+    401:
+      $ref: "../../../components/responses/UnauthorizedError.yml"
+    403:
+      $ref: "../../../components/responses/ForbiddenError.yml"
+    404:
+      description: Não encontrado. O horário de funcionamento com o ID especificado não existe no sistema
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
+          examples:
+            operatingHoursNotFound:
+              value:
+                timestamp: "2025-10-09T12:30:00Z"
+                status: 404
+                errorCode: "OPERATING_HOURS_NOT_FOUND"
+                developerMessage: "Horário de funcionamento não encontrado."
+                path: "/api/admin/operating-hours/550e8400-e29b-41d4-a716-446655440000"
+    409:
+      description: Conflito. O horário de funcionamento já está desabilitado.
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
+          examples:
+            operatingHoursAlreadyDisabled:
+              value:
+                timestamp: "2025-10-09T12:30:00Z"
+                status: 409
+                errorCode: "OPERATING_HOURS_ALREADY_DISABLED"
+                developerMessage: "O horário de funcionamento já está desativado."
+                path: "/api/admin/operating-hours/550e8400-e29b-41d4-a716-446655440000"
+    429:
+      $ref: "../../../components/responses/TooManyRequestsError.yml"
+    500:
+      $ref: "../../../components/responses/InternalServerError.yml"

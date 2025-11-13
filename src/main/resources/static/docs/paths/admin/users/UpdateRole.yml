@@ -7,7 +7,7 @@ patch:
   security:
     - bearerAuth: [ ]
   parameters:
-    - $ref: '../../components/parameters/UserId.yml'
+    - $ref: '../../../components/parameters/UserId.yml'
   requestBody:
     description: |
       Permite que administradores com a role 'ADMIN' alterem a permissão (role) de um usuário específico.
@@ -16,7 +16,7 @@ patch:
     content:
       application/json:
         schema:
-          $ref: '../../components/schemas/admin/UpdateUserRoleRequestDto.yml'
+          $ref: '../../../components/schemas/admin/UpdateUserRoleRequestDto.yml'
   responses:
     204:
       description: Permissão (role) do usuário atualizada com sucesso. Nenhum conteúdo é retornado.
@@ -25,7 +25,7 @@ patch:
       content:
         application/json:
           schema:
-            $ref: '../../components/schemas/error/ErrorResponseDto.yml'
+            $ref: '../../../components/schemas/error/ErrorResponseDto.yml'
           examples:
             InvalidRole:
               summary: Role inválida
@@ -64,7 +64,7 @@ patch:
                     errorCode: "MALFORMED_JSON_REQUEST"
                     developerMessage: "O corpo da requisição contém um JSON malformado ou inválido."
     401:
-      $ref: '../../components/responses/UnauthorizedError.yml'
+      $ref: '../../../components/responses/UnauthorizedError.yml'
     403:
       description: |
         Acesso negado. O usuário autenticado não possui permissão para alterar a
@@ -72,7 +72,7 @@ patch:
       content:
         application/json:
           schema:
-            $ref: '../../components/schemas/error/ErrorResponseDto.yml'
+            $ref: '../../../components/schemas/error/ErrorResponseDto.yml'
           examples:
             AccessDenied:
               summary: Acesso negado por falta de permissão
@@ -111,7 +111,7 @@ patch:
       content:
         application/json:
           schema:
-            $ref: '../../components/schemas/error/ErrorResponseDto.yml'
+            $ref: '../../../components/schemas/error/ErrorResponseDto.yml'
           examples:
             UserNotFound:
               summary: Usuário não encontrado
@@ -127,7 +127,7 @@ patch:
       content:
         application/json:
           schema:
-            $ref: '../../components/schemas/error/ErrorResponseDto.yml'
+            $ref: '../../../components/schemas/error/ErrorResponseDto.yml'
           examples:
             UserAlreadyAdmin:
               summary: O usuário já é um administrador
@@ -146,6 +146,6 @@ patch:
                 developerMessage: "O usuário já possui privilégios padrão."
                 path: "/api/admin/users/{userId}/role"
     429:
-      $ref: '../../components/responses/TooManyRequestsError.yml'
+      $ref: '../../../components/responses/TooManyRequestsError.yml'
     500:
-      $ref: '../../components/responses/InternalServerError.yml'
+      $ref: '../../../components/responses/InternalServerError.yml'

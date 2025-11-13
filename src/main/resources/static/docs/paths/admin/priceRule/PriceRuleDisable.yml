@@ -1,0 +1,64 @@
+patch:
+  operationId: disablePriceRule
+  tags: [ Administração - Gerenciamento de Regras de Preço ]
+  summary: Desativar uma regra de preço
+  description: |
+    Desativa uma regra de preço que está atualmente ativada. Após a desativação, 
+    a quadra não estará mais disponível para novos agendamentos.
+  security:
+    - bearerAuth: [ ]
+  parameters:
+    - $ref: "../../../components/parameters/PriceRuleId.yml"
+  responses:
+    204:
+      description: |
+        Regra de preço desativada com sucesso. Não retorna nenhum conteúdo no corpo da resposta.
+    400:
+      $ref: "../../../components/responses/BadRequestInvalidUUID.yml"
+    401:
+      $ref: "../../../components/responses/UnauthorizedError.yml"
+    403:
+      $ref: "../../../components/responses/ForbiddenError.yml"
+    404:
+      description: |
+        Regra de preço não encontrada ou já está desativada.
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
+          examples:
+            PriceRuleNotFound:
+              summary: Regra de preço não encontrada
+              value:
+                timestamp: "2024-06-15T14:30:00Z"
+                status: 404
+                errorCode: "PRICE_RULE_NOT_FOUND"
+                developerMessage: "Regra de preço não encontrada."
+                path: "/api/admin/price-rules/{ruleId}/disable"
+    409:
+      description: Conflito ao desativar a regra de preço
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
+          examples:
+            PriceRuleConflict:
+              summary: Conflito ao tentar desativar a regra de preço padrão
+              value:
+                timestamp: "2024-06-15T14:30:00Z"
+                status: 409
+                errorCode: "PRICE_RULE_CANNOT_DISABLE_DEFAULT"
+                developerMessage: "A regra de preço padrão não pode ser desativada."
+                path: "/api/admin/price-rules/{ruleId}/disable"
+            PriceRuleAlreadyDisabled:
+              summary: Regra de preço já desativada
+              value:
+                timestamp: "2024-06-15T14:30:00Z"
+                status: 409
+                errorCode: "PRICE_RULE_ALREADY_DISABLED"
+                developerMessage: "A regra de preço já está desativada."
+                path: "/api/admin/price-rules/{ruleId}/disable"
+    429:
+      $ref: "../../../components/responses/TooManyRequestsError.yml"
+    500:
+      $ref: "../../../components/responses/InternalServerError.yml"

@@ -1,10 +1,12 @@
 put:
   operationId: updateCourt
-  tags: [Administração - Gerenciamento de Quadras]
+  tags: [ Administração - Gerenciamento de Quadras ]
   summary: Atualizar uma quadra existente
   description: Atualiza uma quadra existente a partir de um uuid informado via path
   security:
-    - bearerAuth: []
+    - bearerAuth: [ ]
+  parameters:
+    - $ref: "../../../components/parameters/CourtId.yml"
   requestBody:
     description: |
       Dados para atualização da quadra. Todos os campos são opcionais, mas quando 
@@ -12,20 +14,20 @@ put:
     content:
       application/json:
         schema:
-          $ref: "../../openapi.yml#/components/schemas/UpdateCourtRequestDto"
+          $ref: "../../../components/schemas/court/UpdateCourtRequestDto.yml"
   responses:
     200:
       description: Quadra atualizada com sucesso. Retorna os dados da quadra atualizado
       content:
         application/json:
           schema:
-            $ref: "../../openapi.yml#/components/schemas/AdminCourtResponseDto"
+            $ref: "../../../components/schemas/court/AdminCourtResponseDto.yml"
     400:
       description: Requisição inválida. Retornado quando algum campo fornecido falha na validação.
       content:
         application/json:
           schema:
-            $ref: "../../openapi.yml#/components/schemas/ErrorResponseDto"
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
           examples:
             InvalidCourtName:
               summary: Nome da quadra inválido
@@ -64,13 +66,13 @@ put:
                     errorCode: "COURT_MODALITY_REQUIRED"
                     developerMessage: "Ao menos uma modalidade é necessária ser informada."
     401:
-      $ref: "../../components/responses/UnauthorizedError.yml"
+      $ref: "../../../components/responses/UnauthorizedError.yml"
     404:
       description: Quadra não encontrada.
       content:
         application/json:
           schema:
-            $ref: "../../openapi.yml#/components/schemas/ErrorResponseDto"
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
           examples:
             CourtNotFound:
               summary: Quadra não encontrada
@@ -93,7 +95,7 @@ put:
       content:
         application/json:
           schema:
-            $ref: "../../openapi.yml#/components/schemas/ErrorResponseDto"
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
           examples:
             CourtNameConflict:
               summary: Nome da quadra já em uso
@@ -104,32 +106,34 @@ put:
                 developerMessage: "Essa quadra já está cadastrada."
                 path: "/api/admin/courts/{courtId}"
     429:
-      $ref: "../../components/responses/TooManyRequestsError.yml"
+      $ref: "../../../components/responses/TooManyRequestsError.yml"
     500:
-      $ref: "../../components/responses/InternalServerError.yml"
+      $ref: "../../../components/responses/InternalServerError.yml"
 
 get:
   operationId: getCourtById
-  tags: [Administração - Gerenciamento de Quadras]
-  summary: Obter detalhes de uma quadra específica
+  tags: [ Administração - Gerenciamento de Quadras ]
+  summary: Busca uma quadra pelo ID
   description: Recupera os detalhes de uma quadra existente a partir de um uuid informado via path
   security:
-    - bearerAuth: []
+    - bearerAuth: [ ]
+  parameters:
+    - $ref: "../../../components/parameters/ModalityId.yml"
   responses:
     200:
       description: Detalhes da quadra recuperados com sucesso.
       content:
         application/json:
           schema:
-            $ref: "../../openapi.yml#/components/schemas/AdminCourtResponseDto"
+            $ref: "../../../components/schemas/court/AdminCourtResponseDto.yml"
     401:
-      $ref: "../../components/responses/UnauthorizedError.yml"
+      $ref: "../../../components/responses/UnauthorizedError.yml"
     404:
       description: Quadra não encontrada.
       content:
         application/json:
           schema:
-            $ref: "../../components/schemas/error/ErrorResponseDto.yml"
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
           examples:
             CourtNotFound:
               summary: Quadra não encontrada
@@ -140,6 +144,6 @@ get:
                 developerMessage: "Quadra não encontrada."
                 path: "/api/admin/courts/{courtId}"
     429:
-      $ref: "../../components/responses/TooManyRequestsError.yml"
+      $ref: "../../../components/responses/TooManyRequestsError.yml"
     500:
-      $ref: "../../components/responses/InternalServerError.yml"
+      $ref: "../../../components/responses/InternalServerError.yml"

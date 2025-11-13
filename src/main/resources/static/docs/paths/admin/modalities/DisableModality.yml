@@ -1,7 +1,7 @@
 patch:
   operationId: disableModality
   tags: [ "Administração - Gerenciamento de Modalidades" ]
-  summary: Desativar uma modalidade existente (Soft Delete)
+  summary: Desativar uma modalidade
   description: |
     Permite que administradores com a role 'ADMIN' desativem uma modalidade esportiva do sistema 
     através de soft delete. A modalidade não pode estar associada a nenhuma quadra (court) para 
@@ -9,32 +9,22 @@ patch:
   security:
     - BearerAuth: [ ]
   parameters:
-    - $ref: "../../components/parameters/ModalityId.yml"
+    - $ref: "../../../components/parameters/ModalityId.yml"
   responses:
     204:
       description: Modalidade desativada com sucesso. Sem conteúdo no corpo da resposta.
     400:
-      description: Requisição inválida. O ID fornecido não está em um formato UUID válido.
-      content:
-        application/json:
-          schema:
-            $ref: "../../components/schemas/error/ErrorResponseDto.yml"
-          example:
-            timestamp: "2025-10-09T12:30:00Z"
-            status: 400
-            errorCode: "INVALID_REQUEST_PARAMETER"
-            developerMessage: "Um parâmetro da requisição é inválido ou está malformado."
-            path: "/api/admin/modalities/invalid-uuid"
+      $ref: "../../../components/responses/BadRequestInvalidUUID.yml"
     401:
-      $ref: "../../components/responses/UnauthorizedError.yml"
+      $ref: "../../../components/responses/UnauthorizedError.yml"
     403:
-      $ref: "../../components/responses/ForbiddenError.yml"
+      $ref: "../../../components/responses/ForbiddenError.yml"
     404:
       description: Não encontrado. A modalidade com o ID especificado não existe no sistema.
       content:
         application/json:
           schema:
-            $ref: "../../components/schemas/error/ErrorResponseDto.yml"
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
           example:
             timestamp: "2025-10-09T12:30:00Z"
             status: 404
@@ -47,7 +37,7 @@ patch:
       content:
         application/json:
           schema:
-            $ref: "../../components/schemas/error/ErrorResponseDto.yml"
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
           examples:
             ModalityInUse:
               summary: Modalidade em uso por quadras
@@ -58,6 +48,6 @@ patch:
                 developerMessage: "Não é possível desativar esta modalidade pois ela está sendo utilizada por uma ou mais quadras."
                 path: "/api/admin/modalities/550e8400-e29b-41d4-a716-446655440000"
     429:
-      $ref: "../../components/responses/TooManyRequestsError.yml"
+      $ref: "../../../components/responses/TooManyRequestsError.yml"
     500:
-      $ref: "../../components/responses/InternalServerError.yml"
+      $ref: "../../../components/responses/InternalServerError.yml"

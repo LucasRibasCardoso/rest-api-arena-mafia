@@ -47,7 +47,11 @@ public class PriceRule {
     UUID id = UUID.randomUUID();
     Instant now = Instant.now();
 
-    return new PriceRule(id, name, daysOfWeek, timeInterval, price, priority, false, true, now);
+    Set<DayOfWeek> normalizedDaysOfWeek =
+        (daysOfWeek != null && daysOfWeek.isEmpty()) ? null : daysOfWeek;
+
+    return new PriceRule(
+        id, name, normalizedDaysOfWeek, timeInterval, price, priority, false, true, now);
   }
 
   /**

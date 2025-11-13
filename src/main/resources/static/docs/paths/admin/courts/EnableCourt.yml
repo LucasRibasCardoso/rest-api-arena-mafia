@@ -1,43 +1,30 @@
 patch:
   operationId: enableCourt
-  tags: [Administração - Gerenciamento de Quadras]
+  tags: [ Administração - Gerenciamento de Quadras ]
   summary: Ativar uma quadra
   description: |
     Ativa uma quadra que está atualmente desativada. Após a ativação, 
     a quadra estará disponível para novos agendamentos.
   security:
-    - bearerAuth: []
+    - bearerAuth: [ ]
   parameters:
-    - $ref: "../../components/parameters/CourtId.yml"
+    - $ref: "../../../components/parameters/CourtId.yml"
   responses:
     204:
       description: |
         Quadra ativada com sucesso. Não retorna nenhum conteúdo no corpo da resposta.
     400:
-      description: Requisição inválida. O ID fornecido não está em um formato UUID válido.
-      content:
-        application/json:
-          schema:
-            $ref: "../../components/schemas/error/ErrorResponseDto.yml"
-          examples:
-            InvalidModalityId:
-              summary: ID da quadra inválido
-              value:
-                timestamp: "2024-06-15T14:30:00Z"
-                status: 400
-                errorCode: "INVALID_REQUEST_PARAMETER"
-                developerMessage: "Um parâmetro da requisição é inválido ou está malformado."
-                path: "/api/admin/courts/{courtId}/enable"
+      $ref: "../../../components/responses/BadRequestInvalidUUID.yml"
     401:
-      $ref: "../../components/responses/UnauthorizedError.yml"
+      $ref: "../../../components/responses/UnauthorizedError.yml"
     403:
-      $ref: "../../components/responses/ForbiddenError.yml"
+      $ref: "../../../components/responses/ForbiddenError.yml"
     404:
       description: Quadra não encontrada.
       content:
         application/json:
           schema:
-            $ref: "../../components/schemas/error/ErrorResponseDto.yml"
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
           examples:
             CourtNotFound:
               summary: Quadra não encontrada
@@ -53,7 +40,7 @@ patch:
       content:
         application/json:
           schema:
-            $ref: "../../components/schemas/error/ErrorResponseDto.yml"
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
           examples:
             CourtAlreadyEnabled:
               summary: Quadra já está ativada
@@ -64,6 +51,6 @@ patch:
                 developerMessage: "A quadra já está ativada."
                 path: "/api/admin/courts/{courtId}/enable"
     429:
-      $ref: "../../components/responses/TooManyRequestsError.yml"
+      $ref: "../../../components/responses/TooManyRequestsError.yml"
     500:
-      $ref: "../../components/responses/InternalServerError.yml"
+      $ref: "../../../components/responses/InternalServerError.yml"

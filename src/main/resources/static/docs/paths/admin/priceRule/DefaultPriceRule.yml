@@ -1,0 +1,67 @@
+patch:
+  operationId: updateDefaultPriceRule
+  summary: Atualiza a regra de preço padrão
+  description: Atualiza a regra de preço padrão, só é possivel atualizar o preço padrão
+  tags: [ Administração - Gerenciamento de Regras de Preço ]
+  security:
+    - bearerAuth: [ ]
+  requestBody:
+    description: |
+      Dados para atualizar a regra de preço padrão.
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: "../../../components/schemas/priceRule/UpdateDefaultPriceRuleRequestDto.yml"
+  responses:
+    200:
+      description: Regra de preço padrão atualizada com sucesso.
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/priceRule/PriceRuleResponseDto.yml"
+    400:
+      description: Requisição inválida. Verifique os dados enviados.
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
+          examples:
+            PriceRuleInvalidPrice:
+              summary: Preço inválido na regra de preço
+              value:
+                timestamp: "2024-10-10T14:00:00Z"
+                status: 400
+                errorCode: "VALIDATION_FAILED"
+                developerMessage: "A validação falhou. Verifique os detalhes dos campos para mais informações."
+                path: "/api/admin/price-rules/default"
+                fieldErrors:
+                  - fieldName: "price"
+                    errorCode: "PRICE_RULE_PRICE_REQUIRED"
+                    developerMessage: "O preço da regra de preço é obrigatório."
+                  - fieldName: "price"
+                    errorCode: "PRICE_RULE_PRICE_INVALID"
+                    developerMessage: "O preço deve ser um valor positivo."
+    401:
+      $ref: "../../../components/responses/UnauthorizedError.yml"
+    403:
+      $ref: "../../../components/responses/ForbiddenError.yml"
+    404:
+      description: Regra de preço não encontrada.
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
+          examples:
+            PriceRuleNotFound:
+              summary: Regra de preço não encontrada
+              value:
+                timestamp: "2024-10-10T14:00:00Z"
+                status: 404
+                errorCode: "PRICE_RULE_DEFAULT_NOT_FOUND"
+                developerMessage: "A regra de preço padrão não foi encontrada."
+                path: "/api/admin/price-rules/default"
+    429:
+      $ref: "../../../components/responses/TooManyRequestsError.yml"
+    500:
+      $ref: "../../../components/responses/InternalServerError.yml"

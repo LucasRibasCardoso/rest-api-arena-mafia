@@ -115,7 +115,7 @@ public class AdminOperatingHoursControllerIntegrationTest extends WebIntegration
       }
 
       @Test
-      @DisplayName("Deve criar horário de funcionamento para todos os dias da semana")
+      @DisplayName("Deve criar horário de funcionamento para todos os dias da semana quando nulo é fornecido")
       void shouldReturn201_whenCreatingOperatingHoursForAllDaysOfWeek() {
         // Arrange
         var timeInterval = new TimeInterval(LocalTime.of(8, 0), LocalTime.of(0, 0));
@@ -141,17 +141,13 @@ public class AdminOperatingHoursControllerIntegrationTest extends WebIntegration
         assertThat(response.timeInterval().endTime()).isEqualTo(timeInterval.endTime());
         assertThat(response.isActive()).isTrue();
       }
-    }
-
-    @Nested
-    @DisplayName("Cenários de erro - 400 Bad Request")
-    class CreateOperatingHoursBadRequestScenarios {
 
       @Test
-      @DisplayName("Tentar criar um horário de funcionamento com lista de dias da semana vazia")
-      void shouldReturn400_whenProvidingEmptyDaysOfWeekList() {
+      @DisplayName(
+          "Deve criar horário de funcionamento para todos os dias da semana quando lista vazia é fornecida")
+      void shouldReturn201_whenProvidingEmptyDaysOfWeekList() {
         // Arrange
-        var timeInterval = new TimeInterval(LocalTime.of(8, 0), LocalTime.of(0, 0));
+        var timeInterval = new TimeInterval(LocalTime.of(8, 0), LocalTime.of(18, 0));
         var request = new CreateOperatingHoursRequestDto(Set.of(), timeInterval);
 
         // Act
@@ -163,20 +159,21 @@ public class AdminOperatingHoursControllerIntegrationTest extends WebIntegration
                 .when()
                 .post()
                 .then()
-                .statusCode(400)
-                .log()
-                .all()
+                .statusCode(201)
                 .extract()
-                .as(ErrorResponseDto.class);
-
-        ErrorCode errorCode = ErrorCode.DAY_OF_WEEK_EMPTY;
+                .as(OperatingHoursResponseDto.class);
 
         // Assert
-        assertThat(response.status()).isEqualTo(400);
-        assertThat(response.errorCode()).isEqualTo(errorCode.name());
-        assertThat(response.developerMessage()).isEqualTo(errorCode.getMessage());
-        assertThat(response.path()).isEqualTo("/api/admin/operating-hours");
+        assertThat(response.daysOfWeek()).isNull();
+        assertThat(response.timeInterval().startTime()).isEqualTo(timeInterval.startTime());
+        assertThat(response.timeInterval().endTime()).isEqualTo(timeInterval.endTime());
+        assertThat(response.isActive()).isTrue();
       }
+    }
+
+    @Nested
+    @DisplayName("Cenários de erro - 400 Bad Request")
+    class CreateOperatingHoursBadRequestScenarios {
 
       @InvalidDaysOfWeekProvider
       @DisplayName("Tentar criar um horário de funcionamento com dias da semana inválidos")

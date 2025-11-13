@@ -44,7 +44,7 @@ properties:
     type: integer
     format: int32
     description: Prioridade da regra. Valores maiores indicam maior prioridade na aplicação.
-    example: 10
+    example: 1
   isDefault:
     type: boolean
     description: Indica se esta é a regra de preço padrão utilizada quando nenhuma outra regra se aplica.

@@ -86,6 +86,21 @@ public class OperatingHoursTest {
 
     @Test
     @DisplayName(
+        "create() deve normalizar lista vazia de daysOfWeek para null (aplica-se a todos os dias)")
+    void create_shouldNormalizeEmptyDaysOfWeekToNull() {
+      // Act
+      OperatingHours operatingHours = OperatingHours.create(Set.of(), defaultTimeInterval);
+
+      // Assert
+      assertThat(operatingHours).isNotNull();
+      assertThat(operatingHours.getId()).isNotNull();
+      assertThat(operatingHours.getDaysOfWeek()).isNull();
+      assertThat(operatingHours.getTimeInterval()).isEqualTo(defaultTimeInterval);
+      assertThat(operatingHours.isActive()).isTrue();
+    }
+
+    @Test
+    @DisplayName(
         "reconstitute() deve reconstituir um horário de funcionamento a partir de dados existentes")
     void reconstitute_shouldRebuildOperatingHoursSuccessfully() {
       // Arrange
@@ -110,22 +125,6 @@ public class OperatingHoursTest {
     @Nested
     @DisplayName("Cenários de Falha (Validações)")
     class Failure {
-
-      @ParameterizedTest
-      @MethodSource(
-          "com.projetoExtensao.arenaMafia.unit.config.TestOperatingHoursDataProvider#invalidDaysOfWeekProvider")
-      @DisplayName("create() deve lançar InvalidDayOfWeekException quando dayOfWeek é null")
-      void create_shouldThrowException_whenDayOfWeekIsNull(
-          Set<DayOfWeek> invalidDaysOfWeek, ErrorCode errorCode) {
-        // Act & Assert
-        assertThatThrownBy(() -> OperatingHours.create(invalidDaysOfWeek, defaultTimeInterval))
-            .isInstanceOf(InvalidDayOfWeekException.class)
-            .satisfies(
-                ex -> {
-                  InvalidDayOfWeekException exception = (InvalidDayOfWeekException) ex;
-                  assertThat(exception.getErrorCode()).isEqualTo(errorCode);
-                });
-      }
 
       @ParameterizedTest
       @MethodSource(
@@ -340,35 +339,6 @@ public class OperatingHoursTest {
   @Nested
   @DisplayName("Testes para Métodos de Validação Estáticos")
   class StaticValidationTests {
-
-    @Test
-    @DisplayName("validateDayOfWeek() não deve lançar exceção para dayOfWeek válido")
-    void validateDayOfWeek_shouldNotThrowException_whenDayOfWeekIsValid() {
-      // Act & Assert
-      assertDoesNotThrow(() -> OperatingHours.validateDaysOfWeek(defaultDaysOfWeek));
-    }
-
-    @Test
-    @DisplayName(
-        "validateDayOfWeek() deve lançar InvalidDayOfWeekException quando dayOfWeek é null")
-    void validateDayOfWeek_shouldThrowException_whenDayOfWeekIsNull() {
-      // Act & Assert
-      assertDoesNotThrow(() -> OperatingHours.validateDaysOfWeek(null));
-    }
-
-    @Test
-    @DisplayName(
-        "validateDayOfWeek() deve lançar InvalidDayOfWeekException quando dayOfWeek é vazio")
-    void validateDayOfWeek_shouldThrowException_whenDayOfWeekIsEmpty() {
-      // Act & Assert
-      assertThatThrownBy(() -> OperatingHours.validateDaysOfWeek(Set.of()))
-          .isInstanceOf(InvalidDayOfWeekException.class)
-          .satisfies(
-              ex -> {
-                InvalidDayOfWeekException exception = (InvalidDayOfWeekException) ex;
-                assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.DAY_OF_WEEK_EMPTY);
-              });
-    }
 
     @Test
     @DisplayName("validateTimeInterval() não deve lançar exceção para timeInterval válido")

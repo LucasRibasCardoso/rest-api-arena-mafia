@@ -1,12 +1,12 @@
 get:
   operationId: getAllCourts
-  tags: [Administração - Gerenciamento de Quadras]
+  tags: [ Administração - Gerenciamento de Quadras ]
   summary: Listar todas as quadras
   description: |
     Lista todas as quadras cadastradas no sistema. É possível filtrar por status 
     (ativas ou inativas) usando o parâmetro de query `isActive`.
   security:
-    - bearerAuth: []
+    - bearerAuth: [ ]
   parameters:
     - name: isActive
       in: query
@@ -35,7 +35,7 @@ get:
           schema:
             type: array
             items:
-              $ref: "../../openapi.yml#/components/schemas/AdminCourtResponseDto"
+              $ref: "../../../components/schemas/court/AdminCourtResponseDto.yml"
           examples:
             allCourts:
               summary: Todas as quadras (sem filtro)
@@ -88,42 +88,42 @@ get:
                   createdAt: "2024-10-08T09:30:00Z"
             emptyList:
               summary: Lista vazia (sem quadras cadastradas)
-              value: []
+              value: [ ]
     401:
-      $ref: "../../components/responses/UnauthorizedError.yml"
+      $ref: "../../../components/responses/UnauthorizedError.yml"
     403:
-      $ref: "../../components/responses/ForbiddenError.yml"
+      $ref: "../../../components/responses/ForbiddenError.yml"
     429:
-      $ref: "../../components/responses/TooManyRequestsError.yml"
+      $ref: "../../../components/responses/TooManyRequestsError.yml"
     500:
-      $ref: "../../components/responses/InternalServerError.yml"
+      $ref: "../../../components/responses/InternalServerError.yml"
 
 post:
   operationId: createCourt
-  tags: [Administração - Gerenciamento de Quadras]
+  tags: [ Administração - Gerenciamento de Quadras ]
   summary: Criar uma nova quadra
   description: Endpoint para administradores cadastrarem um nova quadra.
   security:
-    - bearerAuth: []
+    - bearerAuth: [ ]
   requestBody:
     description: Dados da nova quadra a ser criada.
     content:
       application/json:
         schema:
-          $ref: "../../openapi.yml#/components/schemas/CreateCourtRequestDto"
+          $ref: "../../../components/schemas/court/CreateCourtRequestDto.yml"
   responses:
     201:
       description: Quadra criada com sucesso.
       content:
         application/json:
           schema:
-            $ref: "../../openapi.yml#/components/schemas/AdminCourtResponseDto"
+            $ref: "../../../components/schemas/court/AdminCourtResponseDto.yml"
     400:
       description: Requisição inválida.
       content:
         application/json:
           schema:
-            $ref: "../../components/schemas/error/ErrorResponseDto.yml"
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
           examples:
             InvalidCourtName:
               summary: Nome da quadra inválido
@@ -168,15 +168,15 @@ post:
                     errorCode: "COURT_MODALITY_REQUIRED"
                     developerMessage: "Ao menos uma modalidade é necessária ser informada."
     401:
-      $ref: "../../components/responses/UnauthorizedError.yml"
+      $ref: "../../../components/responses/UnauthorizedError.yml"
     403:
-      $ref: "../../components/responses/ForbiddenError.yml"
+      $ref: "../../../components/responses/ForbiddenError.yml"
     404:
       description: Modalidades informadas não encontradas.
       content:
         application/json:
           schema:
-            $ref: "../../components/schemas/error/ErrorResponseDto.yml"
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
           examples:
             ModalitiesNotFound:
               summary: Modalidades não encontradas
@@ -192,7 +192,7 @@ post:
       content:
         application/json:
           schema:
-            $ref: "../../components/schemas/error/ErrorResponseDto.yml"
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
           examples:
             CourtAlreadyExists:
               summary: Quadra já existe
@@ -203,6 +203,6 @@ post:
                 developerMessage: "Essa quadra já está cadastrada."
                 path: "/api/admin/courts"
     429:
-      $ref: "../../components/responses/TooManyRequestsError.yml"
+      $ref: "../../../components/responses/TooManyRequestsError.yml"
     500:
-      $ref: "../../components/responses/InternalServerError.yml"
+      $ref: "../../../components/responses/InternalServerError.yml"

@@ -1,7 +1,6 @@
 package com.projetoExtensao.arenaMafia.domain.model;
 
 import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
-import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidDayOfWeekException;
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidTimeIntervalException;
 import com.projetoExtensao.arenaMafia.domain.exception.conflict.OperatingHoursStatusConflictException;
 import com.projetoExtensao.arenaMafia.domain.model.enums.DayOfWeek;
@@ -31,7 +30,11 @@ public class OperatingHours {
     UUID id = UUID.randomUUID();
     Instant now = Instant.now();
     boolean isActive = true;
-    return new OperatingHours(id, daysOfWeek, timeInterval, isActive, now);
+
+    Set<DayOfWeek> normalizedDaysOfWeek =
+        (daysOfWeek != null && daysOfWeek.isEmpty()) ? null : daysOfWeek;
+
+    return new OperatingHours(id, normalizedDaysOfWeek, timeInterval, isActive, now);
   }
 
   /**
@@ -60,7 +63,6 @@ public class OperatingHours {
       TimeInterval timeInterval,
       boolean isActive,
       Instant createdAt) {
-    validateDaysOfWeek(daysOfWeek);
     validateTimeInterval(timeInterval);
     this.id = id;
     this.daysOfWeek = daysOfWeek;
@@ -70,11 +72,6 @@ public class OperatingHours {
   }
 
   // --- Validações ---
-  public static void validateDaysOfWeek(Set<DayOfWeek> daysOfWeek) {
-    if (daysOfWeek != null && daysOfWeek.isEmpty()) {
-      throw new InvalidDayOfWeekException(ErrorCode.DAY_OF_WEEK_EMPTY);
-    }
-  }
 
   public static void validateTimeInterval(TimeInterval timeInterval) {
     if (timeInterval == null) {

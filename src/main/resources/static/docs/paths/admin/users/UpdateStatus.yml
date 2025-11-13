@@ -7,7 +7,7 @@ patch:
   security:
     - bearerAuth: [ ]
   parameters:
-    - $ref: '../../components/parameters/UserId.yml'
+    - $ref: '../../../components/parameters/UserId.yml'
   requestBody:
     description: |
       Permite que administradores com a role 'ADMIN' alterem o status de um usuário específico.
@@ -16,7 +16,7 @@ patch:
     content:
       application/json:
         schema:
-          $ref: '../../components/schemas/admin/UpdateUserStatusRequestDto.yml'
+          $ref: '../../../components/schemas/admin/UpdateUserStatusRequestDto.yml'
   responses:
     204:
       description: Status do usuário atualizado com sucesso. Nenhum conteúdo é retornado.
@@ -25,7 +25,7 @@ patch:
       content:
         application/json:
           schema:
-            $ref: '../../components/schemas/error/ErrorResponseDto.yml'
+            $ref: '../../../components/schemas/error/ErrorResponseDto.yml'
           examples:
             InvalidStatus:
               summary: Status inválido
@@ -64,7 +64,7 @@ patch:
                     errorCode: "MALFORMED_JSON_REQUEST"
                     developerMessage: "O corpo da requisição contém um JSON malformado ou inválido."
     401:
-      $ref: '../../components/responses/UnauthorizedError.yml'
+      $ref: '../../../components/responses/UnauthorizedError.yml'
     403:
       description: |
         Acesso negado. O usuário autenticado não possui permissão para alterar o
@@ -72,7 +72,7 @@ patch:
       content:
         application/json:
           schema:
-            $ref: '../../components/schemas/error/ErrorResponseDto.yml'
+            $ref: '../../../components/schemas/error/ErrorResponseDto.yml'
           examples:
             AccessDenied:
               summary: Acesso negado por falta de permissão
@@ -111,7 +111,7 @@ patch:
       content:
         application/json:
           schema:
-            $ref: '../../components/schemas/error/ErrorResponseDto.yml'
+            $ref: '../../../components/schemas/error/ErrorResponseDto.yml'
           examples:
             UserNotFound:
               summary: Usuário não encontrado
@@ -127,7 +127,7 @@ patch:
       content:
         application/json:
           schema:
-            $ref: '../../components/schemas/error/ErrorResponseDto.yml'
+            $ref: '../../../components/schemas/error/ErrorResponseDto.yml'
           examples:
             AccountAlreadyActive:
               summary: A conta do usuário já está ativa
@@ -154,6 +154,6 @@ patch:
                 developerMessage: "A conta já está bloqueada."
                 path: "/api/admin/users/{userId}/status"
     429:
-      $ref: '../../components/responses/TooManyRequestsError.yml'
+      $ref: '../../../components/responses/TooManyRequestsError.yml'
     500:
-      $ref: '../../components/responses/InternalServerError.yml'
+      $ref: '../../../components/responses/InternalServerError.yml'

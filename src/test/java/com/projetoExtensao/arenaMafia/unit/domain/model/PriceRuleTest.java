@@ -119,6 +119,26 @@ public class PriceRuleTest {
       assertThat(priceRule.getCreatedAt()).isEqualTo(createdAt);
     }
 
+    @Test
+    @DisplayName(
+        "create() deve normalizar lista vazia de daysOfWeek para null (aplica-se a todos os dias)")
+    void create_shouldNormalizeEmptyDaysOfWeekToNull() {
+      // Act
+      PriceRule priceRule =
+          PriceRule.create(defaultName, Set.of(), defaultTimeInterval, defaultPrice, defaultPriority);
+
+      // Assert
+      assertThat(priceRule).isNotNull();
+      assertThat(priceRule.getId()).isNotNull();
+      assertThat(priceRule.getDaysOfWeek()).isNull();
+      assertThat(priceRule.getName()).isEqualTo(defaultName);
+      assertThat(priceRule.getTimeInterval()).isEqualTo(defaultTimeInterval);
+      assertThat(priceRule.getPrice()).isEqualByComparingTo(defaultPrice);
+      assertThat(priceRule.getPriority()).isEqualTo(defaultPriority);
+      assertThat(priceRule.isDefault()).isFalse();
+      assertThat(priceRule.isActive()).isTrue();
+    }
+
     @Nested
     @DisplayName("Cenários de Falha (Validações)")
     class Failure {

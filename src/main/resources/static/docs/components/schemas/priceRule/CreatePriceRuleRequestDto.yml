@@ -1,0 +1,52 @@
+type: object
+description: Dados necessários para criar uma nova regra de preço.
+required:
+  - name
+  - timeInterval
+  - price
+  - priority
+properties:
+  name:
+    type: string
+    minLength: 1
+    maxLength: 100
+    description: |
+      Nome identificador da regra de preço.
+      Deve ser único e descritivo.
+    example: "Horário de Pico - Fim de Semana"
+  daysOfWeek:
+    type: array
+    description: |
+      Dias da semana em que a regra é aplicada.
+      Se null ou vazio, a regra é válida para todos os dias da semana.
+    items:
+      type: string
+      enum:
+        - MONDAY
+        - TUESDAY
+        - WEDNESDAY
+        - THURSDAY
+        - FRIDAY
+        - SATURDAY
+        - SUNDAY
+    nullable: true
+    example: ["SATURDAY", "SUNDAY"]
+  timeInterval:
+    $ref: "../timeInterval/TimeIntervalDto.yml"
+  price:
+    type: number
+    format: decimal
+    minimum: 0
+    description: |
+      Valor do preço para o horário especificado.
+      Deve ser um valor não negativo.
+    example: 150.00
+  priority:
+    type: integer
+    minimum: 0
+    description: |
+      Prioridade da regra de preço.
+      Quanto maior o valor, maior a prioridade.
+      Em caso de conflito entre regras, a de maior prioridade prevalece.
+    example: 1
+

@@ -1,0 +1,188 @@
+get:
+  operationId: adminGetAllOperatingHours
+  tags: [ Administração - Gerenciamento de Horários de Funcionamento ]
+  summary: Lista todos os horários de funcionamento
+  description: |
+    Retorna uma lista contendo todos os horários de funcionamento cadastrados no sistema.
+    É possivel filtrar os horários por ativos e inativos utilizando o parâmetro `isActive`.
+  security:
+    - bearerAuth: [ ]
+  parameters:
+    - name: isActive
+      in: query
+      required: false
+      description: |
+        Filtro opcional para buscar horários por status:
+        - `true`: retorna apenas os horários ativos
+        - `false`: retorna apenas os horários inativos
+        - Se omitido: retorna todos os horários, independentemente do status
+      schema:
+        type: boolean
+      examples:
+        active:
+          summary: Buscar apenas horários de funcionamento ativos
+          value: true
+        inactive:
+          summary: Buscar apenas horários de funcionamento inativos
+          value: false
+  responses:
+    200:
+      description: Lista de horários de funcionamento retornada com sucesso
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: "../../../components/schemas/operatingHours/OperatingHoursResponseDto.yml"
+          examples:
+            activeOperatingHours:
+              summary: Lista contendo apenas horários de funcionamento ativos
+              value:
+                - id: "9a8b7c6d-5e4f-3210-abcd-ef1234567890"
+                  daysOfWeek: [ "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY" ]
+                  timeInterval:
+                    startTime: "08:00"
+                    endTime: "18:00"
+                  isActive: true
+                - id: "1b2c3d4e-5f6a-7b8c-9d0e-1f2a3b4c5d6e"
+                  daysOfWeek: [ "SATURDAY", "SUNDAY" ]
+                  timeInterval:
+                    startTime: "09:00"
+                    endTime: "14:00"
+                  isActive: true
+            inactiveOperatingHours:
+              summary: Lista contendo apenas horários de funcionamento inativos
+              value:
+                - id: "7f8e9d0c-1b2a-3c4d-5e6f-7a8b9c0d1e2f"
+                  daysOfWeek: null
+                  timeInterval:
+                    startTime: "06:00"
+                    endTime: "22:00"
+                  isActive: false
+                - id: "3c4d5e6f-7a8b-9c0d-1e2f-3a4b5c6d7e8f"
+                  daysOfWeek: [ "MONDAY", "WEDNESDAY", "FRIDAY" ]
+                  timeInterval:
+                    startTime: "12:00"
+                    endTime: "20:00"
+                  isActive: false
+            mixedOperatingHours:
+              summary: Lista contendo horários de funcionamento ativos e inativos
+              value:
+                - id: "9a8b7c6d-5e4f-3210-abcd-ef1234567890"
+                  daysOfWeek: [ "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY" ]
+                  timeInterval:
+                    startTime: "08:00"
+                    endTime: "18:00"
+                  isActive: true
+                - id: "1b2c3d4e-5f6a-7b8c-9d0e-1f2a3b4c5d6e"
+                  daysOfWeek: [ "SATURDAY", "SUNDAY" ]
+                  timeInterval:
+                    startTime: "09:00"
+                    endTime: "14:00"
+                  isActive: true
+                - id: "7f8e9d0c-1b2a-3c4d-5e6f-7a8b9c0d1e2f"
+                  daysOfWeek: null
+                  timeInterval:
+                    startTime: "06:00"
+                    endTime: "22:00"
+                  isActive: false
+    401:
+      $ref: "../../../components/responses/UnauthorizedError.yml"
+    403:
+      $ref: "../../../components/responses/ForbiddenError.yml"
+    429:
+      $ref: "../../../components/responses/TooManyRequestsError.yml"
+    500:
+      $ref: "../../../components/responses/InternalServerError.yml"
+
+
+
+
+
+post:
+  operationId: createOperatingHours
+  tags: [ Administração - Gerenciamento de Horários de Funcionamento ]
+  summary: Criar um novo horário de funcionamento
+  description: Cria um novo horário de funcionamento para o estabelecimento.
+  security:
+    - bearerAuth: [ ]
+  requestBody:
+    description: |
+      Dados para a criação do novo horário de funcionamento. Todos os campos são obrigatórios. 
+      `daysOfWeek` deve ser uma lista de dias da semana válidos (ex: "Monday", "Tuesday", etc.). Caso
+      o horário funcionamento se repita para todos os dias, defina o `daysOfWeek` como null.
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: "../../../components/schemas/operatingHours/CreateOperatingHoursRequestDto.yml"
+  responses:
+    201:
+      description: Horário de funcionamento criado com sucesso
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/operatingHours/OperatingHoursResponseDto.yml"
+    400:
+      description: Requisição inválida ao criar o horário de funcionamento
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
+          examples:
+            InvalidDaysOfWeek:
+              summary: Dias da semana inválidos
+              value:
+                timestamp: "2024-10-10T14:00:00Z"
+                status: 400
+                errorCode: "VALIDATION_FAILED"
+                developerMessage: "A validação falhou. Verifique os detalhes dos campos para mais informações."
+                path: "/api/admin/price-rules"
+                fieldErrors:
+                  - fieldName: "daysOfWeek"
+                    errorCode: "DAY_OF_WEEK_REQUIRED"
+                    developerMessage: "O dia da semana é obrigatório."
+                  - fieldName: "daysOfWeek"
+                    errorCode: "DAY_OF_WEEK_INVALID"
+                    developerMessage: "O dia da semana fornecido é inválido. Valores válidos: 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'."
+            InvalidTimeInterval:
+              summary: Intervalo de tempo inválido
+              value:
+                timestamp: "2024-10-10T14:00:00Z"
+                status: 400
+                errorCode: "VALIDATION_FAILED"
+                developerMessage: "A validação falhou. Verifique os detalhes dos campos para mais informações."
+                path: "/api/admin/price-rules"
+                fieldErrors:
+                  - fieldName: "timeInterval"
+                    errorCode: "TIME_INTERVAL_REQUIRED"
+                    developerMessage: "O intervalo de tempo é obrigatório."
+                  - fieldName: "timeInterval"
+                    errorCode: "TIME_INTERVAL_SAME_TIME"
+                    developerMessage: "O horário de abertura não pode ser igual ao horário de fechamento."
+                  - fieldName: "timeInterval"
+                    errorCode: "TIME_INTERVAL_INVALID_MINUTES"
+                    developerMessage: "O intervalo de tempo não pode exceder 24 horas."
+    401:
+      $ref: "../../../components/responses/UnauthorizedError.yml"
+    403:
+      $ref: "../../../components/responses/ForbiddenError.yml"
+    409:
+      description: Conflito ao criar o horário de funcionamento
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
+          examples:
+            OperatingHoursOverlapConflict:
+              summary: Novo horário de funcionamento sobrepõe um horário existente
+              value:
+                timestamp: "2024-01-01T12:00:00Z"
+                status: 409
+                errorCode: "TIME_INTERVAL_OVERLAP"
+                developerMessage: "Este intervalo de horário sobrepõe-se a um intervalo existente."
+                path: /admin/operating-hours
+    429:
+      $ref: "../../../components/responses/TooManyRequestsError.yml"
+    500:
+      $ref: "../../../components/responses/InternalServerError.yml"
