@@ -23,6 +23,11 @@ import com.projetoExtensao.arenaMafia.infrastructure.web.exception.dto.ErrorResp
 import com.projetoExtensao.arenaMafia.infrastructure.web.exception.dto.FieldErrorResponseDto;
 import com.projetoExtensao.arenaMafia.integration.config.WebIntegrationTestConfig;
 import com.projetoExtensao.arenaMafia.integration.config.util.*;
+import com.projetoExtensao.arenaMafia.integration.config.util.user.InvalidOtpCodeProvider;
+import com.projetoExtensao.arenaMafia.integration.config.util.user.InvalidOtpSessionIdProvider;
+import com.projetoExtensao.arenaMafia.integration.config.util.user.InvalidPasswordProvider;
+import com.projetoExtensao.arenaMafia.integration.config.util.user.InvalidPhoneProvider;
+import com.projetoExtensao.arenaMafia.integration.config.util.user.InvalidResetTokenProvider;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.specification.RequestSpecification;
 import java.util.HashMap;

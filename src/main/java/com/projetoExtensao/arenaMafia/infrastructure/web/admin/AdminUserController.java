@@ -3,11 +3,12 @@ package com.projetoExtensao.arenaMafia.infrastructure.web.admin;
 import com.projetoExtensao.arenaMafia.application.admin.usecase.users.*;
 import com.projetoExtensao.arenaMafia.domain.model.User;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.mapper.AdminUserMapper;
+import com.projetoExtensao.arenaMafia.infrastructure.security.rateLimit.CustomRateLimiter;
 import com.projetoExtensao.arenaMafia.infrastructure.security.userDetails.UserDetailsAdapter;
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.request.AdminUserSearchRequestDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.request.UpdateUserRoleRequestDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.request.UpdateUserStatusRequestDto;
-import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.response.UserAdminResponseDto;
+import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.response.AdminUserResponseDto;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
@@ -39,15 +40,17 @@ public class AdminUserController {
   }
 
   @GetMapping
-  public ResponseEntity<Page<UserAdminResponseDto>> listUsers(
+  @CustomRateLimiter(limiterName = "globalLimiter")
+  public ResponseEntity<Page<AdminUserResponseDto>> listUsers(
       @Valid AdminUserSearchRequestDto request, Pageable pageable) {
 
     Page<User> users = adminListUsersUseCase.execute(request, pageable);
-    Page<UserAdminResponseDto> responseDtoPage = users.map(adminUserMapper::toDto);
+    Page<AdminUserResponseDto> responseDtoPage = users.map(adminUserMapper::toDto);
     return ResponseEntity.ok(responseDtoPage);
   }
 
   @PatchMapping("/{userId}/status")
+  @CustomRateLimiter(limiterName = "globalLimiter")
   public ResponseEntity<Void> updateUserStatus(
       @AuthenticationPrincipal UserDetailsAdapter authenticatedAdmin,
       @PathVariable UUID userId,
@@ -59,6 +62,7 @@ public class AdminUserController {
   }
 
   @PatchMapping("/{userId}/role")
+  @CustomRateLimiter(limiterName = "globalLimiter")
   public ResponseEntity<Void> updateUserRole(
       @AuthenticationPrincipal UserDetailsAdapter authenticatedAdmin,
       @PathVariable UUID userId,

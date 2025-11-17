@@ -1,0 +1,11 @@
+description: Requisição inválida. O ID fornecido não está em um formato UUID válido.
+content:
+  application/json:
+    schema:
+      $ref: "../../components/schemas/error/ErrorResponseDto.yml"
+    example:
+      timestamp: "2025-10-09T12:30:00Z"
+      status: 400
+      errorCode: "INVALID_REQUEST_PARAMETER"
+      developerMessage: "Um parâmetro da requisição é inválido ou está malformado."
+      path: "/api/admin/modalities/invalid-uuid"

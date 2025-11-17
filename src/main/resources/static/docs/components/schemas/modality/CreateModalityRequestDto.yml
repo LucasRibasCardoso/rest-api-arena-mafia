@@ -1,0 +1,13 @@
+type: object
+description: Dados necessários para criar uma nova modalidade esportiva.
+required:
+  - name
+properties:
+  name:
+    type: string
+    minLength: 3
+    maxLength: 100
+    description: |
+      Nome da modalidade esportiva.
+      Deve ser único no sistema.
+    example: "Futebol"

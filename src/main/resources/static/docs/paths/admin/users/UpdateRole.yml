@@ -1,0 +1,151 @@
+patch:
+  operationId: updateStatus
+  tags: [ "Administração - Gerenciamento de Usuários" ]
+  summary: Alterar a permissão (role) de um usuário
+  description: |
+    Permite que administradores com a role 'ADMIN' alterem a permissão (role) de um usuário específico.
+  security:
+    - bearerAuth: [ ]
+  parameters:
+    - $ref: '../../../components/parameters/UserId.yml'
+  requestBody:
+    description: |
+      Permite que administradores com a role 'ADMIN' alterem a permissão (role) de um usuário específico.
+      As roles permitidas para atribuição são 'ROLE_USER' e 'ROLE_ADMIN'.
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../../../components/schemas/admin/UpdateUserRoleRequestDto.yml'
+  responses:
+    204:
+      description: Permissão (role) do usuário atualizada com sucesso. Nenhum conteúdo é retornado.
+    400:
+      description: Requisição inválida, possivelmente devido a uma role inválida ou formato incorreto.
+      content:
+        application/json:
+          schema:
+            $ref: '../../../components/schemas/error/ErrorResponseDto.yml'
+          examples:
+            InvalidRole:
+              summary: Role inválida
+              value:
+                timestamp: "2024-01-01T12:00:00Z"
+                status: 400
+                errorCode: "VALIDATION_FAILED"
+                developerMessage: "A validação falhou. Verifique os detalhes dos campos para mais informações."
+                path: "/api/admin/users/{userId}/role"
+                fieldErrors:
+                  - fieldName: "role"
+                    errorCode: "INVALID_ROLE"
+                    developerMessage: "O papel (role) fornecido é inválido."
+            MissingRole:
+              summary: Role não informada
+              value:
+                timestamp: "2024-01-01T12:00:00Z"
+                status: 400
+                errorCode: "VALIDATION_FAILED"
+                developerMessage: "A validação falhou. Verifique os detalhes dos campos para mais informações."
+                path: "/api/admin/users/{userId}/role"
+                fieldErrors:
+                  - fieldName: "role"
+                    errorCode: "ROLE_REQUIRED"
+                    developerMessage: "O papel (role) do usuário é obrigatório."
+            MalformedJson:
+              summary: JSON malformado
+              value:
+                timestamp: "2024-01-01T12:00:00Z"
+                status: 400
+                errorCode: "VALIDATION_FAILED"
+                developerMessage: "A validação falhou. Verifique os detalhes dos campos para mais informações."
+                path: "/api/admin/users/{userId}/role"
+                fieldErrors:
+                  - fieldName: "unknown"
+                    errorCode: "MALFORMED_JSON_REQUEST"
+                    developerMessage: "O corpo da requisição contém um JSON malformado ou inválido."
+    401:
+      $ref: '../../../components/responses/UnauthorizedError.yml'
+    403:
+      description: |
+        Acesso negado. O usuário autenticado não possui permissão para alterar a
+        role de usuários, está tentando alterar a própria role ou para uma role não permitida.
+      content:
+        application/json:
+          schema:
+            $ref: '../../../components/schemas/error/ErrorResponseDto.yml'
+          examples:
+            AccessDenied:
+              summary: Acesso negado por falta de permissão
+              value:
+                timestamp: "2024-06-15T14:30:00Z"
+                status: 403
+                errorCode: "ACCESS_DENIED"
+                developerMessage: "Acesso negado. Você não tem permissão para acessar este recurso."
+                path: "/api/admin/users/{userId}/role"
+            InvalidRoleChange:
+              summary: Tentativa de alterar para uma permissão (role) não permitida
+              value:
+                timestamp: "2024-01-01T12:00:00Z"
+                status: 403
+                errorCode: "INVALID_ROLE"
+                developerMessage: "O papel (role) fornecido é inválido."
+                path: "/api/admin/users/{userId}/role"
+            UpdatedSelfRole:
+              summary: Tentativa de alterar a própria permissão (role)
+              value:
+                timestamp: "2024-01-01T12:00:00Z"
+                status: 403
+                errorCode: "ADMIN_CANNOT_UPDATE_OWN_ROLE"
+                developerMessage: "Um administrador não pode alterar o próprio papel (role)."
+                path: "/api/admin/users/{userId}/role"
+            UpdateUnverifiedUserRole:
+              summary: Tentativa de alterar a role de um usuário não verificado
+              value:
+                timestamp: "2024-01-01T12:00:00Z"
+                status: 403
+                errorCode: "ADMIN_CANNOT_UPDATE_ROLE_OF_UNVERIFIED_USER"
+                developerMessage: "Não é possivel alterar a permissão de um usuário não verificado."
+                path: "/api/admin/users/{userId}/role"
+    404:
+      description: Usuário não encontrado com o ID fornecido.
+      content:
+        application/json:
+          schema:
+            $ref: '../../../components/schemas/error/ErrorResponseDto.yml'
+          examples:
+            UserNotFound:
+              summary: Usuário não encontrado
+              value:
+                timestamp: "2024-06-15T14:30:00Z"
+                status: 404
+                errorCode: "USER_NOT_FOUND"
+                developerMessage: "Usuário não encontrado."
+                path: "/api/admin/users/{userId}/role"
+    409:
+      description: |
+        Conflito. O usuário já possui a role que está sendo atribuída.
+      content:
+        application/json:
+          schema:
+            $ref: '../../../components/schemas/error/ErrorResponseDto.yml'
+          examples:
+            UserAlreadyAdmin:
+              summary: O usuário já é um administrador
+              value:
+                timestamp: "2024-01-01T12:00:00Z"
+                status: 409
+                errorCode: "USER_ALREADY_ADMIN"
+                developerMessage: "O usuário já possui privilégios de administrador."
+                path: "/api/admin/users/{userId}/role"
+            UserAlreadyUser:
+              summary: O usuário já é um usuário padrão
+              value:
+                timestamp: "2024-01-01T12:00:00Z"
+                status: 409
+                errorCode: "USER_ALREADY_USER"
+                developerMessage: "O usuário já possui privilégios padrão."
+                path: "/api/admin/users/{userId}/role"
+    429:
+      $ref: '../../../components/responses/TooManyRequestsError.yml'
+    500:
+      $ref: '../../../components/responses/InternalServerError.yml'

@@ -11,13 +11,16 @@ info:
 
     | Código (`errorCode`) | Mensagem (`developerMessage`) | Descrição |
     |---|---|---|
-    | `UNEXPECTED_ERROR` | Ocorreu um erro inesperado. Tente novamente. | Erro lançado para falhas não previstas.
-    | `ACCESS_DENIED` | Acesso negado. Você não tem permissão. | Erro lançado quando o usuário autenticado não tem permissão para acessar o recurso.
-    | `SESSION_EXPIRED` | Sua sessão expirou. Faça login novamente. | Erro lançado quando o token de autenticação expirou.
-    | `VALIDATION_FAILED` | A validação falhou. Verifique os campos. | A resposta incluí detalhes adicionais no campo `fieldErrors`.
-    | `MALFORMED_JSON_REQUEST` | Requisição JSON malformada. | A resposta incluí detalhes adicionais no campo `fieldErrors`.
-    | `INVALID_REQUEST_PARAMETER`| Um parâmetro da requisição é inválido ou está malformado. | A resposta incluí detalhes adicionais no campo `fieldErrors`. 
-    | `TOO_MANY_REQUESTS` | Limite de requisições excedido. Por favor, tente novamente mais tarde. | Erro lançado quando o limite de requisições foi excedido.
+    | `MALFORMED_JSON_REQUEST` | Requisição JSON malformada. | A resposta incluí detalhes adicionais no campo `fieldErrors`. |
+    | `UNEXPECTED_ERROR` | Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. | Erro lançado para falhas não previstas. |
+    | `ACCESS_DENIED` | Acesso negado. Você não tem permissão para acessar este recurso. | Erro lançado quando o usuário autenticado não tem permissão para acessar o recurso. |
+    | `DATA_INTEGRITY_VIOLATION` | O recurso que você está tentando criar ou atualizar já existe. | Erro lançado quando há violação de integridade de dados (duplicação, etc). |
+    | `INVALID_REQUEST_PARAMETER` | Um parâmetro da requisição é inválido ou está malformado. | A resposta incluí detalhes adicionais no campo `fieldErrors`. |
+    | `VALIDATION_FAILED` | A validação falhou. Verifique os detalhes dos campos para mais informações. | A resposta incluí detalhes adicionais no campo `fieldErrors`. |
+    | `SESSION_EXPIRED` | Sua sessão expirou. Por favor, faça login novamente. | Erro lançado quando o token de autenticação expirou. |
+    | `INVALID_SORT_PARAMETER` | O parâmetro de ordenação fornecido é inválido. | Erro lançado quando o parâmetro de ordenação (sort) não é válido. |
+    | `INVALID_FIELD_VALUE` | O valor fornecido para um campo é inválido. | Erro lançado quando o valor de um campo específico não é válido. |
+    | `TOO_MANY_REQUESTS` | Limite de requisições excedido. Por favor, tente novamente mais tarde. | Erro lançado quando o limite de requisições (rate limit) foi excedido. |
 
 tags:
   - name: "Autenticação - Core"
@@ -42,6 +45,21 @@ tags:
 
   - name: "Administração - Gerenciamento de Usuários"
     description: Endpoints relacionados ao gerenciamento de usuários, acessíveis apenas por administradores.
+
+  - name: "Administração - Gerenciamento de Modalidades"
+    description: Endpoints relacionados ao gerenciamento de modalidades esportivas, acessíveis apenas por administradores.
+
+  - name: "Administração - Gerenciamento de Quadras"
+    description: Endpoints relacionados ao gerenciamento de quadras, acessíveis apenas por administradores.
+
+  - name: "Administração - Gerenciamento de Regras de Preço"
+    description: Endpoints relacionados ao gerenciamento de regras de preço, acessíveis apenas por administradores.
+
+  - name: "Administração - Gerenciamento de Horários de Funcionamento"
+    description: Endpoints relacionados ao gerenciamento de horários de funcionamento, acessíveis apenas por administradores.
+
+  - name: "Endpoints Públicos"
+    description: Endpoints públicos para consultas. Dados utilizados por clientes sem necessidade de autenticação.
 
 components:
   schemas:
@@ -101,6 +119,37 @@ components:
     UpdateUserRoleRequestDto:
       $ref: "./components/schemas/admin/UpdateUserRoleRequestDto.yml"
 
+    CreateModalityRequestDto:
+      $ref: "./components/schemas/modality/CreateModalityRequestDto.yml"
+    UpdateModalityRequestDto:
+      $ref: "./components/schemas/modality/UpdateModalityRequestDto.yml"
+    ModalityResponseDto:
+      $ref: "./components/schemas/modality/ModalityResponseDto.yml"
+
+    PriceRuleResponseDto:
+      $ref: "./components/schemas/priceRule/PriceRuleResponseDto.yml"
+    CreatePriceRuleRequestDto:
+      $ref: "./components/schemas/priceRule/CreatePriceRuleRequestDto.yml"
+    UpdatePriceRuleRequestDto:
+      $ref: "./components/schemas/priceRule/UpdatePriceRuleRequestDto.yml"
+    UpdateDefaultPriceRuleRequestDto:
+      $ref: "./components/schemas/priceRule/UpdateDefaultPriceRuleRequestDto.yml"
+
+    CreateOperatingHoursRequestDto:
+      $ref: "./components/schemas/operatingHours/CreateOperatingHoursRequestDto.yml"
+    OperatingHoursResponseDto:
+      $ref: "./components/schemas/operatingHours/OperatingHoursResponseDto.yml"
+
+    HomePageDataResponseDto:
+      $ref: "./components/schemas/homepage/HomePageDataResponseDto.yml"
+
+    CreateCourtRequestDto:
+      $ref: "./components/schemas/court/CreateCourtRequestDto.yml"
+    UpdateCourtRequestDto:
+      $ref: "./components/schemas/court/UpdateCourtRequestDto.yml"
+    AdminCourtResponseDto:
+      $ref: "./components/schemas/court/AdminCourtResponseDto.yml"
+
   responses:
     InternalServerError:
       $ref: "./components/responses/InternalServerError.yml"
@@ -112,12 +161,6 @@ components:
       $ref: "./components/responses/TooManyRequestsError.yml"
     AccountStatusForbidden:
       $ref: "./components/responses/AccountStatusForbidden.yml"
-
-  parameters:
-    RefreshTokenCookie:
-      $ref: "./components/parameters/RefreshTokenCookie.yml"
-    UserPagination:
-      $ref: "./components/parameters/UserPagination.yml"
 
   headers:
     Set-Cookie:
@@ -172,8 +215,57 @@ paths:
     $ref: "./paths/user/DisableAccount.yml"
 
   /api/admin/users:
-    $ref: "./paths/admin/GetUsers.yml"
+    $ref: "./paths/admin/users/GetUsers.yml"
   /api/admin/users/{userId}/status:
-    $ref: "./paths/admin/UpdateStatus.yml"
+    $ref: "./paths/admin/users/UpdateStatus.yml"
   /api/admin/users/{userId}/role:
-    $ref: "./paths/admin/UpdateRole.yml"
+    $ref: "./paths/admin/users/UpdateRole.yml"
+
+  /api/admin/modalities:
+    $ref: "./paths/admin/modalities/Modalities.yml"
+  /api/admin/modalities/{modalityId}:
+    $ref: "./paths/admin/modalities/ModalityById.yml"
+  /api/admin/modalities/{modalityId}/disable:
+    $ref: "./paths/admin/modalities/DisableModality.yml"
+  /api/admin/modalities/{modalityId}/enable:
+    $ref: "./paths/admin/modalities/EnableModality.yml"
+
+  /api/admin/courts:
+    $ref: "./paths/admin/courts/Courts.yml"
+  /api/admin/courts/{courtId}:
+    $ref: "./paths/admin/courts/CourtsById.yml"
+  /api/admin/courts/{courtId}/disable:
+    $ref: "./paths/admin/courts/DisableCourt.yml"
+  /api/admin/courts/{courtId}/enable:
+    $ref: "./paths/admin/courts/EnableCourt.yml"
+
+
+  /api/admin/price-rules:
+    $ref: "./paths/admin/priceRule/PriceRules.yml"
+  /api/admin/price-rules/{priceRuleId}:
+    $ref: "./paths/admin/priceRule/PriceRuleById.yml"
+  /api/admin/operating-rules/{priceRuleId}/enable:
+    $ref: "./paths/admin/priceRule/PriceRuleEnable.yml"
+  /api/admin/operating-rules/{priceRuleId}/disable:
+    $ref: "./paths/admin/priceRule/PriceRuleDisable.yml"
+  /api/admin/price-rules/default:
+    $ref: "./paths/admin/priceRule/DefaultPriceRule.yml"
+
+  /api/admin/operating-rules:
+    $ref: "./paths/admin/operatingHours/OperatingHours.yml"
+  /api/admin/operating-rules/{operatingHoursId}:
+    $ref: "./paths/admin/operatingHours/OperatingHoursById.yml"
+  /api/admin/operating-rules/{operatingHoursId}/enable:
+    $ref: "./paths/admin/operatingHours/OperatingHoursEnable.yml"
+  /api/admin/operating-rules/{operatingHoursId}/disable:
+    $ref: "./paths/admin/operatingHours/OperatingHoursDisable.yml"
+
+  /api/modalities:
+    $ref: "./paths/modality/GetAllModalities.yml"
+  /api/price-rules:
+    $ref: "./paths/priceRule/GetAllPriceRules.yml"
+  /api/operating-rules:
+    $ref: "./paths/operatingHours/GetAllOperatingHours.yml"
+  /api/homepage:
+    $ref: "./paths/homepage/GetHomePageData.yml"
+

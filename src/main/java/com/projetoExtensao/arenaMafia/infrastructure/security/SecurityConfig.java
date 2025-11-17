@@ -71,8 +71,13 @@ public class SecurityConfig {
                     .requestMatchers("/api/auth/logout", "/api/users/**")
                     .authenticated()
 
-                    // Endpoints públicos para autenticação e cadastro
-                    .requestMatchers("/api/auth/**")
+                    // Endpoints públicos
+                    .requestMatchers(
+                        "/api/auth/**",
+                        "/api/modalities",
+                        "/api/operating-hours",
+                        "/api/price-rules",
+                        "/api/home")
                     .permitAll()
 
                     // Endpoints públicos para desenvolvimento

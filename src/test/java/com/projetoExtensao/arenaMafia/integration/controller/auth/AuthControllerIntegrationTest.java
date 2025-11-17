@@ -26,6 +26,13 @@ import com.projetoExtensao.arenaMafia.infrastructure.web.exception.dto.ErrorResp
 import com.projetoExtensao.arenaMafia.infrastructure.web.exception.dto.FieldErrorResponseDto;
 import com.projetoExtensao.arenaMafia.integration.config.WebIntegrationTestConfig;
 import com.projetoExtensao.arenaMafia.integration.config.util.*;
+import com.projetoExtensao.arenaMafia.integration.config.util.user.InvalidFullNameProvider;
+import com.projetoExtensao.arenaMafia.integration.config.util.user.InvalidOtpCodeProvider;
+import com.projetoExtensao.arenaMafia.integration.config.util.user.InvalidOtpSessionIdProvider;
+import com.projetoExtensao.arenaMafia.integration.config.util.user.InvalidPasswordProvider;
+import com.projetoExtensao.arenaMafia.integration.config.util.user.InvalidPhoneProvider;
+import com.projetoExtensao.arenaMafia.integration.config.util.user.InvalidRefreshTokenProvider;
+import com.projetoExtensao.arenaMafia.integration.config.util.user.InvalidUsernameProvider;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.http.Cookie;
 import io.restassured.response.Response;
@@ -620,7 +627,8 @@ public class AuthControllerIntegrationTest extends WebIntegrationTestConfig {
       assertThat(response.otpSessionId().toString()).hasSize(36); // UUID
       assertThat(response.message())
           .isEqualTo(
-              "Conta criada com sucesso. Um código de verificação foi enviado para o seu telefone.");
+              "Conta criada com sucesso. Um código de verificação foi enviado para o seu"
+                  + " telefone.");
     }
 
     @Nested
@@ -1223,7 +1231,8 @@ public class AuthControllerIntegrationTest extends WebIntegrationTestConfig {
         value = AccountStatus.class,
         names = {"ACTIVE", "PENDING_VERIFICATION"})
     @DisplayName(
-        "Deve retornar 204 No Content quando o OTP for reenviado com sucesso para conta ativa ou pendente")
+        "Deve retornar 204 No Content quando o OTP for reenviado com sucesso para conta ativa ou"
+            + " pendente")
     void resendOtp_shouldReturn204_whenOtpIsResentSuccessfullyToActiveOrPendingAccount(
         AccountStatus status) {
       // Arrange

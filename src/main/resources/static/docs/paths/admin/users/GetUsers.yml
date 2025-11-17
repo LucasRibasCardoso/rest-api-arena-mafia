@@ -1,0 +1,109 @@
+get:
+  operationId: adminGetAllUsers
+  tags: ["Administração - Gerenciamento de Usuários"]
+  summary: Lista e filtra os usuários do sistema
+  description: |
+    Retorna uma lista paginada de usuários, permitindo a busca por termo, filtro por status, 
+    role e data de criação. Acesso restrito a administradores com a role 'ADMIN'.
+  security:
+    - bearerAuth: []
+  parameters:
+    - $ref: "../../../components/parameters/UserPagination.yml#/term"
+    - $ref: "../../../components/parameters/UserPagination.yml#/status"
+    - $ref: "../../../components/parameters/UserPagination.yml#/role"
+    - $ref: "../../../components/parameters/UserPagination.yml#/createdAtStart"
+    - $ref: "../../../components/parameters/UserPagination.yml#/createdAtEnd"
+    - $ref: "../../../components/parameters/UserPagination.yml#/page"
+    - $ref: "../../../components/parameters/UserPagination.yml#/size"
+    - $ref: "../../../components/parameters/UserPagination.yml#/sort"
+  responses:
+    200:
+      description: Operação bem-sucedida. Retorna a página de usuários.
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/admin/PageOfUserAdminResponseDto.yml"
+    400:
+      description: Erro lançado quando os dados de entrada forem inválidos.
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
+          examples:
+            InvalidDateFormat:
+              summary: Formato de data inválido.
+              description: "Ocorre quando a data (createdAtStart ou createdAtEnd) é enviada em um formato diferente de YYYY-MM-DD."
+              value:
+                timestamp: "2025-09-28T19:48:05.852Z"
+                status: 400
+                errorCode: "VALIDATION_FAILED"
+                developerMessage: "A validação falhou. Verifique os detalhes dos campos para mais informações."
+                path: "/api/admin/users"
+                fieldErrors:
+                  - fieldName: "createdAtStart"
+                    errorCode: "INVALID_REQUEST_PARAMETER"
+                    developerMessage: "Um parâmetro da requisição é inválido ou está malformado."
+            InvalidSortParam:
+              summary: Parâmetro de ordenação inválido.
+              description: "Ocorre quando o parâmetro `sort` contém uma propriedade inexistente ou uma direção inválida (ex: 'ask')."
+              value:
+                timestamp: "2025-09-28T18:31:00Z"
+                status: 400
+                errorCode: "INVALID_SORT_PARAMETER"
+                developerMessage: "O parâmetro de ordenação fornecido é inválido."
+                path: "/api/admin/users"
+            TermTooLong:
+              summary: Termo de busca excede o limite de caracteres.
+              description: "Ocorre quando o parâmetro `term` possui mais de 100 caracteres."
+              value:
+                timestamp: "2025-09-28T18:32:00Z"
+                status: 400
+                errorCode: "VALIDATION_FAILED"
+                developerMessage: "A validação falhou. Verifique os detalhes dos campos para mais informações."
+                path: "/api/admin/users"
+                fieldErrors:
+                  - fieldName: "term"
+                    errorCode: "TERM_TOO_LONG"
+                    developerMessage: "O termo de busca é muito longo. O máximo permitido é 100 caracteres."
+            InvalidStatusValue:
+              summary: Valor inválido para o parâmetro 'status'.
+              description: "Ocorre quando o valor do parâmetro `status` não corresponde a um status válido."
+              value:
+                timestamp: "2025-09-28T18:33:00Z"
+                status: 400
+                errorCode: "VALIDATION_FAILED"
+                developerMessage: "A validação falhou. Verifique os detalhes dos campos para mais informações."
+                path: "/api/admin/users"
+                fieldErrors:
+                  - fieldName: "status"
+                    errorCode: "INVALID_ACCOUNT_STATUS"
+                    developerMessage: "O status da conta fornecido é inválido."
+            InvalidRoleValue:
+              summary: Valor inválido para o parâmetro 'role'.
+              description: "Ocorre quando o valor do parâmetro `role` não corresponde a uma permissão válida."
+              value:
+                timestamp: "2025-09-28T18:34:00Z"
+                status: 400
+                errorCode: "VALIDATION_FAILED"
+                developerMessage: "A validação falhou. Verifique os detalhes dos campos para mais informações."
+                path: "/api/admin/users"
+                fieldErrors:
+                  - fieldName: "role"
+                    errorCode: "INVALID_ROLE"
+                    developerMessage: "O papel (role) fornecido é inválido."
+            FilterDateStartAfterEnd:
+              summary: Data de início maior que data de fim no filtro de data.
+              value:
+                timestamp: "2024-06-15T14:30:00Z"
+                status: 400
+                errorCode: "START_DATE_AFTER_END_DATE"
+                developerMessage: "A data de início não pode ser posterior à data de término."
+                path: "/api/admin/users"
+    401:
+      $ref: "../../../components/responses/UnauthorizedError.yml"
+    403:
+      $ref: "../../../components/responses/ForbiddenError.yml"
+    429:
+      $ref: "../../../components/responses/TooManyRequestsError.yml"
+    500:
+      $ref: "../../../components/responses/InternalServerError.yml"

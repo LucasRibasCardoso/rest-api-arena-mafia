@@ -1,0 +1,23 @@
+type: object
+description: Representa os dados necessários para criar um novo horário de funcionamento.
+required:
+  - timeInterval
+properties:
+  daysOfWeek:
+    type: array
+    nullable: true
+    description: Lista de dias da semana em que o horário de funcionamento é aplicável. Se null, o horário é válido para todos os dias da semana.
+    items:
+      type: string
+      enum:
+        - MONDAY
+        - TUESDAY
+        - WEDNESDAY
+        - THURSDAY
+        - FRIDAY
+        - SATURDAY
+        - SUNDAY
+    example: [ "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY" ]
+  timeInterval:
+    $ref: "../timeInterval/TimeIntervalDto.yml"
+

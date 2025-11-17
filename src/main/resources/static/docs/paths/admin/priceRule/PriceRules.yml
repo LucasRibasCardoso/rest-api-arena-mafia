@@ -1,0 +1,238 @@
+get:
+  operationId: adminGetAllPriceRules
+  tags: [ Administração - Gerenciamento de Regras de Preço ]
+  summary: Listar todas as regras de preço
+  description: |
+    Lista todas as regras de preços cadastradas no sistema. É possível filtrar por status 
+    (ativas ou inativas) usando o parâmetro de query `isActive`.
+  security:
+    - bearerAuth: [ ]
+  parameters:
+    - name: isActive
+      in: query
+      required: false
+      description: |
+        Filtro opcional para buscar regras por status:
+        - `true`: retorna apenas regras de preço ativas
+        - `false`: retorna apenas regras de preço inativas
+        - Se omitido: retorna todas as regras de preço (ativas e inativas)
+      schema:
+        type: boolean
+      examples:
+        active:
+          summary: Buscar apenas regras de preço ativas
+          value: true
+        inactive:
+          summary: Buscar apenas regras de preço inativas
+          value: false
+  responses:
+    200:
+      description: Lista de regras de preço retornada com sucesso. Retorna um array vazio se não houver
+        regras de preço cadastradas ou se nenhuma regra corresponder ao filtro aplicado.
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: "../../../components/schemas/priceRule/PriceRuleResponseDto.yml"
+          examples:
+            allPriceRules:
+              summary: Todas as regras de preço (sem filtro)
+              value:
+                - id: "7c8d9e10-1a2b-3c4d-5e6f-7890abcdef12"
+                  name: "Horário de Pico - Fim de Semana"
+                  daysOfWeek: [ "SATURDAY", "SUNDAY" ]
+                  timeInterval:
+                    startTime: "10:00:00"
+                    endTime: "22:00:00"
+                  price: 150.00
+                  priority: 10
+                  isDefault: false
+                  isActive: true
+                - id: "8d9e10f1-2a3b-4c5d-6e7f-8901bcdef234"
+                  name: "Regra Padrão"
+                  daysOfWeek: null
+                  timeInterval:
+                    startTime: "00:00:00"
+                    endTime: "23:59:59"
+                  price: 100.00
+                  priority: 1
+                  isDefault: true
+                  isActive: true
+            enablePriceRules:
+              summary: Apenas regras de preço ativas
+              value:
+                - id: "7c8d9e10-1a2b-3c4d-5e6f-7890abcdef12"
+                  name: "Horário de Pico - Fim de Semana"
+                  daysOfWeek: [ "SATURDAY", "SUNDAY" ]
+                  timeInterval:
+                    startTime: "10:00:00"
+                    endTime: "22:00:00"
+                  price: 150.00
+                  priority: 10
+                  isDefault: false
+                  isActive: true
+            disabledPriceRules:
+              summary: Apenas regras de preço inativas
+              value:
+                - id: "9e10f1a2-3b4c-5d6e-7f89-01bcdef34567"
+                  name: "Regra Temporariamente Desativada"
+                  daysOfWeek: [ "MONDAY", "WEDNESDAY" ]
+                  timeInterval:
+                    startTime: "12:00:00"
+                    endTime: "18:00:00"
+                  price: 120.00
+                  priority: 5
+                  isDefault: false
+                  isActive: false
+    401:
+      $ref: "../../../components/responses/UnauthorizedError.yml"
+    403:
+      $ref: "../../../components/responses/ForbiddenError.yml"
+    429:
+      $ref: "../../../components/responses/TooManyRequestsError.yml"
+    500:
+      $ref: "../../../components/responses/InternalServerError.yml"
+
+post:
+  operationId: createPriceRule
+  tags: [ Administração - Gerenciamento de Regras de Preço ]
+  summary: Criar uma nova regra de preço
+  description: |
+    Cria uma nova regra de preço no sistema com os dados fornecidos.
+  security:
+    - bearerAuth: [ ]
+  requestBody:
+    description: |
+      Dados para criação de uma nova regra de preço. 
+      O atributo `daysOfWeek` pode ser ``null para indicar que a regra se aplica a todos os dias da semana.
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: "../../../components/schemas/priceRule/CreatePriceRuleRequestDto.yml"
+  responses:
+    201:
+      description: Regra de preço criada com sucesso.
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/priceRule/PriceRuleResponseDto.yml"
+    400:
+      description: Requisição inválida. Verifique os dados enviados.
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
+          examples:
+            PriceRuleNameInvalidFormat:
+              summary: Nome da regra de preço em formato inválido
+              value:
+                timestamp: "2024-10-10T14:00:00Z"
+                status: 400
+                errorCode: "VALIDATION_FAILED"
+                developerMessage: "A validação falhou. Verifique os detalhes dos campos para mais informações."
+                path: "/api/admin/price-rules"
+                fieldErrors:
+                  - fieldName: "name"
+                    errorCode: "PRICE_RULE_NAME_REQUIRED"
+                    developerMessage: "O nome da regra de preço é obrigatório."
+                  - fieldName: "name"
+                    errorCode: "PRICE_RULE_NAME_INVALID_LENGTH"
+                    developerMessage: "O nome da regra de preço deve ter entre 1 e 100 caracteres."
+            PriceRuleInvalidDaysOfWeek:
+              summary: Dias da semana inválidos na regra de preço
+              value:
+                timestamp: "2024-10-10T14:00:00Z"
+                status: 400
+                errorCode: "VALIDATION_FAILED"
+                developerMessage: "A validação falhou. Verifique os detalhes dos campos para mais informações."
+                path: "/api/admin/price-rules"
+                fieldErrors:
+                  - fieldName: "daysOfWeek"
+                    errorCode: "DAY_OF_WEEK_REQUIRED"
+                    developerMessage: "O dia da semana é obrigatório."
+                  - fieldName: "daysOfWeek"
+                    errorCode: "DAY_OF_WEEK_INVALID"
+                    developerMessage: "O dia da semana fornecido é inválido. Valores válidos: 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'."
+            PriceRuleTimeIntervalInvalid:
+              summary: Intervalo de tempo inválido na regra de preço
+              value:
+                timestamp: "2024-10-10T14:00:00Z"
+                status: 400
+                errorCode: "VALIDATION_FAILED"
+                developerMessage: "A validação falhou. Verifique os detalhes dos campos para mais informações."
+                path: "/api/admin/price-rules"
+                fieldErrors:
+                  - fieldName: "timeInterval"
+                    errorCode: "TIME_INTERVAL_REQUIRED"
+                    developerMessage: "O intervalo de tempo é obrigatório."
+                  - fieldName: "timeInterval"
+                    errorCode: "TIME_INTERVAL_SAME_TIME"
+                    developerMessage: "O horário de abertura não pode ser igual ao horário de fechamento."
+                  - fieldName: "timeInterval"
+                    errorCode: "TIME_INTERVAL_INVALID_MINUTES"
+                    developerMessage: "O intervalo de tempo não pode exceder 24 horas."
+            PriceRuleInvalidPrice:
+              summary: Preço inválido na regra de preço
+              value:
+                timestamp: "2024-10-10T14:00:00Z"
+                status: 400
+                errorCode: "VALIDATION_FAILED"
+                developerMessage: "A validação falhou. Verifique os detalhes dos campos para mais informações."
+                path: "/api/admin/price-rules"
+                fieldErrors:
+                  - fieldName: "price"
+                    errorCode: "PRICE_RULE_PRICE_REQUIRED"
+                    developerMessage: "O preço da regra de preço é obrigatório."
+                  - fieldName: "price"
+                    errorCode: "PRICE_RULE_PRICE_INVALID"
+                    developerMessage: "O preço deve ser um valor positivo."
+            PriceRuleInvalidPriority:
+              summary: Prioridade inválida na regra de preço
+              value:
+                timestamp: "2024-10-10T14:00:00Z"
+                status: 400
+                errorCode: "VALIDATION_FAILED"
+                developerMessage: "A validação falhou. Verifique os detalhes dos campos para mais informações."
+                path: "/api/admin/price-rules"
+                fieldErrors:
+                  - fieldName: "price"
+                    errorCode: "PRICE_RULE_PRIORITY_REQUIRED"
+                    developerMessage: "A prioridade da regra de preço é obrigatória."
+                  - fieldName: "price"
+                    errorCode: "PRICE_RULE_PRIORITY_INVALID"
+                    developerMessage: "O valor de prioridade deve ser um valor maior que 0."
+    401:
+      $ref: "../../../components/responses/UnauthorizedError.yml"
+    403:
+      $ref: "../../../components/responses/ForbiddenError.yml"
+    409:
+      description: |
+        Conflito ao criar a regra de preço. Pode ocorrer se uma regra padrão já existir ou se sobrepor a uma já existente.
+        Em caso de sobreposição de horários, aumentar a prioridade da nova regra ou ajustar os horários.
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
+          examples:
+            RuleNameAlreadyExists:
+              summary: Nome da regra de preço já existe
+              value:
+                timestamp: "2024-10-10T14:00:00Z"
+                status: 409
+                errorCode: "PRICE_RULE_ALREADY_EXISTS"
+                developerMessage: "Essa regra de preço já está cadastrada."
+                path: "/api/admin/price-rules"
+            PriceRuleOverlap:
+              summary: Sobreposição de regra de preço
+              value:
+                timestamp: "2024-10-10T14:00:00Z"
+                status: 409
+                errorCode: "PRICE_RULE_PRIORITY_OVERLAP"
+                developerMessage: "Já existe uma regra de preço com essa prioridade."
+                path: "/api/admin/price-rules"
+    429:
+      $ref: "../../../components/responses/TooManyRequestsError.yml"
+    500:
+      $ref: "../../../components/responses/InternalServerError.yml"

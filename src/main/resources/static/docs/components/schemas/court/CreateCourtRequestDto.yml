@@ -1,0 +1,47 @@
+type: object
+description: Dados necessários para criar uma nova quadra esportiva.
+required:
+  - name
+  - offsetMinutes
+  - modalityIds
+properties:
+  name:
+    type: string
+    minLength: 3
+    maxLength: 100
+    description: |
+      Nome identificador da quadra.
+      Deve ser único no sistema.
+    example: "Quadra de Futebol A"
+  description:
+    type: string
+    nullable: true
+    description: |
+      Descrição adicional da quadra (opcional).
+      Pode conter informações como localização, características especiais, etc.
+    example: "Quadra coberta com grama sintética, próxima ao estacionamento principal"
+  offsetMinutes:
+    type: integer
+    enum: [0, 30]
+    description: |
+      Deslocamento em minutos para o horário de funcionamento da quadra.
+      Define o offset no início dos horários de reserva.
+      
+      Valores permitidos:
+      - `0`: Horários iniciam na hora cheia (ex: 08:00, 09:00, 10:00)
+      - `30`: Horários iniciam na meia hora (ex: 08:30, 09:30, 10:30)
+    example: 0
+  modalityIds:
+    type: array
+    minItems: 1
+    uniqueItems: true
+    description: |
+      Lista de identificadores (UUIDs) das modalidades esportivas suportadas pela quadra.
+      Ao menos uma modalidade deve ser informada.
+      Todas as modalidades informadas devem existir no sistema.
+    items:
+      type: string
+      format: uuid
+    example: 
+      - "6ba7b810-9dad-11d1-80b4-00c04fd430c8"
+      - "3fa85f64-5717-4562-b3fc-2c963f66afa6"

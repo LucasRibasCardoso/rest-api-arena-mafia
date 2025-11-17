@@ -10,7 +10,7 @@ import com.projetoExtensao.arenaMafia.domain.model.enums.AccountStatus;
 import com.projetoExtensao.arenaMafia.domain.model.enums.RoleEnum;
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.request.UpdateUserRoleRequestDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.request.UpdateUserStatusRequestDto;
-import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.response.UserAdminResponseDto;
+import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.response.AdminUserResponseDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.exception.dto.ErrorResponseDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.exception.dto.FieldErrorResponseDto;
 import com.projetoExtensao.arenaMafia.integration.config.WebIntegrationTestConfig;
@@ -59,7 +59,7 @@ public class AdminUserControllerIntegrationTest extends WebIntegrationTestConfig
   }
 
   @Nested
-  @DisplayName("Testes para o endpoints /api/admin/users")
+  @DisplayName("Testes para o endpoint GET /api/admin/users")
   class ListUsersTests {
 
     @Test
@@ -172,8 +172,8 @@ public class AdminUserControllerIntegrationTest extends WebIntegrationTestConfig
 
           // Assert
           JsonPath jsonPath = new JsonPath(responseBody);
-          List<UserAdminResponseDto> users =
-              jsonPath.getList("content", UserAdminResponseDto.class);
+          List<AdminUserResponseDto> users =
+              jsonPath.getList("content", AdminUserResponseDto.class);
 
           assertThat(users).hasSize(1);
           assertThat(users.getFirst().username()).isEqualTo("gabriela_alves");
@@ -198,8 +198,8 @@ public class AdminUserControllerIntegrationTest extends WebIntegrationTestConfig
 
           // Assert
           JsonPath jsonPath = new JsonPath(responseBody);
-          List<UserAdminResponseDto> users =
-              jsonPath.getList("content", UserAdminResponseDto.class);
+          List<AdminUserResponseDto> users =
+              jsonPath.getList("content", AdminUserResponseDto.class);
 
           assertThat(users).hasSize(1);
           assertThat(users.getFirst().fullName()).isEqualTo("João da Silva");
@@ -224,8 +224,8 @@ public class AdminUserControllerIntegrationTest extends WebIntegrationTestConfig
 
           // Assert
           JsonPath jsonPath = new JsonPath(responseBody);
-          List<UserAdminResponseDto> users =
-              jsonPath.getList("content", UserAdminResponseDto.class);
+          List<AdminUserResponseDto> users =
+              jsonPath.getList("content", AdminUserResponseDto.class);
 
           assertThat(users).hasSize(1);
           assertThat(users.getFirst().phone()).isEqualTo("+5511999000001");
@@ -258,8 +258,8 @@ public class AdminUserControllerIntegrationTest extends WebIntegrationTestConfig
 
           // Assert
           JsonPath jsonPath = new JsonPath(responseBody);
-          List<UserAdminResponseDto> users =
-              jsonPath.getList("content", UserAdminResponseDto.class);
+          List<AdminUserResponseDto> users =
+              jsonPath.getList("content", AdminUserResponseDto.class);
 
           assertThat(users).isNotEmpty();
           assertThat(users.stream().allMatch(user -> user.status().equals(status.name()))).isTrue();
@@ -287,8 +287,8 @@ public class AdminUserControllerIntegrationTest extends WebIntegrationTestConfig
 
           // Assert
           JsonPath jsonPath = new JsonPath(responseBody);
-          List<UserAdminResponseDto> users =
-              jsonPath.getList("content", UserAdminResponseDto.class);
+          List<AdminUserResponseDto> users =
+              jsonPath.getList("content", AdminUserResponseDto.class);
 
           assertThat(users).isNotEmpty();
           assertThat(users.stream().allMatch(user -> user.role().equals(role.name()))).isTrue();
@@ -318,8 +318,8 @@ public class AdminUserControllerIntegrationTest extends WebIntegrationTestConfig
 
           // Assert
           JsonPath jsonPath = new JsonPath(responseBody);
-          List<UserAdminResponseDto> users =
-              jsonPath.getList("content", UserAdminResponseDto.class);
+          List<AdminUserResponseDto> users =
+              jsonPath.getList("content", AdminUserResponseDto.class);
 
           assertThat(users).isNotEmpty();
           assertThat(users.size()).isEqualTo(11);
@@ -348,8 +348,8 @@ public class AdminUserControllerIntegrationTest extends WebIntegrationTestConfig
 
           // Assert
           JsonPath jsonPath = new JsonPath(responseBody);
-          List<UserAdminResponseDto> users =
-              jsonPath.getList("content", UserAdminResponseDto.class);
+          List<AdminUserResponseDto> users =
+              jsonPath.getList("content", AdminUserResponseDto.class);
 
           assertThat(users.getFirst().username()).isEqualTo("ana_oliveira");
           assertThat(users.getLast().username()).isEqualTo("testuser");
@@ -374,8 +374,8 @@ public class AdminUserControllerIntegrationTest extends WebIntegrationTestConfig
 
           // Assert
           JsonPath jsonPath = new JsonPath(responseBody);
-          List<UserAdminResponseDto> users =
-              jsonPath.getList("content", UserAdminResponseDto.class);
+          List<AdminUserResponseDto> users =
+              jsonPath.getList("content", AdminUserResponseDto.class);
 
           assertThat(users.getFirst().username()).isEqualTo("testuser");
           assertThat(users.getLast().username()).isEqualTo("ana_oliveira");
@@ -400,8 +400,8 @@ public class AdminUserControllerIntegrationTest extends WebIntegrationTestConfig
 
           // Assert
           JsonPath jsonPath = new JsonPath(responseBody);
-          List<UserAdminResponseDto> users =
-              jsonPath.getList("content", UserAdminResponseDto.class);
+          List<AdminUserResponseDto> users =
+              jsonPath.getList("content", AdminUserResponseDto.class);
 
           assertThat(users.getFirst().username()).isEqualTo("gabriela_alves");
           assertThat(users.getLast().username()).isEqualTo("testuser");
@@ -819,7 +819,8 @@ public class AdminUserControllerIntegrationTest extends WebIntegrationTestConfig
 
     @Test
     @DisplayName(
-        "Deve retornar 403 Forbidden quando o admin tentar atualizar o status de um usuário com verificação pendente")
+        "Deve retornar 403 Forbidden quando o admin tentar atualizar o status de um usuário com"
+            + " verificação pendente")
     void shouldReturn403_whenAdminTryToUpdateStatusOfUserPending() {
       // Arrange
       User pendingUser =
@@ -857,7 +858,8 @@ public class AdminUserControllerIntegrationTest extends WebIntegrationTestConfig
 
     @Test
     @DisplayName(
-        "Deve retornar 403 Forbidden quando o admin tentar atualizar o status para PENDING_VERIFICATION")
+        "Deve retornar 403 Forbidden quando o admin tentar atualizar o status para"
+            + " PENDING_VERIFICATION")
     void shouldReturn403_whenTryToUpdateStatusToPendingVerification() {
       // Arrange
       User user =
@@ -1138,7 +1140,8 @@ public class AdminUserControllerIntegrationTest extends WebIntegrationTestConfig
 
     @Test
     @DisplayName(
-        "Deve retornar 403 Forbidden quando o admin tentar alterar a role para um nível superior ao seu")
+        "Deve retornar 403 Forbidden quando o admin tentar alterar a role para um nível superior ao"
+            + " seu")
     void shouldReturn403_whenAdminTryToChangeRoleToHigherLevel() {
       // Arrange
       User user =
@@ -1176,7 +1179,8 @@ public class AdminUserControllerIntegrationTest extends WebIntegrationTestConfig
 
     @Test
     @DisplayName(
-        "Deve retornar 403 Forbidden quando o admin tentar atualizar a permissão de um usuário com verificação pendente")
+        "Deve retornar 403 Forbidden quando o admin tentar atualizar a permissão de um usuário com"
+            + " verificação pendente")
     void shouldReturn403_whenAdminTryToChangeRoleFromUserNotVerified() {
       // Arrange
       User pendingUser =

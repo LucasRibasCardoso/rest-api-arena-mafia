@@ -1,0 +1,24 @@
+type: object
+description: |
+  Dados para atualização de uma regra de preço existente.
+  Todos os campos são opcionais. Apenas os campos fornecidos serão atualizados.
+properties:
+  name:
+    type: string
+    minLength: 1
+    maxLength: 100
+    description: |
+      Novo nome da regra de preço.
+      Se fornecido, deve ser único no sistema.
+    nullable: true
+    example: "Horário de Pico - Fim de Semana (Atualizado)"
+  price:
+    type: number
+    format: decimal
+    minimum: 0
+    description: |
+      Novo valor do preço.
+      Deve ser um valor positivo.
+    nullable: true
+    example: 180.00
+

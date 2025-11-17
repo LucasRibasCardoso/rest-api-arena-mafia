@@ -1,0 +1,159 @@
+patch:
+  operationId: updateUserStatus
+  tags: [ "Administração - Gerenciamento de Usuários" ]
+  summary: Alterar o status de um usuário
+  description: |
+    Permite que administradores com a role 'ADMIN' alterem o status de um usuário específico.
+  security:
+    - bearerAuth: [ ]
+  parameters:
+    - $ref: '../../../components/parameters/UserId.yml'
+  requestBody:
+    description: |
+      Permite que administradores com a role 'ADMIN' alterem o status de um usuário específico.
+      Status permitidos para alteração: 'ACTIVE', 'DISABLED' ou 'LOCKED'.
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../../../components/schemas/admin/UpdateUserStatusRequestDto.yml'
+  responses:
+    204:
+      description: Status do usuário atualizado com sucesso. Nenhum conteúdo é retornado.
+    400:
+      description: Requisição inválida, possivelmente devido a um status inválido ou formato incorreto.
+      content:
+        application/json:
+          schema:
+            $ref: '../../../components/schemas/error/ErrorResponseDto.yml'
+          examples:
+            InvalidStatus:
+              summary: Status inválido
+              value:
+                timestamp: "2024-01-01T12:00:00Z"
+                status: 400
+                errorCode: "VALIDATION_FAILED"
+                developerMessage: "A validação falhou. Verifique os detalhes dos campos para mais informações."
+                path: "/api/admin/users/{userId}/status"
+                fieldErrors:
+                  - fieldName: "status"
+                    errorCode: "INVALID_ACCOUNT_STATUS"
+                    developerMessage: "O status da conta fornecido é inválido."
+            MissingStatus:
+              summary: Status não informado
+              value:
+                timestamp: "2024-01-01T12:00:00Z"
+                status: 400
+                errorCode: "VALIDATION_FAILED"
+                developerMessage: "A validação falhou. Verifique os detalhes dos campos para mais informações."
+                path: "/api/admin/users/{userId}/status"
+                fieldErrors:
+                  - fieldName: "status"
+                    errorCode: "ACCOUNT_STATUS_REQUIRED"
+                    developerMessage: "O status da conta é obrigatório."
+            MalformedJson:
+              summary: JSON malformado
+              value:
+                timestamp: "2024-01-01T12:00:00Z"
+                status: 400
+                errorCode: "VALIDATION_FAILED"
+                developerMessage: "A validação falhou. Verifique os detalhes dos campos para mais informações."
+                path: "/api/admin/users/{userId}/status"
+                fieldErrors:
+                  - fieldName: "unknown"
+                    errorCode: "MALFORMED_JSON_REQUEST"
+                    developerMessage: "O corpo da requisição contém um JSON malformado ou inválido."
+    401:
+      $ref: '../../../components/responses/UnauthorizedError.yml'
+    403:
+      description: |
+        Acesso negado. O usuário autenticado não possui permissão para alterar o
+        status de usuários, está tentando alterar o próprio status ou para um status não permitido.
+      content:
+        application/json:
+          schema:
+            $ref: '../../../components/schemas/error/ErrorResponseDto.yml'
+          examples:
+            AccessDenied:
+              summary: Acesso negado por falta de permissão
+              value:
+                timestamp: "2024-06-15T14:30:00Z"
+                status: 403
+                errorCode: "ACCESS_DENIED"
+                developerMessage: "Acesso negado. Você não tem permissão para acessar este recurso."
+                path: "/api/admin/users/{userId}/status"
+            InvalidStatusChange:
+              summary: Tentativa de alterar para um status não permitido
+              value:
+                timestamp: "2024-01-01T12:00:00Z"
+                status: 403
+                errorCode: "INVALID_ACCOUNT_STATUS"
+                developerMessage: "O status da conta fornecido é inválido."
+                path: "/api/admin/users/{userId}/status"
+            UpdateSelfStatus:
+              summary: Tentativa de alterar o próprio status
+              value:
+                timestamp: "2024-01-01T12:00:00Z"
+                status: 403
+                errorCode: "ADMIN_CANNOT_UPDATE_OWN_STATUS"
+                developerMessage: "Um administrador não pode alterar o próprio status."
+                path: "/api/admin/users/{userId}/status"
+            UpdateUnverifiedUserStatus:
+              summary: Tentativa de alterar o status de um usuário não verificado
+              value:
+                timestamp: "2024-01-01T12:00:00Z"
+                status: 403
+                errorCode: "ADMIN_CANNOT_UPDATE_STATUS_OF_UNVERIFIED_USER"
+                developerMessage: "Um administrador não pode alterar o status de um usuário não verificado."
+                path: "/api/admin/users/{userId}/status"
+    404:
+      description: Usuário não encontrado com o ID fornecido.
+      content:
+        application/json:
+          schema:
+            $ref: '../../../components/schemas/error/ErrorResponseDto.yml'
+          examples:
+            UserNotFound:
+              summary: Usuário não encontrado
+              value:
+                timestamp: "2024-01-01T12:00:00Z"
+                status: 404
+                errorCode: "USER_NOT_FOUND"
+                developerMessage: "Usuário não encontrado."
+                path: "/api/admin/users/{userId}/status"
+    409:
+      description: |
+        Conflito. O usuário já possui o status que está sendo atribuído.
+      content:
+        application/json:
+          schema:
+            $ref: '../../../components/schemas/error/ErrorResponseDto.yml'
+          examples:
+            AccountAlreadyActive:
+              summary: A conta do usuário já está ativa
+              value:
+                timestamp: "2024-01-01T12:00:00Z"
+                status: 409
+                errorCode: "ACCOUNT_ALREADY_DISABLED"
+                developerMessage: "A conta já está desativada."
+                path: "/api/admin/users/{userId}/status"
+            AccountAlreadyLocked:
+              summary: A conta do usuário já está bloqueada
+              value:
+                timestamp: "2024-01-01T12:00:00Z"
+                status: 409
+                errorCode: "ACCOUNT_ALREADY_ACTIVE"
+                developerMessage: "A conta já está ativa."
+                path: "/api/admin/users/{userId}/status"
+            AccountAlreadyDisabled:
+              summary: A conta do usuário já está desativada
+              value:
+                timestamp: "2024-01-01T12:00:00Z"
+                status: 409
+                errorCode: "ACCOUNT_ALREADY_LOCKED"
+                developerMessage: "A conta já está bloqueada."
+                path: "/api/admin/users/{userId}/status"
+    429:
+      $ref: '../../../components/responses/TooManyRequestsError.yml'
+    500:
+      $ref: '../../../components/responses/InternalServerError.yml'

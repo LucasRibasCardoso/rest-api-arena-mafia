@@ -27,6 +27,18 @@
     - É onde residem os frameworks, controllers, repositórios JPA, clientes HTTP, etc.
     - Use DTOs (Data Transfer Objects) para a comunicação na camada web (requests/responses). Prefira `Records` do Java para DTOs, pois são imutáveis por padrão.
 
+# Segurança (Security)
+
+Pense em segurança em primeiro lugar. Siga as práticas recomendadas pelo OWASP Top 10.
+
+Validação de Entradas: Nunca confie nos dados que chegam de fontes externas. Valide e sanitize todas as entradas na camada de infrastructure (ex: nos DTOs de request com Bean Validation).
+
+Mínimo Privilégio: As funcionalidades devem ter apenas as permissões estritamente necessárias.
+
+Dependências Seguras: Atente-se à segurança das dependências de terceiros. Sugira o uso de ferramentas de análise de vulnerabilidades (ex: OWASP Dependency-Check).
+
+Autenticação e Autorização: Ao lidar com endpoints protegidos, integre as soluções com o Spring Security de forma robusta.
+
 # Padrões de Projeto
 
 - **Sugira e aplique Design Patterns apropriados para resolver problemas comuns.**

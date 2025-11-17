@@ -2,7 +2,6 @@ package com.projetoExtensao.arenaMafia.unit.application.auth.usecase.otp;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -20,12 +19,10 @@ import com.projetoExtensao.arenaMafia.domain.valueobjects.OtpSessionId;
 import com.projetoExtensao.arenaMafia.unit.config.TestDataProvider;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Stream;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
@@ -107,7 +104,7 @@ public class ResendOtpUseCaseTest {
 
   @ParameterizedTest
   @MethodSource(
-      "com.projetoExtensao.arenaMafia.unit.application.auth.usecase.otp.ResendOtpUseCaseTest#accountStatusNonActiveOrPending")
+      "com.projetoExtensao.arenaMafia.unit.config.TestDataProvider#accountStatusNonActiveOrPending")
   @DisplayName("Deve lançar AccountStatusForbiddenException quando o status da conta é inválido")
   void shouldThrowException_whenInactiveOrBlockedAccount(
       AccountStatus invalidStatus, ErrorCode expectedErrorCode) {
@@ -127,11 +124,5 @@ public class ResendOtpUseCaseTest {
               assertThat(exception.getErrorCode()).isEqualTo(expectedErrorCode);
             });
     verify(eventPublisher, never()).publishEvent(any(OnVerificationRequiredEvent.class));
-  }
-
-  private static Stream<Arguments> accountStatusNonActiveOrPending() {
-    return Stream.of(
-        arguments(AccountStatus.LOCKED, ErrorCode.ACCOUNT_LOCKED),
-        arguments(AccountStatus.DISABLED, ErrorCode.ACCOUNT_DISABLED));
   }
 }

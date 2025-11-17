@@ -1,0 +1,18 @@
+type: object
+description: Intervalo de tempo em que a regra é válida.
+required:
+  - startTime
+  - endTime
+properties:
+  startTime:
+    type: string
+    format: time
+    pattern: "^([01]\\d|2[0-3]):([0-5]\\d)$"
+    description: Horário de início da regra (formato HH:mm).
+    example: "18:00"
+  endTime:
+    type: string
+    format: time
+    pattern: "^([01]\\d|2[0-3]):([0-5]\\d)$"
+    description: Horário de término da regra (formato HH:mm).
+    example: "22:00"

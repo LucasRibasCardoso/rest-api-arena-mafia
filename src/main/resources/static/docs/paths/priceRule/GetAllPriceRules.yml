@@ -1,0 +1,54 @@
+get:
+  operationId: getAllPriceRules
+  tags: [ "Endpoints Públicos" ]
+  summary: Lista todas as regras de preços disponíveis
+  description: |
+    Retorna uma lista de todas as regras de preços ativas no sistema.
+    Este endpoint é público e não requer autenticação.
+  responses:
+    200:
+      description: Operação bem-sucedida. Retorna a lista de regras de preços.
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: "../../components/schemas/priceRule/PriceRuleResponseDto.yml"
+          examples:
+            WithPriceRules:
+              summary: Lista com regras de preços ativas
+              value:
+                - id: "7c8d9e10-1a2b-3c4d-5e6f-7890abcdef12"
+                  name: "Horário de Pico - Fim de Semana"
+                  daysOfWeek: ["SATURDAY", "SUNDAY"]
+                  timeInterval:
+                    startTime: "18:00"
+                    endTime: "22:00"
+                  price: 150.00
+                  priority: 10
+                  isDefault: false
+                  isActive: true
+                - id: "8d9e0f11-2b3c-4d5e-6f7a-8901bcdef234"
+                  name: "Horário Comercial - Dias Úteis"
+                  daysOfWeek: ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"]
+                  timeInterval:
+                    startTime: "08:00"
+                    endTime: "18:00"
+                  price: 100.00
+                  priority: 5
+                  isDefault: false
+                  isActive: true
+                - id: "9e0f1a12-3c4d-5e6f-7a8b-9012cdef3456"
+                  name: "Preço Padrão"
+                  daysOfWeek: null
+                  timeInterval:
+                    startTime: "00:00"
+                    endTime: "23:59"
+                  price: 80.00
+                  priority: 1
+                  isDefault: true
+                  isActive: true
+    429:
+      $ref: "../../components/responses/TooManyRequestsError.yml"
+    500:
+      $ref: "../../components/responses/InternalServerError.yml"

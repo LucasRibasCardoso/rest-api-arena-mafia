@@ -1,0 +1,144 @@
+put:
+  operationId: updateModality
+  tags: [ "Administração - Gerenciamento de Modalidades" ]
+  summary: Atualizar uma modalidade existente
+  description: |
+    Permite que administradores com a role 'ADMIN' atualizem o nome de uma modalidade 
+    esportiva existente. O novo nome deve ser único no sistema.
+  security:
+    - BearerAuth: [ ]
+  parameters:
+    - $ref: "../../../components/parameters/ModalityId.yml"
+  requestBody:
+    description: Dados para atualização da modalidade. O nome deve ter entre 3 e 100 caracteres e ser único.
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: "../../../components/schemas/modality/UpdateModalityRequestDto.yml"
+        example:
+          name: "Futvolei"
+  responses:
+    200:
+      description: Modalidade atualizada com sucesso.
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/modality/ModalityResponseDto.yml"
+          example:
+            id: "550e8400-e29b-41d4-a716-446655440000"
+            name: "Futvolei"
+            createdAt: "2024-10-08T10:30:00Z"
+    400:
+      description: Requisição inválida devido a dados mal formatados ou validação falhou.
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
+          examples:
+            InvalidFormatName:
+              summary: Nome inválido
+              value:
+                timestamp: "2025-10-09T12:30:00Z"
+                status: 400
+                errorCode: "VALIDATION_FAILED"
+                developerMessage: "A validação falhou. Verifique os detalhes dos campos para mais informações."
+                path: "/api/admin/modalities/550e8400-e29b-41d4-a716-446655440000"
+                fieldErrors:
+                  - fieldName: "name"
+                    errorCode: "MODALITY_NAME_INVALID_LENGTH"
+                    developerMessage: "O nome da modalidade deve ter entre 3 e 100 caracteres."
+                  - fieldName: "name"
+                    errorCode: "MODALITY_NAME_REQUIRED"
+                    developerMessage: "O nome da modalidade é obrigatório."
+            InvalidModalityId:
+              summary: ID de modalidade inválido
+              value:
+                timestamp: "2025-10-09T12:30:00Z"
+                status: 400
+                errorCode: "INVALID_REQUEST_PARAMETER"
+                developerMessage: "Um parâmetro da requisição é inválido ou está malformado."
+                path: "/api/admin/modalities/invalid-uuid"
+    401:
+      $ref: "../../../components/responses/UnauthorizedError.yml"
+    403:
+      $ref: "../../../components/responses/ForbiddenError.yml"
+    404:
+      description: Não encontrado. A modalidade com o ID especificado não existe no sistema.
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
+          example:
+            timestamp: "2025-10-09T12:30:00Z"
+            status: 404
+            errorCode: "MODALITY_NOT_FOUND"
+            developerMessage: "Modalidade não encontrada."
+            path: "/api/admin/modalities/550e8400-e29b-41d4-a716-446655440000"
+    409:
+      description: Conflito. Já existe outra modalidade cadastrada com o nome fornecido.
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
+          example:
+            timestamp: "2025-10-09T12:30:00Z"
+            status: 409
+            errorCode: "MODALITY_ALREADY_EXISTS"
+            developerMessage: "Essa modalidade já está cadastrada."
+            path: "/api/admin/modalities/550e8400-e29b-41d4-a716-446655440000"
+    429:
+      $ref: "../../../components/responses/TooManyRequestsError.yml"
+    500:
+      $ref: "../../../components/responses/InternalServerError.yml"
+
+get:
+  operationId: getModalityById
+  tags: [ "Administração - Gerenciamento de Modalidades" ]
+  summary: Buscar uma modalidade específica por ID
+  description: |
+    Permite que administradores com a role 'ADMIN' busquem os detalhes de uma modalidade 
+    esportiva específica através do seu identificador único (UUID).
+  security:
+    - BearerAuth: [ ]
+  parameters:
+    - $ref: "../../../components/parameters/ModalityId.yml"
+  responses:
+    200:
+      description: Operação bem-sucedida. Retorna os dados da modalidade.
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/modality/ModalityResponseDto.yml"
+    400:
+      description: Requisição inválida. O ID fornecido não está em um formato UUID válido.
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
+          example:
+            timestamp: "2025-10-09T12:30:00Z"
+            status: 400
+            errorCode: "INVALID_REQUEST_PARAMETER"
+            developerMessage: "Um parâmetro da requisição é inválido ou está malformado."
+            path: "/api/admin/modalities/invalid-uuid"
+    401:
+      $ref: "../../../components/responses/UnauthorizedError.yml"
+    403:
+      $ref: "../../../components/responses/ForbiddenError.yml"
+    404:
+      description: Não encontrado. A modalidade com o ID especificado não existe no sistema.
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
+          example:
+            timestamp: "2025-10-09T12:30:00Z"
+            status: 404
+            errorCode: "MODALITY_NOT_FOUND"
+            developerMessage: "Modalidade não encontrada."
+            path: "/api/admin/modalities/550e8400-e29b-41d4-a716-446655440000"
+    429:
+      $ref: "../../../components/responses/TooManyRequestsError.yml"
+    500:
+      $ref: "../../../components/responses/InternalServerError.yml"

@@ -1,0 +1,34 @@
+type: object
+description: Representa os dados de um horário de funcionamento retornado pela API.
+required:
+  - id
+  - timeInterval
+  - isActive
+properties:
+  id:
+    type: string
+    format: uuid
+    description: Identificador único do horário de funcionamento.
+    example: "9a8b7c6d-5e4f-3210-abcd-ef1234567890"
+  daysOfWeek:
+    type: array
+    nullable: true
+    description: Lista de dias da semana em que o horário de funcionamento é aplicável. Se null, o horário é válido para todos os dias da semana.
+    items:
+      type: string
+      enum:
+        - MONDAY
+        - TUESDAY
+        - WEDNESDAY
+        - THURSDAY
+        - FRIDAY
+        - SATURDAY
+        - SUNDAY
+    example: [ "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY" ]
+  timeInterval:
+    $ref: "../timeInterval/TimeIntervalDto.yml"
+  isActive:
+    type: boolean
+    description: Indica se o horário de funcionamento está ativo no sistema.
+    example: true
+

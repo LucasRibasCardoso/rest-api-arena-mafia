@@ -29,7 +29,7 @@ spring:
 
 logging:
   level:
-    org.hibernate.type.descriptor.sql: trace
+    root: info
 
 management:
   endpoints:
