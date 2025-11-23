@@ -150,6 +150,9 @@ components:
     AdminCourtResponseDto:
       $ref: "./components/schemas/court/AdminCourtResponseDto.yml"
 
+    AvailableSlotResponseDto:
+      $ref: "./components/schemas/schedule/AvailableSlotResponseDto.yml"
+
   responses:
     InternalServerError:
       $ref: "./components/responses/InternalServerError.yml"
@@ -260,12 +263,15 @@ paths:
   /api/admin/operating-rules/{operatingHoursId}/disable:
     $ref: "./paths/admin/operatingHours/OperatingHoursDisable.yml"
 
-  /api/modalities:
+  /api/schedules/available-times:
+    $ref: "./paths/schedule/GetAvailableTimes.yml"
+
+  /api/public/modalities:
     $ref: "./paths/modality/GetAllModalities.yml"
-  /api/price-rules:
+  /api/public/price-rules:
     $ref: "./paths/priceRule/GetAllPriceRules.yml"
-  /api/operating-rules:
+  /api/public/operating-hours:
     $ref: "./paths/operatingHours/GetAllOperatingHours.yml"
-  /api/homepage:
+  /api/public/homepage:
     $ref: "./paths/homepage/GetHomePageData.yml"
 

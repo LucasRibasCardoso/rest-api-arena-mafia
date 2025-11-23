@@ -32,14 +32,9 @@ public class PriceRuleEntity {
   @Column(name = "day_of_week", length = 20)
   private Set<DayOfWeek> daysOfWeek;
 
-  @Embedded
-  @AttributeOverrides({
-    @AttributeOverride(name = "startTime", column = @Column(name = "start_time")),
-    @AttributeOverride(name = "endTime", column = @Column(name = "end_time"))
-  })
-  private TimeIntervalEmbeddable timeInterval;
+  @Embedded private TimeIntervalEmbeddable timeInterval;
 
-  @Column(nullable = false)
+  @Column(nullable = false, precision = 10, scale = 2)
   private BigDecimal price;
 
   @Column(name = "priority", nullable = false)

@@ -78,12 +78,27 @@ public record TimeInterval(
     }
   }
 
+  /**
+   * Verifica se este intervalo se sobrepõe a outro. Wrapper público seguro para o metodo privado
+   * checkOverlap.
+   */
+  public boolean overlaps(TimeInterval other) {
+    if (other == null) {
+      return false;
+    }
+    return checkOverlap(this, other);
+  }
+
   private void validateDuration(LocalTime startTime, LocalTime endTime) {
     long durationInMinutes = calculateDurationInMinutes(startTime, endTime);
 
     if (durationInMinutes >= 24 * 60) {
       throw new InvalidTimeIntervalException(ErrorCode.TIME_INTERVAL_EXCEEDS_24_HOURS);
     }
+  }
+
+  private boolean crossesMidnight() {
+    return endTime.isBefore(startTime);
   }
 
   private long calculateDurationInMinutes(LocalTime startTime, LocalTime endTime) {
@@ -94,10 +109,6 @@ public record TimeInterval(
       long minutesFromMidnight = Duration.between(LocalTime.MIN, endTime).toMinutes();
       return minutesUntilMidnight + minutesFromMidnight;
     }
-  }
-
-  private boolean crossesMidnight() {
-    return endTime.isBefore(startTime);
   }
 
   private boolean checkOverlap(TimeInterval interval1, TimeInterval interval2) {

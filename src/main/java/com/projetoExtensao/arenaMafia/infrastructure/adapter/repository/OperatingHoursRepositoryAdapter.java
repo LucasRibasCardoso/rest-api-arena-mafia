@@ -46,8 +46,7 @@ public class OperatingHoursRepositoryAdapter implements OperatingHoursRepository
     return operatingHoursJpaRepository
         .findById(id)
         .map(operatingHoursMapper::toDomain)
-        .orElseThrow(
-            () -> new OperatingHoursNotFoundException(ErrorCode.OPERATING_HOURS_NOT_FOUND));
+        .orElseThrow(OperatingHoursNotFoundException::new);
   }
 
   @Override

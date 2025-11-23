@@ -399,6 +399,21 @@ public abstract class BaseTestContainersConfig {
     return operatingHoursRepository.save(operatingHours);
   }
 
+  public OperatingHours mockPersistOperatingHoursAllDays() {
+    TimeInterval timeInterval = new TimeInterval(LocalTime.of(8, 0), LocalTime.of(0, 0));
+    Set<DayOfWeek> daysOfWeek =
+        Set.of(
+            DayOfWeek.MONDAY,
+            DayOfWeek.TUESDAY,
+            DayOfWeek.WEDNESDAY,
+            DayOfWeek.THURSDAY,
+            DayOfWeek.FRIDAY,
+            DayOfWeek.SATURDAY,
+            DayOfWeek.SUNDAY);
+    OperatingHours operatingHours = OperatingHours.create(daysOfWeek, timeInterval);
+    return operatingHoursRepository.save(operatingHours);
+  }
+
   public OperatingHours mockPersistDisabledOperatingHours() {
     TimeInterval timeInterval = new TimeInterval(LocalTime.of(8, 0), LocalTime.of(0, 0));
     Set<DayOfWeek> daysOfWeek =
@@ -453,7 +468,7 @@ public abstract class BaseTestContainersConfig {
 
   public PriceRule mockPersistPriceRule() {
     String ruleName = "Regra de Preço Teste";
-    BigDecimal rulePrice = new BigDecimal("50.00");
+    BigDecimal rulePrice = new BigDecimal("85.00");
     int rulePriority = 1;
     TimeInterval timeInterval = new TimeInterval(LocalTime.of(19, 0), LocalTime.of(0, 0));
     Set<DayOfWeek> daysOfWeek =

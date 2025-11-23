@@ -10,22 +10,22 @@ import org.mapstruct.Mapping;
 import org.mapstruct.ObjectFactory;
 
 @Mapper(componentModel = "spring")
-public interface OperatingHoursMapper {
+public abstract class OperatingHoursMapper {
 
-  OperatingHoursEntity toEntity(OperatingHours operatingHours);
+  public abstract OperatingHoursEntity toEntity(OperatingHours operatingHours);
 
   @Mapping(target = "daysOfWeek", ignore = true)
   @Mapping(target = "timeInterval", ignore = true)
-  OperatingHours toDomain(OperatingHoursEntity entity);
+  public abstract OperatingHours toDomain(OperatingHoursEntity entity);
 
   @Mapping(
       target = "timeInterval",
       expression = "java(toTimeIntervalDto(operatingHours.getTimeInterval()))")
   @Mapping(target = "isActive", source = "active")
-  OperatingHoursResponseDto toDto(OperatingHours operatingHours);
+  public abstract OperatingHoursResponseDto toDto(OperatingHours operatingHours);
 
   @ObjectFactory
-  default OperatingHours createOperatingHours(OperatingHoursEntity entity) {
+  public OperatingHours createOperatingHours(OperatingHoursEntity entity) {
     return OperatingHours.reconstitute(
         entity.getId(),
         entity.getDaysOfWeek(),
@@ -34,7 +34,7 @@ public interface OperatingHoursMapper {
         entity.getCreatedAt());
   }
 
-  default TimeIntervalDto toTimeIntervalDto(TimeInterval timeInterval) {
+  public TimeIntervalDto toTimeIntervalDto(TimeInterval timeInterval) {
     if (timeInterval == null) {
       return null;
     }

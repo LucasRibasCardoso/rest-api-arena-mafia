@@ -26,7 +26,7 @@ class ModalityControllerIntegrationTest extends WebIntegrationTestConfig {
 
     specification =
         new RequestSpecBuilder()
-            .setBasePath("/api/modalities")
+            .setBasePath("/api/public/modalities")
             .setContentType(MediaType.APPLICATION_JSON_VALUE)
             .build();
   }

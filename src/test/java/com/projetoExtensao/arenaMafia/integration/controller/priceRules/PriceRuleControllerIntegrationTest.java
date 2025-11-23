@@ -29,7 +29,7 @@ public class PriceRuleControllerIntegrationTest extends WebIntegrationTestConfig
 
     specification =
         new RequestSpecBuilder()
-            .setBasePath("/api/price-rules")
+            .setBasePath("/api/public/price-rules")
             .setContentType(MediaType.APPLICATION_JSON_VALUE)
             .build();
   }

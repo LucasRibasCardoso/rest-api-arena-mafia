@@ -25,6 +25,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
@@ -94,6 +95,14 @@ public class GlobalExceptionHandler {
                         : buildFieldErrorToValidationException(fieldError))
             .toList();
     return buildValidationErrorResponse(fieldErrors, request);
+  }
+
+  @ExceptionHandler(MissingServletRequestParameterException.class)
+  public ResponseEntity<ErrorResponseDto> handleMissingServletRequestParameter(
+      MissingServletRequestParameterException e, HttpServletRequest request) {
+
+    return buildGeneralErrorResponse(
+        HttpStatus.BAD_REQUEST, ErrorCode.INVALID_REQUEST_PARAMETER, request);
   }
 
   @ExceptionHandler(MethodArgumentTypeMismatchException.class)

@@ -1,0 +1,8 @@
+name: date
+in: query
+required: true
+description: Data para consultar horários disponíveis
+schema:
+  type: string
+  format: date
+example: "2025-11-22"

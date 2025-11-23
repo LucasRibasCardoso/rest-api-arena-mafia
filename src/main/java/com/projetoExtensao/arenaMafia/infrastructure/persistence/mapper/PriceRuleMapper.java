@@ -12,13 +12,13 @@ import org.mapstruct.Mapping;
 import org.mapstruct.ObjectFactory;
 
 @Mapper(componentModel = "spring")
-public interface PriceRuleMapper {
+public abstract class PriceRuleMapper {
 
-  PriceRuleEntity toEntity(PriceRule priceRule);
+  public abstract PriceRuleEntity toEntity(PriceRule priceRule);
 
   @Mapping(target = "daysOfWeek", ignore = true)
   @Mapping(target = "timeInterval", ignore = true)
-  PriceRule toDomain(PriceRuleEntity entity);
+  public abstract PriceRule toDomain(PriceRuleEntity entity);
 
   @Mapping(target = "daysOfWeek", expression = "java(getDaysOfWeek(domain.getDaysOfWeek()))")
   @Mapping(
@@ -26,10 +26,10 @@ public interface PriceRuleMapper {
       expression = "java(toTimeIntervalDto(domain.getTimeInterval()))")
   @Mapping(target = "isActive", source = "active")
   @Mapping(target = "isDefault", source = "default")
-  PriceRuleResponseDto toDto(PriceRule domain);
+  public abstract PriceRuleResponseDto toDto(PriceRule domain);
 
   @ObjectFactory
-  default PriceRule createPriceRule(PriceRuleEntity entity) {
+  public PriceRule createPriceRule(PriceRuleEntity entity) {
     return PriceRule.reconstitute(
         entity.getId(),
         entity.getName(),
@@ -42,14 +42,14 @@ public interface PriceRuleMapper {
         entity.getCreatedAt());
   }
 
-  default TimeIntervalDto toTimeIntervalDto(TimeInterval timeInterval) {
+  public TimeIntervalDto toTimeIntervalDto(TimeInterval timeInterval) {
     if (timeInterval == null) {
       return null;
     }
     return new TimeIntervalDto(timeInterval.startTime(), timeInterval.endTime());
   }
 
-  default Set<DayOfWeek> getDaysOfWeek(Set<DayOfWeek> daysOfWeek) {
+  public Set<DayOfWeek> getDaysOfWeek(Set<DayOfWeek> daysOfWeek) {
     return (daysOfWeek == null || daysOfWeek.isEmpty()) ? null : daysOfWeek;
   }
 }

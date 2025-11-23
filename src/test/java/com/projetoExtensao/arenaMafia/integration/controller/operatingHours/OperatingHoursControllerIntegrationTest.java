@@ -29,7 +29,7 @@ public class OperatingHoursControllerIntegrationTest extends WebIntegrationTestC
 
     specification =
         new RequestSpecBuilder()
-            .setBasePath("/api/operating-hours")
+            .setBasePath("/api/public/operating-hours")
             .setContentType(MediaType.APPLICATION_JSON_VALUE)
             .build();
   }
