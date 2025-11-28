@@ -278,6 +278,39 @@ public class ReservationControllerIntegrationTest extends WebIntegrationTestConf
     class NotFoundScenarios {
 
       @Test
+      @DisplayName("A modalidade informada não existe")
+      void shouldReturn404WhenModalityNotFound() {
+        // Arrange
+        LocalDate reservationDate = LocalDate.now().plusDays(1);
+        TimeInterval timeInterval = new TimeInterval(LocalTime.of(10, 0), LocalTime.of(11, 0));
+        UUID modalityId = UUID.randomUUID();
+        Court court = mockPersistCourt("Court X", mockPersistModality("Basketball"));
+        var request =
+            new CreateReservationRequestDto(
+                modalityId, court.getId(), reservationDate, timeInterval);
+
+        // Act & Assert
+        var response =
+            given()
+                .spec(specification)
+                .header("Authorization", accessToken)
+                .body(request)
+                .when()
+                .post()
+                .then()
+                .statusCode(404)
+                .extract()
+                .as(ErrorResponseDto.class);
+
+        ErrorCode errorCode = ErrorCode.MODALITY_NOT_FOUND;
+
+        assertThat(response.status()).isEqualTo(404);
+        assertThat(response.path()).isEqualTo("/api/users/me/reservations");
+        assertThat(response.errorCode()).isEqualTo(errorCode.name());
+        assertThat(response.developerMessage()).isEqualTo(errorCode.getMessage());
+      }
+
+      @Test
       @DisplayName("A quadra informada não existe")
       void shouldReturn404WhenCourtNotFound() {
         // Arrange
@@ -349,6 +382,40 @@ public class ReservationControllerIntegrationTest extends WebIntegrationTestConf
                 .as(ErrorResponseDto.class);
 
         ErrorCode errorCode = ErrorCode.SCHEDULE_ENTRY_NOT_AVAILABLE;
+
+        assertThat(response.status()).isEqualTo(409);
+        assertThat(response.path()).isEqualTo("/api/users/me/reservations");
+        assertThat(response.errorCode()).isEqualTo(errorCode.name());
+        assertThat(response.developerMessage()).isEqualTo(errorCode.getMessage());
+      }
+
+      @Test
+      @DisplayName("Tenta criar uma reserva em uma quadra que não suporta a modalidade")
+      void shouldReturn409WhenCreatingReservationInCourtThatNotSupportsModality() {
+        // Arrange
+        Modality modalityTennis = mockPersistModality("Tennis");
+        Modality modalitySoccer = mockPersistModality("Soccer");
+        Court court = mockPersistCourt("Court Y", modalityTennis);
+        LocalDate reservationDate = LocalDate.now().plusDays(2);
+        TimeInterval timeInterval = new TimeInterval(LocalTime.of(10, 0), LocalTime.of(11, 0));
+        var request =
+            new CreateReservationRequestDto(
+                modalitySoccer.getId(), court.getId(), reservationDate, timeInterval);
+
+        // Act & Assert
+        var response =
+            given()
+                .spec(specification)
+                .header("Authorization", accessToken)
+                .body(request)
+                .when()
+                .post()
+                .then()
+                .statusCode(409)
+                .extract()
+                .as(ErrorResponseDto.class);
+
+        ErrorCode errorCode = ErrorCode.COURT_NOT_SUPPORTS_MODALITY;
 
         assertThat(response.status()).isEqualTo(409);
         assertThat(response.path()).isEqualTo("/api/users/me/reservations");

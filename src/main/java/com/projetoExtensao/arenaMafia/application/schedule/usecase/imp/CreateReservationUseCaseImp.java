@@ -1,6 +1,7 @@
 package com.projetoExtensao.arenaMafia.application.schedule.usecase.imp;
 
 import com.projetoExtensao.arenaMafia.application.court.port.CourtRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.modality.port.ModalityRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.notification.event.OnScheduleCreatedEvent;
 import com.projetoExtensao.arenaMafia.application.priceRule.ports.PriceRuleRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.priceRule.service.PriceCalculatorService;
@@ -8,7 +9,9 @@ import com.projetoExtensao.arenaMafia.application.schedule.port.repository.Sched
 import com.projetoExtensao.arenaMafia.application.schedule.service.ScheduleAvailabilityService;
 import com.projetoExtensao.arenaMafia.application.schedule.usecase.CreateReservationUseCase;
 import com.projetoExtensao.arenaMafia.application.user.port.repository.UserRepositoryPort;
-import com.projetoExtensao.arenaMafia.domain.exception.badRequest.CourtNotSupportsModalityException;
+import com.projetoExtensao.arenaMafia.domain.exception.conflict.CourtNotSupportsModalityException;
+import com.projetoExtensao.arenaMafia.domain.exception.notFound.CourtNotFoundException;
+import com.projetoExtensao.arenaMafia.domain.exception.notFound.ModalityNotFoundException;
 import com.projetoExtensao.arenaMafia.domain.model.Court;
 import com.projetoExtensao.arenaMafia.domain.model.PriceRule;
 import com.projetoExtensao.arenaMafia.domain.model.User;
@@ -31,6 +34,7 @@ public class CreateReservationUseCaseImp implements CreateReservationUseCase {
 
   private final UserRepositoryPort userRepositoryPort;
   private final CourtRepositoryPort courtRepositoryPort;
+  private final ModalityRepositoryPort modalityRepositoryPort;
   private final PriceCalculatorService priceCalculatorService;
   private final PriceRuleRepositoryPort priceRuleRepositoryPort;
   private final ScheduleAvailabilityService scheduleAvailabilityService;
@@ -40,6 +44,7 @@ public class CreateReservationUseCaseImp implements CreateReservationUseCase {
   public CreateReservationUseCaseImp(
       UserRepositoryPort userRepositoryPort,
       CourtRepositoryPort courtRepositoryPort,
+      ModalityRepositoryPort modalityRepositoryPort,
       PriceCalculatorService priceCalculatorService,
       PriceRuleRepositoryPort priceRuleRepositoryPort,
       ScheduleAvailabilityService scheduleAvailabilityService,
@@ -47,6 +52,7 @@ public class CreateReservationUseCaseImp implements CreateReservationUseCase {
       ApplicationEventPublisher eventPublisher) {
     this.userRepositoryPort = userRepositoryPort;
     this.courtRepositoryPort = courtRepositoryPort;
+    this.modalityRepositoryPort = modalityRepositoryPort;
     this.priceCalculatorService = priceCalculatorService;
     this.priceRuleRepositoryPort = priceRuleRepositoryPort;
     this.scheduleAvailabilityService = scheduleAvailabilityService;
@@ -57,6 +63,8 @@ public class CreateReservationUseCaseImp implements CreateReservationUseCase {
   @Override
   public ScheduleEntry execute(UUID userId, CreateReservationRequestDto request) {
     User user = userRepositoryPort.findByIdOrElseThrow(userId);
+
+    validateModalityExists(request.modalityId());
     validateCourtSupportsModality(request.courtId(), request.modalityId());
 
     DateTimeSlot dateTimeSlot = buildDateTimeSlot(request);
@@ -114,6 +122,7 @@ public class CreateReservationUseCaseImp implements CreateReservationUseCase {
    *
    * @param courtId ID da quadra
    * @param modalityId ID da modalidade
+   * @throws CourtNotFoundException se a quadra não for encontrada
    * @throws CourtNotSupportsModalityException se a quadra não suportar a modalidade
    */
   private void validateCourtSupportsModality(UUID courtId, UUID modalityId) {
@@ -122,6 +131,16 @@ public class CreateReservationUseCaseImp implements CreateReservationUseCase {
     if (!court.getModalityIds().contains(modalityId)) {
       throw new CourtNotSupportsModalityException();
     }
+  }
+
+  /**
+   * Valida se a modalidade existe.
+   *
+   * @param modalityId ID da modalidade
+   * @throws ModalityNotFoundException se a modalidade não for encontrada
+   */
+  private void validateModalityExists(UUID modalityId) {
+    modalityRepositoryPort.findByIdOrElseThrow(modalityId);
   }
 
   /**

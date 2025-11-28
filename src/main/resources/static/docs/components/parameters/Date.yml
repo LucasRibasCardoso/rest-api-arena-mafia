@@ -1,7 +1,7 @@
 name: date
 in: query
 required: true
-description: Data para consultar horários disponíveis
+description: Data para consultar horários disponíveis, formato ISO 8601 (yyyy-MM-dd).
 schema:
   type: string
   format: date

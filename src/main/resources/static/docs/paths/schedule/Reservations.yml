@@ -1,0 +1,126 @@
+post:
+  operationId: createReservation
+  tags: [ "Usuário - Agendamento de Horários" ]
+  summary: Cria uma nova reserva de horário
+  security:
+    - bearerAuth: [ ]
+  description: |
+    Permite que um usuário autenticado faça uma nova reserva de horário. 
+    
+    O usuário deve informar: 
+    - **modalityId**: Identificador da modalidade esportiva
+    - **date**: Data desejada para a reserva
+    
+    O frontend deve previamente buscar os horários disponíveis usando o endpoint de busca de horários disponíveis.
+    O usuário pode então selecionar um dos horários retornados para efetuar a reserva.
+    
+    Após o usuário selecionar o horário que deseja reservar. O frontend deve extrair os seguintes dados do slot 
+    selecionado e montar o payload da requisição:
+    - **courtId**: Identificador da quadra disponível
+    - **timeInterval**: Horário de início e fim do slot
+
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: "../../components/schemas/schedule/CreateReservationRequestDto.yml"
+  responses:
+    201:
+      description: Reserva criada com sucesso.
+      content:
+        application/json:
+          schema:
+            $ref: "../../components/schemas/schedule/ReservationScheduleResponseDto.yml"
+    400:
+      description: Requisição inválida ou dados de validação incorretos.
+      content:
+        application/json:
+          schema:
+            $ref: "../../components/schemas/error/ErrorResponseDto.yml"
+          examples:
+            ModalityIdRequired:
+              summary: ID da modalidade não informado
+              value:
+                status: 400
+                timestamp: "2025-11-28T17:33:12.332726Z"
+                errorCode: "RESERVATION_MODALITY_ID_REQUIRED"
+                developerMessage: "É obrigatório informar a modalidade da reserva."
+                path: "/api/users/me/reservations"
+            CourtIdRequired:
+              summary: ID da quadra não informado
+              value:
+                status: 400
+                timestamp: "2025-11-28T17:33:12.332726Z"
+                errorCode: "RESERVATION_COURT_ID_REQUIRED"
+                developerMessage: "A quadra da reserva é obrigatória."
+                path: "/api/users/me/reservations"
+            DateRequired:
+              summary: Data da reserva não informada
+              value:
+                status: 400
+                timestamp: "2025-11-28T17:33:12.332726Z"
+                errorCode: "RESERVATION_DATE_REQUIRED"
+                developerMessage: "É obrigatório informar a data da reserva."
+                path: "/api/users/me/reservations"
+            TimeIntervalRequired:
+              summary: Intervalo de tempo da reserva não informado
+              value:
+                status: 400
+                timestamp: "2025-11-28T17:33:12.332726Z"
+                errorCode: "TIME_INTERVAL_REQUIRED"
+                developerMessage: "É obrigatório informar o horário da reserva."
+                path: "/api/users/me/reservations"
+    401:
+      $ref: "../../components/responses/UnauthorizedError.yml"
+    404:
+      description: Recurso não encontrado.
+      content:
+        application/json:
+          schema:
+            $ref: "../../components/schemas/error/ErrorResponseDto.yml"
+          examples:
+            ModalityNotFound:
+              summary: Modalidade não encontrada
+              value:
+                status: 404
+                timestamp: "2025-11-28T17:33:12.332726Z"
+                errorCode: "MODALITY_NOT_FOUND"
+                developerMessage: "Modalidade não encontrada."
+                path: "/api/users/me/reservations"
+            CourtNotFound:
+              summary: Quadra não encontrada
+              description: Ocorre quando o courtId informado não corresponde a nenhuma quadra existente.
+              value:
+                status: 404
+                timestamp: "2025-11-28T17:33:12.332726Z"
+                errorCode: "COURT_NOT_FOUND"
+                developerMessage: "Quadra não encontrada."
+                path: "/api/users/me/reservations"
+    409:
+      description: Conflito - Horário não disponível ou regra de negócio violada.
+      content:
+        application/json:
+          schema:
+            $ref: "../../components/schemas/error/ErrorResponseDto.yml"
+          examples:
+            TimeSlotNotAvailable:
+              summary: Horário não disponível
+              value:
+                timestamp: "2025-11-28T17:33:12.332726Z"
+                status: 409
+                errorCode: "SCHEDULE_ENTRY_NOT_AVAILABLE"
+                developerMessage: "O horário selecionado não está mais disponível. Por favor, escolha outro horário."
+                path: "/api/users/me/reservations"
+            CourtNotSupportsModality:
+              summary: Quadra não suporta a modalidade
+              value:
+                status: 409
+                timestamp: "2025-11-28T17:33:12.332726Z"
+                errorCode: "COURT_NOT_SUPPORTS_MODALITY"
+                developerMessage: "A quadra selecionada não suporta a modalidade solicitada."
+                path: "/api/users/me/reservations"
+    429:
+      $ref: "../../components/responses/TooManyRequestsError.yml"
+    500:
+      $ref: "../../components/responses/InternalServerError.yml"

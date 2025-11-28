@@ -40,7 +40,7 @@ public class ScheduleAvailabilityService {
   }
 
   /**
-   * Verifica se um slot está ocupado por alguma reserva confirmada. Este método público é útil
+   * Verifica se um slot está ocupado por alguma reserva confirmada. Este metodo público é útil
    * quando você já possui a lista de schedules carregados e quer evitar múltiplas consultas ao
    * banco de dados.
    *

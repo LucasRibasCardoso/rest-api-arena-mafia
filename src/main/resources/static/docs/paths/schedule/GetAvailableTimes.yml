@@ -1,6 +1,6 @@
 get:
   operationId: getAvailableTimes
-  tags: [ "Agendamento - Consulta de Horários Disponíveis e Reservas" ]
+  tags: [ "Usuário - Agendamento de Horários" ]
   summary: Busca os horários disponíveis para reserva
   security:
     - [ ]
@@ -154,4 +154,3 @@ get:
       $ref: "../../components/responses/TooManyRequestsError.yml"
     500:
       $ref: "../../components/responses/InternalServerError.yml"
-

@@ -1,0 +1,32 @@
+type: object
+description: Dados necessários para criar uma nova reserva.
+required:
+  - modalityId
+  - courtId
+  - date
+  - timeInterval
+properties:
+  modalityId:
+    type: string
+    format: uuid
+    description: |
+      Identificador único da modalidade para a reserva.
+      Deve corresponder a uma modalidade ativa no sistema.
+    example: "550e8400-e29b-41d4-a716-446655440002"
+  courtId:
+    type: string
+    format: uuid
+    description: |
+      Identificador único da quadra para a reserva.
+      A quadra deve suportar a modalidade especificada e estar ativa.
+    example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+  date:
+    type: string
+    format: date
+    description: |
+      Data da reserva no formato ISO 8601 (yyyy-MM-dd).
+      Deve ser uma data futura ou atual.
+    example: "2025-11-25"
+  timeInterval:
+    $ref: "../timeInterval/TimeIntervalDto.yml"
+
