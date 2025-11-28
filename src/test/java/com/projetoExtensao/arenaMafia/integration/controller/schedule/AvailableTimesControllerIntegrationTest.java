@@ -35,7 +35,7 @@ public class AvailableTimesControllerIntegrationTest extends WebIntegrationTestC
 
     specification =
         new RequestSpecBuilder()
-            .setBasePath("/api/schedules/available-times")
+            .setBasePath("/api/schedules/available-slots")
             .setContentType(MediaType.APPLICATION_JSON_VALUE)
             .build();
 
@@ -45,7 +45,7 @@ public class AvailableTimesControllerIntegrationTest extends WebIntegrationTestC
   }
 
   @Nested
-  @DisplayName("Testes para o endpoint GET /api/schedules/available-times")
+  @DisplayName("Testes para o endpoint GET /api/schedules/available-slots")
   class GetAvailableTimes {
 
     @Nested
@@ -115,7 +115,7 @@ public class AvailableTimesControllerIntegrationTest extends WebIntegrationTestC
         ErrorCode errorCode = ErrorCode.INVALID_REQUEST_PARAMETER;
 
         assertThat(response.status()).isEqualTo(400);
-        assertThat(response.path()).isEqualTo("/api/schedules/available-times");
+        assertThat(response.path()).isEqualTo("/api/schedules/available-slots");
         assertThat(response.errorCode()).isEqualTo(errorCode.name());
         assertThat(response.developerMessage()).isEqualTo(errorCode.getMessage());
       }
@@ -145,7 +145,7 @@ public class AvailableTimesControllerIntegrationTest extends WebIntegrationTestC
         ErrorCode errorCode = ErrorCode.INVALID_REQUEST_PARAMETER;
 
         assertThat(response.status()).isEqualTo(400);
-        assertThat(response.path()).isEqualTo("/api/schedules/available-times");
+        assertThat(response.path()).isEqualTo("/api/schedules/available-slots");
         assertThat(response.errorCode()).isEqualTo(errorCode.name());
         assertThat(response.developerMessage()).isEqualTo(errorCode.getMessage());
       }
@@ -173,7 +173,7 @@ public class AvailableTimesControllerIntegrationTest extends WebIntegrationTestC
         ErrorCode errorCode = ErrorCode.INVALID_REQUEST_PARAMETER;
 
         assertThat(response.status()).isEqualTo(400);
-        assertThat(response.path()).isEqualTo("/api/schedules/available-times");
+        assertThat(response.path()).isEqualTo("/api/schedules/available-slots");
         assertThat(response.errorCode()).isEqualTo(errorCode.name());
         assertThat(response.developerMessage()).isEqualTo(errorCode.getMessage());
       }
@@ -203,7 +203,7 @@ public class AvailableTimesControllerIntegrationTest extends WebIntegrationTestC
         ErrorCode errorCode = ErrorCode.INVALID_REQUEST_PARAMETER;
 
         assertThat(response.status()).isEqualTo(400);
-        assertThat(response.path()).isEqualTo("/api/schedules/available-times");
+        assertThat(response.path()).isEqualTo("/api/schedules/available-slots");
         assertThat(response.errorCode()).isEqualTo(errorCode.name());
         assertThat(response.developerMessage()).isEqualTo(errorCode.getMessage());
       }
@@ -233,7 +233,7 @@ public class AvailableTimesControllerIntegrationTest extends WebIntegrationTestC
         ErrorCode errorCode = ErrorCode.PAST_DATE_NOT_ALLOWED;
 
         assertThat(response.status()).isEqualTo(400);
-        assertThat(response.path()).isEqualTo("/api/schedules/available-times");
+        assertThat(response.path()).isEqualTo("/api/schedules/available-slots");
         assertThat(response.errorCode()).isEqualTo(errorCode.name());
         assertThat(response.developerMessage()).isEqualTo(errorCode.getMessage());
       }
@@ -268,7 +268,7 @@ public class AvailableTimesControllerIntegrationTest extends WebIntegrationTestC
         ErrorCode errorCode = ErrorCode.COURT_NOT_FOUND_BY_MODALITY;
 
         assertThat(response.status()).isEqualTo(404);
-        assertThat(response.path()).isEqualTo("/api/schedules/available-times");
+        assertThat(response.path()).isEqualTo("/api/schedules/available-slots");
         assertThat(response.errorCode()).isEqualTo(errorCode.name());
         assertThat(response.developerMessage()).isEqualTo(errorCode.getMessage());
       }
@@ -299,7 +299,7 @@ public class AvailableTimesControllerIntegrationTest extends WebIntegrationTestC
         ErrorCode errorCode = ErrorCode.OPERATING_HOURS_NOT_FOUND;
 
         assertThat(response.status()).isEqualTo(404);
-        assertThat(response.path()).isEqualTo("/api/schedules/available-times");
+        assertThat(response.path()).isEqualTo("/api/schedules/available-slots");
         assertThat(response.errorCode()).isEqualTo(errorCode.name());
         assertThat(response.developerMessage()).isEqualTo(errorCode.getMessage());
       }
@@ -338,7 +338,7 @@ public class AvailableTimesControllerIntegrationTest extends WebIntegrationTestC
         ErrorCode errorCode = ErrorCode.OPERATING_HOURS_APPLICABLE_NOT_FOUND;
 
         assertThat(response.status()).isEqualTo(404);
-        assertThat(response.path()).isEqualTo("/api/schedules/available-times");
+        assertThat(response.path()).isEqualTo("/api/schedules/available-slots");
         assertThat(response.errorCode()).isEqualTo(errorCode.name());
         assertThat(response.developerMessage()).isEqualTo(errorCode.getMessage());
       }

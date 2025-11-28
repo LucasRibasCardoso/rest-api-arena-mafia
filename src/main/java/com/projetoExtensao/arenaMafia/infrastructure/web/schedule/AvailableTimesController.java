@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/schedules/available-times")
+@RequestMapping("/api/schedules/available-slots")
 public class AvailableTimesController {
 
   private final AvailableSlotMapper availableSlotMapper;

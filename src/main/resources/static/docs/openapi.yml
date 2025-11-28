@@ -58,6 +58,9 @@ tags:
   - name: "Administração - Gerenciamento de Horários de Funcionamento"
     description: Endpoints relacionados ao gerenciamento de horários de funcionamento, acessíveis apenas por administradores.
 
+  - name: "Agendamento - Consulta de Horários Disponíveis e Reservas"
+    description: Endpoints relacionados à consulta de horários disponíveis e realização de reservas.
+
   - name: "Endpoints Públicos"
     description: Endpoints públicos para consultas. Dados utilizados por clientes sem necessidade de autenticação.
 
@@ -263,7 +266,7 @@ paths:
   /api/admin/operating-rules/{operatingHoursId}/disable:
     $ref: "./paths/admin/operatingHours/OperatingHoursDisable.yml"
 
-  /api/schedules/available-times:
+  /api/schedules/available-slots:
     $ref: "./paths/schedule/GetAvailableTimes.yml"
 
   /api/public/modalities:
@@ -274,4 +277,3 @@ paths:
     $ref: "./paths/operatingHours/GetAllOperatingHours.yml"
   /api/public/homepage:
     $ref: "./paths/homepage/GetHomePageData.yml"
-

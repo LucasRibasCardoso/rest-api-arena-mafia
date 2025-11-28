@@ -1,6 +1,6 @@
 get:
   operationId: getAvailableTimes
-  tags: [ "Endpoints Públicos" ]
+  tags: [ "Agendamento - Consulta de Horários Disponíveis e Reservas" ]
   summary: Busca os horários disponíveis para reserva
   security:
     - [ ]
@@ -80,7 +80,7 @@ get:
                 errorCode: "INVALID_REQUEST_PARAMETER"
                 developerMessage: "Um parâmetro da requisição é inválido ou está malformado."
                 timestamp: "2025-11-22T14:30:00Z"
-                path: "/api/schedule/available-times"
+                path: "/api/schedule/available-slots"
             InvalidModalityId:
               summary: ModalityId inválido
               value:
@@ -88,7 +88,7 @@ get:
                 errorCode: "INVALID_REQUEST_PARAMETER"
                 developerMessage: "Um parâmetro da requisição é inválido ou está malformado."
                 timestamp: "2025-11-22T14:30:00Z"
-                path: "/api/schedule/available-times"
+                path: "/api/schedule/available-slots"
             MissingDate:
               summary: Date não fornecido
               value:
@@ -96,7 +96,7 @@ get:
                 errorCode: "INVALID_REQUEST_PARAMETER"
                 developerMessage: "Um parâmetro da requisição é inválido ou está malformado."
                 timestamp: "2025-11-22T14:30:00Z"
-                path: "/api/schedule/available-times"
+                path: "/api/schedule/available-slots"
             InvalidDateFormat:
               summary: Formato de data inválido
               value:
@@ -104,7 +104,7 @@ get:
                 errorCode: "INVALID_REQUEST_PARAMETER"
                 developerMessage: "Um parâmetro da requisição é inválido ou está malformado."
                 timestamp: "2025-11-22T14:30:00Z"
-                path: "/api/schedule/available-times"
+                path: "/api/schedule/available-slots"
             PastDate:
               summary: Data no passado
               description: Tenta consultar horários disponíveis para uma data anterior à data atual.
@@ -113,7 +113,7 @@ get:
                 errorCode: "PAST_DATE_NOT_ALLOWED"
                 developerMessage: "Não é possível consultar horários disponíveis para datas passadas."
                 timestamp: "2025-11-22T14:30:00Z"
-                path: "/api/schedule/available-times"
+                path: "/api/schedule/available-slots"
     404:
       description: Recurso não encontrado. Pode ocorrer por falta de configuração do sistema ou dados da modalidade.
       content:
@@ -129,7 +129,7 @@ get:
                 errorCode: "COURT_NOT_FOUND_BY_MODALITY"
                 developerMessage: "Nenhuma quadra encontrada para a modalidade especificada."
                 timestamp: "2025-11-22T14:30:00Z"
-                path: "/api/schedule/available-times"
+                path: "/api/schedule/available-slots"
             NoOperatingHours:
               summary: Sistema sem horários de funcionamento
               description: O sistema não possui horários de funcionamento cadastrados.
@@ -138,7 +138,7 @@ get:
                 errorCode: "OPERATING_HOURS_NOT_FOUND"
                 developerMessage: "Horário de funcionamento não encontrado."
                 timestamp: "2025-11-22T14:30:00Z"
-                path: "/api/schedule/available-times"
+                path: "/api/schedule/available-slots"
             NoApplicableOperatingHours:
               summary: Nenhum horário de funcionamento aplicável
               description: Não há horários de funcionamento que se apliquem à data solicitada. Pode ocorrer se a arena estiver fechada nesse dia.
@@ -147,7 +147,7 @@ get:
                 errorCode: "OPERATING_HOURS_APPLICABLE_NOT_FOUND"
                 developerMessage: "Não há horários de funcionamento aplicáveis para a data fornecida."
                 timestamp: "2025-11-22T14:30:00Z"
-                path: "/api/schedule/available-times"
+                path: "/api/schedule/available-slots"
     401:
       $ref: "../../components/responses/UnauthorizedError.yml"
     429:

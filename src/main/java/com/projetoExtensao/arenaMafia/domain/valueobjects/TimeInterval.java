@@ -1,5 +1,6 @@
 package com.projetoExtensao.arenaMafia.domain.valueobjects;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidOffsetMinutesException;
@@ -10,7 +11,8 @@ import java.time.Duration;
 import java.time.LocalTime;
 
 public record TimeInterval(
-    @JsonProperty("startTime") LocalTime startTime, @JsonProperty("endTime") LocalTime endTime) {
+    @JsonProperty("startTime") @JsonFormat(pattern = "HH:mm") LocalTime startTime,
+    @JsonProperty("endTime") @JsonFormat(pattern = "HH:mm") LocalTime endTime) {
 
   public TimeInterval {
     if (startTime == null || endTime == null) {

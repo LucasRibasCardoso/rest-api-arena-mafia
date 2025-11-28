@@ -131,6 +131,7 @@ public enum ErrorCode {
   // ==================== ERROS DE QUADRA (COURT) ====================
   // Court - Geral
   COURT_NOT_FOUND_BY_MODALITY("Nenhuma quadra encontrada para a modalidade especificada."),
+  COURT_NOT_SUPPORTS_MODALITY("A quadra selecionada não suporta a modalidade solicitada."),
   COURT_NOT_FOUND("Quadra não encontrada."),
   COURT_ALREADY_EXISTS("Essa quadra já está cadastrada."),
 
@@ -201,6 +202,9 @@ public enum ErrorCode {
   SCHEDULE_ENTRY_COURT_ID_REQUIRED("Uma reserva deve estar associada a uma quadra."),
   SCHEDULE_ENTRY_DATE_TIME_SLOT_REQUIRED("O slot de data/hora é obrigatório."),
   SCHEDULE_ENTRY_CREATED_AT_REQUIRED("A data de criação é obrigatória."),
+  SCHEDULE_ENTRY_NOT_FOUND("Agendamento não encontrado."),
+  SCHEDULE_ENTRY_NOT_AVAILABLE(
+      "O horário selecionado não está mais disponível. Por favor, escolha outro horário."),
 
   // =================== ERROS DE CONSULTA DE HORÁRIOS DISPONÍVEIS ====================
   PAST_DATE_NOT_ALLOWED("Não é possível consultar horários disponíveis para datas passadas."),
@@ -208,11 +212,16 @@ public enum ErrorCode {
   // ==================== ERROS DE RESERVA (RESERVATION) ====================
   RESERVATION_PRICE_INVALID("O preço da reserva deve ser um valor positivo."),
   RESERVATION_MODALITY_ID_REQUIRED("É obrigatório informar a modalidade da reserva."),
-  RESERVATION_DATE_TIME_SLOT_REQUIRED("O slot de data/hora da reserva é obrigatório."),
+  RESERVATION_DATE_REQUIRED("É obrigatório informar a data da reserva."),
+  RESERVATION_TIME_INTERVAL_REQUIRED("É obrigatório informar o horário da reserva."),
   RESERVATION_COURT_ID_REQUIRED("A quadra da reserva é obrigatória."),
   RESERVATION_USER_ID_REQUIRED("O usuário da reserva é obrigatório."),
+  RESERVATION_ACCESS_DENIED(
+      "Você não tem permissão para acessar esta reserva. Apenas o dono da reserva ou um administrador podem visualizá-la."),
 
-  RESERVATION_NOT_FOUND("Reserva não encontrada.");
+  // ==================== ERROS DE CONFLITO DE AGENDAMENTO ====================
+  UNSUPPORTED_SCHEDULE_ENTRY_TYPE("O tipo de entrada de agendamento fornecido não é suportado."),
+  ;
 
   // ==================== CONFIGURAÇÃO ====================
   private static final Map<Class<?>, ErrorCode> ENUM_ERROR_MAP = new HashMap<>();

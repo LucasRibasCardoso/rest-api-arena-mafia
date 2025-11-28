@@ -3,10 +3,11 @@ package com.projetoExtensao.arenaMafia.application.schedule.usecase.imp;
 import com.projetoExtensao.arenaMafia.application.court.port.CourtRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.operatingHours.ports.OperatingHoursRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.priceRule.ports.PriceRuleRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.priceRule.service.PriceCalculatorService;
 import com.projetoExtensao.arenaMafia.application.schedule.port.repository.ScheduleEntryRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.schedule.service.ScheduleAvailabilityService;
 import com.projetoExtensao.arenaMafia.application.schedule.usecase.FindAllAvailableTimesUseCase;
 import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
-import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidReservationException;
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidTimeIntervalException;
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.PastDateException;
 import com.projetoExtensao.arenaMafia.domain.exception.notFound.CourtNotFoundException;
@@ -20,6 +21,8 @@ import com.projetoExtensao.arenaMafia.domain.model.enums.OffsetMinutes;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.AvailableSlot;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.ScheduleEntry;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
+import com.projetoExtensao.arenaMafia.infrastructure.persistence.specification.OperatingHoursSpecification;
+import com.projetoExtensao.arenaMafia.infrastructure.persistence.specification.PriceRuleSpecification;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -27,9 +30,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
-
-import com.projetoExtensao.arenaMafia.infrastructure.persistence.specification.OperatingHoursSpecification;
-import com.projetoExtensao.arenaMafia.infrastructure.persistence.specification.PriceRuleSpecification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,16 +41,22 @@ public class FindAllAvailableTimesUseCaseImp implements FindAllAvailableTimesUse
   private final OperatingHoursRepositoryPort operatingHoursRepositoryPort;
   private final PriceRuleRepositoryPort priceRuleRepositoryPort;
   private final ScheduleEntryRepositoryPort scheduleEntryRepositoryPort;
+  private final PriceCalculatorService priceCalculatorService;
+  private final ScheduleAvailabilityService scheduleAvailabilityService;
 
   public FindAllAvailableTimesUseCaseImp(
       CourtRepositoryPort courtRepositoryPort,
       OperatingHoursRepositoryPort operatingHoursRepositoryPort,
       PriceRuleRepositoryPort priceRuleRepositoryPort,
-      ScheduleEntryRepositoryPort scheduleEntryRepositoryPort) {
+      ScheduleEntryRepositoryPort scheduleEntryRepositoryPort,
+      PriceCalculatorService priceCalculatorService,
+      ScheduleAvailabilityService scheduleAvailabilityService) {
     this.courtRepositoryPort = courtRepositoryPort;
     this.operatingHoursRepositoryPort = operatingHoursRepositoryPort;
     this.priceRuleRepositoryPort = priceRuleRepositoryPort;
     this.scheduleEntryRepositoryPort = scheduleEntryRepositoryPort;
+    this.priceCalculatorService = priceCalculatorService;
+    this.scheduleAvailabilityService = scheduleAvailabilityService;
   }
 
   @Override
@@ -62,8 +68,7 @@ public class FindAllAvailableTimesUseCaseImp implements FindAllAvailableTimesUse
     List<PriceRule> priceRules = getActivePriceRules();
 
     DayOfWeek dayOfWeek = DayOfWeek.convertToDayOfWeek(date);
-    List<OperatingHours> applicableOperatingHours =
-        filterApplicableOperatingHours(operatingHours, dayOfWeek);
+    List<OperatingHours> applicableOperatingHours = filterApplicableOperatingHours(operatingHours, dayOfWeek);
 
     return courts.stream()
         .map(
@@ -177,7 +182,7 @@ public class FindAllAvailableTimesUseCaseImp implements FindAllAvailableTimesUse
     return operatingHoursList.stream()
         .map(OperatingHours::getTimeInterval)
         .flatMap(interval -> generateSlots(interval, court.getOffsetMinutes()).stream())
-        .filter(slot -> !isSlotOccupied(slot, confirmedSchedules))
+        .filter(slot -> !scheduleAvailabilityService.isSlotOccupied(slot, confirmedSchedules))
         .map(slot -> buildAvailableSlot(court, slot, priceRules, dayOfWeek))
         .sorted(Comparator.comparing(availableSlot -> availableSlot.getTimeInterval().startTime()))
         .toList();
@@ -194,7 +199,7 @@ public class FindAllAvailableTimesUseCaseImp implements FindAllAvailableTimesUse
    */
   private AvailableSlot buildAvailableSlot(
       Court court, TimeInterval slot, List<PriceRule> priceRules, DayOfWeek dayOfWeek) {
-    BigDecimal price = calculateSlotPrice(slot, priceRules, dayOfWeek);
+    BigDecimal price = priceCalculatorService.calculateSlotPrice(slot, priceRules, dayOfWeek);
     return AvailableSlot.create(court.getId(), slot, price);
   }
 
@@ -261,36 +266,5 @@ public class FindAllAvailableTimesUseCaseImp implements FindAllAvailableTimesUse
     }
 
     return aligned;
-  }
-
-  /**
-   * Verifica se um slot está ocupado por uma reserva confirmada.
-   *
-   * @param slot slot a verificar
-   * @param confirmedSchedules lista de reservas confirmadas
-   * @return true se o slot está ocupado
-   */
-  private boolean isSlotOccupied(TimeInterval slot, List<ScheduleEntry> confirmedSchedules) {
-    return confirmedSchedules.stream()
-        .anyMatch(schedule -> slot.overlaps(schedule.getDateTimeSlot().timeInterval()));
-  }
-
-  /**
-   * Calcula o preço de um slot baseado nas regras de preço.
-   *
-   * @param slot slot de tempo
-   * @param priceRules regras de preço
-   * @param dayOfWeek dia da semana
-   * @return preço calculado
-   */
-  private BigDecimal calculateSlotPrice(
-      TimeInterval slot, List<PriceRule> priceRules, DayOfWeek dayOfWeek) {
-
-    // Buscar a regra de preço aplicável com maior prioridade
-    return priceRules.stream()
-        .filter(rule -> rule.isApplicable(dayOfWeek, slot.startTime()))
-        .max(Comparator.comparingInt(PriceRule::getPriority))
-        .map(PriceRule::getPrice)
-        .orElse(BigDecimal.ZERO);
   }
 }

@@ -7,6 +7,7 @@ import com.projetoExtensao.arenaMafia.application.court.port.CourtRepositoryPort
 import com.projetoExtensao.arenaMafia.application.modality.port.ModalityRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.operatingHours.ports.OperatingHoursRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.priceRule.ports.PriceRuleRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.schedule.port.repository.ScheduleEntryRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.security.port.gateway.PasswordEncoderPort;
 import com.projetoExtensao.arenaMafia.application.user.port.repository.UserRepositoryPort;
 import com.projetoExtensao.arenaMafia.domain.model.*;
@@ -14,15 +15,20 @@ import com.projetoExtensao.arenaMafia.domain.model.enums.AccountStatus;
 import com.projetoExtensao.arenaMafia.domain.model.enums.DayOfWeek;
 import com.projetoExtensao.arenaMafia.domain.model.enums.OffsetMinutes;
 import com.projetoExtensao.arenaMafia.domain.model.enums.RoleEnum;
+import com.projetoExtensao.arenaMafia.domain.model.schedule.Reservation;
+import com.projetoExtensao.arenaMafia.domain.model.schedule.ScheduleEntry;
+import com.projetoExtensao.arenaMafia.domain.valueobjects.DateTimeSlot;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.RefreshTokenVO;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.repository.UserJpaRepository;
 import com.projetoExtensao.arenaMafia.infrastructure.web.auth.dto.request.LoginRequestDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.auth.dto.response.AuthResponseDto;
+import com.projetoExtensao.arenaMafia.infrastructure.web.schedule.dto.response.ScheduleEntryResponseDto;
 import io.restassured.http.Cookie;
 import io.restassured.response.Response;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Set;
 import java.util.UUID;
@@ -65,6 +71,7 @@ public abstract class BaseTestContainersConfig {
   @Autowired private CourtRepositoryPort courtRepository;
   @Autowired private OperatingHoursRepositoryPort operatingHoursRepository;
   @Autowired private PriceRuleRepositoryPort priceRuleRepository;
+  @Autowired private ScheduleEntryRepositoryPort scheduleEntryRepository;
 
   public final String defaultUsername = "testuser";
   public final String defaultPassword = "123456";
@@ -498,5 +505,19 @@ public abstract class BaseTestContainersConfig {
   public PriceRule mockPersistDefaultPriceRule() {
     PriceRule priceRule = PriceRule.createDefault(BigDecimal.valueOf(50));
     return priceRuleRepository.save(priceRule);
+  }
+
+  public ScheduleEntry mockPersistReservationByUser(
+      UUID modalityId,
+      UUID courtId,
+      LocalDate date,
+      TimeInterval timeInterval,
+      BigDecimal price,
+      UUID userId) {
+
+    DateTimeSlot dateTimeSlot = new DateTimeSlot(date, timeInterval);
+    Reservation reservation =
+        Reservation.createByUser(modalityId, courtId, userId, price, dateTimeSlot);
+    return scheduleEntryRepository.save(reservation);
   }
 }

@@ -19,19 +19,87 @@ public class Reservation extends ScheduleEntry {
   private final UUID recurringReservationId;
 
   /**
-   * Factory method para criar uma reserva nova.
+   * Factory method para criar uma reserva feita pelo próprio usuário. Uso: quando o usuário
+   * autenticado faz uma reserva para si mesmo.
    *
    * @param modalityId id da modalidade, é obrigatório
    * @param courtId id da quadra, é obrigatório
-   * @param userId id do usuário que fez a reserva, é obrigatório
-   * @param scheduledByAdminId id do admin que fez a reserva pelo usuário, nulo se foi feita pelo
-   *     próprio usuário
+   * @param userId id do usuário que está fazendo a reserva, é obrigatório
    * @param price preço da reserva, é obrigatório e deve ser maior ou igual a zero
    * @param dateTimeSlot slot de data e hora da reserva, é obrigatório
-   * @param recurringReservationId id da reserva recorrente, pode ser nulo se não for recorrente
    * @return uma nova instância de Reservation
    */
-  public static Reservation create(
+  public static Reservation createByUser(
+      UUID modalityId, UUID courtId, UUID userId, BigDecimal price, DateTimeSlot dateTimeSlot) {
+
+    UUID id = UUID.randomUUID();
+    Instant createdAt = Instant.now();
+    ReservationStatus status = ReservationStatus.CONFIRMED;
+
+    return new Reservation(
+        id,
+        courtId,
+        modalityId,
+        userId,
+        null, // scheduledByAdminId é null quando o próprio usuário faz a reserva
+        price,
+        dateTimeSlot,
+        status,
+        null, // recurringReservationId é null para reservas individuais
+        createdAt);
+  }
+
+  /**
+   * Factory method para criar uma reserva feita por um administrador em nome de um usuário. Uso:
+   * quando um admin agenda uma reserva para outro usuário.
+   *
+   * @param modalityId id da modalidade, é obrigatório
+   * @param courtId id da quadra, é obrigatório
+   * @param userId id do usuário para quem a reserva está sendo feita, é obrigatório
+   * @param scheduledByAdminId id do admin que está criando a reserva, é obrigatório
+   * @param price preço da reserva, é obrigatório e deve ser maior ou igual a zero
+   * @param dateTimeSlot slot de data e hora da reserva, é obrigatório
+   * @return uma nova instância de Reservation
+   */
+  public static Reservation createByAdmin(
+      UUID modalityId,
+      UUID courtId,
+      UUID userId,
+      UUID scheduledByAdminId,
+      BigDecimal price,
+      DateTimeSlot dateTimeSlot) {
+
+    UUID id = UUID.randomUUID();
+    Instant createdAt = Instant.now();
+    ReservationStatus status = ReservationStatus.CONFIRMED;
+
+    return new Reservation(
+        id,
+        courtId,
+        modalityId,
+        userId,
+        scheduledByAdminId,
+        price,
+        dateTimeSlot,
+        status,
+        null, // recurringReservationId é null para reservas individuais
+        createdAt);
+  }
+
+  /**
+   * Factory method para criar uma reserva recorrente. Uso: quando um admin cria uma reserva que se
+   * repete periodicamente.
+   *
+   * @param modalityId id da modalidade, é obrigatório
+   * @param courtId id da quadra, é obrigatório
+   * @param userId id do usuário para quem a reserva está sendo feita, é obrigatório
+   * @param scheduledByAdminId id do admin que está criando a reserva recorrente, é obrigatório
+   * @param price preço da reserva, é obrigatório e deve ser maior ou igual a zero
+   * @param dateTimeSlot slot de data e hora da reserva, é obrigatório
+   * @param recurringReservationId id que agrupa todas as reservas recorrentes, é obrigatório
+   * @return uma nova instância de Reservation
+   */
+  public static Reservation createRecurring(
       UUID modalityId,
       UUID courtId,
       UUID userId,

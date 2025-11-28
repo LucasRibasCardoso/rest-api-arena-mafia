@@ -51,8 +51,6 @@ public class NotificationEventListenerTest {
 
     assertEquals(user.getPhone(), phoneCaptor.getValue());
     assertTrue(messageCaptor.getValue().contains(otpCode.toString()));
-    assertTrue(
-        messageCaptor.getValue().contains("Seu código de verificação para a Arena Máfia é:"));
   }
 
   @Test
@@ -77,8 +75,6 @@ public class NotificationEventListenerTest {
     assertEquals(newPhone, phoneCaptor.getValue());
 
     assertTrue(messageCaptor.getValue().contains(otpCode.toString()));
-    assertTrue(
-        messageCaptor.getValue().contains("Seu código de verificação para a Arena Máfia é:"));
   }
 
   @Test

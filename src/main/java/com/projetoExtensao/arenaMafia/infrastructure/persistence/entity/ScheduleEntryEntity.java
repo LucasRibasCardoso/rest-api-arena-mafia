@@ -5,6 +5,7 @@ import com.projetoExtensao.arenaMafia.infrastructure.persistence.embeddable.Date
 import jakarta.persistence.*;
 import java.time.Instant;
 import java.util.UUID;
+import org.hibernate.annotations.DiscriminatorOptions;
 
 @Entity
 @Table(
@@ -17,6 +18,7 @@ import java.util.UUID;
     })
 @Inheritance(strategy = InheritanceType.JOINED)
 @DiscriminatorColumn(name = "entry_type", discriminatorType = DiscriminatorType.STRING)
+@DiscriminatorOptions(force = true)
 public abstract class ScheduleEntryEntity {
 
   @Id private UUID id;
