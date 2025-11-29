@@ -8,17 +8,17 @@ import org.mapstruct.Mapping;
 import org.mapstruct.ObjectFactory;
 
 @Mapper(componentModel = "spring")
-public interface ModalityMapper {
+public abstract class ModalityMapper {
 
-  ModalityEntity toEntity(Modality modality);
+  public abstract ModalityEntity toEntity(Modality modality);
 
-  Modality toDomain(ModalityEntity entity);
+  public abstract Modality toDomain(ModalityEntity entity);
 
   @Mapping(target = "isActive", source = "active")
-  ModalityResponseDto toDto(Modality modality);
+  public abstract ModalityResponseDto toDto(Modality modality);
 
   @ObjectFactory
-  default Modality createModality(ModalityEntity entity) {
+  public Modality createModality(ModalityEntity entity) {
     return Modality.reconstitute(
         entity.getId(), entity.getName(), entity.isActive(), entity.getCreatedAt());
   }

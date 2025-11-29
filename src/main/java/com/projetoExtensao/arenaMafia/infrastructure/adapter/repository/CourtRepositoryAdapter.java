@@ -58,6 +58,14 @@ public class CourtRepositoryAdapter implements CourtRepositoryPort {
 
   @Override
   @Transactional(readOnly = true)
+  public List<Court> findActiveCourtsByModalityId(UUID modalityId) {
+    return courtJpaRepository.findActiveCourtsByModalityId(modalityId).stream()
+        .map(courtMapper::toDomain)
+        .collect(Collectors.toList());
+  }
+
+  @Override
+  @Transactional(readOnly = true)
   public Optional<Court> findById(UUID id) {
     return courtJpaRepository.findById(id).map(courtMapper::toDomain);
   }

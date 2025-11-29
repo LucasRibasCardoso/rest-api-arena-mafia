@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/modalities")
+@RequestMapping("/api/public/modalities")
 public class ModalityController {
 
   private final FindAllModalitiesUseCase findAllModalitiesUseCase;

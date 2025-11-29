@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidDayOfWeekException;
 
+import java.time.LocalDate;
+
 public enum DayOfWeek {
   MONDAY,
   TUESDAY,
@@ -29,5 +31,10 @@ public enum DayOfWeek {
     } catch (IllegalArgumentException e) {
       throw new InvalidDayOfWeekException(ErrorCode.DAY_OF_WEEK_INVALID);
     }
+  }
+
+  public static DayOfWeek convertToDayOfWeek(LocalDate date) {
+    java.time.DayOfWeek javaDayOfWeek = date.getDayOfWeek();
+    return DayOfWeek.valueOf(javaDayOfWeek.name());
   }
 }

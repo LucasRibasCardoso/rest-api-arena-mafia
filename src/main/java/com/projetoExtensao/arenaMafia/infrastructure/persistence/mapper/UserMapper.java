@@ -6,14 +6,14 @@ import org.mapstruct.Mapper;
 import org.mapstruct.ObjectFactory;
 
 @Mapper(componentModel = "spring")
-public interface UserMapper {
+public abstract class UserMapper {
 
-  UserEntity toEntity(User user);
+  public abstract UserEntity toEntity(User user);
 
-  User toDomain(UserEntity entity);
+  public abstract User toDomain(UserEntity entity);
 
   @ObjectFactory
-  default User createUser(UserEntity entity) {
+  public User createUser(UserEntity entity) {
     return User.reconstitute(
         entity.getId(),
         entity.getUsername(),

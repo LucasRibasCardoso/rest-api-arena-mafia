@@ -7,9 +7,9 @@ get:
     modalidades esportivas, horários de funcionamento e regras de preços.
     
     Este endpoint consolida as informações de três endpoints separados:
-    - `/api/modalities` - Modalidades esportivas ativas
-    - `/api/price-rules` - Regras de preços ativas
-    - `/operating-rules` - Horários de funcionamento ativos
+    - `/api/public/modalities` - Modalidades esportivas ativas
+    - `/api/public/price-rules` - Regras de preços ativas
+    - `/api/public/operating-hours` - Horários de funcionamento ativos
     
     Este endpoint é público e não requer autenticação.
   responses:

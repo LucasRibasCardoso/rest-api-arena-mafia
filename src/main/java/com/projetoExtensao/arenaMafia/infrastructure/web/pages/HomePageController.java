@@ -3,17 +3,23 @@ package com.projetoExtensao.arenaMafia.infrastructure.web.pages;
 import com.projetoExtensao.arenaMafia.application.modality.usecase.FindAllModalitiesUseCase;
 import com.projetoExtensao.arenaMafia.application.operatingHours.usecase.FindAllOperatingHoursUseCase;
 import com.projetoExtensao.arenaMafia.application.priceRule.usecase.FindAllPriceRuleUseCase;
+import com.projetoExtensao.arenaMafia.domain.model.Modality;
+import com.projetoExtensao.arenaMafia.domain.model.OperatingHours;
+import com.projetoExtensao.arenaMafia.domain.model.PriceRule;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.mapper.ModalityMapper;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.mapper.OperatingHoursMapper;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.mapper.PriceRuleMapper;
+import com.projetoExtensao.arenaMafia.infrastructure.security.rateLimit.CustomRateLimiter;
 import com.projetoExtensao.arenaMafia.infrastructure.web.pages.dto.HomePageDataResponseDto;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
-@RequestMapping("/api/homepage")
+@RequestMapping("/api/public/homepage")
 public class HomePageController {
 
   private final PriceRuleMapper priceRuleMapper;
@@ -39,11 +45,12 @@ public class HomePageController {
   }
 
   @GetMapping
+  @CustomRateLimiter(limiterName = "globalLimiter")
   public ResponseEntity<HomePageDataResponseDto> getAllData() {
     boolean filterByActive = true;
-    var modalities = findAllModalitiesUseCase.execute(filterByActive);
-    var operatingHours = findAllOperatingHoursUseCase.execute(filterByActive);
-    var priceRules = findAllPriceRuleUseCase.execute(filterByActive);
+    List<Modality> modalities = findAllModalitiesUseCase.execute(filterByActive);
+    List<OperatingHours> operatingHours = findAllOperatingHoursUseCase.execute(filterByActive);
+    List<PriceRule> priceRules = findAllPriceRuleUseCase.execute(filterByActive);
 
     var response =
         new HomePageDataResponseDto(

@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/operating-hours")
+@RequestMapping("/api/public/operating-hours")
 public class OperatingHoursController {
 
   private final OperatingHoursMapper operatingHoursMapper;

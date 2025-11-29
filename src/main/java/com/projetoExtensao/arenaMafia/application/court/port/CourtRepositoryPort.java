@@ -15,6 +15,8 @@ public interface CourtRepositoryPort {
 
   Optional<Court> findById(UUID id);
 
+  List<Court> findActiveCourtsByModalityId(UUID modalityId);
+
   Court findByIdOrElseThrow(UUID id);
 
   Optional<Court> findByName(String name);

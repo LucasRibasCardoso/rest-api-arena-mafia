@@ -1,0 +1,8 @@
+name: reservationId
+in: path
+required: true
+description: Identificador único da reserva
+schema:
+  type: string
+  format: uuid
+example: "d4e5f6a7-b890-1234-cdef-1234567890ab"

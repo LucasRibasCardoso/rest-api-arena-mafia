@@ -14,7 +14,7 @@ import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 @Configuration
 public class JacksonConfig {
 
-  private static final String DATE_FORMAT = "dd/MM/yyyy";
+  private static final String DATE_FORMAT = "yyyy-MM-dd";
 
   @Bean
   public Jackson2ObjectMapperBuilder jackson2ObjectMapperBuilder() {

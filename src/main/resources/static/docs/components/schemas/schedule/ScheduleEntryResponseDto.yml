@@ -1,0 +1,48 @@
+type: object
+description: |
+  Resposta base para entradas no calendário de agendamentos.
+  Representa qualquer tipo de entrada no calendário (reservas, treinos, bloqueios, etc.).
+  O campo 'type' determina o tipo específico e os campos adicionais presentes.
+required:
+  - id
+  - type
+  - courtId
+  - date
+  - timeInterval
+  - createdAt
+properties:
+  id:
+    type: string
+    format: uuid
+    description: Identificador único da entrada no calendário.
+    example: "d4e5f6a7-b890-1234-cdef-1234567890ab"
+  type:
+    type: string
+    description: |
+      Tipo da entrada no calendário.
+      Este campo determina quais campos adicionais estarão presentes na resposta.
+    enum:
+      - RESERVATION
+    example: "RESERVATION"
+  courtId:
+    type: string
+    format: uuid
+    description: Identificador único da quadra associada.
+    example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+  date:
+    type: string
+    format: date
+    description: Data da entrada no calendário (formato ISO 8601 yyyy-MM-dd).
+    example: "2025-11-25"
+  timeInterval:
+    $ref: "../timeInterval/TimeIntervalDto.yml"
+  createdAt:
+    type: string
+    format: date-time
+    description: Data e hora de criação da entrada (formato ISO 8601).
+    example: "2025-11-20T10:20:30Z"
+discriminator:
+  propertyName: type
+  mapping:
+    RESERVATION: "./ReservationScheduleResponseDto.yml"
+

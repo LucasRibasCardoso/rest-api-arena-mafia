@@ -130,6 +130,8 @@ public enum ErrorCode {
 
   // ==================== ERROS DE QUADRA (COURT) ====================
   // Court - Geral
+  COURT_NOT_FOUND_BY_MODALITY("Nenhuma quadra encontrada para a modalidade especificada."),
+  COURT_NOT_SUPPORTS_MODALITY("A quadra selecionada não suporta a modalidade solicitada."),
   COURT_NOT_FOUND("Quadra não encontrada."),
   COURT_ALREADY_EXISTS("Essa quadra já está cadastrada."),
 
@@ -169,6 +171,8 @@ public enum ErrorCode {
   OPERATING_HOURS_ALREADY_DISABLED("O horário de funcionamento já está desativado."),
   OPERATING_HOURS_ALREADY_ENABLED("O horário de funcionamento já está ativado."),
   OPERATING_HOURS_NOT_FOUND("Horário de funcionamento não encontrado."),
+  OPERATING_HOURS_APPLICABLE_NOT_FOUND(
+      "Não há horários de funcionamento aplicáveis para a data fornecida."),
 
   // ==================== ERROS DE REGRAS DE PREÇO (PRICE RULES) ====================
   PRICE_RULE_NAME_REQUIRED("O nome da regra de preço é obrigatório."),
@@ -185,11 +189,39 @@ public enum ErrorCode {
   PRICE_RULE_ALREADY_EXISTS("Essa regra de preço já está cadastrada."),
   PRICE_RULE_PRIORITY_OVERLAP("Já existe uma regra de preço com essa prioridade."),
 
-  // ==================== ERROS DE ENUMS ====================
-
-  // ==================== ERROS DE BUSCA E VALIDAÇÃO ====================
+  // ==================== ERROS DE BUSCA E VALIDAÇÃO ====================,
+  START_DATE_AFTER_END_DATE("A data de início não pode ser posterior à data de término."),
   TERM_TOO_LONG("O termo de busca é muito longo. O máximo permitido é 100 caracteres."),
-  START_DATE_AFTER_END_DATE("A data de início não pode ser posterior à data de término.");
+
+  // ==================== ERROS DE DATE TIME SLOT ====================
+  DATE_TIME_SLOT_TIME_INTERVAL_REQUIRED("O intervalo de tempo é obrigatório."),
+  DATE_TIME_SLOT_DATE_REQUIRED("A data é obrigatória."),
+
+  // ==================== ERROS DE ENTRADAS DE AGENDAMENTO (SCHEDULE ENTRY) ====================
+  SCHEDULE_ENTRY_ID_REQUIRED("O ID da entrada de agendamento é obrigatório."),
+  SCHEDULE_ENTRY_COURT_ID_REQUIRED("Uma reserva deve estar associada a uma quadra."),
+  SCHEDULE_ENTRY_DATE_TIME_SLOT_REQUIRED("O slot de data/hora é obrigatório."),
+  SCHEDULE_ENTRY_CREATED_AT_REQUIRED("A data de criação é obrigatória."),
+  SCHEDULE_ENTRY_NOT_FOUND("Agendamento não encontrado."),
+  SCHEDULE_ENTRY_NOT_AVAILABLE(
+      "O horário selecionado não está mais disponível. Por favor, escolha outro horário."),
+
+  // =================== ERROS DE CONSULTA DE HORÁRIOS DISPONÍVEIS ====================
+  PAST_DATE_NOT_ALLOWED("Não é possível consultar horários disponíveis para datas passadas."),
+
+  // ==================== ERROS DE RESERVA (RESERVATION) ====================
+  RESERVATION_PRICE_INVALID("O preço da reserva deve ser um valor positivo."),
+  RESERVATION_MODALITY_ID_REQUIRED("É obrigatório informar a modalidade da reserva."),
+  RESERVATION_DATE_REQUIRED("É obrigatório informar a data da reserva."),
+  RESERVATION_TIME_INTERVAL_REQUIRED("É obrigatório informar o horário da reserva."),
+  RESERVATION_COURT_ID_REQUIRED("A quadra da reserva é obrigatória."),
+  RESERVATION_USER_ID_REQUIRED("O usuário da reserva é obrigatório."),
+  RESERVATION_ACCESS_DENIED(
+      "Você não tem permissão para acessar esta reserva. Apenas o dono da reserva ou um administrador podem visualizá-la."),
+
+  // ==================== ERROS DE CONFLITO DE AGENDAMENTO ====================
+  UNSUPPORTED_SCHEDULE_ENTRY_TYPE("O tipo de entrada de agendamento fornecido não é suportado."),
+  ;
 
   // ==================== CONFIGURAÇÃO ====================
   private static final Map<Class<?>, ErrorCode> ENUM_ERROR_MAP = new HashMap<>();
