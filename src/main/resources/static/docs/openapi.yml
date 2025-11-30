@@ -161,6 +161,8 @@ components:
       $ref: "./components/schemas/schedule/ScheduleEntryResponseDto.yml"
     ReservationScheduleResponseDto:
       $ref: "./components/schemas/schedule/ReservationScheduleResponseDto.yml"
+    PageOfReservationResponseDto:
+      $ref: "./components/schemas/schedule/PageOfReservationResponseDto.yml"
 
   responses:
     InternalServerError:
@@ -227,11 +229,11 @@ paths:
     $ref: "./paths/user/DisableAccount.yml"
 
   /api/schedules/available-slots:
-    $ref: "./paths/schedule/GetAvailableTimes.yml"
+    $ref: "./paths/user/schedule/GetAvailableTimes.yml"
   /api/users/me/reservations:
-    $ref: "./paths/schedule/Reservations.yml"
+    $ref: "./paths/user/schedule/Reservations.yml"
   /api/users/me/reservations/{id}:
-    $ref: "./paths/schedule/ReservationById.yml"
+    $ref: "./paths/user/schedule/ReservationById.yml"
 
   /api/admin/users:
     $ref: "./paths/admin/users/GetUsers.yml"

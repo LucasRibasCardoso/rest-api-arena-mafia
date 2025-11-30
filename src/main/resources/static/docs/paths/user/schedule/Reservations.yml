@@ -24,20 +24,20 @@ post:
     content:
       application/json:
         schema:
-          $ref: "../../components/schemas/schedule/CreateReservationRequestDto.yml"
+          $ref: "../../../components/schemas/schedule/CreateReservationRequestDto.yml"
   responses:
     201:
       description: Reserva criada com sucesso.
       content:
         application/json:
           schema:
-            $ref: "../../components/schemas/schedule/ReservationScheduleResponseDto.yml"
+            $ref: "../../../components/schemas/schedule/ReservationScheduleResponseDto.yml"
     400:
       description: Requisição inválida ou dados de validação incorretos.
       content:
         application/json:
           schema:
-            $ref: "../../components/schemas/error/ErrorResponseDto.yml"
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
           examples:
             PastDate:
               summary: Data da reserva no passado
@@ -80,13 +80,13 @@ post:
                 developerMessage: "É obrigatório informar o horário da reserva."
                 path: "/api/users/me/reservations"
     401:
-      $ref: "../../components/responses/UnauthorizedError.yml"
+      $ref: "../../../components/responses/UnauthorizedError.yml"
     404:
       description: Recurso não encontrado.
       content:
         application/json:
           schema:
-            $ref: "../../components/schemas/error/ErrorResponseDto.yml"
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
           examples:
             ModalityNotFound:
               summary: Modalidade não encontrada
@@ -110,7 +110,7 @@ post:
       content:
         application/json:
           schema:
-            $ref: "../../components/schemas/error/ErrorResponseDto.yml"
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
           examples:
             TimeSlotNotAvailable:
               summary: Horário não disponível
@@ -129,6 +129,49 @@ post:
                 developerMessage: "A quadra selecionada não suporta a modalidade solicitada."
                 path: "/api/users/me/reservations"
     429:
-      $ref: "../../components/responses/TooManyRequestsError.yml"
+      $ref: "../../../components/responses/TooManyRequestsError.yml"
     500:
-      $ref: "../../components/responses/InternalServerError.yml"
+      $ref: "../../../components/responses/InternalServerError.yml"
+
+
+get:
+  operationId: getUserReservations
+  tags: [ "Usuário - Agendamento de Horários" ]
+  summary: Lista as reservas de horários do usuário autenticado
+  security:
+    - bearerAuth: [ ]
+  description: Retorna uma lista paginada das reservas de horários feitas pelo usuário autenticado.
+
+  parameters:
+    - $ref: "../../../components/parameters/ReservationPagination.yml#/page"
+    - $ref: "../../../components/parameters/ReservationPagination.yml#/size"
+    - $ref: "../../../components/parameters/ReservationPagination.yml#/sort"
+
+  responses:
+    200:
+      description: Operação bem-sucedida. Retorna a página de reservas do usuário.
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/schedule/PageOfReservationResponseDto.yml"
+    400:
+      description: Erro lançado quando os parâmetros de request forem inválidos.
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
+          examples:
+            InvalidSortParam:
+              summary: Parâmetro de ordenação inválido.
+              value:
+                timestamp: "2025-09-28T18:31:00Z"
+                status: 400
+                errorCode: "INVALID_SORT_PARAMETER"
+                developerMessage: "O parâmetro de ordenação fornecido é inválido."
+                path: "/api/users/me/reservations"
+    401:
+      $ref: "../../../components/responses/UnauthorizedError.yml"
+    429:
+      $ref: "../../../components/responses/TooManyRequestsError.yml"
+    500:
+      $ref: "../../../components/responses/InternalServerError.yml"
