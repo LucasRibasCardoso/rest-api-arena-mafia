@@ -14,12 +14,14 @@ import com.projetoExtensao.arenaMafia.infrastructure.web.schedule.dto.response.S
 import com.projetoExtensao.arenaMafia.integration.config.WebIntegrationTestConfig;
 import com.projetoExtensao.arenaMafia.integration.config.util.timeInterval.InvalidTimeIntervalProvider;
 import io.restassured.builder.RequestSpecBuilder;
+import io.restassured.path.json.JsonPath;
 import io.restassured.specification.RequestSpecification;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
 
@@ -224,6 +226,39 @@ public class ReservationControllerIntegrationTest extends WebIntegrationTestConf
                     fieldError.fieldName().equals("date")
                         && fieldError.errorCode().equals(errorCode.name())
                         && fieldError.developerMessage().equals(errorCode.getMessage()));
+      }
+
+      @Test
+      @DisplayName("Data da reserva no passado")
+      void shouldReturn400WhenReservationDateIsInThePast() {
+        // Arrange
+        Modality modality = mockPersistModality("Futebol");
+        Court court = mockPersistCourt("Court 1", modality);
+        TimeInterval timeInterval = new TimeInterval(LocalTime.of(8, 0), LocalTime.of(9, 0));
+
+        CreateReservationRequestDto request =
+            new CreateReservationRequestDto(
+                modality.getId(), court.getId(), LocalDate.now().minusDays(1), timeInterval);
+
+        // Act & Assert
+        var response =
+            given()
+                .spec(specification)
+                .header("Authorization", accessToken)
+                .body(request)
+                .when()
+                .post()
+                .then()
+                .statusCode(400)
+                .extract()
+                .as(ErrorResponseDto.class);
+
+        ErrorCode errorCode = ErrorCode.RESERVATION_PAST_DATE_NOT_ALLOWED;
+
+        assertThat(response.status()).isEqualTo(400);
+        assertThat(response.path()).isEqualTo("/api/users/me/reservations");
+        assertThat(response.errorCode()).isEqualTo(errorCode.name());
+        assertThat(response.developerMessage()).isEqualTo(errorCode.getMessage());
       }
 
       @InvalidTimeIntervalProvider
@@ -575,6 +610,119 @@ public class ReservationControllerIntegrationTest extends WebIntegrationTestConf
         assertThat(response.errorCode()).isEqualTo(errorCode.name());
         assertThat(response.developerMessage()).isEqualTo(errorCode.getMessage());
       }
+    }
+  }
+
+  @Nested
+  @DisplayName("Testes para o endpoint GET /api/users/me/reservations")
+  class GetAllReservationsTests {
+
+    @Test
+    @DisplayName("Deve retornar todas as reservas do usuário autenticado")
+    void shouldReturnAllReservationsOfAuthenticatedUser() {
+      // Arrange
+      Modality modality = mockPersistModality("Rugby");
+      Court court = mockPersistCourt("Court R", modality);
+      LocalDate reservationDate1 = LocalDate.now().plusDays(5);
+      LocalDate reservationDate2 = LocalDate.now().plusDays(6);
+      TimeInterval timeInterval1 = new TimeInterval(LocalTime.of(9, 0), LocalTime.of(10, 0));
+      TimeInterval timeInterval2 = new TimeInterval(LocalTime.of(11, 0), LocalTime.of(12, 0));
+
+      mockPersistReservationByUser(
+          modality.getId(),
+          court.getId(),
+          reservationDate1,
+          timeInterval1,
+          BigDecimal.valueOf(80.00),
+          defaultUser.getId());
+
+      mockPersistReservationByUser(
+          modality.getId(),
+          court.getId(),
+          reservationDate2,
+          timeInterval2,
+          BigDecimal.valueOf(90.00),
+          defaultUser.getId());
+
+      // Act & Assert
+      var response =
+          given()
+              .spec(specification)
+              .header("Authorization", accessToken)
+              .when()
+              .get()
+              .then()
+              .statusCode(200)
+              .extract()
+              .asString();
+
+      JsonPath jsonPath = new JsonPath(response);
+
+      assertThat(jsonPath.getInt("size")).isEqualTo(20);
+      assertThat(jsonPath.getInt("number")).isEqualTo(0);
+      assertThat(jsonPath.getInt("totalElements")).isEqualTo(2);
+      assertThat(jsonPath.getList("content").size()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Deve retornar uma lista vazia quando o usuário não possui reservas")
+    void shouldReturnEmptyListWhenUserHasNoReservations() {
+      // Act & Assert
+      var response =
+          given()
+              .spec(specification)
+              .header("Authorization", accessToken)
+              .when()
+              .get()
+              .then()
+              .statusCode(200)
+              .extract()
+              .asString();
+
+      JsonPath jsonPath = new JsonPath(response);
+
+      assertThat(jsonPath.getInt("size")).isEqualTo(20);
+      assertThat(jsonPath.getInt("number")).isEqualTo(0);
+      assertThat(jsonPath.getInt("totalElements")).isEqualTo(0);
+      assertThat(jsonPath.getList("content").size()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Não deve retornar reservas de outros usuários")
+    void shouldNotReturnReservationsOfOtherUsers() {
+      // Arrange
+      Modality modality = mockPersistModality("Cricket");
+      Court court = mockPersistCourt("Court C", modality);
+      LocalDate reservationDate = LocalDate.now().plusDays(7);
+      TimeInterval timeInterval = new TimeInterval(LocalTime.of(13, 0), LocalTime.of(14, 0));
+      User anotherUser = mockPersistUser("Another", "Another User", "+5511888888888", "anotheruser");
+
+      mockPersistReservationByUser(
+          modality.getId(),
+          court.getId(),
+          reservationDate,
+          timeInterval,
+          BigDecimal.valueOf(70.00),
+          anotherUser.getId());
+
+      // Act & Assert
+      var response =
+          given()
+              .spec(specification)
+              .header("Authorization", accessToken)
+              .when()
+              .get()
+              .then()
+              .statusCode(200)
+              .extract()
+              .asString();
+
+      JsonPath jsonPath = new JsonPath(response);
+
+      assertThat(jsonPath.getInt("size")).isEqualTo(20);
+      assertThat(jsonPath.getInt("number")).isEqualTo(0);
+      assertThat(jsonPath.getInt("totalElements")).isEqualTo(0);
+      assertThat(jsonPath.getList("content").size()).isEqualTo(0);
     }
   }
 }

@@ -1,0 +1,29 @@
+page:
+  name: page
+  in: query
+  description: "Número da página a ser retornada (inicia em 0)."
+  required: false
+  schema:
+    type: integer
+    default: 0
+    minimum: 0
+
+size:
+  name: size
+  in: query
+  description: "Quantidade de itens por página."
+  required: false
+  schema:
+    type: integer
+    default: 20
+    minimum: 1
+
+sort:
+  name: sort
+  in: query
+  description: "Critério de ordenação no formato 'propriedade,direção'. Ex: 'date,desc' ou 'startTime,asc'."
+  required: false
+  schema:
+    type: string
+    example: "date,desc"
+

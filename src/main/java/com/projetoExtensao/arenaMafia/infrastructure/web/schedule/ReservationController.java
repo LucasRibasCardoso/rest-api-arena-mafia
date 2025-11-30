@@ -1,7 +1,9 @@
 package com.projetoExtensao.arenaMafia.infrastructure.web.schedule;
 
 import com.projetoExtensao.arenaMafia.application.schedule.usecase.CreateReservationUseCase;
+import com.projetoExtensao.arenaMafia.application.schedule.usecase.FindAllReservationUseCase;
 import com.projetoExtensao.arenaMafia.application.schedule.usecase.FindByIdReservationUseCase;
+import com.projetoExtensao.arenaMafia.domain.model.schedule.Reservation;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.ScheduleEntry;
 import com.projetoExtensao.arenaMafia.infrastructure.security.rateLimit.CustomRateLimiter;
 import com.projetoExtensao.arenaMafia.infrastructure.security.userDetails.UserDetailsAdapter;
@@ -11,6 +13,9 @@ import com.projetoExtensao.arenaMafia.infrastructure.web.schedule.mapper.Schedul
 import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.UUID;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -23,14 +28,17 @@ public class ReservationController {
   private final ScheduleEntryResponseMapper scheduleEntryResponseMapper;
   private final FindByIdReservationUseCase findByIdReservationUseCase;
   private final CreateReservationUseCase createReservationUseCase;
+  private final FindAllReservationUseCase findAllReservationUseCase;
 
   public ReservationController(
       ScheduleEntryResponseMapper scheduleEntryResponseMapper,
       FindByIdReservationUseCase findByIdReservationUseCase,
-      CreateReservationUseCase createReservationUseCase) {
+      CreateReservationUseCase createReservationUseCase,
+      FindAllReservationUseCase findAllReservationUseCase) {
     this.scheduleEntryResponseMapper = scheduleEntryResponseMapper;
     this.findByIdReservationUseCase = findByIdReservationUseCase;
     this.createReservationUseCase = createReservationUseCase;
+    this.findAllReservationUseCase = findAllReservationUseCase;
   }
 
   @PostMapping
@@ -52,14 +60,30 @@ public class ReservationController {
     return ResponseEntity.created(location).body(response);
   }
 
+  @GetMapping
+  @CustomRateLimiter(limiterName = "globalLimiter")
+  public ResponseEntity<Page<ScheduleEntryResponseDto>> findAll(
+      Pageable pageable, @AuthenticationPrincipal UserDetailsAdapter authenticatedUser) {
+
+    UUID userId = extractUserId(authenticatedUser);
+    Page<Reservation> reservationsPage = findAllReservationUseCase.execute(userId, pageable);
+    Page<ScheduleEntryResponseDto> responsePage = reservationsPage.map(scheduleEntryResponseMapper::toResponseDto);
+
+    return ResponseEntity.ok(responsePage);
+  }
+
   @GetMapping("/{id}")
   @CustomRateLimiter(limiterName = "globalLimiter")
   public ResponseEntity<ScheduleEntryResponseDto> getById(
       @AuthenticationPrincipal UserDetailsAdapter authenticatedUser, @PathVariable UUID id) {
 
-    UUID userId = authenticatedUser.getUser().getId();
+    UUID userId = extractUserId(authenticatedUser);
     ScheduleEntry scheduleEntry = findByIdReservationUseCase.execute(userId, id);
     ScheduleEntryResponseDto response = scheduleEntryResponseMapper.toResponseDto(scheduleEntry);
     return ResponseEntity.ok(response);
+  }
+
+  private UUID extractUserId(UserDetailsAdapter authenticatedUser) {
+    return authenticatedUser.getUser().getId();
   }
 }

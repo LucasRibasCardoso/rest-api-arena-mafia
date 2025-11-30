@@ -9,20 +9,20 @@ get:
     O usuário só pode visualizar suas próprias reservas. 
 
   parameters:
-    - $ref: "../../components/parameters/ReservationId.yml"
+    - $ref: "../../../components/parameters/ReservationId.yml"
   responses:
     200:
       description: Reserva encontrada com sucesso.
       content:
         application/json:
           schema:
-            $ref: "../../components/schemas/schedule/ReservationScheduleResponseDto.yml"
+            $ref: "../../../components/schemas/schedule/ReservationScheduleResponseDto.yml"
     400:
       description: Requisição inválida - ID mal formatado.
       content:
         application/json:
           schema:
-            $ref: "../../components/schemas/error/ErrorResponseDto.yml"
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
           examples:
             InvalidUUID:
               summary: UUID inválido
@@ -33,13 +33,13 @@ get:
                 developerMessage: "Um parâmetro da requisição é inválido ou está malformado."
                 path: "/api/users/me/reservations/invalid-id"
     401:
-      $ref: "../../components/responses/UnauthorizedError.yml"
+      $ref: "../../../components/responses/UnauthorizedError.yml"
     403:
       description: Tentativa de acesso a uma reserva que não pertence ao usuário autenticado.
       content:
         application/json:
           schema:
-            $ref: "../../components/schemas/error/ErrorResponseDto.yml"
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
           examples:
             ForbiddenReservationAccess:
               summary: Acesso proibido à reserva
@@ -54,7 +54,7 @@ get:
       content:
         application/json:
           schema:
-            $ref: "../../components/schemas/error/ErrorResponseDto.yml"
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
           examples:
             ReservationNotFound:
               summary: Reserva não encontrada
@@ -65,7 +65,7 @@ get:
                 developerMessage: "Agendamento não encontrado."
                 path: "/api/users/me/reservations/d4e5f6a7-b890-1234-cdef-1234567890ab"
     429:
-      $ref: "../../components/responses/TooManyRequestsError.yml"
+      $ref: "../../../components/responses/TooManyRequestsError.yml"
     500:
-      $ref: "../../components/responses/InternalServerError.yml"
+      $ref: "../../../components/responses/InternalServerError.yml"
 

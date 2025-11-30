@@ -21,8 +21,8 @@ get:
     
     Este endpoint é público e não requer autenticação.
   parameters:
-    - $ref: "../../components/parameters/ModalityId.yml"
-    - $ref: "../../components/parameters/Date.yml"
+    - $ref: "../../../components/parameters/ModalityId.yml"
+    - $ref: "../../../components/parameters/Date.yml"
   responses:
     200:
       description: Operação bem-sucedida. Retorna a lista de horários disponíveis.
@@ -31,7 +31,7 @@ get:
           schema:
             type: array
             items:
-              $ref: "../../components/schemas/schedule/AvailableSlotResponseDto.yml"
+              $ref: "../../../components/schemas/schedule/AvailableSlotResponseDto.yml"
           examples:
             WithAvailableSlots:
               summary: Lista com horários disponíveis
@@ -71,7 +71,7 @@ get:
       content:
         application/json:
           schema:
-            $ref: "../../components/schemas/error/ErrorResponseDto.yml"
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
           examples:
             MissingModalityId:
               summary: ModalityId não fornecido
@@ -119,7 +119,7 @@ get:
       content:
         application/json:
           schema:
-            $ref: "../../components/schemas/error/ErrorResponseDto.yml"
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
           examples:
             NoActiveCourtForModality:
               summary: Nenhuma quadra ativa para a modalidade
@@ -149,8 +149,8 @@ get:
                 timestamp: "2025-11-22T14:30:00Z"
                 path: "/api/schedule/available-slots"
     401:
-      $ref: "../../components/responses/UnauthorizedError.yml"
+      $ref: "../../../components/responses/UnauthorizedError.yml"
     429:
-      $ref: "../../components/responses/TooManyRequestsError.yml"
+      $ref: "../../../components/responses/TooManyRequestsError.yml"
     500:
-      $ref: "../../components/responses/InternalServerError.yml"
+      $ref: "../../../components/responses/InternalServerError.yml"

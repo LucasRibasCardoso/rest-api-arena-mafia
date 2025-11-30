@@ -3,10 +3,13 @@ package com.projetoExtensao.arenaMafia.infrastructure.adapter.repository;
 import com.projetoExtensao.arenaMafia.application.schedule.port.repository.ScheduleEntryRepositoryPort;
 import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 import com.projetoExtensao.arenaMafia.domain.exception.notFound.ScheduleNotFoundException;
+import com.projetoExtensao.arenaMafia.domain.model.schedule.Reservation;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.ScheduleEntry;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.ScheduleEntryEntity;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.mapper.ScheduleEntryMapper;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.repository.ScheduleEntryJpaRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -51,5 +54,13 @@ public class ScheduleEntryRepositoryAdapter implements ScheduleEntryRepositoryPo
         .stream()
         .map(scheduleEntryMapper::toDomain)
         .toList();
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public Page<Reservation> findReservationsByUserId(UUID userId, Pageable pageable) {
+    return scheduleEntryJpaRepository
+        .findReservationsByUserId(userId, pageable)
+        .map(entity -> (Reservation) scheduleEntryMapper.toDomain(entity));
   }
 }
