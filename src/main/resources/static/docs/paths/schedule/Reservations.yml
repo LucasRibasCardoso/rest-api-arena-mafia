@@ -39,6 +39,14 @@ post:
           schema:
             $ref: "../../components/schemas/error/ErrorResponseDto.yml"
           examples:
+            PastDate:
+              summary: Data da reserva no passado
+              value:
+                status: 400
+                timestamp: "2025-11-28T17:33:12.332726Z"
+                errorCode: "RESERVATION_PAST_DATE_NOT_ALLOWED"
+                developerMessage: "Não é possível fazer reservas para datas passadas. A data deve ser hoje ou no futuro."
+                path: "/api/users/me/reservations"
             ModalityIdRequired:
               summary: ID da modalidade não informado
               value:

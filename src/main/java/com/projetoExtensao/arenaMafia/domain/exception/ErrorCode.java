@@ -218,6 +218,7 @@ public enum ErrorCode {
   RESERVATION_USER_ID_REQUIRED("O usuário da reserva é obrigatório."),
   RESERVATION_ACCESS_DENIED(
       "Você não tem permissão para acessar esta reserva. Apenas o dono da reserva ou um administrador podem visualizá-la."),
+  RESERVATION_PAST_DATE_NOT_ALLOWED("Não é possível fazer reservas para datas passadas. A data deve ser hoje ou no futuro."),
 
   // ==================== ERROS DE CONFLITO DE AGENDAMENTO ====================
   UNSUPPORTED_SCHEDULE_ENTRY_TYPE("O tipo de entrada de agendamento fornecido não é suportado."),

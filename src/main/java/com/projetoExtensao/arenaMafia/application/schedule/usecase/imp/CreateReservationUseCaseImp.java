@@ -9,6 +9,7 @@ import com.projetoExtensao.arenaMafia.application.schedule.port.repository.Sched
 import com.projetoExtensao.arenaMafia.application.schedule.service.ScheduleAvailabilityService;
 import com.projetoExtensao.arenaMafia.application.schedule.usecase.CreateReservationUseCase;
 import com.projetoExtensao.arenaMafia.application.user.port.repository.UserRepositoryPort;
+import com.projetoExtensao.arenaMafia.domain.exception.badRequest.ReservationPastDateException;
 import com.projetoExtensao.arenaMafia.domain.exception.conflict.CourtNotSupportsModalityException;
 import com.projetoExtensao.arenaMafia.domain.exception.notFound.CourtNotFoundException;
 import com.projetoExtensao.arenaMafia.domain.exception.notFound.ModalityNotFoundException;
@@ -25,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -62,6 +64,8 @@ public class CreateReservationUseCaseImp implements CreateReservationUseCase {
 
   @Override
   public ScheduleEntry execute(UUID userId, CreateReservationRequestDto request) {
+    validateReservationDate(request.date());
+
     User user = userRepositoryPort.findByIdOrElseThrow(userId);
 
     validateModalityExists(request.modalityId());
@@ -71,9 +75,7 @@ public class CreateReservationUseCaseImp implements CreateReservationUseCase {
     validateScheduleAvailability(request.courtId(), dateTimeSlot);
 
     BigDecimal price = calculatePrice(request);
-
-    Reservation reservation =
-        saveReservation(request.modalityId(), request.courtId(), userId, price, dateTimeSlot);
+    Reservation reservation = saveReservation(request.modalityId(), request.courtId(), userId, price, dateTimeSlot);
 
     sendConfirmationNotification(user, reservation);
     return reservation;
@@ -152,6 +154,21 @@ public class CreateReservationUseCaseImp implements CreateReservationUseCase {
   private void validateScheduleAvailability(UUID courtId, DateTimeSlot dateTimeSlot) {
     scheduleAvailabilityService.validateAvailability(
         courtId, dateTimeSlot.date(), dateTimeSlot.timeInterval());
+  }
+
+  /**
+   * Valida se a data da reserva não está no passado. Reservas só podem ser feitas para o dia atual
+   * ou datas futuras.
+   *
+   * @param reservationDate data da reserva
+   * @throws ReservationPastDateException se a data for anterior à data atual
+   */
+  private void validateReservationDate(LocalDate reservationDate) {
+    LocalDate today = LocalDate.now();
+
+    if (reservationDate.isBefore(today)) {
+      throw new ReservationPastDateException();
+    }
   }
 
   /**
