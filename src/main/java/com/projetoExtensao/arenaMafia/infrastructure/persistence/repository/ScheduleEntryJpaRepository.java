@@ -4,6 +4,7 @@ import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.Reservat
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.ScheduleEntryEntity;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -47,4 +48,21 @@ public interface ScheduleEntryJpaRepository extends JpaRepository<ScheduleEntryE
       ORDER BY r.dateTimeSlot.date DESC, r.dateTimeSlot.timeInterval.startTime DESC
       """)
   Page<ReservationEntity> findReservationsByUserId(@Param("userId") UUID userId, Pageable pageable);
+
+  /**
+   * Busca uma reserva específica por ID e usuário. Garante que a reserva pertence ao usuário
+   * autenticado.
+   *
+   * @param reservationId ID da reserva
+   * @param userId ID do usuário
+   * @return a entidade de reserva correspondente
+   */
+  @Query(
+      """
+      SELECT r FROM ReservationEntity r
+      WHERE r.id = :reservationId
+      AND r.userId = :userId
+      """)
+  Optional<ReservationEntity> findReservationByIdAndUser(
+      @Param("reservationId") UUID reservationId, @Param("userId") UUID userId);
 }

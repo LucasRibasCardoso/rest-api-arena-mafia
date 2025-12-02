@@ -2,6 +2,7 @@ package com.projetoExtensao.arenaMafia.domain.model.schedule;
 
 import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidReservationException;
+import com.projetoExtensao.arenaMafia.domain.exception.conflict.ReservationStatusConflictException;
 import com.projetoExtensao.arenaMafia.domain.model.enums.ReservationStatus;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.DateTimeSlot;
 
@@ -15,7 +16,7 @@ public class Reservation extends ScheduleEntry {
   private final UUID modalityId;
   private final UUID scheduledByAdminId;
   private final BigDecimal price;
-  private final ReservationStatus status;
+  private ReservationStatus status;
   private final UUID recurringReservationId;
 
   /**
@@ -208,6 +209,32 @@ public class Reservation extends ScheduleEntry {
     if (price == null || price.compareTo(BigDecimal.ZERO) < 0) {
       throw new InvalidReservationException(ErrorCode.RESERVATION_PRICE_INVALID);
     }
+  }
+
+  // --- Comportamentos de Negócio ---
+
+  public void cancel() {
+    if (this.status == ReservationStatus.CANCELLED) {
+      throw new ReservationStatusConflictException(ErrorCode.RESERVATION_ALREADY_CANCELLED);
+    }
+
+    if (this.status == ReservationStatus.COMPLETED) {
+      throw new ReservationStatusConflictException(ErrorCode.RESERVATION_ALREADY_COMPLETED);
+    }
+
+    this.status = ReservationStatus.CANCELLED;
+  }
+
+  public void complete() {
+    if (this.status == ReservationStatus.CANCELLED) {
+      throw new ReservationStatusConflictException(ErrorCode.RESERVATION_ALREADY_CANCELLED);
+    }
+
+    if (this.status == ReservationStatus.COMPLETED) {
+      throw new ReservationStatusConflictException(ErrorCode.RESERVATION_ALREADY_COMPLETED);
+    }
+
+    this.status = ReservationStatus.COMPLETED;
   }
 
   // --- Getters ---

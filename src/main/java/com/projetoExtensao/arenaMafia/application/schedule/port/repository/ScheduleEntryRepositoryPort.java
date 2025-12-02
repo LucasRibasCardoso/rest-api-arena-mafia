@@ -19,4 +19,6 @@ public interface ScheduleEntryRepositoryPort {
   List<ScheduleEntry> findConfirmedSchedulesByCourtAndDate(UUID courtId, LocalDate date);
 
   Page<Reservation> findReservationsByUserId(UUID userId, Pageable pageable);
+
+  Reservation findReservationByIdAndUserIdOrElseThrow(UUID reservationId, UUID userId);
 }

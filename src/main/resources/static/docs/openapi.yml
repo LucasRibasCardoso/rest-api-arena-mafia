@@ -234,6 +234,8 @@ paths:
     $ref: "./paths/user/schedule/Reservations.yml"
   /api/users/me/reservations/{id}:
     $ref: "./paths/user/schedule/ReservationById.yml"
+  /api/users/me/reservations/{reservationId}/cancel:
+    $ref: "./paths/schedule/CancelReservation.yml"
 
   /api/admin/users:
     $ref: "./paths/admin/users/GetUsers.yml"

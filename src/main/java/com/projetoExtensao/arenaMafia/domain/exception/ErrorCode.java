@@ -3,6 +3,7 @@ package com.projetoExtensao.arenaMafia.domain.exception;
 import com.projetoExtensao.arenaMafia.domain.model.enums.AccountStatus;
 import com.projetoExtensao.arenaMafia.domain.model.enums.RoleEnum;
 
+import java.time.LocalTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -218,7 +219,11 @@ public enum ErrorCode {
   RESERVATION_USER_ID_REQUIRED("O usuário da reserva é obrigatório."),
   RESERVATION_ACCESS_DENIED(
       "Você não tem permissão para acessar esta reserva. Apenas o dono da reserva ou um administrador podem visualizá-la."),
-  RESERVATION_PAST_DATE_NOT_ALLOWED("Não é possível fazer reservas para datas passadas. A data deve ser hoje ou no futuro."),
+  RESERVATION_PAST_DATE_NOT_ALLOWED(
+      "Não é possível fazer reservas para datas passadas. A data deve ser hoje ou no futuro."),
+  RESERVATION_ALREADY_CANCELLED("Esta reserva já foi cancelada."),
+  RESERVATION_ALREADY_COMPLETED("Esta reserva já foi concluída."),
+  RESERVATION_NOT_POSSIBLE_TO_CANCEL("Não é possível cancelar a reserva com menos de 1:30 horas de antecedência."),
 
   // ==================== ERROS DE CONFLITO DE AGENDAMENTO ====================
   UNSUPPORTED_SCHEDULE_ENTRY_TYPE("O tipo de entrada de agendamento fornecido não é suportado."),
