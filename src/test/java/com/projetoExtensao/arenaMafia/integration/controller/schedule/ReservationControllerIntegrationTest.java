@@ -5,6 +5,8 @@ import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 import com.projetoExtensao.arenaMafia.domain.model.Court;
 import com.projetoExtensao.arenaMafia.domain.model.Modality;
 import com.projetoExtensao.arenaMafia.domain.model.User;
+import com.projetoExtensao.arenaMafia.domain.model.enums.ReservationStatus;
+import com.projetoExtensao.arenaMafia.domain.model.schedule.Reservation;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.ScheduleEntry;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
 import com.projetoExtensao.arenaMafia.infrastructure.web.exception.dto.ErrorResponseDto;
@@ -21,12 +23,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.HashMap;
 import java.util.List;
@@ -461,6 +463,252 @@ public class ReservationControllerIntegrationTest extends WebIntegrationTestConf
   }
 
   @Nested
+  @DisplayName("Testes para o endpoint PATCH /api/users/me/reservations/{reservationId}/cancel")
+  class CancelReservationTests {
+
+    @Nested
+    @DisplayName("Cenários de sucesso - 204 No Content")
+    class SuccessScenarios {
+
+      @Test
+      @DisplayName("Deve cancelar uma reserva existente com sucesso")
+      void shouldCancelExistingReservationSuccessfully() {
+        // Arrange
+        Modality modality = mockPersistModality("Badminton");
+        Court court = mockPersistCourt("Court D", modality);
+        LocalDate reservationDate = LocalDate.now().plusDays(3);
+        TimeInterval timeInterval = new TimeInterval(LocalTime.of(10, 0), LocalTime.of(11, 0));
+        ScheduleEntry savedEntry =
+            mockPersistReservationByUser(
+                modality.getId(),
+                court.getId(),
+                reservationDate,
+                timeInterval,
+                BigDecimal.valueOf(55.00),
+                defaultUser.getId());
+
+        // Act & Assert
+        given()
+            .spec(specification)
+            .header("Authorization", accessToken)
+            .when()
+            .patch("/{reservationId}/cancel", savedEntry.getId())
+            .then()
+            .statusCode(204);
+
+        // Verifications
+        Reservation cancelledEntry =
+            (Reservation) scheduleEntryRepository.findByIdOrElseThrow(savedEntry.getId());
+        assertThat(cancelledEntry.getStatus()).isEqualTo(ReservationStatus.CANCELLED);
+      }
+    }
+
+    @Nested
+    @DisplayName("Cenários de erro - 400 Bad Request")
+    class BadRequestScenarios {
+
+      @Test
+      @DisplayName("ID da reserva em formato inválido")
+      void shouldReturn400WhenReservationIdIsInInvalidFormat() {
+        // Arrange
+        String reservationId = "invalid-uuid-format";
+
+        // Act & Assert
+        var response =
+            given()
+                .spec(specification)
+                .header("Authorization", accessToken)
+                .when()
+                .patch("/{reservationId}/cancel", reservationId)
+                .then()
+                .statusCode(400)
+                .extract()
+                .as(ErrorResponseDto.class);
+
+        ErrorCode errorCode = ErrorCode.INVALID_REQUEST_PARAMETER;
+
+        assertThat(response.status()).isEqualTo(400);
+        assertThat(response.path())
+            .isEqualTo("/api/users/me/reservations/" + reservationId + "/cancel");
+        assertThat(response.errorCode()).isEqualTo(errorCode.name());
+        assertThat(response.developerMessage()).isEqualTo(errorCode.getMessage());
+      }
+
+      @Test
+      @DisplayName("Tenta cancelar uma reserva anterior ao tempo mínimo permitido")
+      void shouldReturn400WhenCancellingReservationBeforeMinimumAllowedTime() {
+        // Arrange
+        Modality modality = mockPersistModality("Swimming");
+        Court court = mockPersistCourt("Court S", modality);
+
+        // Cria uma reserva para daqui a 1 hora - menos que o mínimo de 90 minutos (1h30)
+        // Garante que os minutos sejam 0 ou 30 (requisito do TimeInterval)
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime reservationDateTime = now.plusHours(1).withMinute(0);
+
+        LocalDate reservationDate = reservationDateTime.toLocalDate();
+        TimeInterval timeInterval =
+            new TimeInterval(
+                reservationDateTime.toLocalTime(), reservationDateTime.plusHours(1).toLocalTime());
+
+        ScheduleEntry savedEntry =
+            mockPersistReservationByUser(
+                modality.getId(),
+                court.getId(),
+                reservationDate,
+                timeInterval,
+                BigDecimal.valueOf(65.00),
+                defaultUser.getId());
+
+        // Act & Assert
+        var response =
+            given()
+                .spec(specification)
+                .header("Authorization", accessToken)
+                .when()
+                .patch("/{reservationId}/cancel", savedEntry.getId())
+                .then()
+                .statusCode(400)
+                .extract()
+                .as(ErrorResponseDto.class);
+
+        ErrorCode errorCode = ErrorCode.RESERVATION_NOT_POSSIBLE_TO_CANCEL;
+
+        assertThat(response.status()).isEqualTo(400);
+        assertThat(response.path())
+            .isEqualTo("/api/users/me/reservations/" + savedEntry.getId() + "/cancel");
+        assertThat(response.errorCode()).isEqualTo(errorCode.name());
+        assertThat(response.developerMessage()).isEqualTo(errorCode.getMessage());
+      }
+    }
+
+    @Nested
+    @DisplayName("Cenários de erro - 404 Not Found")
+    class NotFoundScenarios {
+
+      @Test
+      @DisplayName("Reserva não encontrada")
+      void shouldReturn404WhenReservationNotFound() {
+        // Arrange
+        UUID reservationId = UUID.randomUUID();
+
+        // Act & Assert
+        var response =
+            given()
+                .spec(specification)
+                .header("Authorization", accessToken)
+                .when()
+                .patch("/{reservationId}/cancel", reservationId)
+                .then()
+                .statusCode(404)
+                .extract()
+                .as(ErrorResponseDto.class);
+
+        ErrorCode errorCode = ErrorCode.SCHEDULE_ENTRY_NOT_FOUND;
+
+        assertThat(response.status()).isEqualTo(404);
+        assertThat(response.path())
+            .isEqualTo("/api/users/me/reservations/" + reservationId + "/cancel");
+        assertThat(response.errorCode()).isEqualTo(errorCode.name());
+        assertThat(response.developerMessage()).isEqualTo(errorCode.getMessage());
+      }
+    }
+
+    @Nested
+    @DisplayName("Cenários de erro - 409 Conflict")
+    class ConflictScenarios {
+
+      @Test
+      @DisplayName("Tenta cancelar uma reserva que já foi cancelada")
+      void shouldReturn409WhenCancellingAlreadyCancelledReservation() {
+        // Arrange
+        Modality modality = mockPersistModality("Gymnastics");
+        Court court = mockPersistCourt("Court G", modality);
+        LocalDate reservationDate = LocalDate.now().plusDays(2);
+        TimeInterval timeInterval = new TimeInterval(LocalTime.of(16, 0), LocalTime.of(17, 0));
+        ScheduleEntry savedEntry =
+            mockPersistReservationByUser(
+                modality.getId(),
+                court.getId(),
+                reservationDate,
+                timeInterval,
+                BigDecimal.valueOf(70.00),
+                defaultUser.getId());
+
+        // Cancela a reserva
+        Reservation reservation =
+            (Reservation) scheduleEntryRepository.findByIdOrElseThrow(savedEntry.getId());
+        reservation.cancel();
+        scheduleEntryRepository.save(reservation);
+
+        // Act & Assert
+        var response =
+            given()
+                .spec(specification)
+                .header("Authorization", accessToken)
+                .when()
+                .patch("/{reservationId}/cancel", savedEntry.getId())
+                .then()
+                .statusCode(409)
+                .extract()
+                .as(ErrorResponseDto.class);
+
+        ErrorCode errorCode = ErrorCode.RESERVATION_ALREADY_CANCELLED;
+
+        assertThat(response.status()).isEqualTo(409);
+        assertThat(response.path())
+            .isEqualTo("/api/users/me/reservations/" + savedEntry.getId() + "/cancel");
+        assertThat(response.errorCode()).isEqualTo(errorCode.name());
+        assertThat(response.developerMessage()).isEqualTo(errorCode.getMessage());
+      }
+
+      @Test
+      @DisplayName("Tenta cancelar uma reserva que já está completada")
+      void shouldReturn400WhenCancellingAlreadyCompletedReservation() {
+        // Arrange
+        Modality modality = mockPersistModality("Running");
+        Court court = mockPersistCourt("Court R", modality);
+        LocalDate reservationDate = LocalDate.now().plusDays(1);
+        TimeInterval timeInterval = new TimeInterval(LocalTime.of(9, 0), LocalTime.of(10, 0));
+        ScheduleEntry savedEntry =
+            mockPersistReservationByUser(
+                modality.getId(),
+                court.getId(),
+                reservationDate,
+                timeInterval,
+                BigDecimal.valueOf(80.00),
+                defaultUser.getId());
+
+        // Altera o status da reserva para COMPLETED
+        Reservation reservation =
+            (Reservation) scheduleEntryRepository.findByIdOrElseThrow(savedEntry.getId());
+        reservation.complete();
+        scheduleEntryRepository.save(reservation);
+
+        // Act & Assert
+        var response =
+            given()
+                .spec(specification)
+                .header("Authorization", accessToken)
+                .when()
+                .patch("/{reservationId}/cancel", savedEntry.getId())
+                .then()
+                .statusCode(409)
+                .extract()
+                .as(ErrorResponseDto.class);
+
+        ErrorCode errorCode = ErrorCode.RESERVATION_ALREADY_COMPLETED;
+
+        assertThat(response.status()).isEqualTo(409);
+        assertThat(response.path())
+            .isEqualTo("/api/users/me/reservations/" + savedEntry.getId() + "/cancel");
+        assertThat(response.errorCode()).isEqualTo(errorCode.name());
+        assertThat(response.developerMessage()).isEqualTo(errorCode.getMessage());
+      }
+    }
+  }
+
+  @Nested
   @DisplayName("Testes para o endpoint GET /api/users/me/reservations/{reservationId}")
   class GetReservationByIdTests {
 
@@ -695,7 +943,8 @@ public class ReservationControllerIntegrationTest extends WebIntegrationTestConf
       Court court = mockPersistCourt("Court C", modality);
       LocalDate reservationDate = LocalDate.now().plusDays(7);
       TimeInterval timeInterval = new TimeInterval(LocalTime.of(13, 0), LocalTime.of(14, 0));
-      User anotherUser = mockPersistUser("Another", "Another User", "+5511888888888", "anotheruser");
+      User anotherUser =
+          mockPersistUser("Another", "Another User", "+5511888888888", "anotheruser");
 
       mockPersistReservationByUser(
           modality.getId(),

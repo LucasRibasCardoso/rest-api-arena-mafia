@@ -77,7 +77,7 @@ public class CreateReservationUseCaseImp implements CreateReservationUseCase {
     BigDecimal price = calculatePrice(request);
     Reservation reservation = saveReservation(request.modalityId(), request.courtId(), userId, price, dateTimeSlot);
 
-    sendConfirmationNotification(user, reservation);
+    publishConfirmationEvent(user, reservation);
     return reservation;
   }
 
@@ -109,12 +109,12 @@ public class CreateReservationUseCaseImp implements CreateReservationUseCase {
   }
 
   /**
-   * Envia uma notificação de confirmação de reserva para o usuário.
+   * Publica um evento de confirmação de reserva para processamento assíncrono de notificações.
    *
    * @param user Usuário que fez a reserva
    * @param reservation Reserva criada
    */
-  private void sendConfirmationNotification(User user, Reservation reservation) {
+  private void publishConfirmationEvent(User user, Reservation reservation) {
     eventPublisher.publishEvent(
         new OnScheduleCreatedEvent(user.getUsername(), user.getPhone(), reservation));
   }

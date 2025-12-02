@@ -1,5 +1,6 @@
 package com.projetoExtensao.arenaMafia.infrastructure.web.schedule;
 
+import com.projetoExtensao.arenaMafia.application.schedule.usecase.CancelReservationUseCase;
 import com.projetoExtensao.arenaMafia.application.schedule.usecase.CreateReservationUseCase;
 import com.projetoExtensao.arenaMafia.application.schedule.usecase.FindAllReservationUseCase;
 import com.projetoExtensao.arenaMafia.application.schedule.usecase.FindByIdReservationUseCase;
@@ -27,18 +28,21 @@ public class ReservationController {
 
   private final ScheduleEntryResponseMapper scheduleEntryResponseMapper;
   private final FindByIdReservationUseCase findByIdReservationUseCase;
-  private final CreateReservationUseCase createReservationUseCase;
   private final FindAllReservationUseCase findAllReservationUseCase;
+  private final CreateReservationUseCase createReservationUseCase;
+  private final CancelReservationUseCase cancelReservationUseCase;
 
   public ReservationController(
       ScheduleEntryResponseMapper scheduleEntryResponseMapper,
       FindByIdReservationUseCase findByIdReservationUseCase,
+      FindAllReservationUseCase findAllReservationUseCase,
       CreateReservationUseCase createReservationUseCase,
-      FindAllReservationUseCase findAllReservationUseCase) {
+      CancelReservationUseCase cancelReservationUseCase) {
     this.scheduleEntryResponseMapper = scheduleEntryResponseMapper;
     this.findByIdReservationUseCase = findByIdReservationUseCase;
-    this.createReservationUseCase = createReservationUseCase;
     this.findAllReservationUseCase = findAllReservationUseCase;
+    this.createReservationUseCase = createReservationUseCase;
+    this.cancelReservationUseCase = cancelReservationUseCase;
   }
 
   @PostMapping
@@ -67,7 +71,8 @@ public class ReservationController {
 
     UUID userId = extractUserId(authenticatedUser);
     Page<Reservation> reservationsPage = findAllReservationUseCase.execute(userId, pageable);
-    Page<ScheduleEntryResponseDto> responsePage = reservationsPage.map(scheduleEntryResponseMapper::toResponseDto);
+    Page<ScheduleEntryResponseDto> responsePage =
+        reservationsPage.map(scheduleEntryResponseMapper::toResponseDto);
 
     return ResponseEntity.ok(responsePage);
   }
@@ -81,6 +86,17 @@ public class ReservationController {
     ScheduleEntry scheduleEntry = findByIdReservationUseCase.execute(userId, id);
     ScheduleEntryResponseDto response = scheduleEntryResponseMapper.toResponseDto(scheduleEntry);
     return ResponseEntity.ok(response);
+  }
+
+  @PatchMapping("/{reservationId}/cancel")
+  @CustomRateLimiter(limiterName = "globalLimiter")
+  public ResponseEntity<Void> cancelReservation(
+      @AuthenticationPrincipal UserDetailsAdapter authenticatedUser,
+      @PathVariable UUID reservationId) {
+
+    UUID userId = extractUserId(authenticatedUser);
+    cancelReservationUseCase.execute(userId, reservationId);
+    return ResponseEntity.noContent().build();
   }
 
   private UUID extractUserId(UserDetailsAdapter authenticatedUser) {

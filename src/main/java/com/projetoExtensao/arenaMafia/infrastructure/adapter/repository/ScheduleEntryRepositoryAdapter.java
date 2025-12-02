@@ -63,4 +63,13 @@ public class ScheduleEntryRepositoryAdapter implements ScheduleEntryRepositoryPo
         .findReservationsByUserId(userId, pageable)
         .map(entity -> (Reservation) scheduleEntryMapper.toDomain(entity));
   }
+
+  @Override
+  @Transactional(readOnly = true)
+  public Reservation findReservationByIdAndUserIdOrElseThrow(UUID reservationId, UUID userId) {
+    return scheduleEntryJpaRepository
+        .findReservationByIdAndUser(reservationId, userId)
+        .map(entity -> (Reservation) scheduleEntryMapper.toDomain(entity))
+        .orElseThrow(() -> new ScheduleNotFoundException(ErrorCode.SCHEDULE_ENTRY_NOT_FOUND));
+  }
 }

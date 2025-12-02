@@ -1,5 +1,6 @@
 package com.projetoExtensao.arenaMafia.application.notification.listener;
 
+import com.projetoExtensao.arenaMafia.application.notification.event.OnReservationCancelledEvent;
 import com.projetoExtensao.arenaMafia.application.notification.event.OnScheduleCreatedEvent;
 import com.projetoExtensao.arenaMafia.application.notification.event.OnVerificationRequiredEvent;
 import com.projetoExtensao.arenaMafia.application.notification.gateway.OtpPort;
@@ -52,6 +53,12 @@ public class NotificationEventListener {
     }
   }
 
+  /**
+   * Listener que processa eventos de criação de agendamento. Envia notificação SMS ao usuário
+   * confirmando a reserva.
+   *
+   * @param eventData evento contendo dados do agendamento
+   */
   @Async
   @EventListener
   public void onScheduleCreated(OnScheduleCreatedEvent eventData) {
@@ -76,6 +83,32 @@ public class NotificationEventListener {
 
     } catch (Exception e) {
       logger.error("Falha ao processar evento de criação de reserva: {}", e.getMessage(), e);
+    }
+  }
+
+  /**
+   * Listener que processa eventos de cancelamento de reserva. Envia notificação SMS ao usuário
+   * confirmando o cancelamento.
+   *
+   * @param eventData evento contendo dados do cancelamento
+   */
+  @Async
+  @EventListener
+  public void onReservationCancelled(OnReservationCancelledEvent eventData) {
+    try {
+      Reservation reservation = eventData.reservation();
+
+      String message =
+          buildReservationCancellationMessage(eventData.username(), reservation);
+      smsPort.send(eventData.userPhone(), message);
+
+      logger.info(
+          "SMS de cancelamento de reserva enviado para o usuário: {} - Reserva ID: {}",
+          eventData.username(),
+          reservation.getId());
+
+    } catch (Exception e) {
+      logger.error("Falha ao processar evento de cancelamento de reserva: {}", e.getMessage(), e);
     }
   }
 
@@ -119,5 +152,27 @@ public class NotificationEventListener {
 
         Código da reserva: %s"""
         .formatted(username, date, startTime, endTime, price, reservation.getId());
+  }
+
+  /**
+   * Constrói a mensagem de cancelamento de reserva.
+   *
+   * @param username nome do usuário
+   * @param reservation reserva cancelada
+   * @return mensagem formatada para envio
+   */
+  private String buildReservationCancellationMessage(String username, Reservation reservation) {
+    String date = reservation.getDateTimeSlot().date().toString();
+    String startTime = reservation.getDateTimeSlot().timeInterval().startTime().toString();
+    String endTime = reservation.getDateTimeSlot().timeInterval().endTime().toString();
+
+    return """
+        Arena Máfia - Reserva cancelada
+
+        Olá %s,
+        Sua reserva para o dia %s, no horário de %s às %s, foi cancelada com sucesso.
+
+        Código da reserva: %s"""
+        .formatted(username, date, startTime, endTime, reservation.getId());
   }
 }
