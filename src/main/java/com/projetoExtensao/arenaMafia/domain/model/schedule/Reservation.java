@@ -237,6 +237,10 @@ public class Reservation extends ScheduleEntry {
     this.status = ReservationStatus.COMPLETED;
   }
 
+  public boolean isConfirmed() {
+    return this.status == ReservationStatus.CONFIRMED;
+  }
+
   // --- Getters ---
   public UUID getUserId() {
     return userId;

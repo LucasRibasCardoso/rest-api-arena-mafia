@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -21,4 +22,6 @@ public interface ScheduleEntryRepositoryPort {
   Page<Reservation> findReservationsByUserId(UUID userId, Pageable pageable);
 
   Reservation findReservationByIdAndUserIdOrElseThrow(UUID reservationId, UUID userId);
+
+  List<Reservation> findAllConfirmedReservationsWithEndTimeAfter(LocalDateTime dateTime);
 }

@@ -6,6 +6,7 @@ import com.projetoExtensao.arenaMafia.application.notification.event.OnScheduleC
 import com.projetoExtensao.arenaMafia.application.priceRule.ports.PriceRuleRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.priceRule.service.PriceCalculatorService;
 import com.projetoExtensao.arenaMafia.application.schedule.port.repository.ScheduleEntryRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.schedule.scheduler.DynamicReservationCompletionScheduler;
 import com.projetoExtensao.arenaMafia.application.schedule.service.ScheduleAvailabilityService;
 import com.projetoExtensao.arenaMafia.application.schedule.usecase.CreateReservationUseCase;
 import com.projetoExtensao.arenaMafia.application.user.port.repository.UserRepositoryPort;
@@ -27,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -34,31 +36,34 @@ import java.util.UUID;
 @Transactional
 public class CreateReservationUseCaseImp implements CreateReservationUseCase {
 
+  private final PriceCalculatorService priceCalculatorService;
+  private final ScheduleAvailabilityService scheduleAvailabilityService;
+  private final DynamicReservationCompletionScheduler completionScheduler;
   private final UserRepositoryPort userRepositoryPort;
   private final CourtRepositoryPort courtRepositoryPort;
-  private final ModalityRepositoryPort modalityRepositoryPort;
-  private final PriceCalculatorService priceCalculatorService;
-  private final PriceRuleRepositoryPort priceRuleRepositoryPort;
-  private final ScheduleAvailabilityService scheduleAvailabilityService;
-  private final ScheduleEntryRepositoryPort scheduleEntryRepositoryPort;
   private final ApplicationEventPublisher eventPublisher;
+  private final ModalityRepositoryPort modalityRepositoryPort;
+  private final PriceRuleRepositoryPort priceRuleRepositoryPort;
+  private final ScheduleEntryRepositoryPort scheduleEntryRepositoryPort;
 
   public CreateReservationUseCaseImp(
+      PriceCalculatorService priceCalculatorService,
+      ScheduleAvailabilityService scheduleAvailabilityService,
+      DynamicReservationCompletionScheduler completionScheduler,
       UserRepositoryPort userRepositoryPort,
       CourtRepositoryPort courtRepositoryPort,
       ModalityRepositoryPort modalityRepositoryPort,
-      PriceCalculatorService priceCalculatorService,
       PriceRuleRepositoryPort priceRuleRepositoryPort,
-      ScheduleAvailabilityService scheduleAvailabilityService,
       ScheduleEntryRepositoryPort scheduleEntryRepositoryPort,
       ApplicationEventPublisher eventPublisher) {
+    this.priceRuleRepositoryPort = priceRuleRepositoryPort;
+    this.scheduleEntryRepositoryPort = scheduleEntryRepositoryPort;
+    this.completionScheduler = completionScheduler;
     this.userRepositoryPort = userRepositoryPort;
     this.courtRepositoryPort = courtRepositoryPort;
+    this.scheduleAvailabilityService = scheduleAvailabilityService;
     this.modalityRepositoryPort = modalityRepositoryPort;
     this.priceCalculatorService = priceCalculatorService;
-    this.priceRuleRepositoryPort = priceRuleRepositoryPort;
-    this.scheduleAvailabilityService = scheduleAvailabilityService;
-    this.scheduleEntryRepositoryPort = scheduleEntryRepositoryPort;
     this.eventPublisher = eventPublisher;
   }
 
@@ -75,9 +80,12 @@ public class CreateReservationUseCaseImp implements CreateReservationUseCase {
     validateScheduleAvailability(request.courtId(), dateTimeSlot);
 
     BigDecimal price = calculatePrice(request);
-    Reservation reservation = saveReservation(request.modalityId(), request.courtId(), userId, price, dateTimeSlot);
+    Reservation reservation =
+        saveReservation(request.modalityId(), request.courtId(), userId, price, dateTimeSlot);
 
     publishConfirmationEvent(user, reservation);
+
+    scheduleAutomaticCompletion(reservation);
     return reservation;
   }
 
@@ -117,6 +125,20 @@ public class CreateReservationUseCaseImp implements CreateReservationUseCase {
   private void publishConfirmationEvent(User user, Reservation reservation) {
     eventPublisher.publishEvent(
         new OnScheduleCreatedEvent(user.getUsername(), user.getPhone(), reservation));
+  }
+
+  /**
+   * Agenda a conclusão automática da reserva no momento do seu término.
+   *
+   * @param reservation Reserva a ser agendada para conclusão automática
+   */
+  private void scheduleAutomaticCompletion(Reservation reservation) {
+    LocalDateTime endDateTime =
+        LocalDateTime.of(
+            reservation.getDateTimeSlot().date(),
+            reservation.getDateTimeSlot().timeInterval().endTime());
+
+    completionScheduler.scheduleCompletion(reservation.getId(), endDateTime);
   }
 
   /**
