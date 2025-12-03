@@ -3,6 +3,7 @@ package com.projetoExtensao.arenaMafia.infrastructure.persistence.repository;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.ReservationEntity;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.ScheduleEntryEntity;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -65,4 +66,29 @@ public interface ScheduleEntryJpaRepository extends JpaRepository<ScheduleEntryE
       """)
   Optional<ReservationEntity> findReservationByIdAndUser(
       @Param("reservationId") UUID reservationId, @Param("userId") UUID userId);
+
+  /**
+   * Busca todas as reservas confirmadas cujo horário de término é posterior ao momento especificado.
+   * Utilizado para reagendar conclusão automática de reservas quando a aplicação é reiniciada.
+   *
+   * <p>Critérios de busca:
+   * <ul>
+   *   <li>Status = CONFIRMED</li>
+   *   <li>Data > data de referência OU (Data = data de referência E Horário de término > hora de referência)</li>
+   * </ul>
+   *
+   * @param date data de referência
+   * @param time hora de referência
+   * @return lista de reservas confirmadas ordenadas por data e horário de término
+   */
+  @Query(
+      """
+      SELECT r FROM ReservationEntity r
+      WHERE r.status = 'CONFIRMED'
+      AND (r.dateTimeSlot.date > :date
+           OR (r.dateTimeSlot.date = :date AND r.dateTimeSlot.timeInterval.endTime > :time))
+      ORDER BY r.dateTimeSlot.date ASC, r.dateTimeSlot.timeInterval.endTime ASC
+      """)
+  List<ReservationEntity> findConfirmedReservationsEndedAfter(
+      @Param("date") LocalDate date, @Param("time") LocalTime time);
 }

@@ -14,6 +14,8 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -71,5 +73,16 @@ public class ScheduleEntryRepositoryAdapter implements ScheduleEntryRepositoryPo
         .findReservationByIdAndUser(reservationId, userId)
         .map(entity -> (Reservation) scheduleEntryMapper.toDomain(entity))
         .orElseThrow(() -> new ScheduleNotFoundException(ErrorCode.SCHEDULE_ENTRY_NOT_FOUND));
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public List<Reservation> findAllConfirmedReservationsWithEndTimeAfter(LocalDateTime dateTime) {
+    LocalDate date = dateTime.toLocalDate();
+    LocalTime time = dateTime.toLocalTime();
+
+    return scheduleEntryJpaRepository.findConfirmedReservationsEndedAfter(date, time).stream()
+        .map(entity -> (Reservation) scheduleEntryMapper.toDomain(entity))
+        .toList();
   }
 }
