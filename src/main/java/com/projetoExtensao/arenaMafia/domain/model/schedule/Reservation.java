@@ -237,8 +237,25 @@ public class Reservation extends ScheduleEntry {
     this.status = ReservationStatus.COMPLETED;
   }
 
-  public boolean isConfirmed() {
-    return this.status == ReservationStatus.CONFIRMED;
+  /**
+   * Verifica se a reserva está ativa. Uma reserva é considerada ativa se o status for CONFIRMED.
+   *
+   * @return true se a reserva estiver ativa, false caso contrário
+   */
+  @Override
+  public boolean isActive() {
+    return this.status.equals(ReservationStatus.CONFIRMED);
+  }
+
+  /**
+   * Verifica se esta reserva pertence à modalidade especificada.
+   *
+   * @param modalityId ID da modalidade para verificar
+   * @return true se a reserva pertence à modalidade, false caso contrário
+   */
+  @Override
+  public boolean belongsToModality(UUID modalityId) {
+    return this.modalityId.equals(modalityId);
   }
 
   // --- Getters ---

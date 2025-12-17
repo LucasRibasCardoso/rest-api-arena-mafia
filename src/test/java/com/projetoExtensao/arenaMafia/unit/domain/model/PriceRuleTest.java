@@ -46,8 +46,8 @@ public class PriceRuleTest {
       // Act
       PriceRule priceRule =
           PriceRule.create(
-              defaultName, defaultDaysOfWeek, defaultTimeInterval, defaultPrice, defaultPriority);
 
+                  defaultName, defaultDaysOfWeek, defaultTimeInterval, defaultPrice, defaultPriority);
       // Assert
       assertThat(priceRule).isNotNull();
       assertThat(priceRule.getId()).isNotNull();

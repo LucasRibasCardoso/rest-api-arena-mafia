@@ -227,6 +227,9 @@ public enum ErrorCode {
 
   // ==================== ERROS DE CONFLITO DE AGENDAMENTO ====================
   UNSUPPORTED_SCHEDULE_ENTRY_TYPE("O tipo de entrada de agendamento fornecido não é suportado."),
+
+  // ==================== ERROS DE AGENDA (AGENDA ITEM) ====================
+  AVAILABLE_MODALITY_IDS_REQUIRED("Erro interno: Não foi possível gerar a agenda. Nenhuma modalidade disponível encontrada para o horário agrupado."),
   ;
 
   // ==================== CONFIGURAÇÃO ====================

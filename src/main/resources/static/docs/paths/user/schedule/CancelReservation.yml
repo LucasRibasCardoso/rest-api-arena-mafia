@@ -19,7 +19,7 @@ patch:
     - O horário fica automaticamente disponível para novas reservas
 
   parameters:
-    - $ref: "../../components/parameters/ReservationId.yml"
+    - $ref: "../../../components/parameters/ReservationId.yml"
 
   responses:
     204:
@@ -29,7 +29,7 @@ patch:
       content:
         application/json:
           schema:
-            $ref: "../../components/schemas/error/ErrorResponseDto.yml"
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
           examples:
             InvalidReservationId:
               summary: ID de reserva inválido
@@ -49,13 +49,13 @@ patch:
                 path: "/api/users/me/reservations/{reservationId}/cancel"
 
     401:
-      $ref: "../../components/responses/UnauthorizedError.yml"
+      $ref: "../../../components/responses/UnauthorizedError.yml"
     404:
       description: Recurso não encontrado.
       content:
         application/json:
           schema:
-            $ref: "../../components/schemas/error/ErrorResponseDto.yml"
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
           examples:
             ReservationNotFound:
               summary: Reserva não encontrada
@@ -79,7 +79,7 @@ patch:
       content:
         application/json:
           schema:
-            $ref: "../../components/schemas/error/ErrorResponseDto.yml"
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
           examples:
             ReservationAlreadyCancelled:
               summary: Reserva já está cancelada
@@ -98,7 +98,7 @@ patch:
                 developerMessage: "Esta reserva já foi concluída."
                 path: "/api/users/me/reservations/{reservationId}/cancel"
     429:
-      $ref: "../../components/responses/TooManyRequestsError.yml"
+      $ref: "../../../components/responses/TooManyRequestsError.yml"
     500:
-      $ref: "../../components/responses/InternalServerError.yml"
+      $ref: "../../../components/responses/InternalServerError.yml"
 

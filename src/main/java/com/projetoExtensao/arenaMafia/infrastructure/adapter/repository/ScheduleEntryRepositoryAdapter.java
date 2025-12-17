@@ -60,6 +60,14 @@ public class ScheduleEntryRepositoryAdapter implements ScheduleEntryRepositoryPo
 
   @Override
   @Transactional(readOnly = true)
+  public List<ScheduleEntry> findAllSchedulesByDate(LocalDate date) {
+    return scheduleEntryJpaRepository.findAllSchedulesByDate(date).stream()
+        .map(scheduleEntryMapper::toDomain)
+        .toList();
+  }
+
+  @Override
+  @Transactional(readOnly = true)
   public Page<Reservation> findReservationsByUserId(UUID userId, Pageable pageable) {
     return scheduleEntryJpaRepository
         .findReservationsByUserId(userId, pageable)

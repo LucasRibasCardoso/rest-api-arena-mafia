@@ -164,6 +164,9 @@ components:
     PageOfReservationResponseDto:
       $ref: "./components/schemas/schedule/PageOfReservationResponseDto.yml"
 
+    AgendaSlotResponseDto:
+      $ref: "./components/schemas/agenda/AgendaSlotResponseDto.yml"
+
   responses:
     InternalServerError:
       $ref: "./components/responses/InternalServerError.yml"
@@ -235,7 +238,7 @@ paths:
   /api/users/me/reservations/{id}:
     $ref: "./paths/user/schedule/ReservationById.yml"
   /api/users/me/reservations/{reservationId}/cancel:
-    $ref: "./paths/schedule/CancelReservation.yml"
+    $ref: "./paths/user/schedule/CancelReservation.yml"
 
   /api/admin/users:
     $ref: "./paths/admin/users/GetUsers.yml"
@@ -291,3 +294,5 @@ paths:
     $ref: "./paths/operatingHours/GetAllOperatingHours.yml"
   /api/public/homepage:
     $ref: "./paths/homepage/GetHomePageData.yml"
+  /api/public/agenda:
+    $ref: "./paths/agenda/Agenda.yml"

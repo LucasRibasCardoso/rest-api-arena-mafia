@@ -1,0 +1,175 @@
+get:
+  operationId: getPublicAgenda
+  tags:
+    - "Endpoints Públicos"
+  summary: Buscar agenda pública do dia
+  description: |
+    Retorna a agenda completa do estabelecimento para uma data específica.
+    
+    **Este endpoint é público e não requer autenticação.**
+    
+    A agenda inclui:
+    - **Slots disponíveis**: Horários livres agrupados com as modalidades que podem ser praticadas
+    - **Reservas confirmadas**: Horários já reservados (sem expor dados pessoais dos usuários)
+    - **Treinos e bloqueios**: Horários bloqueados pela administração (funcionalidade futura)
+    
+    **Funcionamento:**
+    1. Sistema busca todos os agendamentos confirmados da data
+    2. Gera slots disponíveis para todas as quadras ativas
+    3. Agrupa slots disponíveis por horário, consolidando modalidades
+    4. Retorna lista ordenada cronologicamente
+    
+    **Regras de agrupamento:**
+    - Se um horário tem múltiplas quadras disponíveis, retorna 1 item AVAILABLE com todas as modalidades
+    - Se um horário tem uma ou mais quadras ocupadas, retorna 1 item RESERVED/TRAINING/BLOCKED por quadra ocupada
+    - Um mesmo horário pode ter itens AVAILABLE e RESERVED simultaneamente (quando há quadras livres e ocupadas)
+    
+    **Exemplo de resposta para 10:00-11:00 com 2 quadras:**
+    - Quadra A ocupada (Futebol) → 1 item RESERVED
+    - Quadra B disponível (Vôlei, Basquete) → 1 item AVAILABLE com modalityIds=[vôlei, basquete]
+    
+    **Casos de uso:**
+    - Usuários consultam horários disponíveis antes de fazer reserva
+    - Visualização da ocupação do estabelecimento
+    - Frontend usa `availableModalityIds` para pré-filtrar modalidades disponíveis
+
+  parameters:
+    - $ref: "../../components/parameters/Date.yml"
+
+  responses:
+    200:
+      description: |
+        Agenda do dia retornada com sucesso.
+        
+        Retorna lista de slots ordenados cronologicamente, incluindo horários disponíveis e ocupados.
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: "../../components/schemas/agenda/AgendaSlotResponseDto.yml"
+          examples:
+            CompletedAgenda:
+              summary: Agenda com horários disponíveis e reservados
+              description: |
+                Exemplo mostrando diferentes tipos de slots na mesma agenda.
+                
+                ⚠️ **Nota:** Campos nulos não aparecem no JSON
+                - Slots AVAILABLE não incluem o campo `courtId`
+                - Slots RESERVED não incluem o campo `availableModalityIds`
+              value:
+                - timeInterval:
+                    startTime: "08:00"
+                    endTime: "09:00"
+                  slotType: "AVAILABLE"
+                  availableModalityIds:
+                    - "550e8400-e29b-41d4-a716-446655440002"
+                    - "550e8400-e29b-41d4-a716-446655440005"
+                - timeInterval:
+                    startTime: "09:00"
+                    endTime: "10:00"
+                  slotType: "RESERVED"
+                  courtId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                - timeInterval:
+                    startTime: "10:00"
+                    endTime: "11:00"
+                  slotType: "AVAILABLE"
+                  availableModalityIds:
+                    - "550e8400-e29b-41d4-a716-446655440002"
+
+            AvailableOnly:
+              summary: Agenda sem reservas (todos os horários disponíveis)
+              description: |
+                Exemplo de um dia sem nenhuma reserva. Todos os slots são AVAILABLE.
+              value:
+                - timeInterval:
+                    startTime: "08:00"
+                    endTime: "09:00"
+                  slotType: "AVAILABLE"
+                  availableModalityIds:
+                    - "550e8400-e29b-41d4-a716-446655440002"
+                    - "550e8400-e29b-41d4-a716-446655440005"
+                - timeInterval:
+                    startTime: "09:00"
+                    endTime: "10:00"
+                  slotType: "AVAILABLE"
+                  availableModalityIds:
+                    - "550e8400-e29b-41d4-a716-446655440002"
+                    - "550e8400-e29b-41d4-a716-446655440005"
+
+    400:
+      description: |
+        Requisição inválida.
+        
+        Lançado quando:
+        - Parâmetro `date` não é fornecido
+        - Parâmetro `date` está em formato inválido (esperado: yyyy-MM-dd)
+      content:
+        application/json:
+          schema:
+            $ref: "../../components/schemas/error/ErrorResponseDto.yml"
+          examples:
+            DateMissing:
+              summary: Parâmetro date não fornecido
+              value:
+                timestamp: "2025-12-16T20:00:00Z"
+                status: 400
+                errorCode: "INVALID_REQUEST_PARAMETER"
+                developerMessage: "Um parâmetro da requisição é inválido ou está malformado."
+                path: "/api/public/agenda"
+
+            InvalidDateFormat:
+              summary: Formato de data inválido
+              value:
+                timestamp: "2025-12-16T20:00:00Z"
+                status: 400
+                errorCode: "INVALID_REQUEST_PARAMETER"
+                developerMessage: "Um parâmetro da requisição é inválido ou está malformado."
+                path: "/api/public/agenda"
+
+    404:
+      description: |
+        Recurso não encontrado.
+        
+        Lançado quando:
+        - Não há quadras ativas cadastradas no sistema
+        - Não há horários de funcionamento ativos
+        - Não há regras de preço ativas
+      content:
+        application/json:
+          schema:
+            $ref: "../../components/schemas/error/ErrorResponseDto.yml"
+          examples:
+            NoActiveCourts:
+              summary: Nenhuma quadra ativa encontrada
+              value:
+                timestamp: "2025-12-16T20:00:00Z"
+                status: 404
+                errorCode: "COURT_NOT_FOUND"
+                developerMessage: "Nenhuma quadra foi encontrada."
+                path: "/api/public/agenda"
+
+            NoOperatingHours:
+              summary: Nenhum horário de funcionamento ativo
+              value:
+                timestamp: "2025-12-16T20:00:00Z"
+                status: 404
+                errorCode: "OPERATING_HOURS_NOT_FOUND"
+                developerMessage: "Nenhum horário de funcionamento foi encontrado."
+                path: "/api/public/agenda"
+
+            NoPriceRules:
+              summary: Nenhuma regra de preço ativa
+              value:
+                timestamp: "2025-12-16T20:00:00Z"
+                status: 404
+                errorCode: "PRICE_RULE_NOT_FOUND"
+                developerMessage: "Nenhuma regra de preço foi encontrada."
+                path: "/api/public/agenda"
+
+    429:
+      $ref: "../../components/responses/TooManyRequestsError.yml"
+
+    500:
+      $ref: "../../components/responses/InternalServerError.yml"
+

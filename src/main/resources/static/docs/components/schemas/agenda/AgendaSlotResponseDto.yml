@@ -1,0 +1,82 @@
+type: object
+description: |
+  Representa um item da agenda pública do estabelecimento.
+  
+  Cada item pode ser:
+  - **AVAILABLE**: Slot de horário disponível para reserva, contendo as modalidades que podem ser praticadas
+  - **RESERVED**: Horário já reservado por um usuário
+  - **TRAINING**: Horário bloqueado para treino (funcionalidade futura)
+  - **BLOCKED**: Horário bloqueado pela administração (funcionalidade futura)
+  
+  **⚠️ Importante sobre campos condicionais:**
+  
+  Devido à anotação `@JsonInclude(JsonInclude.Include.NON_NULL)`, campos nulos **não aparecem** no JSON de resposta:
+  
+  - **Slots AVAILABLE**: Contêm apenas `timeInterval`, `slotType` e `availableModalityIds` (sem `courtId`)
+  - **Slots RESERVED/TRAINING/BLOCKED**: Contêm apenas `timeInterval`, `slotType` e `courtId` (sem `availableModalityIds`)
+  
+  **Exemplos:**
+  ```json
+  // Slot AVAILABLE (sem courtId)
+  {
+    "timeInterval": { "startTime": "10:00", "endTime": "11:00" },
+    "slotType": "AVAILABLE",
+    "availableModalityIds": ["uuid1", "uuid2"]
+  }
+  
+  // Slot RESERVED (sem availableModalityIds)
+  {
+    "timeInterval": { "startTime": "11:00", "endTime": "12:00" },
+    "slotType": "RESERVED",
+    "courtId": "uuid-quadra"
+  }
+  ```
+required:
+  - timeInterval
+  - slotType
+properties:
+  timeInterval:
+    $ref: "../timeInterval/TimeIntervalDto.yml"
+  slotType:
+    type: string
+    description: |
+      Tipo do slot na agenda.
+      
+      - `AVAILABLE`: Horário disponível para reserva
+      - `RESERVED`: Horário já reservado
+      - `TRAINING`: Horário bloqueado para treino (funcionalidade futura)
+      - `BLOCKED`: Horário bloqueado pela administração (funcionalidade futura)
+    enum:
+      - AVAILABLE
+      - RESERVED
+      - TRAINING
+      - BLOCKED
+    example: "AVAILABLE"
+  courtId:
+    type: string
+    format: uuid
+    description: |
+      ID da quadra ocupada.
+      
+      **Este campo aparece APENAS quando `slotType` é RESERVED, TRAINING ou BLOCKED.**
+      
+      Para slots AVAILABLE, este campo **não aparece no JSON** (não é incluído na resposta).
+    example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+  availableModalityIds:
+    type: array
+    description: |
+      Lista de IDs das modalidades que podem ser praticadas neste horário.
+      
+      **Este campo aparece APENAS quando `slotType` é AVAILABLE.**
+      
+      Representa todas as modalidades suportadas pelas quadras disponíveis neste horário.
+      Se múltiplas quadras estão livres no mesmo horário, este campo consolida as modalidades de todas elas.
+      
+      Para slots RESERVED/TRAINING/BLOCKED, este campo **não aparece no JSON** (não é incluído na resposta).
+    items:
+      type: string
+      format: uuid
+    example:
+      - "550e8400-e29b-41d4-a716-446655440002"
+      - "550e8400-e29b-41d4-a716-446655440005"
+

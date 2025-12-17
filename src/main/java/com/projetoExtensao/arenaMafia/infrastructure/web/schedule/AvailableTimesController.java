@@ -4,7 +4,6 @@ import com.projetoExtensao.arenaMafia.application.schedule.usecase.FindAllAvaila
 import com.projetoExtensao.arenaMafia.infrastructure.security.rateLimit.CustomRateLimiter;
 import com.projetoExtensao.arenaMafia.infrastructure.web.schedule.dto.response.AvailableSlotResponseDto;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.mapper.AvailableSlotMapper;
-import jakarta.validation.constraints.NotNull;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -32,14 +31,14 @@ public class AvailableTimesController {
   @GetMapping
   @CustomRateLimiter(limiterName = "globalLimiter")
   public ResponseEntity<List<AvailableSlotResponseDto>> getAvailableTimes(
-      @RequestParam("modalityId") @NotNull UUID modalityId,
-      @RequestParam("date") @NotNull LocalDate date) {
+      @RequestParam("date") LocalDate date,
+      @RequestParam("modalityId") UUID modalityId) {
 
     List<AvailableSlotResponseDto> availableSlots =
         findAllAvailableTimesUseCase.execute(modalityId, date).stream()
             .map(availableSlotMapper::toDto)
             .toList();
 
-    return ResponseEntity.ok().body(availableSlots);
+    return ResponseEntity.ok(availableSlots);
   }
 }

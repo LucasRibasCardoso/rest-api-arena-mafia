@@ -53,7 +53,7 @@ public class ReservationController {
 
     UUID authenticateUserId = authenticatedUser.getUser().getId();
     ScheduleEntry scheduleEntry = createReservationUseCase.execute(authenticateUserId, request);
-    ScheduleEntryResponseDto response = scheduleEntryResponseMapper.toResponseDto(scheduleEntry);
+    ScheduleEntryResponseDto response = scheduleEntryResponseMapper.toDto(scheduleEntry);
 
     URI location =
         ServletUriComponentsBuilder.fromCurrentRequest()
@@ -72,7 +72,7 @@ public class ReservationController {
     UUID userId = extractUserId(authenticatedUser);
     Page<Reservation> reservationsPage = findAllReservationUseCase.execute(userId, pageable);
     Page<ScheduleEntryResponseDto> responsePage =
-        reservationsPage.map(scheduleEntryResponseMapper::toResponseDto);
+        reservationsPage.map(scheduleEntryResponseMapper::toDto);
 
     return ResponseEntity.ok(responsePage);
   }
@@ -84,7 +84,7 @@ public class ReservationController {
 
     UUID userId = extractUserId(authenticatedUser);
     ScheduleEntry scheduleEntry = findByIdReservationUseCase.execute(userId, id);
-    ScheduleEntryResponseDto response = scheduleEntryResponseMapper.toResponseDto(scheduleEntry);
+    ScheduleEntryResponseDto response = scheduleEntryResponseMapper.toDto(scheduleEntry);
     return ResponseEntity.ok(response);
   }
 
