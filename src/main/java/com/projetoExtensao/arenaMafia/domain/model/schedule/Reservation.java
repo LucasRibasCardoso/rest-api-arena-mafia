@@ -247,17 +247,6 @@ public class Reservation extends ScheduleEntry {
     return this.status.equals(ReservationStatus.CONFIRMED);
   }
 
-  /**
-   * Verifica se esta reserva pertence à modalidade especificada.
-   *
-   * @param modalityId ID da modalidade para verificar
-   * @return true se a reserva pertence à modalidade, false caso contrário
-   */
-  @Override
-  public boolean belongsToModality(UUID modalityId) {
-    return this.modalityId.equals(modalityId);
-  }
-
   // --- Getters ---
   public UUID getUserId() {
     return userId;
