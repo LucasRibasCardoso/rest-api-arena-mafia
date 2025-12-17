@@ -56,7 +56,7 @@ public class AgendaControllerIntegrationTest extends WebIntegrationTestConfig {
       void shouldReturnAgendaWithAvailableAndReservedSlots() {
         Modality modality = mockPersistModality("Tennis");
         Court court = mockPersistCourt("Court A", modality);
-        mockPersistOperatingHours();
+        mockPersistOperatingHoursAllDays();
         mockPersistDefaultPriceRule();
 
         User user = mockPersistUser();
@@ -115,7 +115,7 @@ public class AgendaControllerIntegrationTest extends WebIntegrationTestConfig {
       void shouldReturnAgendaSortedByStartTime() {
         Modality modality = mockPersistModality("Football");
         mockPersistCourt("Court B", modality);
-        mockPersistOperatingHours();
+        mockPersistOperatingHoursAllDays();
         mockPersistDefaultPriceRule();
 
         LocalDate date = LocalDate.now().plusDays(2);
@@ -147,10 +147,10 @@ public class AgendaControllerIntegrationTest extends WebIntegrationTestConfig {
       void shouldReturnOnlyAvailableSlotsWhenNoReservations() {
         Modality modality = mockPersistModality("Basketball");
         mockPersistCourt("Court C", modality);
-        mockPersistOperatingHours();
+        mockPersistOperatingHoursAllDays();
         mockPersistDefaultPriceRule();
 
-        LocalDate date = LocalDate.now().plusDays(3);
+        LocalDate date = LocalDate.now().plusDays(4);
 
         List<AgendaSlotResponseDto> response =
             given()
@@ -159,6 +159,7 @@ public class AgendaControllerIntegrationTest extends WebIntegrationTestConfig {
                 .when()
                 .get()
                 .then()
+                    .log().all()
                 .statusCode(200)
                 .extract()
                 .body()
@@ -182,7 +183,7 @@ public class AgendaControllerIntegrationTest extends WebIntegrationTestConfig {
       void shouldReturnAgendaForCurrentDate() {
         Modality modality = mockPersistModality("Volleyball");
         mockPersistCourt("Court D", modality);
-        mockPersistOperatingHours();
+        mockPersistOperatingHoursAllDays();
         mockPersistDefaultPriceRule();
 
         LocalDate today = LocalDate.now();
@@ -306,7 +307,7 @@ public class AgendaControllerIntegrationTest extends WebIntegrationTestConfig {
       void shouldNotHaveCourtIdInGroupedAvailableSlots() {
         Modality modality = mockPersistModality("Swimming");
         mockPersistCourt("Court N", modality);
-        mockPersistOperatingHours();
+        mockPersistOperatingHoursAllDays();
         mockPersistDefaultPriceRule();
 
         LocalDate date = LocalDate.now().plusDays(6);
@@ -344,7 +345,7 @@ public class AgendaControllerIntegrationTest extends WebIntegrationTestConfig {
       void shouldHaveCourtIdButNotAvailableModalityIdsInReservedSlots() {
         Modality modality = mockPersistModality("Boxing");
         Court court = mockPersistCourt("Court O", modality);
-        mockPersistOperatingHours();
+        mockPersistOperatingHoursAllDays();
         mockPersistDefaultPriceRule();
 
         User user = mockPersistUser();
@@ -394,7 +395,7 @@ public class AgendaControllerIntegrationTest extends WebIntegrationTestConfig {
         mockPersistCourt("Court P1", modality1);
         mockPersistCourt("Court P2", modality2);
 
-        mockPersistOperatingHours();
+        mockPersistOperatingHoursAllDays();
         mockPersistDefaultPriceRule();
 
         LocalDate date = LocalDate.now().plusDays(8);
@@ -464,7 +465,7 @@ public class AgendaControllerIntegrationTest extends WebIntegrationTestConfig {
       @Test
       @DisplayName("Retorna erro quando não há quadras ativas")
       void shouldReturn404WhenNoActiveCourts() {
-        mockPersistOperatingHours();
+        mockPersistOperatingHoursAllDays();
         mockPersistDefaultPriceRule();
 
         LocalDate date = LocalDate.now().plusDays(1);
@@ -521,7 +522,7 @@ public class AgendaControllerIntegrationTest extends WebIntegrationTestConfig {
       void shouldReturn404WhenNoPriceRules() {
         Modality modality = mockPersistModality("Wrestling");
         mockPersistCourt("Court I", modality);
-        mockPersistOperatingHours();
+        mockPersistOperatingHoursAllDays();
 
         LocalDate futureDate = LocalDate.now().plusDays(1);
 
