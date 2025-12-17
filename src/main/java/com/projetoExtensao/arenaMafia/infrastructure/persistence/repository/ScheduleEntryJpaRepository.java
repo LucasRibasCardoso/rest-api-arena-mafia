@@ -34,6 +34,23 @@ public interface ScheduleEntryJpaRepository extends JpaRepository<ScheduleEntryE
   List<ScheduleEntryEntity> findConfirmedReservationsByCourtAndDate(
       @Param("courtId") UUID courtId, @Param("date") LocalDate date);
 
+
+  /**
+   * Busca todos os agendamentos de uma data específica.
+   * Retorna todos os tipos de ScheduleEntry (Reservation, Training, BlockedTime).
+   *
+   *
+   * @param date data do agendamento
+   * @return lista de todos os agendamentos da data, ordenados por horário de início
+   */
+  @Query(
+      """
+      SELECT s FROM ScheduleEntryEntity s
+      WHERE s.dateTimeSlot.date = :date
+      ORDER BY s.dateTimeSlot.timeInterval.startTime ASC
+      """)
+  List<ScheduleEntryEntity> findAllSchedulesByDate(@Param("date") LocalDate date);
+
   /**
    * Busca todas as reservas de um usuário específico com paginação. Ordena por data e horário de
    * início em ordem decrescente (mais recentes primeiro).

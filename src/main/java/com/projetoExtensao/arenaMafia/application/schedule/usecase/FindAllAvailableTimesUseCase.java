@@ -1,6 +1,6 @@
 package com.projetoExtensao.arenaMafia.application.schedule.usecase;
 
-import com.projetoExtensao.arenaMafia.domain.model.schedule.AvailableSlot;
+import com.projetoExtensao.arenaMafia.domain.valueobjects.AvailableSlot;
 
 import java.time.LocalDate;
 import java.util.List;

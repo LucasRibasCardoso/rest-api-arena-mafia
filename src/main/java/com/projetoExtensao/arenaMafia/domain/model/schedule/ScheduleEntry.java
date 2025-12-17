@@ -61,6 +61,14 @@ public abstract class ScheduleEntry {
     }
   }
 
+  /**
+   * Verifica se o agendamento está ativo. - Para Reservations: verifica o status ativo - Para
+   * outros tipos: considera sempre ativo
+   *
+   * @return true se o agendamento estiver ativo, false caso contrário
+   */
+  public abstract boolean isActive();
+
   // --- Getters ---
 
   public UUID getId() {
