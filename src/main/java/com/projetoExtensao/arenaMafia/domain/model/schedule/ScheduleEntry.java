@@ -69,15 +69,6 @@ public abstract class ScheduleEntry {
    */
   public abstract boolean isActive();
 
-  /**
-   * Verifica se este agendamento pertence à modalidade especificada. Cada tipo de ScheduleEntry
-   * implementa sua própria lógica.
-   *
-   * @param modalityId ID da modalidade para verificar
-   * @return true se pertence à modalidade, false caso contrário
-   */
-  public abstract boolean belongsToModality(UUID modalityId);
-
   // --- Getters ---
 
   public UUID getId() {

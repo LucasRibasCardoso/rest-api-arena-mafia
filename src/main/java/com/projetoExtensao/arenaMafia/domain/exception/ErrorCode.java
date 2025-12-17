@@ -3,7 +3,6 @@ package com.projetoExtensao.arenaMafia.domain.exception;
 import com.projetoExtensao.arenaMafia.domain.model.enums.AccountStatus;
 import com.projetoExtensao.arenaMafia.domain.model.enums.RoleEnum;
 
-import java.time.LocalTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
