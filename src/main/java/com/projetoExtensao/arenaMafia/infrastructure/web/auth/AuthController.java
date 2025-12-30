@@ -1,6 +1,6 @@
 package com.projetoExtensao.arenaMafia.infrastructure.web.auth;
 
-import com.projetoExtensao.arenaMafia.application.auth.dto.AuthResult;
+import com.projetoExtensao.arenaMafia.domain.dto.AuthResult;
 import com.projetoExtensao.arenaMafia.application.auth.usecase.accountverification.VerifyAccountUseCase;
 import com.projetoExtensao.arenaMafia.application.auth.usecase.authentication.LoginUseCase;
 import com.projetoExtensao.arenaMafia.application.auth.usecase.authentication.LogoutUseCase;

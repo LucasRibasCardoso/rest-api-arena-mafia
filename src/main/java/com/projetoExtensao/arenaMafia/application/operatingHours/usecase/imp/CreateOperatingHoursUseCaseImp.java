@@ -3,7 +3,7 @@ package com.projetoExtensao.arenaMafia.application.operatingHours.usecase.imp;
 import com.projetoExtensao.arenaMafia.application.operatingHours.ports.OperatingHoursRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.operatingHours.usecase.CreateOperatingHoursUseCase;
 import com.projetoExtensao.arenaMafia.domain.model.OperatingHours;
-import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.request.CreateOperatingHoursRequestDto;
+import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.operatingHours.request.CreateOperatingHoursRequestDto;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 

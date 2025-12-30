@@ -11,4 +11,5 @@ public record AgendaSlotResponseDto(
     UUID courtId,
     TimeIntervalDto timeInterval,
     AgendaSlotType slotType,
-    Set<UUID> availableModalityIds) {}
+    Set<UUID> availableModalityIds,
+    String description) {}

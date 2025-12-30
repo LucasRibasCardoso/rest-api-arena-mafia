@@ -5,6 +5,7 @@ import com.projetoExtensao.arenaMafia.domain.model.enums.AccountStatus;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 public interface UserRepositoryPort {
@@ -15,6 +16,8 @@ public interface UserRepositoryPort {
   Optional<User> findById(UUID id);
 
   User findByIdOrElseThrow(UUID id);
+
+  List<User> findAllByIds(Set<UUID> ids);
 
   Optional<User> findByPhone(String phone);
 

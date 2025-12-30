@@ -10,6 +10,7 @@ import com.projetoExtensao.arenaMafia.infrastructure.persistence.repository.User
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -53,6 +54,12 @@ public class UserRepositoryAdapter implements UserRepositoryPort {
   @Transactional(readOnly = true)
   public Optional<User> findByUsername(String username) {
     return userJpaRepository.findByUsername(username).map(userMapper::toDomain);
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public List<User> findAllByIds(Set<UUID> ids) {
+    return userJpaRepository.findAllById(ids).stream().map(userMapper::toDomain).toList();
   }
 
   @Override

@@ -4,6 +4,7 @@ import com.projetoExtensao.arenaMafia.domain.model.Court;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.CourtEntity;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -12,6 +13,8 @@ public interface CourtRepositoryPort {
   Court save(Court court);
 
   List<Court> findAll(Specification<CourtEntity> spec);
+
+  List<Court> findAllByIds(Set<UUID> ids);
 
   Optional<Court> findById(UUID id);
 

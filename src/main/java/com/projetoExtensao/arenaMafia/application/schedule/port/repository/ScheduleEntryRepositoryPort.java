@@ -1,13 +1,9 @@
 package com.projetoExtensao.arenaMafia.application.schedule.port.repository;
 
-import com.projetoExtensao.arenaMafia.domain.model.schedule.Reservation;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.ScheduleEntry;
-
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -21,9 +17,5 @@ public interface ScheduleEntryRepositoryPort {
 
   List<ScheduleEntry> findAllSchedulesByDate(LocalDate date);
 
-  Page<Reservation> findReservationsByUserId(UUID userId, Pageable pageable);
-
-  Reservation findReservationByIdAndUserIdOrElseThrow(UUID reservationId, UUID userId);
-
-  List<Reservation> findAllConfirmedReservationsWithEndTimeAfter(LocalDateTime dateTime);
+  List<ScheduleEntry> findConflicts(List<UUID> courtIds, LocalDate startDate, LocalDate endDate, TimeInterval timeInterval);
 }

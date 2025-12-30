@@ -85,6 +85,15 @@ public class CourtRepositoryAdapter implements CourtRepositoryPort {
   }
 
   @Override
+  @Transactional(readOnly = true)
+  public List<Court> findAllByIds(Set<UUID> ids) {
+    return courtJpaRepository.findAllById(ids).stream()
+        .filter(CourtEntity::isActive)
+        .map(courtMapper::toDomain)
+        .toList();
+  }
+
+  @Override
   public boolean existsByName(String name) {
     return courtJpaRepository.existsByName(name);
   }

@@ -9,9 +9,9 @@ get:
     **Este endpoint é público e não requer autenticação.**
     
     A agenda inclui:
-    - **Slots disponíveis**: Horários livres agrupados com as modalidades que podem ser praticadas
-    - **Reservas confirmadas**: Horários já reservados (sem expor dados pessoais dos usuários)
-    - **Treinos e bloqueios**: Horários bloqueados pela administração (funcionalidade futura)
+    - **Slots disponíveis (AVAILABLE)**: Horários livres agrupados com as modalidades que podem ser praticadas
+    - **Reservas confirmadas (RESERVED)**: Horários já reservados (sem expor dados pessoais dos usuários)
+    - **Bloqueios de horário (BLOCKED_TIME)**: Horários bloqueados pela administração com descrição do motivo
     
     **Funcionamento:**
     1. Sistema busca todos os agendamentos confirmados da data
@@ -21,12 +21,14 @@ get:
     
     **Regras de agrupamento:**
     - Se um horário tem múltiplas quadras disponíveis, retorna 1 item AVAILABLE com todas as modalidades
-    - Se um horário tem uma ou mais quadras ocupadas, retorna 1 item RESERVED/TRAINING/BLOCKED por quadra ocupada
-    - Um mesmo horário pode ter itens AVAILABLE e RESERVED simultaneamente (quando há quadras livres e ocupadas)
+    - Se um horário tem uma ou mais quadras ocupadas/bloqueadas, retorna 1 item por quadra ocupada/bloqueada
+    - BlockedTimes são retornados individualmente (1 por quadra bloqueada) com `courtId` e `description`
+    - Um mesmo horário pode ter itens AVAILABLE, RESERVED e BLOCKED_TIME simultaneamente
     
-    **Exemplo de resposta para 10:00-11:00 com 2 quadras:**
+    **Exemplo de resposta para 10:00-11:00 com 3 quadras:**
     - Quadra A ocupada (Futebol) → 1 item RESERVED
-    - Quadra B disponível (Vôlei, Basquete) → 1 item AVAILABLE com modalityIds=[vôlei, basquete]
+    - Quadra B bloqueada (Manutenção) → 1 item BLOCKED_TIME com descrição
+    - Quadra C disponível (Vôlei, Basquete) → 1 item AVAILABLE com modalityIds
     
     **Casos de uso:**
     - Usuários consultam horários disponíveis antes de fazer reserva
@@ -50,13 +52,14 @@ get:
               $ref: "../../components/schemas/agenda/AgendaSlotResponseDto.yml"
           examples:
             CompletedAgenda:
-              summary: Agenda com horários disponíveis e reservados
+              summary: Agenda com horários disponíveis, reservados e bloqueados
               description: |
                 Exemplo mostrando diferentes tipos de slots na mesma agenda.
                 
                 ⚠️ **Nota:** Campos nulos não aparecem no JSON
-                - Slots AVAILABLE não incluem o campo `courtId`
-                - Slots RESERVED não incluem o campo `availableModalityIds`
+                - Slots AVAILABLE: não incluem `courtId` nem `description`
+                - Slots RESERVED: não incluem `availableModalityIds` nem `description`
+                - Slots BLOCKED_TIME: incluem `courtId` e `description`, não incluem `availableModalityIds`
               value:
                 - timeInterval:
                     startTime: "08:00"
@@ -76,6 +79,12 @@ get:
                   slotType: "AVAILABLE"
                   availableModalityIds:
                     - "550e8400-e29b-41d4-a716-446655440002"
+                - courtId: "b2c3d4e5-f6a7-8901-bcde-f12345678901"
+                  timeInterval:
+                    startTime: "18:00"
+                    endTime: "19:00"
+                  slotType: "BLOCKED_TIME"
+                  description: "Reservado para evento especial"
 
             AvailableOnly:
               summary: Agenda sem reservas (todos os horários disponíveis)
@@ -96,6 +105,35 @@ get:
                   availableModalityIds:
                     - "550e8400-e29b-41d4-a716-446655440002"
                     - "550e8400-e29b-41d4-a716-446655440005"
+
+            BlockedTimeExample:
+              summary: Agenda com bloqueios administrativos
+              description: |
+                Exemplo mostrando múltiplos bloqueios de horário.
+                
+                Cenário:
+                - Quadra A bloqueada às 12:00 para manutenção
+                - Quadra B bloqueada às 12:00 para evento especial
+                - Outras quadras permanecem disponíveis no mesmo horário
+              value:
+                - timeInterval:
+                    startTime: "12:00"
+                    endTime: "13:00"
+                  slotType: "BLOCKED_TIME"
+                  courtId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                  description: "Manutenção preventiva do sistema de iluminação"
+                - timeInterval:
+                    startTime: "12:00"
+                    endTime: "13:00"
+                  slotType: "BLOCKED_TIME"
+                  courtId: "b2c3d4e5-f6a7-8901-bcde-f12345678901"
+                  description: "Reservado para evento especial"
+                - timeInterval:
+                    startTime: "12:00"
+                    endTime: "13:00"
+                  slotType: "AVAILABLE"
+                  availableModalityIds:
+                    - "550e8400-e29b-41d4-a716-446655440002"
 
     400:
       description: |

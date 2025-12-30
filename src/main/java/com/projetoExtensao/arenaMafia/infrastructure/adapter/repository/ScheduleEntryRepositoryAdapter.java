@@ -3,19 +3,15 @@ package com.projetoExtensao.arenaMafia.infrastructure.adapter.repository;
 import com.projetoExtensao.arenaMafia.application.schedule.port.repository.ScheduleEntryRepositoryPort;
 import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 import com.projetoExtensao.arenaMafia.domain.exception.notFound.ScheduleNotFoundException;
-import com.projetoExtensao.arenaMafia.domain.model.schedule.Reservation;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.ScheduleEntry;
+import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.ScheduleEntryEntity;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.mapper.ScheduleEntryMapper;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.repository.ScheduleEntryJpaRepository;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -33,6 +29,7 @@ public class ScheduleEntryRepositoryAdapter implements ScheduleEntryRepositoryPo
   }
 
   @Override
+  @Transactional
   public ScheduleEntry save(ScheduleEntry scheduleEntry) {
     ScheduleEntryEntity entity = scheduleEntryMapper.toEntity(scheduleEntry);
     ScheduleEntryEntity savedEntity = scheduleEntryJpaRepository.save(entity);
@@ -52,7 +49,18 @@ public class ScheduleEntryRepositoryAdapter implements ScheduleEntryRepositoryPo
   @Transactional(readOnly = true)
   public List<ScheduleEntry> findConfirmedSchedulesByCourtAndDate(UUID courtId, LocalDate date) {
     return scheduleEntryJpaRepository
-        .findConfirmedReservationsByCourtAndDate(courtId, date)
+        .findSchedulesByCourtAndDate(courtId, date)
+        .stream()
+        .map(scheduleEntryMapper::toDomain)
+        .filter(ScheduleEntry::isActive)
+        .toList();
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public List<ScheduleEntry> findAllSchedulesByDate(LocalDate date) {
+    return scheduleEntryJpaRepository
+        .findAllSchedulesByDate(date)
         .stream()
         .map(scheduleEntryMapper::toDomain)
         .toList();
@@ -60,37 +68,17 @@ public class ScheduleEntryRepositoryAdapter implements ScheduleEntryRepositoryPo
 
   @Override
   @Transactional(readOnly = true)
-  public List<ScheduleEntry> findAllSchedulesByDate(LocalDate date) {
-    return scheduleEntryJpaRepository.findAllSchedulesByDate(date).stream()
+  public List<ScheduleEntry> findConflicts(
+      List<UUID> courtIds,
+      LocalDate startDate,
+      LocalDate endDate,
+      TimeInterval timeInterval) {
+    var entities = scheduleEntryJpaRepository.findActiveSchedulesByCourtAndDateRange(courtIds, startDate, endDate);
+
+    return entities.stream()
         .map(scheduleEntryMapper::toDomain)
-        .toList();
-  }
-
-  @Override
-  @Transactional(readOnly = true)
-  public Page<Reservation> findReservationsByUserId(UUID userId, Pageable pageable) {
-    return scheduleEntryJpaRepository
-        .findReservationsByUserId(userId, pageable)
-        .map(entity -> (Reservation) scheduleEntryMapper.toDomain(entity));
-  }
-
-  @Override
-  @Transactional(readOnly = true)
-  public Reservation findReservationByIdAndUserIdOrElseThrow(UUID reservationId, UUID userId) {
-    return scheduleEntryJpaRepository
-        .findReservationByIdAndUser(reservationId, userId)
-        .map(entity -> (Reservation) scheduleEntryMapper.toDomain(entity))
-        .orElseThrow(() -> new ScheduleNotFoundException(ErrorCode.SCHEDULE_ENTRY_NOT_FOUND));
-  }
-
-  @Override
-  @Transactional(readOnly = true)
-  public List<Reservation> findAllConfirmedReservationsWithEndTimeAfter(LocalDateTime dateTime) {
-    LocalDate date = dateTime.toLocalDate();
-    LocalTime time = dateTime.toLocalTime();
-
-    return scheduleEntryJpaRepository.findConfirmedReservationsEndedAfter(date, time).stream()
-        .map(entity -> (Reservation) scheduleEntryMapper.toDomain(entity))
+        .filter(scheduleEntry -> scheduleEntry.getDateTimeSlot().timeInterval().overlaps(timeInterval))
         .toList();
   }
 }
+

@@ -1,7 +1,7 @@
 package com.projetoExtensao.arenaMafia.application.schedule.scheduler;
 
-import com.projetoExtensao.arenaMafia.application.schedule.port.repository.ScheduleEntryRepositoryPort;
-import com.projetoExtensao.arenaMafia.application.schedule.usecase.CompleteReservationUseCase;
+import com.projetoExtensao.arenaMafia.application.schedule.port.repository.ReservationRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.schedule.usecase.reservation.CompleteReservationUseCase;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.Reservation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,21 +22,22 @@ import java.util.concurrent.ScheduledFuture;
 @Component
 public class DynamicReservationCompletionScheduler {
 
-  private static final Logger logger = LoggerFactory.getLogger(DynamicReservationCompletionScheduler.class);
+  private static final Logger logger =
+      LoggerFactory.getLogger(DynamicReservationCompletionScheduler.class);
   private static final ZoneId ZONE_ID = ZoneId.of("America/Sao_Paulo");
 
   private final TaskScheduler taskScheduler;
   private final CompleteReservationUseCase completeReservationUseCase;
-  private final ScheduleEntryRepositoryPort scheduleEntryRepositoryPort;
+  private final ReservationRepositoryPort reservationRepositoryPort;
   private final Map<UUID, ScheduledFuture<?>> scheduledTasks;
 
   public DynamicReservationCompletionScheduler(
       TaskScheduler taskScheduler,
       CompleteReservationUseCase completeReservationUseCase,
-      ScheduleEntryRepositoryPort scheduleEntryRepositoryPort) {
+      ReservationRepositoryPort reservationRepositoryPort) {
     this.taskScheduler = taskScheduler;
     this.completeReservationUseCase = completeReservationUseCase;
-    this.scheduleEntryRepositoryPort = scheduleEntryRepositoryPort;
+    this.reservationRepositoryPort = reservationRepositoryPort;
     this.scheduledTasks = new ConcurrentHashMap<>();
   }
 
@@ -84,7 +85,7 @@ public class DynamicReservationCompletionScheduler {
 
     LocalDateTime now = LocalDateTime.now(ZONE_ID);
     List<Reservation> confirmedReservations =
-        scheduleEntryRepositoryPort.findAllConfirmedReservationsWithEndTimeAfter(now);
+        reservationRepositoryPort.findAllConfirmedReservationsWithEndTimeAfter(now);
 
     if (confirmedReservations.isEmpty()) {
       logger.info("Nenhuma reserva confirmada encontrada para reagendar");

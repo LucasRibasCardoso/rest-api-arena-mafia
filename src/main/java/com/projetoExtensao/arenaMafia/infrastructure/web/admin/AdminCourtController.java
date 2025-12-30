@@ -1,6 +1,6 @@
 package com.projetoExtensao.arenaMafia.infrastructure.web.admin;
 
-import com.projetoExtensao.arenaMafia.application.court.dto.CourtWithModalitiesResult;
+import com.projetoExtensao.arenaMafia.domain.dto.CourtWithModalitiesResult;
 import com.projetoExtensao.arenaMafia.application.court.usecase.CreateCourtUseCase;
 import com.projetoExtensao.arenaMafia.application.court.usecase.DisableCourtUseCase;
 import com.projetoExtensao.arenaMafia.application.court.usecase.EnableCourtUseCase;
@@ -9,9 +9,9 @@ import com.projetoExtensao.arenaMafia.application.court.usecase.FindCourtByIdUse
 import com.projetoExtensao.arenaMafia.application.court.usecase.UpdateCourtUseCase;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.mapper.ModalityMapper;
 import com.projetoExtensao.arenaMafia.infrastructure.security.rateLimit.CustomRateLimiter;
-import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.request.CreateCourtRequestDto;
-import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.request.UpdateCourtRequestDto;
-import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.response.AdminCourtResponseDto;
+import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.court.request.CreateCourtRequestDto;
+import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.court.request.UpdateCourtRequestDto;
+import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.court.response.AdminCourtResponseDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.modality.dto.response.ModalityResponseDto;
 import jakarta.validation.Valid;
 import java.net.URI;

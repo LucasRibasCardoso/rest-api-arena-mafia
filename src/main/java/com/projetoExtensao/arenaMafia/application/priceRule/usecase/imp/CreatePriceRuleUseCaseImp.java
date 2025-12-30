@@ -5,7 +5,7 @@ import com.projetoExtensao.arenaMafia.application.priceRule.usecase.CreatePriceR
 import com.projetoExtensao.arenaMafia.domain.exception.conflict.PriceRuleAlreadyExistsException;
 import com.projetoExtensao.arenaMafia.domain.model.PriceRule;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.specification.PriceRuleSpecification;
-import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.request.CreatePriceRuleRequestDto;
+import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.priceRule.request.CreatePriceRuleRequestDto;
 import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

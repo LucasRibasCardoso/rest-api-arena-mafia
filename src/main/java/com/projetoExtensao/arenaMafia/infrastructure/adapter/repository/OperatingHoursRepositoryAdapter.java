@@ -53,4 +53,6 @@ public class OperatingHoursRepositoryAdapter implements OperatingHoursRepository
     List<OperatingHoursEntity> entities = operatingHoursJpaRepository.findAll(spec);
     return entities.stream().map(operatingHoursMapper::toDomain).toList();
   }
+
+
 }

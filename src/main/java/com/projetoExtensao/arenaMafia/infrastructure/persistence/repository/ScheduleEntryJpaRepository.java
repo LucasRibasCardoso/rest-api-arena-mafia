@@ -1,5 +1,6 @@
 package com.projetoExtensao.arenaMafia.infrastructure.persistence.repository;
 
+import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.BlockedTimeEntity;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.ReservationEntity;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.ScheduleEntryEntity;
 import java.time.LocalDate;
@@ -10,35 +11,17 @@ import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface ScheduleEntryJpaRepository extends JpaRepository<ScheduleEntryEntity, UUID> {
 
-  /**
-   * Busca todas as reservas confirmadas para uma quadra específica em uma data específica. Filtra
-   * automaticamente apenas reservas com status CONFIRMED.
-   *
-   * @param courtId ID da quadra
-   * @param date data do agendamento
-   * @return lista de reservas confirmadas ordenadas por horário de início
-   */
-  @Query(
-      """
-      SELECT r FROM ReservationEntity r
-      WHERE r.courtId = :courtId
-      AND r.dateTimeSlot.date = :date
-      AND r.status = 'CONFIRMED'
-      ORDER BY r.dateTimeSlot.timeInterval.startTime ASC
-      """)
-  List<ScheduleEntryEntity> findConfirmedReservationsByCourtAndDate(
-      @Param("courtId") UUID courtId, @Param("date") LocalDate date);
-
+  // ==================== QUERIES GENÉRICAS (ScheduleEntry) ====================
 
   /**
-   * Busca todos os agendamentos de uma data específica.
-   * Retorna todos os tipos de ScheduleEntry (Reservation, Training, BlockedTime).
-   *
+   * Busca todos os agendamentos de uma data específica. Retorna todos os tipos de ScheduleEntry
+   * (Reservation, BlockedTime).
    *
    * @param date data do agendamento
    * @return lista de todos os agendamentos da data, ordenados por horário de início
@@ -50,6 +33,71 @@ public interface ScheduleEntryJpaRepository extends JpaRepository<ScheduleEntryE
       ORDER BY s.dateTimeSlot.timeInterval.startTime ASC
       """)
   List<ScheduleEntryEntity> findAllSchedulesByDate(@Param("date") LocalDate date);
+
+  /**
+   * Busca todos os agendamentos (Reservations confirmadas e BlockedTimes) que conflitam
+   * com um conjunto de quadras em um intervalo de datas.
+   *
+   * @param courtIds IDs das quadras
+   * @param startDate data inicial (inclusive)
+   * @param endDate data final (inclusive)
+   * @return lista de agendamentos ativos que estão no período especificado
+   */
+  @Query(
+      """
+      SELECT s FROM ScheduleEntryEntity s
+      WHERE s.courtId IN :courtIds
+      AND s.dateTimeSlot.date BETWEEN :startDate AND :endDate
+      AND (TYPE(s) = BlockedTimeEntity
+          OR 
+          (TYPE(s) = ReservationEntity AND TREAT(s AS ReservationEntity).status = 'CONFIRMED'))
+      ORDER BY s.dateTimeSlot.date ASC, s.dateTimeSlot.timeInterval.startTime ASC
+      """)
+  List<ScheduleEntryEntity> findActiveSchedulesByCourtAndDateRange(
+      @Param("courtIds") List<UUID> courtIds,
+      @Param("startDate") LocalDate startDate,
+      @Param("endDate") LocalDate endDate);
+
+  // ==================== QUERIES ESPECÍFICAS DE RESERVATION ====================
+
+  /**
+   * Busca todos os agendamentos (Reservations e BlockedTimes) para uma quadra específica em uma
+   * data específica.
+   *
+   * @param courtId ID da quadra
+   * @param date data do agendamento
+   * @return lista de agendamentos ordenados por horário de início
+   */
+  @Query(
+      """
+      SELECT s FROM ScheduleEntryEntity s
+      WHERE s.courtId = :courtId
+      AND s.dateTimeSlot.date = :date
+      ORDER BY s.dateTimeSlot.timeInterval.startTime ASC
+      """)
+  List<ScheduleEntryEntity> findSchedulesByCourtAndDate(
+      @Param("courtId") UUID courtId, @Param("date") LocalDate date);
+
+  /**
+   * Busca todos os agendamentos (Reservations e BlockedTimes) para uma quadra específica em um
+   * intervalo de datas.
+   *
+   * @param courtId ID da quadra
+   * @param startDate data inicial (inclusive)
+   * @param endDate data final (inclusive)
+   * @return lista de agendamentos ordenados por data e horário de início
+   */
+  @Query(
+      """
+      SELECT s FROM ScheduleEntryEntity s
+      WHERE s.courtId = :courtId
+      AND s.dateTimeSlot.date BETWEEN :startDate AND :endDate
+      ORDER BY s.dateTimeSlot.date ASC, s.dateTimeSlot.timeInterval.startTime ASC
+      """)
+  List<ScheduleEntryEntity> findSchedulesByCourtAndDateRange(
+      @Param("courtId") UUID courtId,
+      @Param("startDate") LocalDate startDate,
+      @Param("endDate") LocalDate endDate);
 
   /**
    * Busca todas as reservas de um usuário específico com paginação. Ordena por data e horário de
@@ -85,14 +133,9 @@ public interface ScheduleEntryJpaRepository extends JpaRepository<ScheduleEntryE
       @Param("reservationId") UUID reservationId, @Param("userId") UUID userId);
 
   /**
-   * Busca todas as reservas confirmadas cujo horário de término é posterior ao momento especificado.
-   * Utilizado para reagendar conclusão automática de reservas quando a aplicação é reiniciada.
-   *
-   * <p>Critérios de busca:
-   * <ul>
-   *   <li>Status = CONFIRMED</li>
-   *   <li>Data > data de referência OU (Data = data de referência E Horário de término > hora de referência)</li>
-   * </ul>
+   * Busca todas as reservas confirmadas cujo horário de término é posterior ao momento
+   * especificado. Utilizado para reagendar conclusão automática de reservas quando a aplicação é
+   * reiniciada.
    *
    * @param date data de referência
    * @param time hora de referência
@@ -108,4 +151,90 @@ public interface ScheduleEntryJpaRepository extends JpaRepository<ScheduleEntryE
       """)
   List<ReservationEntity> findConfirmedReservationsEndedAfter(
       @Param("date") LocalDate date, @Param("time") LocalTime time);
+
+
+  // ==================== QUERIES ESPECÍFICAS DE BLOCKED TIME ====================
+
+  /**
+   * Busca todos os bloqueios que fazem parte de um grupo recorrente.
+   *
+   * @param recurringBlockedTimeId identificador do grupo de bloqueios recorrentes
+   * @return lista de bloqueios do grupo
+   */
+  @Query(
+      """
+      SELECT bt FROM BlockedTimeEntity bt
+      WHERE bt.recurringBlockedTimeId = :recurringBlockedTimeId
+      ORDER BY bt.dateTimeSlot.date ASC, bt.dateTimeSlot.timeInterval.startTime ASC
+      """)
+  List<BlockedTimeEntity> findAllByRecurringBlockedTimeId(
+      @Param("recurringBlockedTimeId") UUID recurringBlockedTimeId);
+
+  /**
+   * Busca todos os bloqueios de uma quadra em um intervalo de datas.
+   *
+   * @param courtId identificador da quadra
+   * @param startDate data inicial (inclusive)
+   * @param endDate data final (inclusive)
+   * @return lista de bloqueios encontrados ordenados por data e horário
+   */
+  @Query(
+      """
+      SELECT bt FROM BlockedTimeEntity bt
+      WHERE bt.courtId = :courtId
+      AND bt.dateTimeSlot.date BETWEEN :startDate AND :endDate
+      ORDER BY bt.dateTimeSlot.date ASC, bt.dateTimeSlot.timeInterval.startTime ASC
+      """)
+  List<BlockedTimeEntity> findByCourtIdAndDateRange(
+      @Param("courtId") UUID courtId,
+      @Param("startDate") LocalDate startDate,
+      @Param("endDate") LocalDate endDate);
+
+  /**
+   * Busca bloqueios de múltiplas quadras em um intervalo de datas.
+   *
+   * @param courtIds lista de identificadores de quadras
+   * @param startDate data inicial (inclusive)
+   * @param endDate data final (inclusive)
+   * @return lista de bloqueios encontrados ordenados por quadra, data e horário
+   */
+  @Query(
+      """
+      SELECT bt FROM BlockedTimeEntity bt
+      WHERE bt.courtId IN :courtIds
+      AND bt.dateTimeSlot.date BETWEEN :startDate AND :endDate
+      ORDER BY bt.courtId ASC, bt.dateTimeSlot.date ASC, bt.dateTimeSlot.timeInterval.startTime ASC
+      """)
+  List<BlockedTimeEntity> findByCourtIdsAndDateRange(
+      @Param("courtIds") List<UUID> courtIds,
+      @Param("startDate") LocalDate startDate,
+      @Param("endDate") LocalDate endDate);
+
+  /**
+   * Deleta todos os bloqueios de um grupo recorrente.
+   *
+   * @param recurringBlockedTimeId identificador do grupo de bloqueios recorrentes
+   */
+  @Modifying
+  @Query(
+      """
+      DELETE FROM BlockedTimeEntity bt
+      WHERE bt.recurringBlockedTimeId = :recurringBlockedTimeId
+      """)
+  void deleteByRecurringBlockedTimeId(@Param("recurringBlockedTimeId") UUID recurringBlockedTimeId);
+
+  /**
+   * Verifica se existe algum bloqueio ativo para uma quadra em uma data específica.
+   *
+   * @param courtId identificador da quadra
+   * @param date data a verificar
+   * @return true se existir bloqueio ativo, false caso contrário
+   */
+  @Query(
+      """
+      SELECT COUNT(bt) > 0 FROM BlockedTimeEntity bt
+      WHERE bt.courtId = :courtId
+      AND bt.dateTimeSlot.date = :date
+      """)
+  boolean existsByCourtIdAndDate(@Param("courtId") UUID courtId, @Param("date") LocalDate date);
 }

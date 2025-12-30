@@ -1,6 +1,6 @@
 package com.projetoExtensao.arenaMafia.application.court.usecase.imp;
 
-import com.projetoExtensao.arenaMafia.application.court.dto.CourtWithModalitiesResult;
+import com.projetoExtensao.arenaMafia.domain.dto.CourtWithModalitiesResult;
 import com.projetoExtensao.arenaMafia.application.court.port.CourtRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.court.usecase.CreateCourtUseCase;
 import com.projetoExtensao.arenaMafia.application.modality.port.ModalityRepositoryPort;
@@ -8,7 +8,7 @@ import com.projetoExtensao.arenaMafia.domain.exception.conflict.CourtAlreadyExis
 import com.projetoExtensao.arenaMafia.domain.exception.notFound.ModalityNotFoundException;
 import com.projetoExtensao.arenaMafia.domain.model.Court;
 import com.projetoExtensao.arenaMafia.domain.model.Modality;
-import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.request.CreateCourtRequestDto;
+import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.court.request.CreateCourtRequestDto;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;

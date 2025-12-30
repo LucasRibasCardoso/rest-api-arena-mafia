@@ -1,6 +1,6 @@
 package com.projetoExtensao.arenaMafia.infrastructure.web.schedule;
 
-import com.projetoExtensao.arenaMafia.application.schedule.usecase.FindAllAvailableTimesUseCase;
+import com.projetoExtensao.arenaMafia.application.schedule.usecase.availabletime.FindAllAvailableTimesUseCase;
 import com.projetoExtensao.arenaMafia.infrastructure.security.rateLimit.CustomRateLimiter;
 import com.projetoExtensao.arenaMafia.infrastructure.web.schedule.dto.response.AvailableSlotResponseDto;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.mapper.AvailableSlotMapper;

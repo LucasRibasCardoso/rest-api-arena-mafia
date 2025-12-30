@@ -345,8 +345,7 @@ public class FindAllAgendaItemUseCaseImp implements FindAllAgendaItemUseCase {
     return schedules.stream().map(ScheduleEntryAgendaItem::new).collect(Collectors.toList());
   }
 
-  /**
-   * Cria um item de slot disponível agrupado com todas as modalidades disponíveis.
+  /* Cria um item de slot disponível agrupado com todas as modalidades disponíveis.
    *
    * <p>Agrupa múltiplos slots disponíveis do mesmo horário (de quadras diferentes) em um único item
    * da agenda, consolidando todas as modalidades suportadas pelas quadras disponíveis.

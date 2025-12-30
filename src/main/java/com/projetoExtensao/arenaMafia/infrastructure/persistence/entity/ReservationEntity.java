@@ -37,6 +37,9 @@ public class ReservationEntity extends ScheduleEntryEntity {
   @Column(name = "recurring_reservation_id")
   private UUID recurringReservationId;
 
+  @Column(name = "cancelled_by_admin_id")
+  private UUID cancelledByAdminId;
+
   // Construtor padrão necessário para JPA
   public ReservationEntity() {}
 
@@ -64,6 +67,14 @@ public class ReservationEntity extends ScheduleEntryEntity {
 
   public void setScheduledByAdminId(UUID scheduledByAdminId) {
     this.scheduledByAdminId = scheduledByAdminId;
+  }
+
+  public UUID getCancelledByAdminId() {
+    return cancelledByAdminId;
+  }
+
+  public void setCancelledByAdminId(UUID cancelledByAdminId) {
+    this.cancelledByAdminId = cancelledByAdminId;
   }
 
   public BigDecimal getPrice() {

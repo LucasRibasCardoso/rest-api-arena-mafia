@@ -2,7 +2,7 @@ package com.projetoExtensao.arenaMafia.infrastructure.web.schedule.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.enums.ScheduleEntryType;
+import com.projetoExtensao.arenaMafia.domain.model.enums.ScheduleEntryType;
 import com.projetoExtensao.arenaMafia.infrastructure.web.operatingHours.dto.response.TimeIntervalDto;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -18,9 +18,11 @@ import java.util.UUID;
     property = "type",
     visible = true)
 @JsonSubTypes({
-  @JsonSubTypes.Type(value = ReservationScheduleResponseDto.class, name = "RESERVATION")
+  @JsonSubTypes.Type(value = ReservationResponseDto.class, name = "RESERVATION"),
+  @JsonSubTypes.Type(value = BlockedTimeResponseDto.class, name = "BLOCKED_TIME")
 })
-public sealed interface ScheduleEntryResponseDto permits ReservationScheduleResponseDto {
+public sealed interface ScheduleEntryResponseDto
+    permits ReservationResponseDto, BlockedTimeResponseDto {
 
   UUID id();
 

@@ -1,9 +1,9 @@
 package com.projetoExtensao.arenaMafia.infrastructure.web.schedule;
 
-import com.projetoExtensao.arenaMafia.application.schedule.usecase.CancelReservationUseCase;
-import com.projetoExtensao.arenaMafia.application.schedule.usecase.CreateReservationUseCase;
-import com.projetoExtensao.arenaMafia.application.schedule.usecase.FindAllReservationUseCase;
-import com.projetoExtensao.arenaMafia.application.schedule.usecase.FindByIdReservationUseCase;
+import com.projetoExtensao.arenaMafia.application.schedule.usecase.reservation.CancelReservationUseCase;
+import com.projetoExtensao.arenaMafia.application.schedule.usecase.reservation.CreateReservationUseCase;
+import com.projetoExtensao.arenaMafia.application.schedule.usecase.reservation.FindAllReservationUseCase;
+import com.projetoExtensao.arenaMafia.application.schedule.usecase.reservation.FindByIdReservationUseCase;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.Reservation;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.ScheduleEntry;
 import com.projetoExtensao.arenaMafia.infrastructure.security.rateLimit.CustomRateLimiter;
