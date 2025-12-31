@@ -50,6 +50,14 @@ patch:
                 errorCode: "COURT_ALREADY_DISABLED"
                 developerMessage: "A quadra já está desativada."
                 path: "/api/admin/courts/{courtId}/disable"
+            CourtHasActiveReservations:
+              summary: Quadra possui reservas ativas
+              value:
+                timestamp: "2024-06-15T14:30:00Z"
+                status: 409
+                errorCode: "COURT_CANNOT_BE_DISABLED_DUE_TO_FUTURE_RESERVATIONS"
+                developerMessage: "Não é possível desativar a quadra pois existem reservas futuras associadas a ela."
+                path: "/api/admin/courts/{courtId}/disable"
     429:
       $ref: "../../../components/responses/TooManyRequestsError.yml"
     500:
