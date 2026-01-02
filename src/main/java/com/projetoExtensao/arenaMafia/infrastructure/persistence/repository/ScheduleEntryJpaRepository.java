@@ -1,5 +1,7 @@
 package com.projetoExtensao.arenaMafia.infrastructure.persistence.repository;
 
+import com.projetoExtensao.arenaMafia.domain.model.enums.DayOfWeek;
+import com.projetoExtensao.arenaMafia.domain.model.schedule.Reservation;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.BlockedTimeEntity;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.ReservationEntity;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.ScheduleEntryEntity;
@@ -7,6 +9,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -35,13 +38,22 @@ public interface ScheduleEntryJpaRepository extends JpaRepository<ScheduleEntryE
   List<ScheduleEntryEntity> findAllSchedulesByDate(@Param("date") LocalDate date);
 
   /**
-   * Busca todos os agendamentos (Reservations confirmadas e BlockedTimes) que conflitam
-   * com um conjunto de quadras em um intervalo de datas.
+   * Busca conflitos (Reservations confirmadas e BlockedTimes) com filtro opcional de dias da
+   * semana.
+   *
+   * <p>Se selectedDaysOfWeek for null ou vazio, retorna conflitos para todos os dias. Caso
+   * contrário, filtra apenas os dias da semana especificados.
+   *
+   * <p><b>Nota:</b> Esta query NÃO valida sobreposição de TimeInterval. A validação de sobreposição
+   * deve ser feita no adapter usando o metodo overlaps do TimeInterval, pois essa lógica já
+   * considera intervalos que atravessam a meia-noite.
    *
    * @param courtIds IDs das quadras
    * @param startDate data inicial (inclusive)
    * @param endDate data final (inclusive)
-   * @return lista de agendamentos ativos que estão no período especificado
+   * @param selectedDaysOfWeek dias da semana para filtrar (null/vazio = todos)
+   * @param sqlDaysOfWeek valores SQL dos dias da semana (1=Sunday, 2=Monday, ...)
+   * @return lista de agendamentos ativos no intervalo de datas e dias da semana especificados
    */
   @Query(
       """
@@ -49,14 +61,18 @@ public interface ScheduleEntryJpaRepository extends JpaRepository<ScheduleEntryE
       WHERE s.courtId IN :courtIds
       AND s.dateTimeSlot.date BETWEEN :startDate AND :endDate
       AND (TYPE(s) = BlockedTimeEntity
-          OR 
+          OR
           (TYPE(s) = ReservationEntity AND TREAT(s AS ReservationEntity).status = 'CONFIRMED'))
+      AND (:sqlDaysOfWeek IS NULL
+          OR FUNCTION('DAYOFWEEK', s.dateTimeSlot.date) IN :sqlDaysOfWeek)
       ORDER BY s.dateTimeSlot.date ASC, s.dateTimeSlot.timeInterval.startTime ASC
       """)
-  List<ScheduleEntryEntity> findActiveSchedulesByCourtAndDateRange(
+  List<ScheduleEntryEntity> findConflictingSchedules(
       @Param("courtIds") List<UUID> courtIds,
       @Param("startDate") LocalDate startDate,
-      @Param("endDate") LocalDate endDate);
+      @Param("endDate") LocalDate endDate,
+      @Param("selectedDaysOfWeek") Set<DayOfWeek> selectedDaysOfWeek,
+      @Param("sqlDaysOfWeek") Set<Integer> sqlDaysOfWeek);
 
   // ==================== QUERIES ESPECÍFICAS DE RESERVATION ====================
 
@@ -77,27 +93,6 @@ public interface ScheduleEntryJpaRepository extends JpaRepository<ScheduleEntryE
       """)
   List<ScheduleEntryEntity> findSchedulesByCourtAndDate(
       @Param("courtId") UUID courtId, @Param("date") LocalDate date);
-
-  /**
-   * Busca todos os agendamentos (Reservations e BlockedTimes) para uma quadra específica em um
-   * intervalo de datas.
-   *
-   * @param courtId ID da quadra
-   * @param startDate data inicial (inclusive)
-   * @param endDate data final (inclusive)
-   * @return lista de agendamentos ordenados por data e horário de início
-   */
-  @Query(
-      """
-      SELECT s FROM ScheduleEntryEntity s
-      WHERE s.courtId = :courtId
-      AND s.dateTimeSlot.date BETWEEN :startDate AND :endDate
-      ORDER BY s.dateTimeSlot.date ASC, s.dateTimeSlot.timeInterval.startTime ASC
-      """)
-  List<ScheduleEntryEntity> findSchedulesByCourtAndDateRange(
-      @Param("courtId") UUID courtId,
-      @Param("startDate") LocalDate startDate,
-      @Param("endDate") LocalDate endDate);
 
   /**
    * Busca todas as reservas de um usuário específico com paginação. Ordena por data e horário de
@@ -152,6 +147,72 @@ public interface ScheduleEntryJpaRepository extends JpaRepository<ScheduleEntryE
   List<ReservationEntity> findConfirmedReservationsEndedAfter(
       @Param("date") LocalDate date, @Param("time") LocalTime time);
 
+  /**
+   * Verifica se existem reservas confirmadas para uma quadra específica após uma data
+   * determinada. Utilizado para validar se uma quadra pode ser desativada.
+   * @param courtId identificador da quadra
+   * @param date data de referência
+   * @return true se existirem reservas confirmadas após a data, false caso contrário
+   */
+  @Query(
+      """
+      SELECT COUNT(r) > 0 FROM ReservationEntity r
+      WHERE r.courtId = :courtId
+      AND r.status = 'CONFIRMED'
+      AND r.dateTimeSlot.date >= :date
+      """)
+  boolean existsConfirmedReservationsAfter(
+      @Param("courtId") UUID courtId, @Param("date") LocalDate date);
+
+  /**
+   * Verifica se existem conflitos de reservas confirmadas em dias específicos da semana após uma
+   * data determinada. Verifica sobreposição de horários para o mesmo dia, o restante da validação de sobreposição
+   * de intervalos que cruzam a meia-noite está no adapter.
+   *
+   * @param afterDate Data a partir da qual verificar os conflitos
+   * @param sqlDaysOfWeek Conjunto de inteiros representando os dias da semana no formato SQL (1=Sunday, 2=Monday, ..., 7=Saturday)
+   * @param checkStartTime horário de início do intervalo a ser verificado
+   * @param checkEndTime horário de término do intervalo a ser verificado
+   * @return true se existir conflito, false caso contrário
+   */
+  @Query("""
+    SELECT COUNT(r) > 0
+    FROM ReservationEntity r
+    WHERE r.status = 'CONFIRMED'
+    AND r.dateTimeSlot.date >= :afterDate
+    AND FUNCTION('DAYOFWEEK', r.dateTimeSlot.date) IN :sqlDaysOfWeek
+    
+    AND (
+        r.dateTimeSlot.timeInterval.startTime < :checkEndTime
+        AND 
+        r.dateTimeSlot.timeInterval.endTime > :checkStartTime
+    )
+    """)
+  boolean existsConflictInDays(
+          @Param("afterDate") LocalDate afterDate,
+          @Param("sqlDaysOfWeek") Set<Integer> sqlDaysOfWeek,
+          @Param("checkStartTime") LocalTime checkStartTime,
+          @Param("checkEndTime") LocalTime checkEndTime
+  );
+
+  /**
+   * Busca todas as reservas confirmadas cujo horário de término é anterior ou igual ao momento
+   * especificado. Utilizado para completar reservas expiradas quando a aplicação é reiniciada.
+   *
+   * @param date data de referência
+   * @param time hora de referência
+   * @return lista de reservas confirmadas ordenadas por data e horário de término
+   */
+  @Query(
+        """
+        SELECT r FROM ReservationEntity r
+        WHERE r.status = 'CONFIRMED'
+        AND (r.dateTimeSlot.date < :date
+             OR (r.dateTimeSlot.date = :date AND r.dateTimeSlot.timeInterval.endTime <= :time))
+        ORDER BY r.dateTimeSlot.date ASC, r.dateTimeSlot.timeInterval.endTime ASC
+        """
+  )
+  List<ReservationEntity> findConfirmedReservationsEndedBeforeOrEqual(@Param("date") LocalDate date, @Param("time") LocalTime time);
 
   // ==================== QUERIES ESPECÍFICAS DE BLOCKED TIME ====================
 

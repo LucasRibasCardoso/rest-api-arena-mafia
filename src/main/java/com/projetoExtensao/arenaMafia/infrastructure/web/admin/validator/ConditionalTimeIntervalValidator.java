@@ -1,4 +1,4 @@
-package com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.blockedtime.validator;
+package com.projetoExtensao.arenaMafia.infrastructure.web.admin.validator;
 
 import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
 import jakarta.validation.ConstraintValidator;

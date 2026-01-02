@@ -1,6 +1,6 @@
 package com.projetoExtensao.arenaMafia.infrastructure.web.admin;
 
-import com.projetoExtensao.arenaMafia.domain.dto.CourtWithModalitiesResult;
+import com.projetoExtensao.arenaMafia.application.court.aggregate.CourtWithModalities;
 import com.projetoExtensao.arenaMafia.application.court.usecase.CreateCourtUseCase;
 import com.projetoExtensao.arenaMafia.application.court.usecase.DisableCourtUseCase;
 import com.projetoExtensao.arenaMafia.application.court.usecase.EnableCourtUseCase;
@@ -66,7 +66,7 @@ public class AdminCourtController {
   public ResponseEntity<AdminCourtResponseDto> create(
       @Valid @RequestBody CreateCourtRequestDto request) {
 
-    CourtWithModalitiesResult result = createCourtUseCase.execute(request);
+    CourtWithModalities result = createCourtUseCase.execute(request);
     AdminCourtResponseDto response = mapToResponse(result);
 
     URI location =
@@ -82,7 +82,7 @@ public class AdminCourtController {
   @CustomRateLimiter(limiterName = "globalLimiter")
   public ResponseEntity<List<AdminCourtResponseDto>> getAll(
       @RequestParam(required = false) Boolean isActive) {
-    List<CourtWithModalitiesResult> courts = findAllCourtUseCase.execute(isActive);
+    List<CourtWithModalities> courts = findAllCourtUseCase.execute(isActive);
     List<AdminCourtResponseDto> response = mapToResponseList(courts);
 
     return ResponseEntity.ok(response);
@@ -91,7 +91,7 @@ public class AdminCourtController {
   @GetMapping("/{courtId}")
   @CustomRateLimiter(limiterName = "globalLimiter")
   public ResponseEntity<AdminCourtResponseDto> getById(@PathVariable UUID courtId) {
-    CourtWithModalitiesResult result = findCourtByIdUseCase.execute(courtId);
+    CourtWithModalities result = findCourtByIdUseCase.execute(courtId);
     AdminCourtResponseDto response = mapToResponse(result);
     return ResponseEntity.ok(response);
   }
@@ -114,7 +114,7 @@ public class AdminCourtController {
   @CustomRateLimiter(limiterName = "globalLimiter")
   public ResponseEntity<AdminCourtResponseDto> update(
       @PathVariable UUID courtId, @Valid @RequestBody UpdateCourtRequestDto request) {
-    CourtWithModalitiesResult result = updateCourtUseCase.execute(courtId, request);
+    CourtWithModalities result = updateCourtUseCase.execute(courtId, request);
     AdminCourtResponseDto response = mapToResponse(result);
     return ResponseEntity.ok(response);
   }
@@ -125,7 +125,7 @@ public class AdminCourtController {
    * @param courts Lista de CourtWithModalitiesResult a ser mapeada.
    * @return Lista de AdminCourtResponseDto mapeada.
    */
-  private List<AdminCourtResponseDto> mapToResponseList(List<CourtWithModalitiesResult> courts) {
+  private List<AdminCourtResponseDto> mapToResponseList(List<CourtWithModalities> courts) {
     return courts.stream().map(this::mapToResponse).collect(Collectors.toList());
   }
 
@@ -135,7 +135,7 @@ public class AdminCourtController {
    * @param result CourtWithModalitiesResult a ser mapeado.
    * @return AdminCourtResponseDto mapeado.
    */
-  private AdminCourtResponseDto mapToResponse(CourtWithModalitiesResult result) {
+  private AdminCourtResponseDto mapToResponse(CourtWithModalities result) {
     List<ModalityResponseDto> modalityResponses =
         result.modalities().stream().map(modalityMapper::toDto).collect(Collectors.toList());
     return AdminCourtResponseDto.fromDomain(result.court(), modalityResponses);

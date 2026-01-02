@@ -91,6 +91,47 @@ public record TimeInterval(
     return checkOverlap(this, other);
   }
 
+  /**
+   * Verifica se outro intervalo está completamente contido dentro deste intervalo.
+   *
+   * <p>Um intervalo está contido se seu horário de início está dentro deste intervalo
+   * (usando a semântica de {@link #contains(LocalTime)}) e seu horário de término
+   * não ultrapassa o endTime deste intervalo.
+   *
+   * <p>O endTime do intervalo interno pode coincidir com o endTime deste intervalo
+   * (limite inclusivo no fim para esta verificação).
+   *
+   * <p>Considera intervalos que atravessam a meia-noite.
+   *
+   * <p>Exemplo: [08:00-12:00] contém [09:00-11:00] e [08:00-12:00], mas não contém [07:00-11:00].
+   *
+   * @param other O intervalo a ser verificado se está contido.
+   * @return true se o intervalo fornecido está completamente contido neste intervalo.
+   */
+  public boolean containsInterval(TimeInterval other) {
+    if (other == null) {
+      return false;
+    }
+
+    // O startTime do inner deve estar contido neste intervalo
+    if (!this.contains(other.startTime())) {
+      return false;
+    }
+
+    // Se os endTimes são iguais, está contido
+    if (other.endTime().equals(this.endTime)) {
+      return true;
+    }
+
+    // Se o inner atravessa meia-noite mas o outer não, impossível conter
+    if (other.crossesMidnight() && !this.crossesMidnight()) {
+      return false;
+    }
+
+    // Verifica se o endTime do inner não ultrapassa o endTime do outer
+    return this.contains(other.endTime()) || other.endTime().equals(this.endTime);
+  }
+
   private void validateDuration(LocalTime startTime, LocalTime endTime) {
     long durationInMinutes = calculateDurationInMinutes(startTime, endTime);
 

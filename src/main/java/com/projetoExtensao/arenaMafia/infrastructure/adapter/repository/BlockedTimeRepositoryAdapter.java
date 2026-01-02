@@ -84,11 +84,11 @@ public class BlockedTimeRepositoryAdapter implements BlockedTimeRepositoryPort {
 
   @Override
   @Transactional
-  public void deleteById(UUID id) {
-    if (!scheduleEntryJpaRepository.existsById(id)) {
-      throw new BlockedTimeNotFoundException();
+  public void deleteAllByIds(List<UUID> ids) {
+    if (ids == null || ids.isEmpty()) {
+      return;
     }
-    scheduleEntryJpaRepository.deleteById(id);
+    scheduleEntryJpaRepository.deleteAllById(ids);
   }
 
   @Override

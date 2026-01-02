@@ -121,6 +121,7 @@ public enum ErrorCode {
   COURT_NOT_SUPPORTS_MODALITY("A quadra selecionada não suporta a modalidade solicitada."),
   COURT_NOT_FOUND("Quadra não encontrada."),
   COURT_ALREADY_EXISTS("Essa quadra já está cadastrada."),
+  COURT_CANNOT_BE_DISABLED_DUE_TO_FUTURE_RESERVATIONS("Não é possível desativar a quadra pois existem reservas futuras associadas a ela."),
 
   // Court - Name
   COURT_NAME_REQUIRED("O nome da quadra é obrigatório."),
@@ -150,6 +151,7 @@ public enum ErrorCode {
   // ==================== ERROS DE HORÁRIO DE FUNCIONAMENTO (OPERATING HOURS) ====================
   OPERATING_HOURS_ALREADY_EXISTS("Já existe um horário de funcionamento ativo para este dia da semana."),
   OPERATING_HOURS_ALREADY_DISABLED("O horário de funcionamento já está desativado."),
+  OPERATING_HOURS_CANNOT_BE_DISABLED_DUE_TO_RESERVATIONS("Não é possível desativar o horário de funcionamento pois existem reservas futuras associadas a ele."),
   OPERATING_HOURS_ALREADY_ENABLED("O horário de funcionamento já está ativado."),
   OPERATING_HOURS_NOT_FOUND("Horário de funcionamento não encontrado."),
   OPERATING_HOURS_APPLICABLE_NOT_FOUND("Não há horários de funcionamento aplicáveis para a data fornecida."),
@@ -211,9 +213,7 @@ public enum ErrorCode {
   BLOCKED_TIME_PAST_DATE_NOT_ALLOWED("Não é possível criar bloqueios para datas passadas. A data deve ser hoje ou no futuro."),
   BLOCKED_TIME_START_DATE_IN_PAST("A data inicial do bloqueio não pode estar no passado. A data deve ser hoje ou no futuro."),
   BLOCKED_TIME_START_DATE_AFTER_END_DATE("A data inicial não pode ser posterior à data final."),
-  BLOCKED_TIME_END_DATE_BEFORE_START_DATE("A data final do bloqueio não pode ser anterior à data inicial."),
   BLOCKED_TIME_END_DATE_IN_PAST("A data final do bloqueio não pode estar no passado."),
-  BLOCKED_TIME_MAX_DAYS_EXCEEDED("O período de bloqueio não pode exceder 365 dias consecutivos."),
 
   // BlockedTime - Validação de Input
   BLOCKED_TIME_COURT_IDS_REQUIRED("É obrigatório informar ao menos uma quadra para o bloqueio."),
@@ -221,7 +221,6 @@ public enum ErrorCode {
   BLOCKED_TIME_START_DATE_REQUIRED("A data inicial do bloqueio é obrigatória."),
   BLOCKED_TIME_IS_FULL_DAY_REQUIRED("É obrigatório informar se o bloqueio é para o dia todo."),
   BLOCKED_TIME_TIME_INTERVAL_REQUIRED_WHEN_NOT_FULL_DAY("O intervalo de tempo é obrigatório quando o bloqueio não é de dia inteiro."),
-  BLOCKED_TIME_PERIOD_REQUIRED("O período do bloqueio é obrigatório."),
 
   // BlockedTime - Description
   BLOCKED_TIME_DESCRIPTION_REQUIRED("A descrição do bloqueio é obrigatória."),
@@ -229,7 +228,6 @@ public enum ErrorCode {
 
   // BlockedTime - Admin
   BLOCKED_TIME_ADMIN_ID_REQUIRED("O ID do administrador que está bloqueando o horário é obrigatório."),
-  BLOCKED_TIME_ADMIN_REASON_REQUIRED("O motivo do cancelamento é obrigatório quando existem reservas conflitantes."),
 
   // BlockedTime - Preview e Cache
   BLOCKED_TIME_PREVIEW_KEY_REQUIRED("A chave do preview é obrigatória."),
@@ -237,6 +235,9 @@ public enum ErrorCode {
   BLOCKED_TIME_PREVIEW_NOT_FOUND("Preview não encontrado. Pode ter expirado após 5 minutos."),
   BLOCKED_TIME_PREVIEW_EXPIRED("O preview de bloqueio expirou. Gere um novo preview antes de confirmar."),
   BLOCKED_TIME_PREVIEW_OWNERSHIP_INVALID("Esta chave de preview não pertence a você. Não é possível usar um preview gerado por outro usuário."),
+  BLOCKED_TIME_DAYS_OF_WEEK_SIZE_INVALID("É necessário informar entre 1 e 7 dias da semana para bloqueios recorrentes."),
+  BLOCKED_TIME_TOO_MANY_OCCURRENCES("O bloqueio recorrente geraria muitas ocorrências. O limite máximo é de 1000 bloqueios (quadras × datas aplicáveis)."),
+  BLOCKED_TIME_OUTSIDE_OPERATING_HOURS("O intervalo de tempo informado está fora do horário de funcionamento de um ou mais dias selecionados. Verifique se o horário é válido para todos os dias."),
 
   // ==================== ERROS DE AGENDA (AGENDA ITEM) ====================
   AVAILABLE_MODALITY_IDS_REQUIRED("Erro interno: Não foi possível gerar a agenda. Nenhuma modalidade disponível encontrada para o horário agrupado."),

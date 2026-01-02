@@ -1,6 +1,6 @@
 package com.projetoExtensao.arenaMafia.application.operatingHours.usecase.imp;
 
-import com.projetoExtensao.arenaMafia.application.operatingHours.ports.OperatingHoursRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.operatingHours.port.OperatingHoursRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.operatingHours.usecase.FindAllOperatingHoursUseCase;
 import com.projetoExtensao.arenaMafia.domain.model.OperatingHours;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.specification.OperatingHoursSpecification;

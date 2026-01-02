@@ -1,8 +1,8 @@
 package com.projetoExtensao.arenaMafia.application.schedule.usecase.availabletime.imp;
 
 import com.projetoExtensao.arenaMafia.application.court.port.CourtRepositoryPort;
-import com.projetoExtensao.arenaMafia.application.operatingHours.ports.OperatingHoursRepositoryPort;
-import com.projetoExtensao.arenaMafia.application.priceRule.ports.PriceRuleRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.operatingHours.port.OperatingHoursRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.priceRule.port.PriceRuleRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.schedule.port.repository.ScheduleEntryRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.schedule.service.AvailableSlotGenerationService;
 import com.projetoExtensao.arenaMafia.application.schedule.usecase.availabletime.FindAllAvailableTimesUseCase;

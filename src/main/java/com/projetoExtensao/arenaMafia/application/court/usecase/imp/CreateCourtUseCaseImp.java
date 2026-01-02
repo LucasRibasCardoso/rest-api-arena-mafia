@@ -1,6 +1,6 @@
 package com.projetoExtensao.arenaMafia.application.court.usecase.imp;
 
-import com.projetoExtensao.arenaMafia.domain.dto.CourtWithModalitiesResult;
+import com.projetoExtensao.arenaMafia.application.court.aggregate.CourtWithModalities;
 import com.projetoExtensao.arenaMafia.application.court.port.CourtRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.court.usecase.CreateCourtUseCase;
 import com.projetoExtensao.arenaMafia.application.modality.port.ModalityRepositoryPort;
@@ -29,7 +29,7 @@ public class CreateCourtUseCaseImp implements CreateCourtUseCase {
   }
 
   @Override
-  public CourtWithModalitiesResult execute(CreateCourtRequestDto request) {
+  public CourtWithModalities execute(CreateCourtRequestDto request) {
     validateCourtAlreadyExists(request.name());
     List<Modality> modalities = validateAndRetrieveModalities(request.modalityIds());
 
@@ -38,7 +38,7 @@ public class CreateCourtUseCaseImp implements CreateCourtUseCase {
             request.name(), request.description(), request.offsetMinutes(), request.modalityIds());
 
     Court savedCourt = courtRepository.save(court);
-    return new CourtWithModalitiesResult(savedCourt, modalities);
+    return new CourtWithModalities(savedCourt, modalities);
   }
 
   private List<Modality> validateAndRetrieveModalities(Set<UUID> modalityIds) {

@@ -43,6 +43,13 @@ patch:
                 errorCode: "OPERATING_HOURS_ALREADY_DISABLED"
                 developerMessage: "O horário de funcionamento já está desativado."
                 path: "/api/admin/operating-hours/550e8400-e29b-41d4-a716-446655440000"
+            operatingHoursCannotBeDisabled:
+              value:
+                timestamp: "2025-10-09T12:30:00Z"
+                status: 409
+                errorCode: "OPERATING_HOURS_CANNOT_BE_DISABLED_DUE_TO_RESERVATIONS"
+                developerMessage: "Não é possível desativar o horário de funcionamento pois existem reservas futuras associadas a ele."
+                path: "/api/admin/operating-hours/550e8400-e29b-41d4-a716-446655440000"
     429:
       $ref: "../../../components/responses/TooManyRequestsError.yml"
     500:

@@ -3,6 +3,7 @@ package com.projetoExtensao.arenaMafia.infrastructure.adapter.repository;
 import com.projetoExtensao.arenaMafia.application.schedule.port.repository.ScheduleEntryRepositoryPort;
 import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 import com.projetoExtensao.arenaMafia.domain.exception.notFound.ScheduleNotFoundException;
+import com.projetoExtensao.arenaMafia.domain.model.enums.DayOfWeek;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.ScheduleEntry;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.ScheduleEntryEntity;
@@ -13,7 +14,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Repository
 public class ScheduleEntryRepositoryAdapter implements ScheduleEntryRepositoryPort {
@@ -72,8 +75,25 @@ public class ScheduleEntryRepositoryAdapter implements ScheduleEntryRepositoryPo
       List<UUID> courtIds,
       LocalDate startDate,
       LocalDate endDate,
-      TimeInterval timeInterval) {
-    var entities = scheduleEntryJpaRepository.findActiveSchedulesByCourtAndDateRange(courtIds, startDate, endDate);
+      TimeInterval timeInterval,
+      Set<DayOfWeek> selectedDaysOfWeek) {
+
+    // Converter DayOfWeek do domínio para valores SQL (1=Sunday, 2=Monday, ..., 7=Saturday)
+    Set<Integer> sqlDaysOfWeek = null;
+    if (selectedDaysOfWeek != null && !selectedDaysOfWeek.isEmpty()) {
+      sqlDaysOfWeek = selectedDaysOfWeek.stream()
+          .map(DayOfWeek::getSqlDayOfWeekValue)
+          .collect(Collectors.toSet());
+    }
+
+    // Buscar agendamentos filtrados por data e dia da semana (no SQL)
+    List<ScheduleEntryEntity> entities = scheduleEntryJpaRepository.findConflictingSchedules(
+        courtIds,
+        startDate,
+        endDate,
+        selectedDaysOfWeek,
+        sqlDaysOfWeek
+    );
 
     return entities.stream()
         .map(scheduleEntryMapper::toDomain)

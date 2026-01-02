@@ -5,8 +5,8 @@ import static io.restassured.RestAssured.given;
 import com.projetoExtensao.arenaMafia.application.auth.port.repository.RefreshTokenRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.court.port.CourtRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.modality.port.ModalityRepositoryPort;
-import com.projetoExtensao.arenaMafia.application.operatingHours.ports.OperatingHoursRepositoryPort;
-import com.projetoExtensao.arenaMafia.application.priceRule.ports.PriceRuleRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.operatingHours.port.OperatingHoursRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.priceRule.port.PriceRuleRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.schedule.port.repository.ScheduleEntryRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.security.port.gateway.PasswordEncoderPort;
 import com.projetoExtensao.arenaMafia.application.user.port.repository.UserRepositoryPort;
@@ -23,7 +23,6 @@ import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.repository.UserJpaRepository;
 import com.projetoExtensao.arenaMafia.infrastructure.web.auth.dto.request.LoginRequestDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.auth.dto.response.AuthResponseDto;
-import com.projetoExtensao.arenaMafia.infrastructure.web.schedule.dto.response.ScheduleEntryResponseDto;
 import io.restassured.http.Cookie;
 import io.restassured.response.Response;
 import java.math.BigDecimal;
@@ -391,6 +390,11 @@ public abstract class BaseTestContainersConfig {
     OperatingHours operatingHours4 = OperatingHours.create(inactiveDays, timeIntervalInactive);
     operatingHours4.disable();
     operatingHoursRepository.save(operatingHours4);
+  }
+
+  public OperatingHours mockPersistOperatingHoursFixedInterval(Set<DayOfWeek> daysOfWeeks, TimeInterval timeInterval) {
+    OperatingHours operatingHours = OperatingHours.create(daysOfWeeks, timeInterval);
+    return operatingHoursRepository.save(operatingHours);
   }
 
   public OperatingHours mockPersistOperatingHours() {

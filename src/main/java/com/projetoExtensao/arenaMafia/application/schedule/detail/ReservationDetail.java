@@ -1,4 +1,4 @@
-package com.projetoExtensao.arenaMafia.domain.dto;
+package com.projetoExtensao.arenaMafia.application.schedule.detail;
 
 import com.projetoExtensao.arenaMafia.domain.model.enums.ReservationStatus;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
@@ -9,6 +9,7 @@ import java.util.UUID;
 
 public record ReservationDetail(
     UUID reservationId,
+    UUID userId,
     UUID courtId,
     String username,
     String userPhone,

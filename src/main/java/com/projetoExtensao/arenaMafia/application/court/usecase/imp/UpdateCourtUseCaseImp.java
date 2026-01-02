@@ -1,6 +1,6 @@
 package com.projetoExtensao.arenaMafia.application.court.usecase.imp;
 
-import com.projetoExtensao.arenaMafia.domain.dto.CourtWithModalitiesResult;
+import com.projetoExtensao.arenaMafia.application.court.aggregate.CourtWithModalities;
 import com.projetoExtensao.arenaMafia.application.court.port.CourtRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.court.usecase.UpdateCourtUseCase;
 import com.projetoExtensao.arenaMafia.application.modality.port.ModalityRepositoryPort;
@@ -29,14 +29,14 @@ public class UpdateCourtUseCaseImp implements UpdateCourtUseCase {
   }
 
   @Override
-  public CourtWithModalitiesResult execute(UUID courtId, UpdateCourtRequestDto request) {
+  public CourtWithModalities execute(UUID courtId, UpdateCourtRequestDto request) {
     Court court = courtRepositoryPort.findByIdOrElseThrow(courtId);
 
     updateCourtFields(court, request);
     Court updatedCourt = courtRepositoryPort.save(court);
 
     List<Modality> modalities = modalityRepositoryPort.findAllByIds(updatedCourt.getModalityIds());
-    return new CourtWithModalitiesResult(updatedCourt, modalities);
+    return new CourtWithModalities(updatedCourt, modalities);
   }
 
   private void updateCourtFields(Court court, UpdateCourtRequestDto request) {

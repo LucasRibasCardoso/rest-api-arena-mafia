@@ -1,6 +1,6 @@
 package com.projetoExtensao.arenaMafia.application.court.usecase.imp;
 
-import com.projetoExtensao.arenaMafia.domain.dto.CourtWithModalitiesResult;
+import com.projetoExtensao.arenaMafia.application.court.aggregate.CourtWithModalities;
 import com.projetoExtensao.arenaMafia.application.court.port.CourtRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.court.usecase.FindAllCourtUseCase;
 import com.projetoExtensao.arenaMafia.application.modality.port.ModalityRepositoryPort;
@@ -32,7 +32,7 @@ public class FindAllCourtUseCaseImp implements FindAllCourtUseCase {
   }
 
   @Override
-  public List<CourtWithModalitiesResult> execute(Boolean isActive) {
+  public List<CourtWithModalities> execute(Boolean isActive) {
     Specification<CourtEntity> spec = CourtSpecification.byActiveStatus(isActive);
     List<Court> courts = courtRepositoryPort.findAll(spec);
 
@@ -60,7 +60,7 @@ public class FindAllCourtUseCaseImp implements FindAllCourtUseCase {
     return modalities.stream().collect(Collectors.toMap(Modality::getId, modality -> modality));
   }
 
-  private List<CourtWithModalitiesResult> enrichCourtsWithModalities(
+  private List<CourtWithModalities> enrichCourtsWithModalities(
       List<Court> courts, Map<UUID, Modality> modalityMap) {
 
     return courts.stream()
@@ -68,11 +68,11 @@ public class FindAllCourtUseCaseImp implements FindAllCourtUseCase {
         .collect(Collectors.toList());
   }
 
-  private CourtWithModalitiesResult enrichSingleCourt(
+  private CourtWithModalities enrichSingleCourt(
       Court court, Map<UUID, Modality> modalityMap) {
 
     List<Modality> courtModalities = getModalitiesForCourt(court, modalityMap);
-    return new CourtWithModalitiesResult(court, courtModalities);
+    return new CourtWithModalities(court, courtModalities);
   }
 
   private List<Modality> getModalitiesForCourt(Court court, Map<UUID, Modality> modalityMap) {

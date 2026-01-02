@@ -1,4 +1,4 @@
-package com.projetoExtensao.arenaMafia.domain.dto;
+package com.projetoExtensao.arenaMafia.application.auth.result;
 
 import com.projetoExtensao.arenaMafia.domain.model.User;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.RefreshTokenVO;

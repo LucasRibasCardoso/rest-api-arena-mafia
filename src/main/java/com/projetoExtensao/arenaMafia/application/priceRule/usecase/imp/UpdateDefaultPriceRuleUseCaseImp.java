@@ -1,6 +1,6 @@
 package com.projetoExtensao.arenaMafia.application.priceRule.usecase.imp;
 
-import com.projetoExtensao.arenaMafia.application.priceRule.ports.PriceRuleRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.priceRule.port.PriceRuleRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.priceRule.usecase.UpdateDefaultPriceRuleUseCase;
 import com.projetoExtensao.arenaMafia.domain.model.PriceRule;
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.priceRule.request.UpdateDefaultPriceRuleRequestDto;

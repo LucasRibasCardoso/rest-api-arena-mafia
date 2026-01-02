@@ -3,7 +3,7 @@ INSERT INTO tb_schedule_entries (id, court_id, date, start_time, end_time, entry
        -- HOJE - Quadra A (Reservations)
        ('3e7a9b2c-5d8f-4c3e-9a1b-7f6e4d2c1a0b', 'a1b2c3d4-e5f6-7890-abcd-ef1234567890', CURRENT_DATE, '08:00:00', '09:00:00', 'RESERVATION', CURRENT_TIMESTAMP),
        ('8f1c4e9a-2b7d-4a5c-8e3f-1d6b9c4a7e2f', 'a1b2c3d4-e5f6-7890-abcd-ef1234567890', CURRENT_DATE, '10:00:00', '11:00:00', 'RESERVATION', CURRENT_TIMESTAMP),
-       ('c2d5e8f1-9a4b-4c7e-8d3a-5f6b2e1c9a7d', 'a1b2c3d4-e5f6-7890-abcd-ef1234567890', CURRENT_DATE, '14:00:00', '15:00:00', 'RESERVATION', CURRENT_TIMESTAMP),
+       ('c2d5e8f1-9a4b-4c7e-8d3a-5f6b2e1c9a7d', 'a1b2c3d4-e5f6-7890-abcd-ef1234567890', CURRENT_DATE, '15:00:00', '16:00:00', 'RESERVATION', CURRENT_TIMESTAMP),
 
        -- HOJE - Quadra A (BlockedTime - 1h específica)
        ('f1a2b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5c', 'a1b2c3d4-e5f6-7890-abcd-ef1234567890', CURRENT_DATE, '16:00:00', '17:00:00', 'BLOCKED_TIME', CURRENT_TIMESTAMP),

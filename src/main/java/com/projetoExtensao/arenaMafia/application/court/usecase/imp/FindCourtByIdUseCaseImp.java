@@ -1,6 +1,6 @@
 package com.projetoExtensao.arenaMafia.application.court.usecase.imp;
 
-import com.projetoExtensao.arenaMafia.domain.dto.CourtWithModalitiesResult;
+import com.projetoExtensao.arenaMafia.application.court.aggregate.CourtWithModalities;
 import com.projetoExtensao.arenaMafia.application.court.port.CourtRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.court.usecase.FindCourtByIdUseCase;
 import com.projetoExtensao.arenaMafia.application.modality.port.ModalityRepositoryPort;
@@ -25,9 +25,9 @@ public class FindCourtByIdUseCaseImp implements FindCourtByIdUseCase {
   }
 
   @Override
-  public CourtWithModalitiesResult execute(UUID courtId) {
+  public CourtWithModalities execute(UUID courtId) {
     Court court = courtRepositoryPort.findByIdOrElseThrow(courtId);
     List<Modality> modalities = modalityRepositoryPort.findAllByIds(court.getModalityIds());
-    return new CourtWithModalitiesResult(court, modalities);
+    return new CourtWithModalities(court, modalities);
   }
 }

@@ -1,6 +1,6 @@
 package com.projetoExtensao.arenaMafia.application.priceRule.usecase.imp;
 
-import com.projetoExtensao.arenaMafia.application.priceRule.ports.PriceRuleRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.priceRule.port.PriceRuleRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.priceRule.usecase.DisablePriceRuleUseCase;
 import com.projetoExtensao.arenaMafia.domain.model.PriceRule;
 import java.util.UUID;

@@ -8,7 +8,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.projetoExtensao.arenaMafia.application.court.port.CourtRepositoryPort;
 import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 import com.projetoExtensao.arenaMafia.domain.model.Court;
+import com.projetoExtensao.arenaMafia.domain.model.User;
 import com.projetoExtensao.arenaMafia.domain.model.enums.OffsetMinutes;
+import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.court.request.CreateCourtRequestDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.court.request.UpdateCourtRequestDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.court.response.AdminCourtResponseDto;
@@ -18,6 +20,10 @@ import com.projetoExtensao.arenaMafia.integration.config.WebIntegrationTestConfi
 import com.projetoExtensao.arenaMafia.integration.config.util.court.InvalidCourtNameProvider;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.specification.RequestSpecification;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -42,6 +48,7 @@ public class AdminCourtControllerIntegrationTest extends WebIntegrationTestConfi
   @Autowired private CourtRepositoryPort courtRepository;
   private RequestSpecification specification;
   private String accessToken;
+  private UUID authenticatedAdminId;
 
   @BeforeEach
   void setup() {
@@ -53,7 +60,9 @@ public class AdminCourtControllerIntegrationTest extends WebIntegrationTestConfi
             .setContentType(MediaType.APPLICATION_JSON_VALUE)
             .build();
 
-    mockPersistAdminUser();
+    User admin = mockPersistAdminUser();
+    authenticatedAdminId = admin.getId();
+
     AuthTokensTest tokensTest = mockLogin(defaultUsername, defaultPassword);
     accessToken = "Bearer " + tokensTest.accessToken();
   }
@@ -918,6 +927,41 @@ public class AdminCourtControllerIntegrationTest extends WebIntegrationTestConfi
                 .as(ErrorResponseDto.class);
 
         ErrorCode errorCode = ErrorCode.COURT_ALREADY_DISABLED;
+
+        assertThat(response.status()).isEqualTo(409);
+        assertThat(response.path()).isEqualTo("/api/admin/courts/" + court.getId() + "/disable");
+        assertThat(response.errorCode()).isEqualTo(errorCode.name());
+        assertThat(response.developerMessage()).isEqualTo(errorCode.getMessage());
+      }
+
+      @Test
+      @DisplayName("Tenta desabilitar uma quadra com reservas futuras")
+      void shouldReturn409_whenDisablingCourtWithFutureReservations() {
+        // Arrange
+        var modality = mockPersistModality("Tennis");
+        var court = mockPersistCourt("Quadra A", modality);
+
+        mockPersistReservationByUser(
+            modality.getId(),
+            court.getId(),
+            LocalDate.now().plusDays(1),
+            new TimeInterval(LocalTime.of(8, 0), LocalTime.of(9, 0)),
+            BigDecimal.valueOf(50),
+            authenticatedAdminId);
+
+        // Act & Assert
+        var response =
+            given()
+                .spec(specification)
+                .header("Authorization", accessToken)
+                .when()
+                .patch("/{courtId}/disable", court.getId())
+                .then()
+                .statusCode(409)
+                .extract()
+                .as(ErrorResponseDto.class);
+
+        ErrorCode errorCode = ErrorCode.COURT_CANNOT_BE_DISABLED_DUE_TO_FUTURE_RESERVATIONS;
 
         assertThat(response.status()).isEqualTo(409);
         assertThat(response.path()).isEqualTo("/api/admin/courts/" + court.getId() + "/disable");

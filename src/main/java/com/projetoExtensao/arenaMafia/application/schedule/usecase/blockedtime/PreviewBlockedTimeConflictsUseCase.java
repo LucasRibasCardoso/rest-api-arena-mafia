@@ -1,6 +1,6 @@
 package com.projetoExtensao.arenaMafia.application.schedule.usecase.blockedtime;
 
-import com.projetoExtensao.arenaMafia.domain.dto.BlockedTimeConflictsPreview;
+import com.projetoExtensao.arenaMafia.application.schedule.preview.BlockedTimeConflictsPreview;
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.blockedtime.request.BlockedTimeConflictsPreviewRequestDto;
 
 import java.util.UUID;

@@ -1,6 +1,6 @@
 package com.projetoExtensao.arenaMafia.application.auth.usecase.accountverification.imp;
 
-import com.projetoExtensao.arenaMafia.domain.dto.AuthResult;
+import com.projetoExtensao.arenaMafia.application.auth.result.AuthResult;
 import com.projetoExtensao.arenaMafia.application.auth.port.gateway.AuthPort;
 import com.projetoExtensao.arenaMafia.application.auth.port.gateway.OtpSessionPort;
 import com.projetoExtensao.arenaMafia.application.auth.usecase.accountverification.VerifyAccountUseCase;

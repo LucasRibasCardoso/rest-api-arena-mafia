@@ -1,6 +1,6 @@
 package com.projetoExtensao.arenaMafia.infrastructure.persistence.mapper;
 
-import com.projetoExtensao.arenaMafia.domain.dto.ReservationDetail;
+import com.projetoExtensao.arenaMafia.application.schedule.detail.ReservationDetail;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.Reservation;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.ReservationEntity;

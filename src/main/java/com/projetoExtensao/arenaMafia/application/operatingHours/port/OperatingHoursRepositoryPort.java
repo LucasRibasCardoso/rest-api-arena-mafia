@@ -1,4 +1,4 @@
-package com.projetoExtensao.arenaMafia.application.operatingHours.ports;
+package com.projetoExtensao.arenaMafia.application.operatingHours.port;
 
 import com.projetoExtensao.arenaMafia.domain.model.OperatingHours;
 import com.projetoExtensao.arenaMafia.domain.model.enums.DayOfWeek;

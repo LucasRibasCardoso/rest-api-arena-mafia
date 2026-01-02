@@ -84,6 +84,20 @@ public class DynamicReservationCompletionScheduler {
     logger.info("INICIANDO: Reagendamento de reservas confirmadas existentes");
 
     LocalDateTime now = LocalDateTime.now(ZONE_ID);
+    List<Reservation> expiredReservations =
+        reservationRepositoryPort.findAllConfirmedReservationsWithEndTimeBeforeOrEqual(now);
+
+    for (Reservation reservation : expiredReservations) {
+      try {
+        completeReservationUseCase.execute(reservation.getId());
+      } catch (Exception e) {
+        logger.warn(
+            "Falha ao completar reserva {} durante startup: {}",
+            reservation.getId(),
+            e.getMessage());
+      }
+    }
+
     List<Reservation> confirmedReservations =
         reservationRepositoryPort.findAllConfirmedReservationsWithEndTimeAfter(now);
 

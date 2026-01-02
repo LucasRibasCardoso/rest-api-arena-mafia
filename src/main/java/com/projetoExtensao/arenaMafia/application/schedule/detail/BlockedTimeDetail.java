@@ -1,4 +1,4 @@
-package com.projetoExtensao.arenaMafia.domain.dto;
+package com.projetoExtensao.arenaMafia.application.schedule.detail;
 
 import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
 import java.time.LocalDate;

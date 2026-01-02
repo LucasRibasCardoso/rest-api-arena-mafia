@@ -1,6 +1,6 @@
 package com.projetoExtensao.arenaMafia.infrastructure.adapter.repository;
 
-import com.projetoExtensao.arenaMafia.application.priceRule.ports.PriceRuleRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.priceRule.port.PriceRuleRepositoryPort;
 import com.projetoExtensao.arenaMafia.domain.exception.notFound.DefaultPriceRuleNotFoundException;
 import com.projetoExtensao.arenaMafia.domain.exception.notFound.PriceRuleNotFoundException;
 import com.projetoExtensao.arenaMafia.domain.model.PriceRule;

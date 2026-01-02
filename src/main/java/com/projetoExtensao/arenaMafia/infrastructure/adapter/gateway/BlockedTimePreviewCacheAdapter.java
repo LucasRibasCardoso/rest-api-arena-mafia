@@ -3,12 +3,15 @@ package com.projetoExtensao.arenaMafia.infrastructure.adapter.gateway;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.projetoExtensao.arenaMafia.application.schedule.port.gateway.BlockedTimePreviewCachePort;
-import com.projetoExtensao.arenaMafia.domain.dto.BlockedTimeConflictsPreview;
+import com.projetoExtensao.arenaMafia.application.schedule.preview.BlockedTimeConflictsPreview;
+import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidPreviewKeyException;
 import com.projetoExtensao.arenaMafia.domain.exception.forbidden.InvalidPreviewOwnershipException;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.UUID;
+
+import com.projetoExtensao.arenaMafia.domain.exception.notFound.BlockedTimeNotFoundException;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
@@ -38,18 +41,16 @@ public class BlockedTimePreviewCacheAdapter implements BlockedTimePreviewCachePo
   }
 
   @Override
-  public Optional<BlockedTimeConflictsPreview> find(String key) {
+  public BlockedTimeConflictsPreview getPreviewOrElseThrow(String key) {
     String jsonValue = redisTemplate.opsForValue().get(key);
     if (jsonValue == null) {
-      return Optional.empty();
+      throw new BlockedTimeNotFoundException(ErrorCode.BLOCKED_TIME_PREVIEW_NOT_FOUND);
     }
 
     try {
-      BlockedTimeConflictsPreview preview =
-          objectMapper.readValue(jsonValue, BlockedTimeConflictsPreview.class);
-      return Optional.of(preview);
+      return objectMapper.readValue(jsonValue, BlockedTimeConflictsPreview.class);
     } catch (JsonProcessingException e) {
-      return Optional.empty();
+      throw new BlockedTimeNotFoundException(ErrorCode.BLOCKED_TIME_PREVIEW_NOT_FOUND);
     }
   }
 

@@ -1,6 +1,6 @@
 package com.projetoExtensao.arenaMafia.application.schedule.port.gateway;
 
-import com.projetoExtensao.arenaMafia.domain.dto.BlockedTimeConflictsPreview;
+import com.projetoExtensao.arenaMafia.application.schedule.preview.BlockedTimeConflictsPreview;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -20,8 +20,9 @@ public interface BlockedTimePreviewCachePort {
    *
    * @param key chave do preview
    * @return preview se encontrado
+   * @throws com.projetoExtensao.arenaMafia.domain.exception.notFound.BlockedTimeNotFoundException se o preview não for encontrado
    */
-  Optional<BlockedTimeConflictsPreview> find(String key);
+  BlockedTimeConflictsPreview getPreviewOrElseThrow(String key);
 
   /**
    * Remove um preview do cache.

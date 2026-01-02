@@ -1,4 +1,4 @@
-package com.projetoExtensao.arenaMafia.application.priceRule.ports;
+package com.projetoExtensao.arenaMafia.application.priceRule.port;
 
 import com.projetoExtensao.arenaMafia.domain.model.PriceRule;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.PriceRuleEntity;

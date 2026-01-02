@@ -1,6 +1,6 @@
 package com.projetoExtensao.arenaMafia.application.priceRule.usecase.imp;
 
-import com.projetoExtensao.arenaMafia.application.priceRule.ports.PriceRuleRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.priceRule.port.PriceRuleRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.priceRule.usecase.CreatePriceRuleUseCase;
 import com.projetoExtensao.arenaMafia.domain.exception.conflict.PriceRuleAlreadyExistsException;
 import com.projetoExtensao.arenaMafia.domain.model.PriceRule;

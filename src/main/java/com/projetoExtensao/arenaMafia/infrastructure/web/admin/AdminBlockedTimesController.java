@@ -1,10 +1,14 @@
 package com.projetoExtensao.arenaMafia.infrastructure.web.admin;
 
-import com.projetoExtensao.arenaMafia.domain.dto.BlockedTimeConflictsPreview;
+import com.projetoExtensao.arenaMafia.application.schedule.preview.BlockedTimeConflictsPreview;
+import com.projetoExtensao.arenaMafia.application.schedule.result.ConfirmBlockedTimeResult;
+import com.projetoExtensao.arenaMafia.application.schedule.usecase.blockedtime.ConfirmBlockedTimeUseCase;
 import com.projetoExtensao.arenaMafia.application.schedule.usecase.blockedtime.PreviewBlockedTimeConflictsUseCase;
 import com.projetoExtensao.arenaMafia.infrastructure.security.rateLimit.CustomRateLimiter;
 import com.projetoExtensao.arenaMafia.infrastructure.security.userDetails.UserDetailsAdapter;
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.blockedtime.request.BlockedTimeConflictsPreviewRequestDto;
+import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.blockedtime.request.BlockedTimeConfirmRequestDto;
+import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.blockedtime.response.BlockedTimeConfirmResponseDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.blockedtime.response.BlockedTimeConflictsPreviewResponseDto;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -20,10 +24,13 @@ import java.util.UUID;
 public class AdminBlockedTimesController {
 
   private final PreviewBlockedTimeConflictsUseCase previewBlockedTimeConflictsUseCase;
+  private final ConfirmBlockedTimeUseCase confirmBlockedTimeUseCase;
 
   public AdminBlockedTimesController(
-      PreviewBlockedTimeConflictsUseCase previewBlockedTimeConflictsUseCase) {
+      PreviewBlockedTimeConflictsUseCase previewBlockedTimeConflictsUseCase,
+      ConfirmBlockedTimeUseCase confirmBlockedTimeUseCase) {
     this.previewBlockedTimeConflictsUseCase = previewBlockedTimeConflictsUseCase;
+    this.confirmBlockedTimeUseCase = confirmBlockedTimeUseCase;
   }
 
   @PostMapping("/preview-conflicts")
@@ -34,8 +41,22 @@ public class AdminBlockedTimesController {
 
     UUID adminId = authenticatedAdmin.getUser().getId();
     BlockedTimeConflictsPreview preview = previewBlockedTimeConflictsUseCase.execute(requestDto, adminId);
-    BlockedTimeConflictsPreviewResponseDto response = buildResponseDto(preview);
+    BlockedTimeConflictsPreviewResponseDto response = buildPreviewResponseDto(preview);
+
     return ResponseEntity.ok(response);
+  }
+
+  @PostMapping("/confirm")
+  @CustomRateLimiter(limiterName = "globalLimiter")
+  public ResponseEntity<BlockedTimeConfirmResponseDto> createBlockedTime(
+      @AuthenticationPrincipal UserDetailsAdapter authenticatedAdmin,
+      @RequestBody @Valid BlockedTimeConfirmRequestDto requestDto) {
+
+    UUID adminId = authenticatedAdmin.getUser().getId();
+    ConfirmBlockedTimeResult result = confirmBlockedTimeUseCase.execute(adminId, requestDto);
+    BlockedTimeConfirmResponseDto responseDto = buildConfirmResponseDto(result);
+
+    return ResponseEntity.ok(responseDto);
   }
 
   /**
@@ -44,18 +65,33 @@ public class AdminBlockedTimesController {
    * @param preview O preview de conflitos gerado pelo caso de uso.
    * @return O DTO de resposta contendo os detalhes dos conflitos.
    */
-  private BlockedTimeConflictsPreviewResponseDto buildResponseDto(
-      BlockedTimeConflictsPreview preview) {
+  private BlockedTimeConflictsPreviewResponseDto buildPreviewResponseDto(BlockedTimeConflictsPreview preview) {
+
     return new BlockedTimeConflictsPreviewResponseDto(
         preview.previewKey(),
         preview.usersAffected(),
         preview.blockedTimesAffected(),
         preview.reservationsAffected(),
         preview.conflictingBlockedTimes(),
-        preview.conflictingReservations());
+        preview.conflictingReservations(),
+        preview.inProgressReservations());
   }
 
-  // TODO: Implementar endpoint POST para cadastrar novos horários bloqueados
+  /**
+   * Monta o DTO de resposta a partir do resultado da confirmação de criação de bloqueio.
+   *
+   * @param result O resultado da confirmação gerado pelo caso de uso.
+   * @return O DTO de resposta contendo os detalhes da operação.
+   */
+  private BlockedTimeConfirmResponseDto buildConfirmResponseDto(ConfirmBlockedTimeResult result) {
+    return new BlockedTimeConfirmResponseDto(
+        result.blockedTimesCreated(),
+        result.totalBlockedTimesCreated(),
+        result.reservationsCancelled(),
+        result.blockedTimesCancelled(),
+        result.usersAffected()
+    );
+  }
 
   // TODO: Implementar endpoint DELETE para remover horários bloqueados existentes
 

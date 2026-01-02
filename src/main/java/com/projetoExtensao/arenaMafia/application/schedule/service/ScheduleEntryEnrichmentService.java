@@ -3,9 +3,9 @@ package com.projetoExtensao.arenaMafia.application.schedule.service;
 import com.projetoExtensao.arenaMafia.application.court.port.CourtRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.modality.port.ModalityRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.user.port.repository.UserRepositoryPort;
-import com.projetoExtensao.arenaMafia.domain.dto.BlockedTimeDetail;
-import com.projetoExtensao.arenaMafia.domain.dto.ReservationDetail;
-import com.projetoExtensao.arenaMafia.domain.dto.ScheduleDetail;
+import com.projetoExtensao.arenaMafia.application.schedule.detail.BlockedTimeDetail;
+import com.projetoExtensao.arenaMafia.application.schedule.detail.ReservationDetail;
+import com.projetoExtensao.arenaMafia.application.schedule.detail.ScheduleDetail;
 import com.projetoExtensao.arenaMafia.domain.model.Court;
 import com.projetoExtensao.arenaMafia.domain.model.Modality;
 import com.projetoExtensao.arenaMafia.domain.model.User;
@@ -141,6 +141,7 @@ public class ScheduleEntryEnrichmentService {
 
     return new ReservationDetail(
         reservation.getId(),
+        reservation.getUserId(),
         reservation.getCourtId(),
         user.getFullName() != null ? user.getFullName() : "Usuário Desconhecido",
         user.getPhone() != null ? user.getPhone() : "Telefone Não Informado",

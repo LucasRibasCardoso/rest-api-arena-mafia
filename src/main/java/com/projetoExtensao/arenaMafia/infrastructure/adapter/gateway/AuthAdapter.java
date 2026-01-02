@@ -1,6 +1,6 @@
 package com.projetoExtensao.arenaMafia.infrastructure.adapter.gateway;
 
-import com.projetoExtensao.arenaMafia.domain.dto.AuthResult;
+import com.projetoExtensao.arenaMafia.application.auth.result.AuthResult;
 import com.projetoExtensao.arenaMafia.application.auth.port.gateway.AuthPort;
 import com.projetoExtensao.arenaMafia.application.auth.port.repository.RefreshTokenRepositoryPort;
 import com.projetoExtensao.arenaMafia.domain.exception.unauthorized.InvalidCredentialsException;
