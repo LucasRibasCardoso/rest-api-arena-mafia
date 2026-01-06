@@ -7,8 +7,9 @@ import jakarta.validation.ConstraintValidatorContext;
 import java.lang.reflect.Field;
 
 /**
- * Validador customizado que garante que timeInterval seja fornecido quando isFullDay = false.
- * Quando isFullDay = true, o timeInterval é opcional (será calculado baseado nos OperatingHours).
+ * Validador customizado que garante a consistência entre isFullDay e timeInterval:
+ * - Se isFullDay = false → timeInterval é obrigatório
+ * - Se isFullDay = true → timeInterval deve ser null (será calculado baseado nos OperatingHours)
  */
 public class ConditionalTimeIntervalValidator
     implements ConstraintValidator<ValidConditionalTimeInterval, Object> {
@@ -28,7 +29,7 @@ public class ConditionalTimeIntervalValidator
         return true;
       }
 
-      // Se isFullDay = false, então timeInterval é obrigatório
+      // Caso 1: Se isFullDay = false, então timeInterval é obrigatório
       if (!isFullDay && timeInterval == null) {
         context.disableDefaultConstraintViolation();
         context
@@ -39,10 +40,20 @@ public class ConditionalTimeIntervalValidator
         return false;
       }
 
+      // Caso 2: Se isFullDay = true, então timeInterval deve ser null
+      if (isFullDay && timeInterval != null) {
+        context.disableDefaultConstraintViolation();
+        context
+            .buildConstraintViolationWithTemplate(
+                "BLOCKED_TIME_TIME_INTERVAL_NOT_ALLOWED_WHEN_FULL_DAY")
+            .addPropertyNode("timeInterval")
+            .addConstraintViolation();
+        return false;
+      }
+
       return true;
 
     } catch (Exception e) {
-      // Em caso de erro na reflexão, considera inválido
       return false;
     }
   }

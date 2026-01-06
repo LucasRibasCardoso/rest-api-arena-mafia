@@ -6,9 +6,9 @@ import java.util.List;
 
 public record BlockedTimeConflictsPreviewResponseDto(
     String previewKey,
-    Integer usersAffected,
-    Integer blockedTimesAffected,
-    Integer reservationsAffected,
+    int usersAffected,
+    int blockedTimesAffected,
+    int reservationsAffected,
     List<BlockedTimeDetail> conflictingBlockedTimes,
     List<ReservationDetail> conflictingReservations,
     List<ReservationDetail> inProgressReservations) {}

@@ -78,11 +78,10 @@ public class ScheduleEntryRepositoryAdapter implements ScheduleEntryRepositoryPo
       TimeInterval timeInterval,
       Set<DayOfWeek> selectedDaysOfWeek) {
 
-    // Converter DayOfWeek do domínio para valores SQL (1=Sunday, 2=Monday, ..., 7=Saturday)
-    Set<Integer> sqlDaysOfWeek = null;
+    Set<Integer> postgresDaysOfWeek = null;
     if (selectedDaysOfWeek != null && !selectedDaysOfWeek.isEmpty()) {
-      sqlDaysOfWeek = selectedDaysOfWeek.stream()
-          .map(DayOfWeek::getSqlDayOfWeekValue)
+      postgresDaysOfWeek = selectedDaysOfWeek.stream()
+          .map(DayOfWeek::getPostgresDayOfWeekValue)
           .collect(Collectors.toSet());
     }
 
@@ -92,7 +91,7 @@ public class ScheduleEntryRepositoryAdapter implements ScheduleEntryRepositoryPo
         startDate,
         endDate,
         selectedDaysOfWeek,
-        sqlDaysOfWeek
+        postgresDaysOfWeek
     );
 
     return entities.stream()

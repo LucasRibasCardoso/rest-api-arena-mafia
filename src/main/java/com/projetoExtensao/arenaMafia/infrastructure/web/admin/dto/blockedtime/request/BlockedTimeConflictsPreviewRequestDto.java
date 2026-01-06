@@ -4,6 +4,7 @@ import com.projetoExtensao.arenaMafia.domain.model.enums.DayOfWeek;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.validator.ValidConditionalTimeInterval;
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.validator.ValidDateRange;
+import com.projetoExtensao.arenaMafia.infrastructure.web.admin.validator.ValidConditionalSelectedDaysOfWeek;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -35,6 +36,7 @@ import java.util.UUID;
  */
 @ValidDateRange
 @ValidConditionalTimeInterval
+@ValidConditionalSelectedDaysOfWeek
 public record BlockedTimeConflictsPreviewRequestDto(
     @NotNull(message = "BLOCKED_TIME_COURT_IDS_REQUIRED")
     @Size(min = 1, max = 20, message = "BLOCKED_TIME_COURT_IDS_SIZE_INVALID")

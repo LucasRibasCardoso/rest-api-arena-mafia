@@ -38,22 +38,23 @@ public enum DayOfWeek {
     return DayOfWeek.valueOf(javaDayOfWeek.name());
   }
 
+
   /**
-   * Converte o DayOfWeek para o valor usado pela função SQL DAYOFWEEK.
+   * Converte o DayOfWeek para o valor usado pela função PostgreSQL EXTRACT(DOW).
    *
-   * <p>SQL DAYOFWEEK retorna: 1=Sunday, 2=Monday, 3=Tuesday, ..., 7=Saturday
+   * <p>PostgreSQL EXTRACT(DOW) retorna: 0=Sunday, 1=Monday, 2=Tuesday, ..., 6=Saturday
    *
-   * @return valor inteiro correspondente ao dia da semana no SQL
+   * @return valor inteiro correspondente ao dia da semana no PostgreSQL
    */
-  public int getSqlDayOfWeekValue() {
+  public int getPostgresDayOfWeekValue() {
     return switch (this) {
-      case SUNDAY -> 1;
-      case MONDAY -> 2;
-      case TUESDAY -> 3;
-      case WEDNESDAY -> 4;
-      case THURSDAY -> 5;
-      case FRIDAY -> 6;
-      case SATURDAY -> 7;
+      case SUNDAY -> 0;
+      case MONDAY -> 1;
+      case TUESDAY -> 2;
+      case WEDNESDAY -> 3;
+      case THURSDAY -> 4;
+      case FRIDAY -> 5;
+      case SATURDAY -> 6;
     };
   }
 

@@ -1,5 +1,6 @@
 package com.projetoExtensao.arenaMafia.application.schedule.usecase.blockedtime.imp;
 
+import com.projetoExtensao.arenaMafia.application.court.port.CourtRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.schedule.detail.BlockedTimeDetail;
 import com.projetoExtensao.arenaMafia.application.schedule.detail.ReservationDetail;
 import com.projetoExtensao.arenaMafia.application.schedule.detail.ScheduleDetail;
@@ -9,6 +10,10 @@ import com.projetoExtensao.arenaMafia.application.schedule.preview.BlockedTimeCo
 import com.projetoExtensao.arenaMafia.application.schedule.service.BlockedTimeDateCalculationService;
 import com.projetoExtensao.arenaMafia.application.schedule.service.ScheduleEntryEnrichmentService;
 import com.projetoExtensao.arenaMafia.application.schedule.usecase.blockedtime.PreviewBlockedTimeConflictsUseCase;
+import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
+import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidBlockedTimeException;
+import com.projetoExtensao.arenaMafia.domain.exception.notFound.CourtNotFoundException;
+import com.projetoExtensao.arenaMafia.domain.model.Court;
 import com.projetoExtensao.arenaMafia.domain.model.enums.DayOfWeek;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.ScheduleEntry;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
@@ -31,93 +36,68 @@ public class PreviewBlockedTimeConflictsUseCaseImp implements PreviewBlockedTime
   private final ScheduleEntryRepositoryPort scheduleEntryRepository;
   private final BlockedTimePreviewCachePort blockedTimePreviewCachePort;
   private final BlockedTimeDateCalculationService dateCalculationService;
+  private final CourtRepositoryPort courtRepository;
 
   public PreviewBlockedTimeConflictsUseCaseImp(
       ScheduleEntryEnrichmentService enrichmentService,
       ScheduleEntryRepositoryPort scheduleEntryRepository,
       BlockedTimePreviewCachePort blockedTimePreviewCachePort,
-      BlockedTimeDateCalculationService dateCalculationService) {
+      BlockedTimeDateCalculationService dateCalculationService,
+      CourtRepositoryPort courtRepository) {
     this.scheduleEntryRepository = scheduleEntryRepository;
     this.enrichmentService = enrichmentService;
     this.blockedTimePreviewCachePort = blockedTimePreviewCachePort;
     this.dateCalculationService = dateCalculationService;
+    this.courtRepository = courtRepository;
   }
 
   @Override
-  public BlockedTimeConflictsPreview execute(BlockedTimeConflictsPreviewRequestDto request, UUID adminId) {
+  public BlockedTimeConflictsPreview execute(
+      BlockedTimeConflictsPreviewRequestDto request, UUID adminId) {
+    validateCourtsExist(request.courtIds());
+
     Set<DayOfWeek> effectiveDaysOfWeek = resolveAndValidateDaysOfWeek(request);
-
-    List<LocalDate> applicableDates = calculateAndValidateDates(request, effectiveDaysOfWeek);
-    if (applicableDates.isEmpty()) {
-      return createEmptyPreview(request);
-    }
-
     TimeInterval searchInterval = calculateSearchInterval(request, effectiveDaysOfWeek);
 
     List<ScheduleEntry> conflicts = findConflicts(request, searchInterval, effectiveDaysOfWeek);
-    if (conflicts.isEmpty()) {
-      return createEmptyPreview(request);
-    }
 
     return buildAndCachePreview(conflicts, request, adminId);
   }
 
-  /**
-   * Resolve e valida os dias da semana efetivos.
-   *
-   * @param request request do preview
-   * @return conjunto de dias da semana efetivos
-   */
-  private Set<DayOfWeek> resolveAndValidateDaysOfWeek(BlockedTimeConflictsPreviewRequestDto request) {
-    Set<DayOfWeek> effectiveDaysOfWeek = dateCalculationService.resolveEffectiveDaysOfWeek(
-        request.selectedDaysOfWeek(),
-        request.startDate(),
-        request.endDate());
+  private Set<DayOfWeek> resolveAndValidateDaysOfWeek(
+      BlockedTimeConflictsPreviewRequestDto request
+  ) {
+    Set<DayOfWeek> effectiveDaysOfWeek =
+        dateCalculationService.resolveEffectiveDaysOfWeekWithOccurrencesValidation(
+            request.selectedDaysOfWeek(),
+            request.startDate(),
+            request.endDate(),
+            request.courtIds().size());
 
     dateCalculationService.validateDaysHaveOperatingHours(effectiveDaysOfWeek);
 
     return effectiveDaysOfWeek;
   }
 
-  /**
-   * Calcula as datas aplicáveis e valida o limite de ocorrências.
-   */
-  private List<LocalDate> calculateAndValidateDates(
-      BlockedTimeConflictsPreviewRequestDto request,
-      Set<DayOfWeek> effectiveDaysOfWeek) {
-
-    List<LocalDate> applicableDates = dateCalculationService.calculateApplicableDates(
-        request.startDate(),
-        request.endDate(),
-        effectiveDaysOfWeek);
-
-    if (!applicableDates.isEmpty()) {
-      dateCalculationService.validateOccurrencesLimit(request.courtIds().size(), applicableDates.size());
-    }
-
-    return applicableDates;
-  }
-
-  /**
-   * Calcula o intervalo de tempo para busca de conflitos.
-   */
   private TimeInterval calculateSearchInterval(
       BlockedTimeConflictsPreviewRequestDto request,
-      Set<DayOfWeek> effectiveDaysOfWeek) {
+      Set<DayOfWeek> effectiveDaysOfWeek
+  ) {
+
+    if (!request.isFullDay() && request.timeInterval() == null) {
+      throw new InvalidBlockedTimeException(
+          ErrorCode.BLOCKED_TIME_TIME_INTERVAL_REQUIRED_WHEN_NOT_FULL_DAY);
+    }
 
     return dateCalculationService.calculateSearchInterval(
-        request.isFullDay(),
-        request.timeInterval(),
-        effectiveDaysOfWeek);
+        request.isFullDay(), request.timeInterval(), effectiveDaysOfWeek);
   }
 
-  /**
-   * Busca os conflitos no repositório.
-   */
   private List<ScheduleEntry> findConflicts(
       BlockedTimeConflictsPreviewRequestDto request,
       TimeInterval searchInterval,
-      Set<DayOfWeek> effectiveDaysOfWeek) {
+      Set<DayOfWeek> effectiveDaysOfWeek
+  ) {
 
     return scheduleEntryRepository.findConflicts(
         request.courtIds(),
@@ -127,42 +107,39 @@ public class PreviewBlockedTimeConflictsUseCaseImp implements PreviewBlockedTime
         effectiveDaysOfWeek);
   }
 
-  /**
-   * Constrói o preview enriquecido e salva em cache.
-   */
   private BlockedTimeConflictsPreview buildAndCachePreview(
       List<ScheduleEntry> conflicts,
       BlockedTimeConflictsPreviewRequestDto request,
-      UUID adminId) {
+      UUID adminId
+  ) {
 
     List<ScheduleDetail> enrichedConflicts = enrichmentService.enrichScheduleEntries(conflicts);
 
     List<ReservationDetail> allReservations = filterReservations(enrichedConflicts);
     List<BlockedTimeDetail> blockedTimes = filterBlockedTimes(enrichedConflicts);
     List<ReservationDetail> inProgressReservations = filterInProgressReservations(allReservations);
-    List<ReservationDetail> reservationsToCancel = excludeInProgressReservations(allReservations, inProgressReservations);
+    List<ReservationDetail> reservationsToCancel =
+        excludeInProgressReservations(allReservations, inProgressReservations);
 
     int usersAffected = countDistinctUsers(reservationsToCancel);
     String previewKey = blockedTimePreviewCachePort.generateKey(adminId);
 
-    BlockedTimeConflictsPreview preview = new BlockedTimeConflictsPreview(
-        previewKey,
-        usersAffected,
-        blockedTimes.size(),
-        reservationsToCancel.size(),
-        blockedTimes,
-        reservationsToCancel,
-        inProgressReservations,
-        request);
+    BlockedTimeConflictsPreview preview =
+        new BlockedTimeConflictsPreview(
+            previewKey,
+            usersAffected,
+            blockedTimes.size(),
+            reservationsToCancel.size(),
+            blockedTimes,
+            reservationsToCancel,
+            inProgressReservations,
+            request);
 
     blockedTimePreviewCachePort.save(previewKey, preview);
 
     return preview;
   }
 
-  /**
-   * Filtra apenas as reservas da lista de detalhes enriquecidos.
-   */
   private List<ReservationDetail> filterReservations(List<ScheduleDetail> enrichedConflicts) {
     return enrichedConflicts.stream()
         .filter(ReservationDetail.class::isInstance)
@@ -170,9 +147,6 @@ public class PreviewBlockedTimeConflictsUseCaseImp implements PreviewBlockedTime
         .toList();
   }
 
-  /**
-   * Filtra apenas os bloqueios da lista de detalhes enriquecidos.
-   */
   private List<BlockedTimeDetail> filterBlockedTimes(List<ScheduleDetail> enrichedConflicts) {
     return enrichedConflicts.stream()
         .filter(BlockedTimeDetail.class::isInstance)
@@ -180,40 +154,24 @@ public class PreviewBlockedTimeConflictsUseCaseImp implements PreviewBlockedTime
         .toList();
   }
 
-  /**
-   * Filtra as reservas que estão em andamento.
-   */
   private List<ReservationDetail> filterInProgressReservations(List<ReservationDetail> reservations) {
-    return reservations.stream()
-        .filter(this::isInProgress)
-        .toList();
+    return reservations.stream().filter(this::isInProgress).toList();
   }
 
-  /**
-   * Remove as reservas em andamento da lista de reservas a cancelar.
-   */
   private List<ReservationDetail> excludeInProgressReservations(
-      List<ReservationDetail> allReservations,
-      List<ReservationDetail> inProgressReservations) {
+          List<ReservationDetail> allReservations,
+          List<ReservationDetail> inProgressReservations
+  ) {
 
     return allReservations.stream()
         .filter(reservation -> !inProgressReservations.contains(reservation))
         .toList();
   }
 
-  /**
-   * Conta o número de usuários distintos afetados.
-   */
   private int countDistinctUsers(List<ReservationDetail> reservations) {
-    return (int) reservations.stream()
-        .map(ReservationDetail::userId)
-        .distinct()
-        .count();
+    return (int) reservations.stream().map(ReservationDetail::userId).distinct().count();
   }
 
-  /**
-   * Verifica se a reserva está em andamento com base na data e horário atuais.
-   */
   private boolean isInProgress(ReservationDetail reservation) {
     LocalDateTime now = LocalDateTime.now();
 
@@ -226,9 +184,6 @@ public class PreviewBlockedTimeConflictsUseCaseImp implements PreviewBlockedTime
     return !now.isBefore(startDateTime) && now.isBefore(endDateTime);
   }
 
-  /**
-   * Calcula o DateTime de término considerando intervalos que atravessam meia-noite.
-   */
   private LocalDateTime calculateEndDateTime(LocalDate date, LocalTime startTime, LocalTime endTime) {
     if (endTime.isBefore(startTime)) {
       return LocalDateTime.of(date.plusDays(1), endTime);
@@ -236,18 +191,12 @@ public class PreviewBlockedTimeConflictsUseCaseImp implements PreviewBlockedTime
     return LocalDateTime.of(date, endTime);
   }
 
-  /**
-   * Cria um preview vazio quando não há conflitos.
-   */
-  private BlockedTimeConflictsPreview createEmptyPreview(BlockedTimeConflictsPreviewRequestDto request) {
-    return new BlockedTimeConflictsPreview(
-        null,
-        0,
-        0,
-        0,
-        List.of(),
-        List.of(),
-        List.of(),
-        request);
+  private void validateCourtsExist(List<UUID> courtIds) {
+    Set<UUID> courtIdsSet = Set.copyOf(courtIds);
+    List<Court> foundCourts = courtRepository.findAllByIds(courtIdsSet);
+
+    if (foundCourts.size() != courtIdsSet.size()) {
+      throw new CourtNotFoundException(ErrorCode.COURT_NOT_FOUND);
+    }
   }
 }

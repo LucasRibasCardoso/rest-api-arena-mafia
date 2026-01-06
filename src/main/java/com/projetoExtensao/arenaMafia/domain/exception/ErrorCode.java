@@ -154,7 +154,7 @@ public enum ErrorCode {
   OPERATING_HOURS_CANNOT_BE_DISABLED_DUE_TO_RESERVATIONS("Não é possível desativar o horário de funcionamento pois existem reservas futuras associadas a ele."),
   OPERATING_HOURS_ALREADY_ENABLED("O horário de funcionamento já está ativado."),
   OPERATING_HOURS_NOT_FOUND("Horário de funcionamento não encontrado."),
-  OPERATING_HOURS_APPLICABLE_NOT_FOUND("Não há horários de funcionamento aplicáveis para a data fornecida."),
+  OPERATING_HOURS_APPLICABLE_NOT_FOUND("Não há horários de funcionamento aplicáveis para todos os dias selecionados."),
 
   // ==================== ERROS DE REGRAS DE PREÇO (PRICE RULES) ====================
   PRICE_RULE_NAME_REQUIRED("O nome da regra de preço é obrigatório."),
@@ -210,17 +210,21 @@ public enum ErrorCode {
   // ==================== ERROS DE BLOQUEIO DE HORÁRIO (BLOCKED TIME) ====================
   // BlockedTime - Geral
   BLOCKED_TIME_NOT_FOUND("Bloqueio de horário não encontrado."),
-  BLOCKED_TIME_PAST_DATE_NOT_ALLOWED("Não é possível criar bloqueios para datas passadas. A data deve ser hoje ou no futuro."),
-  BLOCKED_TIME_START_DATE_IN_PAST("A data inicial do bloqueio não pode estar no passado. A data deve ser hoje ou no futuro."),
+  BLOCKED_TIME_PAST_DATE_NOT_ALLOWED("Não é possível criar bloqueios para datas no passada."),
+  BLOCKED_TIME_START_DATE_IN_PAST("A data inicial do bloqueio não pode estar no passado."),
   BLOCKED_TIME_START_DATE_AFTER_END_DATE("A data inicial não pode ser posterior à data final."),
   BLOCKED_TIME_END_DATE_IN_PAST("A data final do bloqueio não pode estar no passado."),
+  BLOCKED_TIME_SELECTED_DAYS_OUTSIDE_DATE_RANGE("Um ou mais dias da semana selecionados estão fora do intervalo de datas informado."),
+  BLOCKED_TIME_SELECTED_DAYS_NOT_ALLOWED_FOR_SINGLE_DATE("Para bloqueios de um único dia (startDate = endDate), não é necessário informar dias da semana específicos."),
 
   // BlockedTime - Validação de Input
   BLOCKED_TIME_COURT_IDS_REQUIRED("É obrigatório informar ao menos uma quadra para o bloqueio."),
   BLOCKED_TIME_COURT_IDS_SIZE_INVALID("É necessário informar entre 1 e 20 quadras."),
   BLOCKED_TIME_START_DATE_REQUIRED("A data inicial do bloqueio é obrigatória."),
+  BLOCKED_TIME_END_DATE_REQUIRED("A data final do bloqueio é obrigatória."),
   BLOCKED_TIME_IS_FULL_DAY_REQUIRED("É obrigatório informar se o bloqueio é para o dia todo."),
-  BLOCKED_TIME_TIME_INTERVAL_REQUIRED_WHEN_NOT_FULL_DAY("O intervalo de tempo é obrigatório quando o bloqueio não é de dia inteiro."),
+  BLOCKED_TIME_TIME_INTERVAL_REQUIRED_WHEN_NOT_FULL_DAY("O intervalo de tempo é obrigatório quando o bloqueio não é para o dia todo."),
+  BLOCKED_TIME_TIME_INTERVAL_NOT_ALLOWED_WHEN_FULL_DAY("O intervalo de tempo não deve ser informado quando o bloqueio é para o dia todo. O horário será calculado automaticamente baseado no funcionamento da quadra."),
 
   // BlockedTime - Description
   BLOCKED_TIME_DESCRIPTION_REQUIRED("A descrição do bloqueio é obrigatória."),

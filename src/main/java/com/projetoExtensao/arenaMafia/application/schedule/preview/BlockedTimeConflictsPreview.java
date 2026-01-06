@@ -13,9 +13,4 @@ public record BlockedTimeConflictsPreview(
     List<BlockedTimeDetail> conflictingBlockedTimes,
     List<ReservationDetail> conflictingReservations,
     List<ReservationDetail> inProgressReservations,
-    BlockedTimeConflictsPreviewRequestDto request) {
-
-  public BlockedTimeConflictsPreview createDefaultWithRequest(BlockedTimeConflictsPreviewRequestDto request) {
-    return new BlockedTimeConflictsPreview(null, 0, 0, 0, List.of(), List.of(), List.of(), request);
-  }
-}
+    BlockedTimeConflictsPreviewRequestDto request) {}

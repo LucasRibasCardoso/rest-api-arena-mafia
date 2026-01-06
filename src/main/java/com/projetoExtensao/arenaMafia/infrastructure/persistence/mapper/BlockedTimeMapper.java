@@ -3,11 +3,13 @@ package com.projetoExtensao.arenaMafia.infrastructure.persistence.mapper;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.BlockedTime;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.BlockedTimeEntity;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import org.mapstruct.ObjectFactory;
 
 @Mapper(componentModel = "spring")
 public abstract class BlockedTimeMapper {
 
+  @Mapping(target = "isFullDay", source = "fullDay")
   public abstract BlockedTimeEntity toEntity(BlockedTime blockedTime);
 
   public abstract BlockedTime toDomain(BlockedTimeEntity blockedTimeEntity);

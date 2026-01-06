@@ -8,7 +8,6 @@ import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidPreviewKeyException;
 import com.projetoExtensao.arenaMafia.domain.exception.forbidden.InvalidPreviewOwnershipException;
 import java.time.Duration;
-import java.util.Optional;
 import java.util.UUID;
 
 import com.projetoExtensao.arenaMafia.domain.exception.notFound.BlockedTimeNotFoundException;
@@ -33,6 +32,7 @@ public class BlockedTimePreviewCacheAdapter implements BlockedTimePreviewCachePo
   @Override
   public void save(String key, BlockedTimeConflictsPreview preview) {
     try {
+      deleteExistingPreviewsForUser(extractUserIdFromKey(key));
       String jsonValue = objectMapper.writeValueAsString(preview);
       redisTemplate.opsForValue().set(key, jsonValue, CACHE_TTL);
     } catch (JsonProcessingException e) {
@@ -73,5 +73,16 @@ public class BlockedTimePreviewCacheAdapter implements BlockedTimePreviewCachePo
     if (!key.startsWith(CACHE_PREFIX + userId + ":")) {
       throw new InvalidPreviewOwnershipException();
     }
+  }
+
+  private UUID extractUserIdFromKey(String key) {
+    String userIdPart = key.substring(CACHE_PREFIX.length());
+    String userIdString = userIdPart.substring(0, userIdPart.indexOf(':'));
+    return UUID.fromString(userIdString);
+  }
+
+  private void deleteExistingPreviewsForUser(UUID userId) {
+    String pattern = CACHE_PREFIX + userId + ":*";
+    redisTemplate.delete(redisTemplate.keys(pattern));
   }
 }

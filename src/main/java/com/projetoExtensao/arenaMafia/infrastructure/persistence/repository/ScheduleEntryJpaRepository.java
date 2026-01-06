@@ -1,7 +1,6 @@
 package com.projetoExtensao.arenaMafia.infrastructure.persistence.repository;
 
 import com.projetoExtensao.arenaMafia.domain.model.enums.DayOfWeek;
-import com.projetoExtensao.arenaMafia.domain.model.schedule.Reservation;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.BlockedTimeEntity;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.ReservationEntity;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.ScheduleEntryEntity;
@@ -63,8 +62,8 @@ public interface ScheduleEntryJpaRepository extends JpaRepository<ScheduleEntryE
       AND (TYPE(s) = BlockedTimeEntity
           OR
           (TYPE(s) = ReservationEntity AND TREAT(s AS ReservationEntity).status = 'CONFIRMED'))
-      AND (:sqlDaysOfWeek IS NULL
-          OR FUNCTION('DAYOFWEEK', s.dateTimeSlot.date) IN :sqlDaysOfWeek)
+      AND (:postgresDaysOfWeek IS NULL
+          OR FUNCTION('date_part', 'dow', s.dateTimeSlot.date) IN :postgresDaysOfWeek)
       ORDER BY s.dateTimeSlot.date ASC, s.dateTimeSlot.timeInterval.startTime ASC
       """)
   List<ScheduleEntryEntity> findConflictingSchedules(
@@ -72,7 +71,7 @@ public interface ScheduleEntryJpaRepository extends JpaRepository<ScheduleEntryE
       @Param("startDate") LocalDate startDate,
       @Param("endDate") LocalDate endDate,
       @Param("selectedDaysOfWeek") Set<DayOfWeek> selectedDaysOfWeek,
-      @Param("sqlDaysOfWeek") Set<Integer> sqlDaysOfWeek);
+      @Param("postgresDaysOfWeek") Set<Integer> postgresDaysOfWeek);
 
   // ==================== QUERIES ESPECÍFICAS DE RESERVATION ====================
 
@@ -170,7 +169,7 @@ public interface ScheduleEntryJpaRepository extends JpaRepository<ScheduleEntryE
    * de intervalos que cruzam a meia-noite está no adapter.
    *
    * @param afterDate Data a partir da qual verificar os conflitos
-   * @param sqlDaysOfWeek Conjunto de inteiros representando os dias da semana no formato SQL (1=Sunday, 2=Monday, ..., 7=Saturday)
+   * @param postgresDaysOfWeek Conjunto de inteiros representando os dias da semana no formato PostgreSQL (0=Sunday, 1=Monday, ..., 6=Saturday)
    * @param checkStartTime horário de início do intervalo a ser verificado
    * @param checkEndTime horário de término do intervalo a ser verificado
    * @return true se existir conflito, false caso contrário
@@ -180,17 +179,16 @@ public interface ScheduleEntryJpaRepository extends JpaRepository<ScheduleEntryE
     FROM ReservationEntity r
     WHERE r.status = 'CONFIRMED'
     AND r.dateTimeSlot.date >= :afterDate
-    AND FUNCTION('DAYOFWEEK', r.dateTimeSlot.date) IN :sqlDaysOfWeek
-    
+    AND FUNCTION('date_part', 'dow', r.dateTimeSlot.date) IN :postgresDaysOfWeek
     AND (
         r.dateTimeSlot.timeInterval.startTime < :checkEndTime
-        AND 
+        AND
         r.dateTimeSlot.timeInterval.endTime > :checkStartTime
     )
     """)
   boolean existsConflictInDays(
           @Param("afterDate") LocalDate afterDate,
-          @Param("sqlDaysOfWeek") Set<Integer> sqlDaysOfWeek,
+          @Param("postgresDaysOfWeek") Set<Integer> postgresDaysOfWeek,
           @Param("checkStartTime") LocalTime checkStartTime,
           @Param("checkEndTime") LocalTime checkEndTime
   );

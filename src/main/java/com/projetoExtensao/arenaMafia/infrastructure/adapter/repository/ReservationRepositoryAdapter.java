@@ -108,32 +108,32 @@ public class ReservationRepositoryAdapter implements ReservationRepositoryPort {
 
     if (daysOfWeek == null || daysOfWeek.isEmpty()) return false;
 
-    Set<Integer> currentSqlDays =
-        daysOfWeek.stream().map(DayOfWeek::getSqlDayOfWeekValue).collect(Collectors.toSet());
+    Set<Integer> currentPostgresDays =
+        daysOfWeek.stream().map(DayOfWeek::getPostgresDayOfWeekValue).collect(Collectors.toSet());
 
     boolean crossesMidnight = endTime.isBefore(startTime);
 
     if (!crossesMidnight) {
       // CENÁRIO SIMPLES (Ex: 08:00 as 22:00)
       return scheduleEntryJpaRepository.existsConflictInDays(
-          afterDate, currentSqlDays, startTime, endTime);
+          afterDate, currentPostgresDays, startTime, endTime);
     } else {
       // CENÁRIO COMPLEXO (Ex: 22:00 as 02:00)
       // Parte A: Verificar o final da noite nos dias originais (22:00 -> 23:59:59.999)
       boolean conflictPart1 =
           scheduleEntryJpaRepository.existsConflictInDays(
-              afterDate, currentSqlDays, startTime, LocalTime.MAX);
+              afterDate, currentPostgresDays, startTime, LocalTime.MAX);
 
       if (conflictPart1) return true;
 
-      Set<Integer> nextDaySqlDays =
+      Set<Integer> nextDayPostgresDays =
           daysOfWeek.stream()
               .map(DayOfWeek::next)
-              .map(DayOfWeek::getSqlDayOfWeekValue)
+              .map(DayOfWeek::getPostgresDayOfWeekValue)
               .collect(Collectors.toSet());
 
       return scheduleEntryJpaRepository.existsConflictInDays(
-          afterDate, nextDaySqlDays, LocalTime.MIN, endTime);
+          afterDate, nextDayPostgresDays, LocalTime.MIN, endTime);
     }
   }
 

@@ -7,6 +7,7 @@ import com.projetoExtensao.arenaMafia.application.court.port.CourtRepositoryPort
 import com.projetoExtensao.arenaMafia.application.modality.port.ModalityRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.operatingHours.port.OperatingHoursRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.priceRule.port.PriceRuleRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.schedule.port.repository.BlockedTimeRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.schedule.port.repository.ScheduleEntryRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.security.port.gateway.PasswordEncoderPort;
 import com.projetoExtensao.arenaMafia.application.user.port.repository.UserRepositoryPort;
@@ -15,12 +16,15 @@ import com.projetoExtensao.arenaMafia.domain.model.enums.AccountStatus;
 import com.projetoExtensao.arenaMafia.domain.model.enums.DayOfWeek;
 import com.projetoExtensao.arenaMafia.domain.model.enums.OffsetMinutes;
 import com.projetoExtensao.arenaMafia.domain.model.enums.RoleEnum;
+import com.projetoExtensao.arenaMafia.domain.model.schedule.BlockedTime;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.Reservation;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.ScheduleEntry;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.DateTimeSlot;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.RefreshTokenVO;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.repository.UserJpaRepository;
+import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.blockedtime.request.BlockedTimeConflictsPreviewRequestDto;
+import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.blockedtime.response.BlockedTimeConflictsPreviewResponseDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.auth.dto.request.LoginRequestDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.auth.dto.response.AuthResponseDto;
 import io.restassured.http.Cookie;
@@ -71,6 +75,7 @@ public abstract class BaseTestContainersConfig {
   @Autowired private OperatingHoursRepositoryPort operatingHoursRepository;
   @Autowired private PriceRuleRepositoryPort priceRuleRepository;
   @Autowired private ScheduleEntryRepositoryPort scheduleEntryRepository;
+  @Autowired private BlockedTimeRepositoryPort blockedTimeRepository;
 
   public final String defaultUsername = "testuser";
   public final String defaultPassword = "123456";
@@ -392,7 +397,8 @@ public abstract class BaseTestContainersConfig {
     operatingHoursRepository.save(operatingHours4);
   }
 
-  public OperatingHours mockPersistOperatingHoursFixedInterval(Set<DayOfWeek> daysOfWeeks, TimeInterval timeInterval) {
+  public OperatingHours mockPersistOperatingHoursFixedInterval(
+      Set<DayOfWeek> daysOfWeeks, TimeInterval timeInterval) {
     OperatingHours operatingHours = OperatingHours.create(daysOfWeeks, timeInterval);
     return operatingHoursRepository.save(operatingHours);
   }
@@ -424,6 +430,21 @@ public abstract class BaseTestContainersConfig {
     OperatingHours operatingHours = OperatingHours.create(daysOfWeek, timeInterval);
     return operatingHoursRepository.save(operatingHours);
   }
+
+  public OperatingHours mockPersistOperatingHoursAllDaysWithTimeInterval(TimeInterval timeInterval) {
+    Set<DayOfWeek> daysOfWeek =
+            Set.of(
+                    DayOfWeek.MONDAY,
+                    DayOfWeek.TUESDAY,
+                    DayOfWeek.WEDNESDAY,
+                    DayOfWeek.THURSDAY,
+                    DayOfWeek.FRIDAY,
+                    DayOfWeek.SATURDAY,
+                    DayOfWeek.SUNDAY);
+    OperatingHours operatingHours = OperatingHours.create(daysOfWeek, timeInterval);
+    return operatingHoursRepository.save(operatingHours);
+  }
+
 
   public OperatingHours mockPersistDisabledOperatingHours() {
     TimeInterval timeInterval = new TimeInterval(LocalTime.of(8, 0), LocalTime.of(0, 0));
@@ -524,4 +545,14 @@ public abstract class BaseTestContainersConfig {
         Reservation.createByUser(modalityId, courtId, userId, price, dateTimeSlot);
     return scheduleEntryRepository.save(reservation);
   }
+
+  // =================== Blocked Time Helpers ===================
+  public BlockedTime mockPersistBlockedTimeSpecific(
+      UUID courtId, LocalDate date, TimeInterval timeInterval, String reason, UUID adminId) {
+
+    DateTimeSlot dateTimeSlot = new DateTimeSlot(date, timeInterval);
+    BlockedTime blockedTime = BlockedTime.createSpecificTime(courtId, dateTimeSlot, reason, adminId);
+    return blockedTimeRepository.save(blockedTime);
+  }
+
 }

@@ -3,6 +3,7 @@ package com.projetoExtensao.arenaMafia.application.schedule.service;
 import com.projetoExtensao.arenaMafia.application.operatingHours.port.OperatingHoursRepositoryPort;
 import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidBlockDateException;
+import com.projetoExtensao.arenaMafia.domain.exception.notFound.OperatingHoursNotFoundException;
 import com.projetoExtensao.arenaMafia.domain.model.OperatingHours;
 import com.projetoExtensao.arenaMafia.domain.model.enums.DayOfWeek;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
@@ -69,13 +70,15 @@ public class BlockedTimeDateCalculationService {
   /**
    * Resolve os dias da semana efetivos baseado na requisição.
    *
-   * <p>Se dias específicos foram selecionados, usa eles. Caso contrário, deriva todos os dias
-   * presentes no intervalo de datas fornecido.
+   * <p>Se dias específicos foram selecionados, valida se todos estão dentro do range
+   * de datas e retorna eles. Caso contrário, deriva todos os dias presentes no
+   * intervalo de datas fornecido.
    *
-   * @param selectedDaysOfWeek Dias da semana selecionados (pode ser null ou vazio)
+   * @param selectedDaysOfWeek Dias da semana selecionados (pode ser null ou vazio para representar todos os dias)
    * @param startDate Data inicial do intervalo
    * @param endDate Data final do intervalo
    * @return Conjunto de dias da semana efetivos
+   * @throws InvalidBlockDateException se algum dia selecionado estiver fora do range de datas
    */
   public Set<DayOfWeek> resolveEffectiveDaysOfWeek(
       Set<DayOfWeek> selectedDaysOfWeek,
@@ -83,6 +86,7 @@ public class BlockedTimeDateCalculationService {
       LocalDate endDate) {
 
     if (selectedDaysOfWeek != null && !selectedDaysOfWeek.isEmpty()) {
+      validateSelectedDaysWithinDateRange(selectedDaysOfWeek, startDate, endDate);
       return selectedDaysOfWeek;
     }
 
@@ -90,10 +94,38 @@ public class BlockedTimeDateCalculationService {
   }
 
   /**
+   * Resolve os dias da semana efetivos e valida o limite de ocorrências em uma única operação.
+   *
+   * <p>Metodo otimizado para cenários onde as datas aplicáveis não são utilizadas,
+   * apenas sua contagem para validação de limite.
+   *
+   * @param selectedDaysOfWeek Dias da semana selecionados (pode ser null ou vazio para representar todos os dias)
+   * @param startDate Data inicial do intervalo
+   * @param endDate Data final do intervalo
+   * @param courtsCount Número de quadras selecionadas
+   * @return Conjunto de dias da semana efetivos
+   * @throws InvalidBlockDateException se algum dia selecionado estiver fora do range de datas ou se exceder limite de ocorrências
+   */
+  public Set<DayOfWeek> resolveEffectiveDaysOfWeekWithOccurrencesValidation(
+      Set<DayOfWeek> selectedDaysOfWeek,
+      LocalDate startDate,
+      LocalDate endDate,
+      int courtsCount) {
+
+    Set<DayOfWeek> effectiveDaysOfWeek = resolveEffectiveDaysOfWeek(selectedDaysOfWeek, startDate, endDate);
+
+    long datesCount = countApplicableDates(startDate, endDate, effectiveDaysOfWeek);
+    validateOccurrencesLimit(courtsCount, (int) datesCount);
+
+    return effectiveDaysOfWeek;
+  }
+
+
+  /**
    * Valida se todos os dias solicitados possuem horários de funcionamento definidos.
    *
    * @param requestedDays Conjunto de dias da semana solicitados
-   * @throws InvalidBlockDateException se algum dia solicitado não possuir horários de funcionamento
+   * @throws OperatingHoursNotFoundException se algum dia solicitado não possuir horários de funcionamento
    */
   public void validateDaysHaveOperatingHours(Set<DayOfWeek> requestedDays) {
     // Busca os horários existentes para os dias solicitados
@@ -107,7 +139,7 @@ public class BlockedTimeDateCalculationService {
             .collect(Collectors.toSet());
 
     if (!foundDays.containsAll(requestedDays)) {
-      throw new InvalidBlockDateException(ErrorCode.OPERATING_HOURS_APPLICABLE_NOT_FOUND);
+      throw new OperatingHoursNotFoundException(ErrorCode.OPERATING_HOURS_APPLICABLE_NOT_FOUND);
     }
   }
 
@@ -147,6 +179,62 @@ public class BlockedTimeDateCalculationService {
   }
 
   /**
+   * Conta as datas aplicáveis baseado no intervalo e dias da semana selecionados.
+   *
+   * <p>Versão otimizada que calcula apenas a quantidade sem gerar a lista completa.
+   * Usado para validação de limite de ocorrências.
+   *
+   * @param startDate Data inicial (inclusiva)
+   * @param endDate Data final (inclusiva)
+   * @param selectedDaysOfWeek Dias da semana selecionados (null ou vazio = todos os dias)
+   * @return Quantidade de datas aplicáveis
+   */
+  private long countApplicableDates(
+          LocalDate startDate,
+          LocalDate endDate,
+          Set<DayOfWeek> selectedDaysOfWeek) {
+
+    Stream<LocalDate> dateStream = startDate.datesUntil(endDate.plusDays(1));
+
+    // Se não há dias da semana selecionados, conta todas as datas
+    if (selectedDaysOfWeek == null || selectedDaysOfWeek.isEmpty()) {
+      return dateStream.count();
+    }
+
+    // Conta apenas os dias da semana selecionados
+    return dateStream
+            .filter(date -> selectedDaysOfWeek.contains(DayOfWeek.convertToDayOfWeek(date)))
+            .count();
+  }
+
+  /**
+   * Valida se todos os dias da semana selecionados estão dentro do range de datas fornecido.
+   *
+   * <p>Para cada dia selecionado, verifica se existe pelo menos uma data no intervalo
+   * que corresponda àquele dia da semana.
+   *
+   * @param selectedDaysOfWeek Dias da semana selecionados pelo usuário
+   * @param startDate Data inicial do intervalo
+   * @param endDate Data final do intervalo
+   * @throws InvalidBlockDateException se algum dia selecionado não estiver presente no range de datas
+   */
+  private void validateSelectedDaysWithinDateRange(
+          Set<DayOfWeek> selectedDaysOfWeek,
+          LocalDate startDate,
+          LocalDate endDate) {
+
+    Set<DayOfWeek> daysInRange = getDaysOfWeekInRange(startDate, endDate);
+
+    Set<DayOfWeek> invalidDays = selectedDaysOfWeek.stream()
+            .filter(day -> !daysInRange.contains(day))
+            .collect(Collectors.toSet());
+
+    if (!invalidDays.isEmpty()) {
+      throw new InvalidBlockDateException(ErrorCode.BLOCKED_TIME_SELECTED_DAYS_OUTSIDE_DATE_RANGE);
+    }
+  }
+
+  /**
    * Valida se o intervalo fornecido está completamente contido dentro do horário
    * de funcionamento de TODOS os dias da semana selecionados.
    *
@@ -159,8 +247,7 @@ public class BlockedTimeDateCalculationService {
    * @param interval Intervalo a ser validado
    * @param operatingHoursList Lista de horários de funcionamento
    * @param effectiveDaysOfWeek Dias da semana que devem ser validados
-   * @throws InvalidBlockDateException se o intervalo não estiver dentro do horário
-   *         de funcionamento de algum dia
+   * @throws InvalidBlockDateException se o intervalo não estiver dentro do horáriode funcionamento de algum dia
    */
   private void validateIntervalWithinOperatingHours(
       TimeInterval interval,
@@ -188,7 +275,7 @@ public class BlockedTimeDateCalculationService {
    * @param datesCount Número de datas aplicáveis
    * @throws InvalidBlockDateException se o total de ocorrências exceder {@value #MAX_BLOCKED_TIME_OCCURRENCES}
    */
-  public void validateOccurrencesLimit(int courtsCount, int datesCount) {
+  private void validateOccurrencesLimit(int courtsCount, int datesCount) {
     int totalOccurrences = courtsCount * datesCount;
     if (totalOccurrences > MAX_BLOCKED_TIME_OCCURRENCES) {
       throw new InvalidBlockDateException(ErrorCode.BLOCKED_TIME_TOO_MANY_OCCURRENCES);
@@ -214,13 +301,13 @@ public class BlockedTimeDateCalculationService {
    *
    * @param hoursList Lista de OperatingHours
    * @return LocalTime representando o horário de início mínimo
-   * @throws InvalidBlockDateException se a lista estiver vazia
+   * @throws OperatingHoursNotFoundException se a lista estiver vazia
    */
   private LocalTime calculateMinStart(List<OperatingHours> hoursList) {
     return hoursList.stream()
         .map(oh -> oh.getTimeInterval().startTime())
         .min(LocalTime::compareTo)
-        .orElseThrow(() -> new InvalidBlockDateException(ErrorCode.OPERATING_HOURS_APPLICABLE_NOT_FOUND));
+        .orElseThrow(() -> new OperatingHoursNotFoundException(ErrorCode.OPERATING_HOURS_APPLICABLE_NOT_FOUND));
   }
 
   /**
@@ -228,13 +315,15 @@ public class BlockedTimeDateCalculationService {
    *
    * @param hoursList Lista de OperatingHours
    * @return LocalTime representando o horário de término máximo
-   * @throws InvalidBlockDateException se a lista estiver vazia
+   * @throws OperatingHoursNotFoundException se a lista estiver vazia
    */
   private LocalTime calculateMaxEnd(List<OperatingHours> hoursList) {
     return hoursList.stream()
         .map(oh -> oh.getTimeInterval().endTime())
         .max(LocalTime::compareTo)
-        .orElseThrow(() -> new InvalidBlockDateException(ErrorCode.OPERATING_HOURS_APPLICABLE_NOT_FOUND));
+        .orElseThrow(
+            () ->
+                new OperatingHoursNotFoundException(ErrorCode.OPERATING_HOURS_APPLICABLE_NOT_FOUND));
   }
 }
 

@@ -109,7 +109,7 @@ public class ConfirmBlockedTimeUseCaseImp implements ConfirmBlockedTimeUseCase {
     String cancellationReason = String.format("Bloqueio de horário criado: %s", description);
 
     BatchCancellationResult result =
-            batchCancellationService.cancelReservationsInBatch(reservationsToCancel, cancellationReason);
+        batchCancellationService.cancelReservationsInBatch(reservationsToCancel, cancellationReason);
 
     if (result.hasFailures()) {
       LOGGER.warn(

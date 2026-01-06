@@ -40,11 +40,11 @@ public class BlockedTime extends ScheduleEntry {
 
   /**
    * Factory method para criar um bloqueio de dia inteiro em uma única data. Uso: quando um admin
-   * bloqueia uma quadra por um dia inteiro (durante todo o horário de funcionamento).
+   * bloqueia uma quadra por um dia inteiro.
    *
    * <p>O timeInterval deve corresponder ao horário de funcionamento da quadra naquele dia, obtido
    * através dos OperatingHours. Mesmo que o horário passe da meia-noite (ex: 08:00 - 02:00), o
-   * bloqueio cobrirá todo o período de funcionamento.
+   * bloqueio cobrirá o período de funcionamento completamente.
    *
    * @param courtId id da quadra a ser bloqueada, é obrigatório
    * @param dateTimeSlot slot de data e hora do bloqueio (baseado em OperatingHours), é obrigatório

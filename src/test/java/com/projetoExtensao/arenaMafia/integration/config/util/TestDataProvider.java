@@ -1,6 +1,9 @@
 package com.projetoExtensao.arenaMafia.integration.config.util;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 import java.util.stream.Stream;
 import org.junit.jupiter.params.provider.Arguments;
 
@@ -125,5 +128,17 @@ public final class TestDataProvider {
     return Stream.of(
         Arguments.of(null, "PRICE_RULE_PRIORITY_REQUIRED"),
         Arguments.of(-1, "PRICE_RULE_PRIORITY_INVALID"));
+  }
+
+  public static Stream<Arguments> invalidListOfCourtIds() {
+    List<UUID> courtIds = new ArrayList<>();
+    for (int i = 0; i < 21; i++) {
+      courtIds.add(UUID.randomUUID());
+    }
+
+    return Stream.of(
+        Arguments.of(null, "BLOCKED_TIME_COURT_IDS_REQUIRED"),
+        Arguments.of(List.of(), "BLOCKED_TIME_COURT_IDS_SIZE_INVALID"),
+        Arguments.of(courtIds, "BLOCKED_TIME_COURT_IDS_SIZE_INVALID"));
   }
 }
