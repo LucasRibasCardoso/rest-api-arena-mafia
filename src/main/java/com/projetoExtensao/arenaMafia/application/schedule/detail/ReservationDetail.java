@@ -1,6 +1,5 @@
 package com.projetoExtensao.arenaMafia.application.schedule.detail;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.projetoExtensao.arenaMafia.domain.model.enums.ReservationStatus;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.DateTimeSlot;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
@@ -28,7 +27,6 @@ public record ReservationDetail(
    * Verifica se a reserva está em andamento no momento atual.
    * @return true se a reserva estiver em andamento, false caso contrário.
    */
-  @JsonIgnore
   public boolean isInProgress() {
     var dateTimeSlot = new DateTimeSlot(date, timeInterval);
     return dateTimeSlot.isInProgress();

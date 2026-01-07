@@ -1,14 +1,15 @@
 package com.projetoExtensao.arenaMafia.infrastructure.web.schedule.mapper;
 
+import com.projetoExtensao.arenaMafia.application.schedule.detail.BlockedTimeDetail;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.BlockedTime;
 import com.projetoExtensao.arenaMafia.domain.model.enums.ScheduleEntryType;
+import com.projetoExtensao.arenaMafia.infrastructure.web.schedule.dto.response.scheduleDetail.BlockedTimeDetailResponseDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.operatingHours.dto.response.TimeIntervalDto;
-import com.projetoExtensao.arenaMafia.infrastructure.web.schedule.dto.response.BlockedTimeResponseDto;
-import com.projetoExtensao.arenaMafia.infrastructure.web.schedule.dto.response.ScheduleEntryResponseDto;
+import com.projetoExtensao.arenaMafia.infrastructure.web.schedule.dto.response.scheduleNormal.BlockedTimeResponseDto;
 import org.springframework.stereotype.Component;
 
 @Component
-public class BlockedTimeResponseMapper implements ScheduleEntryMapperStrategy<BlockedTime> {
+public class BlockedTimeResponseMapper implements ScheduleEntryMapperStrategy<BlockedTime, BlockedTimeDetail> {
 
   @Override
   public Class<BlockedTime> getSupportedType() {
@@ -16,7 +17,12 @@ public class BlockedTimeResponseMapper implements ScheduleEntryMapperStrategy<Bl
   }
 
   @Override
-  public ScheduleEntryResponseDto toDto(BlockedTime blockedTime) {
+  public Class<BlockedTimeDetail> getSupportedDetailType() {
+    return BlockedTimeDetail.class;
+  }
+
+  @Override
+  public BlockedTimeResponseDto toDto(BlockedTime blockedTime) {
     TimeIntervalDto timeIntervalDto =
         new TimeIntervalDto(
             blockedTime.getDateTimeSlot().timeInterval().startTime(),
@@ -31,5 +37,23 @@ public class BlockedTimeResponseMapper implements ScheduleEntryMapperStrategy<Bl
         blockedTime.getCreatedAt(),
         blockedTime.getDescription(),
         blockedTime.isFullDay());
+  }
+
+  @Override
+  public BlockedTimeDetailResponseDto toDetailDto(BlockedTimeDetail detail) {
+    TimeIntervalDto timeIntervalDto =
+        new TimeIntervalDto(
+                detail.timeInterval().startTime(),
+                detail.timeInterval().endTime());
+
+    return new BlockedTimeDetailResponseDto(
+        detail.blockedTimeId(),
+        detail.courtId(),
+        detail.courtName(),
+        detail.date(),
+        timeIntervalDto,
+        detail.description(),
+        detail.isFullDay(),
+        detail.recurringBlockedTimeId());
   }
 }

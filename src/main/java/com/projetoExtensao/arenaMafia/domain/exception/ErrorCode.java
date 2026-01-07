@@ -236,7 +236,7 @@ public enum ErrorCode {
 
   // BlockedTime - Preview e Cache
   BLOCKED_TIME_PREVIEW_KEY_REQUIRED("A chave do preview é obrigatória."),
-  BLOCKED_TIME_PREVIEW_KEY_INVALID("A chave do preview é inválida ou foi manipulada."),
+  BLOCKED_TIME_PREVIEW_KEY_INVALID("A chave do preview é inválida."),
   BLOCKED_TIME_PREVIEW_NOT_FOUND("Preview não encontrado. Pode ter expirado após 5 minutos."),
   BLOCKED_TIME_PREVIEW_EXPIRED("O preview de bloqueio expirou. Gere um novo preview antes de confirmar."),
   BLOCKED_TIME_PREVIEW_OWNERSHIP_INVALID("Esta chave de preview não pertence a você. Não é possível usar um preview gerado por outro usuário."),

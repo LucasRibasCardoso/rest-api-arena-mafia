@@ -1,0 +1,70 @@
+type: object
+description: |
+  Resposta da pré-visualização de conflitos para criação de bloqueios de horário.
+  
+  Contém informações detalhadas sobre todos os agendamentos que serão afetados 
+  pela criação dos bloqueios propostos, incluindo:
+  - Bloqueios de horário existentes que serão sobrescritos
+  - Reservas confirmadas que serão canceladas
+  - Reservas atualmente em andamento (não serão canceladas)
+  
+  **Fluxo de Uso:**
+  1. O administrador solicita a pré-visualização informando os dados do bloqueio
+  2. O sistema retorna este DTO com todos os conflitos identificados
+  3. O administrador analisa os impactos e decide se deseja confirmar
+  4. Se confirmado, usa o `previewKey` para chamar o endpoint de confirmação
+  
+  **Importante:** O `previewKey` é válido por tempo limitado (5 minutos) e 
+  deve ser utilizado no endpoint de confirmação para efetivar os bloqueios.
+properties:
+  previewKey:
+    type: string
+    description: |
+      Chave única do preview armazenado em cache.
+      Deve ser utilizada no endpoint de confirmação para criar os bloqueios.
+      Expira após 5 minutos.
+    example: "blocked-time-preview:960289b9-d32d-4f00-8df7-02f4c04a017c:798b677e-fc31-4fb2-94c7-3b029d2e0306"
+  usersAffected:
+    type: integer
+    description: |
+      Quantidade de usuários distintos que serão afetados pelo bloqueio.
+      Considera apenas reservas que serão canceladas (não inclui reservas em andamento).
+    minimum: 0
+    example: 5
+  blockedTimesAffected:
+    type: integer
+    description: |
+      Quantidade de bloqueios de horário existentes que serão sobrescritos.
+    minimum: 0
+    example: 2
+  reservationsAffected:
+    type: integer
+    description: |
+      Quantidade de reservas confirmadas que serão canceladas.
+      Não inclui reservas em andamento.
+    minimum: 0
+    example: 8
+  conflictingBlockedTimes:
+    type: array
+    description: |
+      Lista de bloqueios de horário existentes que serão sobrescritos pelo novo bloqueio.
+      Estes bloqueios serão removidos quando o administrador confirmar a criação.
+    items:
+      $ref: "../schedule/BlockedTimeDetailResponseDto.yml"
+  conflictingReservations:
+    type: array
+    description: |
+      Lista de reservas confirmadas que serão canceladas pelo bloqueio.
+      Os usuários dessas reservas receberão notificação de cancelamento.
+      **Não inclui** reservas em andamento.
+    items:
+      $ref: "../schedule/ReservationDetailResponseDto.yml"
+  inProgressReservations:
+    type: array
+    description: |
+      Lista de reservas que estão atualmente em andamento (horário atual está dentro do intervalo da reserva).
+      Estas reservas **NÃO serão canceladas** para evitar interrupção de uso em progresso.
+      São informadas apenas para conhecimento do administrador.
+    items:
+      $ref: "../schedule/ReservationDetailResponseDto.yml"
+

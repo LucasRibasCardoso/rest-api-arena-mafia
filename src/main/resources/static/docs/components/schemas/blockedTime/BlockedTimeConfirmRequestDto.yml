@@ -1,0 +1,45 @@
+type: object
+description: |
+  DTO de request para confirmar a criação de bloqueios de horário.
+  
+  Contém a chave do preview gerado anteriormente e a descrição do bloqueio que será aplicada a todos os bloqueios criados.
+  
+  **Importante:**
+  - O `previewKey` deve ter sido obtido através do endpoint `/preview-conflicts`
+  - O preview expira após 5 minutos
+  - Apenas o administrador que gerou o preview pode confirmá-lo
+  - A descrição será aplicada a todos os bloqueios criados nesta operação
+required:
+  - previewKey
+  - description
+properties:
+  previewKey:
+    type: string
+    description: |
+      Chave única do preview armazenado em cache.
+      Obtida através do endpoint de preview de conflitos.
+      
+      **Formato:** `blocked-time-preview:{adminId}:{uuid}`
+      
+      **Validações:**
+      - Deve estar no formato correto (não pode ter caracteres inválidos)
+      - Deve existir no cache (não expirado)
+      - Deve pertencer ao administrador que está confirmando
+    minLength: 1
+    example: "blocked-time-preview:960289b9-d32d-4f00-8df7-02f4c04a017c:798b677e-fc31-4fb2-94c7-3b029d2e0306"
+  description:
+    type: string
+    description: |
+      Descrição/motivo do bloqueio de horário.
+      Será aplicada a todos os bloqueios criados nesta operação.
+      
+      **Exemplos de uso:**
+      - "Manutenção programada da quadra"
+      - "Reforma do piso e iluminação"
+      - "Evento especial - Torneio interno"
+      - "Aulas regulares de vôlei - Professor João"
+      - "Treinamento da equipe profissional"
+    minLength: 3
+    maxLength: 500
+    example: "Manutenção programada da quadra - Troca da iluminação"
+

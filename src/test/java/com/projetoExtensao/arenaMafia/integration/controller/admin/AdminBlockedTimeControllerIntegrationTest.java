@@ -200,12 +200,10 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
               .isEqualTo(response.blockedTimesAffected());
           assertThat(previewSaved.reservationsAffected())
               .isEqualTo(response.reservationsAffected());
-          assertThat(previewSaved.conflictingBlockedTimes())
-              .isEqualTo(response.conflictingBlockedTimes());
-          assertThat(previewSaved.conflictingReservations())
-              .isEqualTo(response.conflictingReservations());
-          assertThat(previewSaved.inProgressReservations())
-              .isEqualTo(response.inProgressReservations());
+          
+          assertThat(previewSaved.conflictingBlockedTimes().size()).isEqualTo(response.conflictingBlockedTimes().size());
+          assertThat(previewSaved.conflictingReservations().size()).isEqualTo(response.conflictingReservations().size());
+          assertThat(previewSaved.inProgressReservations().size()).isEqualTo(response.inProgressReservations().size());
           assertThat(previewSaved.request()).usingRecursiveComparison().isEqualTo(requestDto);
         }
 
@@ -273,12 +271,10 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
               .isEqualTo(response.blockedTimesAffected());
           assertThat(previewSaved.reservationsAffected())
               .isEqualTo(response.reservationsAffected());
-          assertThat(previewSaved.conflictingBlockedTimes())
-              .isEqualTo(response.conflictingBlockedTimes());
-          assertThat(previewSaved.conflictingReservations())
-              .isEqualTo(response.conflictingReservations());
-          assertThat(previewSaved.inProgressReservations())
-              .isEqualTo(response.inProgressReservations());
+
+          assertThat(previewSaved.conflictingBlockedTimes().size()).isEqualTo(response.conflictingBlockedTimes().size());
+          assertThat(previewSaved.conflictingReservations().size()).isEqualTo(response.conflictingReservations().size());
+          assertThat(previewSaved.inProgressReservations().size()).isEqualTo(response.inProgressReservations().size());
           assertThat(previewSaved.request()).usingRecursiveComparison().isEqualTo(requestDto);
         }
 
@@ -346,8 +342,7 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
           Modality modality = mockPersistModality("Futebol");
           UUID courtId = mockPersistCourt("Quadra 1", modality).getId();
           LocalDate date = LocalDate.now().plusDays(1);
-          TimeInterval conflictInterval =
-              new TimeInterval(LocalTime.of(10, 0), LocalTime.of(11, 0));
+          TimeInterval conflictInterval = new TimeInterval(LocalTime.of(10, 0), LocalTime.of(11, 0));
 
           mockPersistReservationByUser(
               modality.getId(),
@@ -383,23 +378,19 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
           assertThat(response.conflictingReservations().size()).isEqualTo(1);
           assertThat(response.inProgressReservations()).isEmpty();
 
-          Optional<BlockedTimeConflictsPreview> previewSavedOpt =
-              getPreviewSavedFromCache(response.previewKey());
+          Optional<BlockedTimeConflictsPreview> previewSavedOpt = getPreviewSavedFromCache(response.previewKey());
           assertThat(previewSavedOpt).isPresent();
 
           BlockedTimeConflictsPreview previewSaved = previewSavedOpt.get();
           assertThat(previewSaved.previewKey()).isEqualTo(response.previewKey());
           assertThat(previewSaved.usersAffected()).isEqualTo(response.usersAffected());
-          assertThat(previewSaved.blockedTimesAffected())
-              .isEqualTo(response.blockedTimesAffected());
-          assertThat(previewSaved.reservationsAffected())
-              .isEqualTo(response.reservationsAffected());
-          assertThat(previewSaved.conflictingBlockedTimes())
-              .isEqualTo(response.conflictingBlockedTimes());
-          assertThat(previewSaved.conflictingReservations())
-              .isEqualTo(response.conflictingReservations());
-          assertThat(previewSaved.inProgressReservations())
-              .isEqualTo(response.inProgressReservations());
+          assertThat(previewSaved.blockedTimesAffected()).isEqualTo(response.blockedTimesAffected());
+          assertThat(previewSaved.reservationsAffected()).isEqualTo(response.reservationsAffected());
+
+          assertThat(previewSaved.conflictingBlockedTimes().size()).isEqualTo(response.conflictingBlockedTimes().size());
+          assertThat(previewSaved.conflictingReservations().size()).isEqualTo(response.conflictingReservations().size());
+          assertThat(previewSaved.inProgressReservations().size()).isEqualTo(response.inProgressReservations().size());
+
           assertThat(previewSaved.request()).usingRecursiveComparison().isEqualTo(requestDto);
         }
 

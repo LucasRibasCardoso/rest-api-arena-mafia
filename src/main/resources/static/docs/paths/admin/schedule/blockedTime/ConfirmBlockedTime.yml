@@ -1,0 +1,287 @@
+post:
+  operationId: confirmBlockedTime
+  tags: [ "Administração - Gerenciamento de Bloqueios de Horários" ]
+  summary: Confirmar criação de bloqueios de horário
+  description: |
+    Confirma a criação dos bloqueios de horário previamente analisados através do preview.
+    
+    **Fluxo de Uso:**
+    1. O administrador primeiro solicita um preview através do endpoint `/preview-conflicts`
+    2. O sistema retorna um `previewKey` junto com todos os conflitos identificados
+    3. O administrador analisa os impactos (reservas e bloqueios que serão afetados)
+    4. Usa este endpoint para confirmar a criação, informando o `previewKey` e uma descrição
+    
+    **Comportamento:**
+    - Cancela automaticamente todas as reservas conflitantes identificadas no preview
+    - Remove bloqueios de horário existentes que foram sobrescritos
+    - **Preserva reservas em andamento** (não as cancela)
+    - Cria os novos bloqueios de horário conforme especificado no preview
+    - Envia notificações aos usuários cujas reservas foram canceladas
+    - Remove o preview do cache após confirmação bem-sucedida
+    
+    **Validações Importantes:**
+    - O `previewKey` deve existir e não estar expirado (válido por 5 minutos)
+    - O preview deve pertencer ao administrador que está confirmando
+    - Os dados não podem ter sido alterados desde a geração do preview (validação de staleness)
+    - Todas as quadras referenciadas devem existir e estar ativas
+    - Horários de funcionamento devem existir para os dias afetados
+    
+    **Segurança:**
+    - Apenas o administrador que gerou o preview pode confirmá-lo
+    - Proteção contra race conditions através de validação de staleness
+    - Operação atômica: tudo ocorre com sucesso ou tudo falha (transacional)
+  security:
+    - BearerAuth: [ ]
+  requestBody:
+    description: |
+      Dados necessários para confirmar a criação dos bloqueios.
+      Inclui a chave do preview gerado anteriormente e a descrição do bloqueio.
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: "../../../../components/schemas/blockedTime/BlockedTimeConfirmRequestDto.yml"
+  responses:
+    200:
+      description: |
+        Bloqueios criados com sucesso.
+        
+        Retorna informações detalhadas sobre:
+        - Quantidade total de bloqueios criados
+        - IDs dos bloqueios criados com sucesso
+        - Quantidade de reservas canceladas
+        - Quantidade de bloqueios anteriores removidos
+        - Quantidade de usuários afetados
+      content:
+        application/json:
+          schema:
+            $ref: "../../../../components/schemas/blockedTime/BlockedTimeConfirmResponseDto.yml"
+          examples:
+            SingleDayFullDayWithoutConflicts:
+              summary: Bloqueio pontual para dia inteiro sem conflitos
+              value:
+                totalBlockedTimesCreated: 1
+                blockedTimesCreatedSuccessfully:
+                  - "f1a2b3c4-d5e6-7890-abcd-ef1234567890"
+                reservationsCancelled: 0
+                blockedTimesCancelled: 0
+                usersAffected: 0
+            SingleDayFullDayWithConflicts:
+              summary: Bloqueio pontual para dia inteiro com conflitos
+              value:
+                totalBlockedTimesCreated: 1
+                blockedTimesCreatedSuccessfully:
+                  - "f1a2b3c4-d5e6-7890-abcd-ef1234567890"
+                reservationsCancelled: 3
+                blockedTimesCancelled: 1
+                usersAffected: 2
+            SingleDaySpecificTime:
+              summary: Bloqueio pontual para horário específico
+              value:
+                totalBlockedTimesCreated: 1
+                blockedTimesCreatedSuccessfully:
+                  - "a2b3c4d5-e6f7-8901-bcde-f12345678901"
+                reservationsCancelled: 0
+                blockedTimesCancelled: 0
+                usersAffected: 0
+            ConsecutiveDays:
+              summary: Bloqueio consecutivo para 14 dias
+              value:
+                totalBlockedTimesCreated: 15
+                blockedTimesCreatedSuccessfully:
+                  - "a1a2a3a4-b5b6-c7c8-d9d0-e1e2e3e4e5e6"
+                  - "b2b3b4b5-c6c7-d8d9-e0e1-f2f3f4f5f6f7"
+                  - "c3c4c5c6-d7d8-e9e0-f1f2-a3a4a5a6a7a8"
+                  # ... mais IDs (total: 15)
+                reservationsCancelled: 2
+                blockedTimesCancelled: 0
+                usersAffected: 1
+            RecurringWeekly:
+              summary: Bloqueio recorrente semanal (terças e quintas)
+              value:
+                totalBlockedTimesCreated: 4
+                blockedTimesCreatedSuccessfully:
+                  - "d4d5d6d7-e8e9-f0f1-a2a3-b4b5b6b7b8b9"
+                  - "e5e6e7e8-f9f0-a1a2-b3b4-c5c6c7c8c9c0"
+                  - "f6f7f8f9-a0a1-b2b3-c4c5-d6d7d8d9d0d1"
+                  - "a7a8a9a0-b1b2-c3c4-d5d6-e7e8e9e0e1e2"
+                reservationsCancelled: 0
+                blockedTimesCancelled: 0
+                usersAffected: 0
+            MultipleCourts:
+              summary: Bloqueio em múltiplas quadras
+              value:
+                totalBlockedTimesCreated: 2
+                blockedTimesCreatedSuccessfully:
+                  - "b8b9b0b1-c2c3-d4d5-e6e7-f8f9f0f1f2f3"
+                  - "c9c0c1c2-d3d4-e5e6-f7f8-a9a0a1a2a3a4"
+                reservationsCancelled: 0
+                blockedTimesCancelled: 0
+                usersAffected: 0
+    400:
+      description: |
+        Requisição inválida ou dados de validação incorretos.
+        
+        Ocorre quando:
+        - `previewKey` não informada ou em branco
+        - `previewKey` possui formato inválido
+        - `description` não informada ou em branco
+        - `description` muito curta (menos de 3 caracteres)
+        - `description` muito longa (mais de 500 caracteres)
+      content:
+        application/json:
+          schema:
+            $ref: "../../../../components/schemas/error/ErrorResponseDto.yml"
+          examples:
+            PreviewKeyRequired:
+              summary: PreviewKey não informada
+              value:
+                timestamp: "2026-01-15T14:30:00Z"
+                status: 400
+                errorCode: "VALIDATION_FAILED"
+                developerMessage: "A validação falhou. Verifique os detalhes dos campos para mais informações."
+                path: "/api/admin/blocked-times/confirm"
+                fieldErrors:
+                  - fieldName: "previewKey"
+                    errorCode: "BLOCKED_TIME_PREVIEW_KEY_REQUIRED"
+                    developerMessage: "A chave do preview é obrigatória."
+            PreviewKeyInvalid:
+              summary: PreviewKey com formato inválido
+              value:
+                timestamp: "2026-01-15T14:30:00Z"
+                status: 400
+                errorCode: "BLOCKED_TIME_PREVIEW_KEY_INVALID"
+                developerMessage: "A chave do preview é inválida."
+                path: "/api/admin/blocked-times/confirm"
+            DescriptionRequired:
+              summary: Descrição não informada
+              value:
+                timestamp: "2026-01-15T14:30:00Z"
+                status: 400
+                errorCode: "VALIDATION_FAILED"
+                developerMessage: "A validação falhou. Verifique os detalhes dos campos para mais informações."
+                path: "/api/admin/blocked-times/confirm"
+                fieldErrors:
+                  - fieldName: "description"
+                    errorCode: "BLOCKED_TIME_DESCRIPTION_REQUIRED"
+                    developerMessage: "A descrição do bloqueio é obrigatória."
+            DescriptionTooShort:
+              summary: Descrição muito curta
+              value:
+                timestamp: "2026-01-15T14:30:00Z"
+                status: 400
+                errorCode: "VALIDATION_FAILED"
+                developerMessage: "A validação falhou. Verifique os detalhes dos campos para mais informações."
+                path: "/api/admin/blocked-times/confirm"
+                fieldErrors:
+                  - fieldName: "description"
+                    errorCode: "BLOCKED_TIME_DESCRIPTION_INVALID_LENGTH"
+                    developerMessage: "A descrição do bloqueio deve ter entre 3 e 500 caracteres."
+            DescriptionTooLong:
+              summary: Descrição muito longa
+              value:
+                timestamp: "2026-01-15T14:30:00Z"
+                status: 400
+                errorCode: "VALIDATION_FAILED"
+                developerMessage: "A validação falhou. Verifique os detalhes dos campos para mais informações."
+                path: "/api/admin/blocked-times/confirm"
+                fieldErrors:
+                  - fieldName: "description"
+                    errorCode: "BLOCKED_TIME_DESCRIPTION_INVALID_LENGTH"
+                    developerMessage: "A descrição do bloqueio deve ter entre 3 e 500 caracteres."
+    401:
+      $ref: "../../../../components/responses/UnauthorizedError.yml"
+    403:
+      description: |
+        Acesso negado.
+        
+        Lançado quando:
+        - Usuário não possui permissão de administrador
+        - O preview pertence a outro administrador (proteção contra uso indevido)
+      content:
+        application/json:
+          schema:
+            $ref: "../../../../components/schemas/error/ErrorResponseDto.yml"
+          examples:
+            AccessDenied:
+              summary: Acesso negado por falta de permissão
+              value:
+                timestamp: "2026-01-15T14:30:00Z"
+                status: 403
+                errorCode: "ACCESS_DENIED"
+                developerMessage: "Acesso negado. Você não tem permissão para acessar este recurso."
+                path: "/api/admin/blocked-times/confirm"
+            PreviewOwnershipInvalid:
+              summary: Preview pertence a outro administrador
+              value:
+                timestamp: "2026-01-15T14:30:00Z"
+                status: 403
+                errorCode: "BLOCKED_TIME_PREVIEW_OWNERSHIP_INVALID"
+                developerMessage: "Esta chave de preview não pertence a você. Não é possível usar um preview gerado por outro usuário."
+                path: "/api/admin/blocked-times/confirm"
+    404:
+      description: |
+        Recurso não encontrado.
+        
+        Lançado quando:
+        - Preview não existe ou já expirou (válido por 5 minutos)
+        - Alguma quadra do preview foi removida/desativada após geração do preview
+        - Horários de funcionamento foram removidos após geração do preview
+      content:
+        application/json:
+          schema:
+            $ref: "../../../../components/schemas/error/ErrorResponseDto.yml"
+          examples:
+            PreviewNotFound:
+              summary: Preview não encontrado ou expirado
+              value:
+                timestamp: "2026-01-15T14:30:00Z"
+                status: 404
+                errorCode: "BLOCKED_TIME_PREVIEW_NOT_FOUND"
+                developerMessage: "Preview não encontrado. Pode ter expirado após 5 minutos."
+                path: "/api/admin/blocked-times/confirm"
+            CourtNotFound:
+              summary: Quadra do preview não existe mais
+              value:
+                timestamp: "2026-01-15T14:30:00Z"
+                status: 404
+                errorCode: "COURT_NOT_FOUND"
+                developerMessage: "Quadra não encontrada."
+                path: "/api/admin/blocked-times/confirm"
+            OperatingHoursNotFound:
+              summary: Horário de funcionamento não encontrado
+              value:
+                timestamp: "2026-01-15T14:30:00Z"
+                status: 404
+                errorCode: "OPERATING_HOURS_APPLICABLE_NOT_FOUND"
+                developerMessage: "Não há horários de funcionamento aplicáveis para todos os dias selecionados."
+                path: "/api/admin/blocked-times/confirm"
+    409:
+      description: |
+        Conflito - Os dados foram alterados desde a geração do preview.
+        
+        Proteção contra race conditions. Lançado quando:
+        - Uma nova reserva foi criada após a geração do preview
+        - Um novo bloqueio foi criado por outro administrador
+        - Uma reserva conflitante foi cancelada após o preview
+        - Qualquer alteração que invalide os dados do preview
+        
+        **Solução:** Gerar um novo preview para obter dados atualizados.
+      content:
+        application/json:
+          schema:
+            $ref: "../../../../components/schemas/error/ErrorResponseDto.yml"
+          examples:
+            PreviewStaleNewReservation:
+              summary: Nova reserva criada após preview
+              value:
+                timestamp: "2026-01-15T14:30:00Z"
+                status: 409
+                errorCode: "BLOCKED_TIME_PREVIEW_STALE"
+                developerMessage: "Os dados do preview estão desatualizados. Outro administrador pode ter criado bloqueios ou reservas foram alteradas desde a geração do preview. Por favor, gere um novo preview."
+                path: "/api/admin/blocked-times/confirm"
+    429:
+      $ref: "../../../../components/responses/TooManyRequestsError.yml"
+    500:
+      $ref: "../../../../components/responses/InternalServerError.yml"
+

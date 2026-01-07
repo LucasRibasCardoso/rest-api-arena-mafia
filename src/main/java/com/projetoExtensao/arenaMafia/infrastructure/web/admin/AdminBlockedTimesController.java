@@ -10,12 +10,16 @@ import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.blockedtime.r
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.blockedtime.request.BlockedTimeConfirmRequestDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.blockedtime.response.BlockedTimeConfirmResponseDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.blockedtime.response.BlockedTimeConflictsPreviewResponseDto;
+import com.projetoExtensao.arenaMafia.infrastructure.web.schedule.dto.response.scheduleDetail.BlockedTimeDetailResponseDto;
+import com.projetoExtensao.arenaMafia.infrastructure.web.schedule.dto.response.scheduleDetail.ReservationDetailResponseDto;
+import com.projetoExtensao.arenaMafia.infrastructure.web.schedule.mapper.ScheduleEntryResponseMapper;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -25,12 +29,15 @@ public class AdminBlockedTimesController {
 
   private final PreviewBlockedTimeConflictsUseCase previewBlockedTimeConflictsUseCase;
   private final ConfirmBlockedTimeUseCase confirmBlockedTimeUseCase;
+  private final ScheduleEntryResponseMapper scheduleEntryMapper;
 
   public AdminBlockedTimesController(
       PreviewBlockedTimeConflictsUseCase previewBlockedTimeConflictsUseCase,
-      ConfirmBlockedTimeUseCase confirmBlockedTimeUseCase) {
+      ConfirmBlockedTimeUseCase confirmBlockedTimeUseCase,
+      ScheduleEntryResponseMapper scheduleEntryMapper) {
     this.previewBlockedTimeConflictsUseCase = previewBlockedTimeConflictsUseCase;
     this.confirmBlockedTimeUseCase = confirmBlockedTimeUseCase;
+    this.scheduleEntryMapper = scheduleEntryMapper;
   }
 
   @PostMapping("/preview-conflicts")
@@ -66,15 +73,26 @@ public class AdminBlockedTimesController {
    * @return O DTO de resposta contendo os detalhes dos conflitos.
    */
   private BlockedTimeConflictsPreviewResponseDto buildPreviewResponseDto(BlockedTimeConflictsPreview preview) {
+    List<BlockedTimeDetailResponseDto> blockedTimesDetails = preview.conflictingBlockedTimes().stream()
+        .map(detail -> (BlockedTimeDetailResponseDto) scheduleEntryMapper.toDetailDto(detail))
+        .toList();
+
+    List<ReservationDetailResponseDto> reservationsDetails = preview.conflictingReservations().stream()
+        .map(detail -> (ReservationDetailResponseDto) scheduleEntryMapper.toDetailDto(detail))
+        .toList();
+
+    List<ReservationDetailResponseDto> inProgressReservationsDetails = preview.inProgressReservations().stream()
+        .map(detail -> (ReservationDetailResponseDto) scheduleEntryMapper.toDetailDto(detail))
+        .toList();
 
     return new BlockedTimeConflictsPreviewResponseDto(
         preview.previewKey(),
         preview.usersAffected(),
         preview.blockedTimesAffected(),
         preview.reservationsAffected(),
-        preview.conflictingBlockedTimes(),
-        preview.conflictingReservations(),
-        preview.inProgressReservations());
+        blockedTimesDetails,
+        reservationsDetails,
+        inProgressReservationsDetails);
   }
 
   /**
@@ -93,9 +111,11 @@ public class AdminBlockedTimesController {
     );
   }
 
-  // TODO: Implementar endpoint DELETE para remover horários bloqueados existentes
+  // TODO: Implementar endpoint DELETE para deletar um ou todos horários bloqueados
 
   // TODO: Implementar endpoint GET para listar todos os horários bloqueados
+
+  // TODO: Implementar endpoint GET para obter detalhes de um horário bloqueado específico
 
   // TODO: Implementar endpoint PUT para atualizar horários bloqueados existentes
 

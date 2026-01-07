@@ -7,7 +7,7 @@ content:
       AccessDenied:
         summary: Acesso negado por falta de permissão
         value:
-          timestamp: "2024-06-15T14:30:00Z"
+          timestamp: "2026-01-07T14:30:00Z"
           status: 403
           errorCode: "ACCESS_DENIED"
           developerMessage: "Acesso negado. Você não tem permissão para acessar este recurso."

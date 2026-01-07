@@ -40,15 +40,13 @@ public class BlockedTimeDateCalculationService {
   }
 
   /**
-   * Calcula as datas aplicáveis baseado no intervalo e dias da semana selecionados.
+   * Calcula as datas aplicáveis baseado no intervalo e dias da semana selecionado* <p>Filtra as datas no intervalo que correspondem aos dias da semana selecionados.
    *
    * <p>Se dias da semana são fornecidos, filtra apenas as datas que correspondem a esses dias.
    * Caso contrário, retorna todas as datas no intervalo.
-   *
-   * @param startDate Data inicial (inclusiva)
    * @param endDate Data final (inclusiva)
    * @param selectedDaysOfWeek Dias da semana selecionados (null ou vazio = todos os dias)
-   * @return Lista de datas aplicáveis
+   * @return Lista de LocalDate representando as datas aplicáveis
    */
   public List<LocalDate> calculateApplicableDates(
       LocalDate startDate,
@@ -64,8 +62,8 @@ public class BlockedTimeDateCalculationService {
 
     // Filtra apenas os dias da semana selecionados
     return dateStream
-        .filter(date -> selectedDaysOfWeek.contains(DayOfWeek.convertToDayOfWeek(date)))
-        .collect(Collectors.toList());
+            .filter(date -> selectedDaysOfWeek.contains(DayOfWeek.convertToDayOfWeek(date)))
+            .collect(Collectors.toList());
   }
 
   /**

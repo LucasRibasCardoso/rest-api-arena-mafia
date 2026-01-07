@@ -18,7 +18,6 @@ import com.projetoExtensao.arenaMafia.domain.model.Court;
 import com.projetoExtensao.arenaMafia.domain.model.PriceRule;
 import com.projetoExtensao.arenaMafia.domain.model.User;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.Reservation;
-import com.projetoExtensao.arenaMafia.domain.model.schedule.ScheduleEntry;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.DateTimeSlot;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.specification.PriceRuleSpecification;
 import com.projetoExtensao.arenaMafia.infrastructure.web.schedule.dto.request.CreateReservationRequestDto;
@@ -68,7 +67,7 @@ public class CreateReservationUseCaseImp implements CreateReservationUseCase {
   }
 
   @Override
-  public ScheduleEntry execute(UUID userId, CreateReservationRequestDto request) {
+  public Reservation execute(UUID userId, CreateReservationRequestDto request) {
     validateReservationDate(request.date());
 
     User user = userRepositoryPort.findByIdOrElseThrow(userId);
@@ -80,8 +79,7 @@ public class CreateReservationUseCaseImp implements CreateReservationUseCase {
     validateScheduleAvailability(request.courtId(), dateTimeSlot);
 
     BigDecimal price = calculatePrice(request);
-    Reservation reservation =
-        saveReservation(request.modalityId(), request.courtId(), userId, price, dateTimeSlot);
+    Reservation reservation = saveReservation(request.modalityId(), request.courtId(), userId, price, dateTimeSlot);
 
     publishConfirmationEvent(user, reservation);
 

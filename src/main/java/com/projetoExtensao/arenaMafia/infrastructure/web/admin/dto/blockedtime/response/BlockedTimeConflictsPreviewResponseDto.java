@@ -1,7 +1,7 @@
 package com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.blockedtime.response;
 
-import com.projetoExtensao.arenaMafia.application.schedule.detail.BlockedTimeDetail;
-import com.projetoExtensao.arenaMafia.application.schedule.detail.ReservationDetail;
+import com.projetoExtensao.arenaMafia.infrastructure.web.schedule.dto.response.scheduleDetail.BlockedTimeDetailResponseDto;
+import com.projetoExtensao.arenaMafia.infrastructure.web.schedule.dto.response.scheduleDetail.ReservationDetailResponseDto;
 import java.util.List;
 
 public record BlockedTimeConflictsPreviewResponseDto(
@@ -9,6 +9,6 @@ public record BlockedTimeConflictsPreviewResponseDto(
     int usersAffected,
     int blockedTimesAffected,
     int reservationsAffected,
-    List<BlockedTimeDetail> conflictingBlockedTimes,
-    List<ReservationDetail> conflictingReservations,
-    List<ReservationDetail> inProgressReservations) {}
+    List<BlockedTimeDetailResponseDto> conflictingBlockedTimes,
+    List<ReservationDetailResponseDto> conflictingReservations,
+    List<ReservationDetailResponseDto> inProgressReservations) {}
