@@ -41,7 +41,9 @@ public class BlockedTimePreviewCacheAdapter implements BlockedTimePreviewCachePo
   }
 
   @Override
-  public BlockedTimeConflictsPreview getPreviewOrElseThrow(String key) {
+  public BlockedTimeConflictsPreview getPreviewOrElseThrow(String key, UUID userId) {
+    validateKeyOwnership(key, userId);
+
     String jsonValue = redisTemplate.opsForValue().get(key);
     if (jsonValue == null) {
       throw new BlockedTimeNotFoundException(ErrorCode.BLOCKED_TIME_PREVIEW_NOT_FOUND);
@@ -64,8 +66,7 @@ public class BlockedTimePreviewCacheAdapter implements BlockedTimePreviewCachePo
     return CACHE_PREFIX + userId + ":" + UUID.randomUUID();
   }
 
-  @Override
-  public void validateKeyOwnership(String key, UUID userId) {
+  private void validateKeyOwnership(String key, UUID userId) {
     if (key == null || key.isBlank() || !key.startsWith(CACHE_PREFIX)) {
       throw new InvalidPreviewKeyException();
     }

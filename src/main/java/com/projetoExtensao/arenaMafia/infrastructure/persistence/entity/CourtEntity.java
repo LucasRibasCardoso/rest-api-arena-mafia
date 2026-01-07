@@ -30,7 +30,7 @@ public class CourtEntity {
   @Column(name = "is_active", nullable = false)
   private boolean isActive;
 
-  @ManyToMany
+  @ManyToMany(fetch = FetchType.EAGER)
   @JoinTable(
       name = "tb_court_modalities",
       joinColumns = @JoinColumn(name = "court_id"),

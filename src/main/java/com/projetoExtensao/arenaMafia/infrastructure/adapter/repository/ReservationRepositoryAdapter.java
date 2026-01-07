@@ -10,7 +10,6 @@ import com.projetoExtensao.arenaMafia.infrastructure.persistence.repository.Sche
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -35,7 +34,6 @@ public class ReservationRepositoryAdapter implements ReservationRepositoryPort {
   }
 
   @Override
-  @Transactional
   public Reservation save(Reservation reservation) {
     var entity = scheduleEntryMapper.toEntity(reservation);
     var savedEntity = scheduleEntryJpaRepository.save(entity);
@@ -43,7 +41,6 @@ public class ReservationRepositoryAdapter implements ReservationRepositoryPort {
   }
 
   @Override
-  @Transactional(readOnly = true)
   public Optional<Reservation> findById(UUID id) {
     return scheduleEntryJpaRepository
         .findById(id)
@@ -53,7 +50,6 @@ public class ReservationRepositoryAdapter implements ReservationRepositoryPort {
   }
 
   @Override
-  @Transactional(readOnly = true)
   public List<Reservation> findAllByIds(List<UUID> ids) {
     return scheduleEntryJpaRepository.findAllById(ids).stream()
         .map(entity -> (Reservation) scheduleEntryMapper.toDomain(entity))
@@ -61,14 +57,12 @@ public class ReservationRepositoryAdapter implements ReservationRepositoryPort {
   }
 
   @Override
-  @Transactional(readOnly = true)
   public Reservation findByIdOrElseThrow(UUID id) {
     return findById(id)
         .orElseThrow(() -> new ScheduleNotFoundException(ErrorCode.SCHEDULE_ENTRY_NOT_FOUND));
   }
 
   @Override
-  @Transactional(readOnly = true)
   public Page<Reservation> findReservationsByUserId(UUID userId, Pageable pageable) {
     return scheduleEntryJpaRepository
         .findReservationsByUserId(userId, pageable)
@@ -76,7 +70,6 @@ public class ReservationRepositoryAdapter implements ReservationRepositoryPort {
   }
 
   @Override
-  @Transactional(readOnly = true)
   public Reservation findReservationByIdAndUserIdOrElseThrow(UUID reservationId, UUID userId) {
     return scheduleEntryJpaRepository
         .findReservationByIdAndUser(reservationId, userId)
@@ -85,7 +78,6 @@ public class ReservationRepositoryAdapter implements ReservationRepositoryPort {
   }
 
   @Override
-  @Transactional(readOnly = true)
   public List<Reservation> findAllConfirmedReservationsWithEndTimeAfter(LocalDateTime dateTime) {
     LocalDate date = dateTime.toLocalDate();
     LocalTime time = dateTime.toLocalTime();
@@ -96,13 +88,11 @@ public class ReservationRepositoryAdapter implements ReservationRepositoryPort {
   }
 
   @Override
-  @Transactional(readOnly = true)
   public boolean existsConfirmedReservationsAfter(UUID courtId, LocalDate date) {
     return scheduleEntryJpaRepository.existsConfirmedReservationsAfter(courtId, date);
   }
 
   @Override
-  @Transactional(readOnly = true)
   public boolean existsConfirmedReservationsForDaysAndTime(
       Set<DayOfWeek> daysOfWeek, LocalTime startTime, LocalTime endTime, LocalDate afterDate) {
 

@@ -15,6 +15,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 @Component
 public class NotificationEventListener {
@@ -116,10 +118,14 @@ public class NotificationEventListener {
    * Listener que processa eventos de cancelamento de reserva por administrador. Envia notificação
    * SMS ao usuário informando sobre o cancelamento feito pelo admin.
    *
+   * <p>Usa {@link TransactionalEventListener} com fase AFTER_COMMIT para garantir que a notificação
+   * só seja enviada após o commit bem-sucedido da transação. Isso evita enviar notificações
+   * para cancelamentos que falharam e sofreram rollback.
+   *
    * @param eventData evento contendo dados do cancelamento pelo admin
    */
   @Async
-  @EventListener
+  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
   public void onReservationCancelledByAdmin(OnReservationCancelledByAdminEvent eventData) {
     try {
       Reservation reservation = eventData.reservation();

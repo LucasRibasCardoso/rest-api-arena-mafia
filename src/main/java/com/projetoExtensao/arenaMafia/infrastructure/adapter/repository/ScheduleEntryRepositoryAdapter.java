@@ -10,7 +10,6 @@ import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.Schedule
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.mapper.ScheduleEntryMapper;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.repository.ScheduleEntryJpaRepository;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -32,7 +31,6 @@ public class ScheduleEntryRepositoryAdapter implements ScheduleEntryRepositoryPo
   }
 
   @Override
-  @Transactional
   public ScheduleEntry save(ScheduleEntry scheduleEntry) {
     ScheduleEntryEntity entity = scheduleEntryMapper.toEntity(scheduleEntry);
     ScheduleEntryEntity savedEntity = scheduleEntryJpaRepository.save(entity);
@@ -40,7 +38,6 @@ public class ScheduleEntryRepositoryAdapter implements ScheduleEntryRepositoryPo
   }
 
   @Override
-  @Transactional(readOnly = true)
   public ScheduleEntry findByIdOrElseThrow(UUID id) {
     return scheduleEntryJpaRepository
         .findById(id)
@@ -49,7 +46,6 @@ public class ScheduleEntryRepositoryAdapter implements ScheduleEntryRepositoryPo
   }
 
   @Override
-  @Transactional(readOnly = true)
   public List<ScheduleEntry> findConfirmedSchedulesByCourtAndDate(UUID courtId, LocalDate date) {
     return scheduleEntryJpaRepository
         .findSchedulesByCourtAndDate(courtId, date)
@@ -60,7 +56,6 @@ public class ScheduleEntryRepositoryAdapter implements ScheduleEntryRepositoryPo
   }
 
   @Override
-  @Transactional(readOnly = true)
   public List<ScheduleEntry> findAllSchedulesByDate(LocalDate date) {
     return scheduleEntryJpaRepository
         .findAllSchedulesByDate(date)
@@ -70,7 +65,6 @@ public class ScheduleEntryRepositoryAdapter implements ScheduleEntryRepositoryPo
   }
 
   @Override
-  @Transactional(readOnly = true)
   public List<ScheduleEntry> findConflicts(
       List<UUID> courtIds,
       LocalDate startDate,
@@ -100,4 +94,3 @@ public class ScheduleEntryRepositoryAdapter implements ScheduleEntryRepositoryPo
         .toList();
   }
 }
-

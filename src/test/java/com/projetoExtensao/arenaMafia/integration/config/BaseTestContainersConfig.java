@@ -1,6 +1,7 @@
 package com.projetoExtensao.arenaMafia.integration.config;
 
 import static io.restassured.RestAssured.given;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import com.projetoExtensao.arenaMafia.application.auth.port.repository.RefreshTokenRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.court.port.CourtRepositoryPort;
@@ -11,6 +12,7 @@ import com.projetoExtensao.arenaMafia.application.schedule.port.repository.Block
 import com.projetoExtensao.arenaMafia.application.schedule.port.repository.ScheduleEntryRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.security.port.gateway.PasswordEncoderPort;
 import com.projetoExtensao.arenaMafia.application.user.port.repository.UserRepositoryPort;
+import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 import com.projetoExtensao.arenaMafia.domain.model.*;
 import com.projetoExtensao.arenaMafia.domain.model.enums.AccountStatus;
 import com.projetoExtensao.arenaMafia.domain.model.enums.DayOfWeek;
@@ -27,12 +29,14 @@ import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.blockedtime.r
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.blockedtime.response.BlockedTimeConflictsPreviewResponseDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.auth.dto.request.LoginRequestDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.auth.dto.response.AuthResponseDto;
+import com.projetoExtensao.arenaMafia.infrastructure.web.exception.dto.ErrorResponseDto;
 import io.restassured.http.Cookie;
 import io.restassured.response.Response;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -106,6 +110,79 @@ public abstract class BaseTestContainersConfig {
         "tb_modalities",
         "tb_users");
     redisTemplate.getConnectionFactory().getConnection().serverCommands().flushAll();
+  }
+
+  /**
+   * Valida uma resposta de erro de validação (400 Bad Request) com fieldErrors. Útil para validar
+   * erros de Bean Validation em DTOs de request.
+   *
+   * @param response A resposta de erro extraída do RestAssured
+   * @param expectedPath O path esperado do endpoint
+   * @param fieldName O nome do campo com erro
+   * @param expectedErrorCode O ErrorCode esperado para o campo
+   */
+  public void assertValidationError(
+          ErrorResponseDto response,
+          String expectedPath,
+          String fieldName,
+          ErrorCode expectedErrorCode) {
+
+    assertThat(response.status()).isEqualTo(400);
+    assertThat(response.errorCode()).isEqualTo(ErrorCode.VALIDATION_FAILED.name());
+    assertThat(response.developerMessage()).isEqualTo(ErrorCode.VALIDATION_FAILED.getMessage());
+    assertThat(response.path()).isEqualTo(expectedPath);
+    assertThat(response.fieldErrors())
+            .anyMatch(
+                    fieldError ->
+                            fieldError.fieldName().equals(fieldName)
+                                    && fieldError.errorCode().equals(expectedErrorCode.name())
+                                    && fieldError.developerMessage().equals(expectedErrorCode.getMessage()));
+  }
+
+  /**
+   * Valida uma resposta de erro de negócio (404, 409, 403, etc.) sem fieldErrors.
+   *
+   * @param response A resposta de erro extraída do RestAssured
+   * @param expectedStatus O status HTTP esperado (404, 409, etc.)
+   * @param expectedPath O path esperado do endpoint
+   * @param expectedErrorCode O ErrorCode esperado
+   */
+  public void assertBusinessError(
+          ErrorResponseDto response,
+          int expectedStatus,
+          String expectedPath,
+          ErrorCode expectedErrorCode) {
+
+    assertThat(response.status()).isEqualTo(expectedStatus);
+    assertThat(response.errorCode()).isEqualTo(expectedErrorCode.name());
+    assertThat(response.developerMessage()).isEqualTo(expectedErrorCode.getMessage());
+    assertThat(response.path()).isEqualTo(expectedPath);
+  }
+
+  /**
+   * Valida múltiplos erros de validação em uma única resposta.
+   *
+   * @param response A resposta de erro extraída do RestAssured
+   * @param expectedPath O path esperado do endpoint
+   * @param fieldErrorsMap Mapa de fieldName -> ErrorCode esperado
+   */
+  public void assertMultipleValidationErrors(
+          ErrorResponseDto response, String expectedPath, Map<String, ErrorCode> fieldErrorsMap) {
+
+    assertThat(response.status()).isEqualTo(400);
+    assertThat(response.errorCode()).isEqualTo(ErrorCode.VALIDATION_FAILED.name());
+    assertThat(response.path()).isEqualTo(expectedPath);
+
+    fieldErrorsMap.forEach(
+            (fieldName, expectedErrorCode) ->
+                    assertThat(response.fieldErrors())
+                            .anyMatch(
+                                    fieldError ->
+                                            fieldError.fieldName().equals(fieldName)
+                                                    && fieldError.errorCode().equals(expectedErrorCode.name())
+                                                    && fieldError
+                                                    .developerMessage()
+                                                    .equals(expectedErrorCode.getMessage())));
   }
 
   public record AuthTokensTest(
@@ -241,6 +318,23 @@ public abstract class BaseTestContainersConfig {
             now,
             now);
     return userRepository.save(adminUser);
+  }
+
+  public User mockPersistOtherAdminUser() {
+    String passwordEncoded = passwordEncoder.encode(defaultPassword);
+    Instant now = Instant.now();
+    User otherAdminUser =
+        User.reconstitute(
+            UUID.randomUUID(),
+            "outro_admin",
+            "Outro Administrador",
+            "+5511988887777",
+            passwordEncoded,
+            AccountStatus.ACTIVE,
+            RoleEnum.ROLE_ADMIN,
+            now,
+            now);
+    return userRepository.save(otherAdminUser);
   }
 
   public void mockPersistListOfUsers() {
@@ -445,7 +539,6 @@ public abstract class BaseTestContainersConfig {
     return operatingHoursRepository.save(operatingHours);
   }
 
-
   public OperatingHours mockPersistDisabledOperatingHours() {
     TimeInterval timeInterval = new TimeInterval(LocalTime.of(8, 0), LocalTime.of(0, 0));
     Set<DayOfWeek> daysOfWeek =
@@ -532,7 +625,7 @@ public abstract class BaseTestContainersConfig {
     return priceRuleRepository.save(priceRule);
   }
 
-  public ScheduleEntry mockPersistReservationByUser(
+  public Reservation mockPersistReservationByUser(
       UUID modalityId,
       UUID courtId,
       LocalDate date,
@@ -543,7 +636,7 @@ public abstract class BaseTestContainersConfig {
     DateTimeSlot dateTimeSlot = new DateTimeSlot(date, timeInterval);
     Reservation reservation =
         Reservation.createByUser(modalityId, courtId, userId, price, dateTimeSlot);
-    return scheduleEntryRepository.save(reservation);
+    return (Reservation) scheduleEntryRepository.save(reservation);
   }
 
   // =================== Blocked Time Helpers ===================
@@ -554,5 +647,6 @@ public abstract class BaseTestContainersConfig {
     BlockedTime blockedTime = BlockedTime.createSpecificTime(courtId, dateTimeSlot, reason, adminId);
     return blockedTimeRepository.save(blockedTime);
   }
+
 
 }

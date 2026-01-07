@@ -11,6 +11,8 @@ public interface BlockedTimeRepositoryPort {
 
   BlockedTime save(BlockedTime blockedTime);
 
+  List<BlockedTime> saveAll(List<BlockedTime> blockedTimes);
+
   Optional<BlockedTime> findById(UUID id);
 
   BlockedTime findByIdOrElseThrow(UUID id);

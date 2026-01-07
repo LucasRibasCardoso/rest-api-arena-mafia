@@ -273,6 +273,24 @@ public class Reservation extends ScheduleEntry {
     return this.status.equals(ReservationStatus.CONFIRMED);
   }
 
+  /**
+   * Verifica se a reserva está em andamento.
+   *
+   * <p>Uma reserva é considerada em andamento quando:
+   * <ul>
+   *   <li>O status é CONFIRMED</li>
+   *   <li>O momento atual está dentro do intervalo de data/hora da reserva</li>
+   * </ul>
+   *
+   * @return true se a reserva estiver em andamento, false caso contrário
+   */
+  public boolean isInProgress() {
+    if (!isActive()) {
+      return false;
+    }
+    return getDateTimeSlot().isInProgress();
+  }
+
   // --- Getters ---
   public UUID getUserId() {
     return userId;

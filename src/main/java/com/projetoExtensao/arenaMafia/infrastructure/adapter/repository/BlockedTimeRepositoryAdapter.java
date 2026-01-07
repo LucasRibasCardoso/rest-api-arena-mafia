@@ -7,7 +7,6 @@ import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.BlockedT
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.mapper.ScheduleEntryMapper;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.repository.ScheduleEntryJpaRepository;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -28,7 +27,6 @@ public class BlockedTimeRepositoryAdapter implements BlockedTimeRepositoryPort {
   }
 
   @Override
-  @Transactional
   public BlockedTime save(BlockedTime blockedTime) {
     BlockedTimeEntity entity = (BlockedTimeEntity) scheduleEntryMapper.toEntity(blockedTime);
     BlockedTimeEntity savedEntity = scheduleEntryJpaRepository.save(entity);
@@ -36,7 +34,20 @@ public class BlockedTimeRepositoryAdapter implements BlockedTimeRepositoryPort {
   }
 
   @Override
-  @Transactional(readOnly = true)
+  public List<BlockedTime> saveAll(List<BlockedTime> blockedTimes) {
+    List<BlockedTimeEntity> entities =
+        blockedTimes.stream()
+            .map(blockedTime -> (BlockedTimeEntity) scheduleEntryMapper.toEntity(blockedTime))
+            .toList();
+
+    List<BlockedTimeEntity> savedEntities = scheduleEntryJpaRepository.saveAll(entities);
+
+    return savedEntities.stream()
+        .map(entity -> (BlockedTime) scheduleEntryMapper.toDomain(entity))
+        .toList();
+  }
+
+  @Override
   public Optional<BlockedTime> findById(UUID id) {
     return scheduleEntryJpaRepository
         .findById(id)
@@ -45,13 +56,11 @@ public class BlockedTimeRepositoryAdapter implements BlockedTimeRepositoryPort {
   }
 
   @Override
-  @Transactional(readOnly = true)
   public BlockedTime findByIdOrElseThrow(UUID id) {
     return findById(id).orElseThrow(BlockedTimeNotFoundException::new);
   }
 
   @Override
-  @Transactional(readOnly = true)
   public List<BlockedTime> findAllByRecurringBlockedTimeId(UUID recurringBlockedTimeId) {
     return scheduleEntryJpaRepository
         .findAllByRecurringBlockedTimeId(recurringBlockedTimeId)
@@ -61,7 +70,6 @@ public class BlockedTimeRepositoryAdapter implements BlockedTimeRepositoryPort {
   }
 
   @Override
-  @Transactional(readOnly = true)
   public List<BlockedTime> findByCourtIdAndDateRange(
       UUID courtId, LocalDate startDate, LocalDate endDate) {
     return scheduleEntryJpaRepository
@@ -72,7 +80,6 @@ public class BlockedTimeRepositoryAdapter implements BlockedTimeRepositoryPort {
   }
 
   @Override
-  @Transactional(readOnly = true)
   public List<BlockedTime> findByCourtIdsAndDateRange(
       List<UUID> courtIds, LocalDate startDate, LocalDate endDate) {
     return scheduleEntryJpaRepository
@@ -83,7 +90,6 @@ public class BlockedTimeRepositoryAdapter implements BlockedTimeRepositoryPort {
   }
 
   @Override
-  @Transactional
   public void deleteAllByIds(List<UUID> ids) {
     if (ids == null || ids.isEmpty()) {
       return;
@@ -92,13 +98,11 @@ public class BlockedTimeRepositoryAdapter implements BlockedTimeRepositoryPort {
   }
 
   @Override
-  @Transactional
   public void deleteByRecurringBlockedTimeId(UUID recurringBlockedTimeId) {
     scheduleEntryJpaRepository.deleteByRecurringBlockedTimeId(recurringBlockedTimeId);
   }
 
   @Override
-  @Transactional(readOnly = true)
   public boolean existsActiveBlockedTimeByCourtIdAndDate(UUID courtId, LocalDate date) {
     return scheduleEntryJpaRepository.existsByCourtIdAndDate(courtId, date);
   }

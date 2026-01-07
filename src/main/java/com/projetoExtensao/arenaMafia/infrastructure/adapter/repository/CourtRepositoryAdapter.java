@@ -8,6 +8,7 @@ import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.Modality
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.mapper.CourtMapper;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.repository.CourtJpaRepository;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.repository.ModalityJpaRepository;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -15,7 +16,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 @Repository
 public class CourtRepositoryAdapter implements CourtRepositoryPort {
@@ -34,7 +34,6 @@ public class CourtRepositoryAdapter implements CourtRepositoryPort {
   }
 
   @Override
-  @Transactional
   public Court save(Court court) {
     CourtEntity entity = courtMapper.toEntity(court);
 
@@ -49,7 +48,6 @@ public class CourtRepositoryAdapter implements CourtRepositoryPort {
     return courtMapper.toDomain(savedEntity);
   }
 
-  @Transactional(readOnly = true)
   public List<Court> findAll(Specification<CourtEntity> spec) {
     return courtJpaRepository.findAll(spec).stream()
         .map(courtMapper::toDomain)
@@ -57,7 +55,6 @@ public class CourtRepositoryAdapter implements CourtRepositoryPort {
   }
 
   @Override
-  @Transactional(readOnly = true)
   public List<Court> findActiveCourtsByModalityId(UUID modalityId) {
     return courtJpaRepository.findActiveCourtsByModalityId(modalityId).stream()
         .map(courtMapper::toDomain)
@@ -65,7 +62,6 @@ public class CourtRepositoryAdapter implements CourtRepositoryPort {
   }
 
   @Override
-  @Transactional(readOnly = true)
   public Optional<Court> findById(UUID id) {
     return courtJpaRepository.findById(id).map(courtMapper::toDomain);
   }
@@ -79,13 +75,11 @@ public class CourtRepositoryAdapter implements CourtRepositoryPort {
   }
 
   @Override
-  @Transactional(readOnly = true)
   public Optional<Court> findByName(String name) {
     return courtJpaRepository.findByName(name).map(courtMapper::toDomain);
   }
 
   @Override
-  @Transactional(readOnly = true)
   public List<Court> findAllByIds(Set<UUID> ids) {
     return courtJpaRepository.findAllById(ids).stream()
         .filter(CourtEntity::isActive)
@@ -96,5 +90,14 @@ public class CourtRepositoryAdapter implements CourtRepositoryPort {
   @Override
   public boolean existsByName(String name) {
     return courtJpaRepository.existsByName(name);
+  }
+
+  @Override
+  public void validateAllExistAndActive(List<UUID> courtIds) {
+    List<Court> activeCourts = findAllByIds(new HashSet<>(courtIds));
+
+    if (activeCourts.size() != courtIds.size()) {
+      throw new CourtNotFoundException();
+    }
   }
 }

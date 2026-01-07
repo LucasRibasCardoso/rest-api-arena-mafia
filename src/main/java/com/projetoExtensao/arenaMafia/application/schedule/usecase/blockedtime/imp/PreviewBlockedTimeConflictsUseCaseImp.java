@@ -10,10 +10,6 @@ import com.projetoExtensao.arenaMafia.application.schedule.preview.BlockedTimeCo
 import com.projetoExtensao.arenaMafia.application.schedule.service.BlockedTimeDateCalculationService;
 import com.projetoExtensao.arenaMafia.application.schedule.service.ScheduleEntryEnrichmentService;
 import com.projetoExtensao.arenaMafia.application.schedule.usecase.blockedtime.PreviewBlockedTimeConflictsUseCase;
-import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
-import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidBlockedTimeException;
-import com.projetoExtensao.arenaMafia.domain.exception.notFound.CourtNotFoundException;
-import com.projetoExtensao.arenaMafia.domain.model.Court;
 import com.projetoExtensao.arenaMafia.domain.model.enums.DayOfWeek;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.ScheduleEntry;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
@@ -21,9 +17,6 @@ import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.blockedtime.r
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -52,74 +45,70 @@ public class PreviewBlockedTimeConflictsUseCaseImp implements PreviewBlockedTime
   }
 
   @Override
-  public BlockedTimeConflictsPreview execute(
-      BlockedTimeConflictsPreviewRequestDto request, UUID adminId) {
-    validateCourtsExist(request.courtIds());
+  public BlockedTimeConflictsPreview execute(BlockedTimeConflictsPreviewRequestDto request, UUID adminId) {
+    // Valida se todas as quadras existem e estão ativas
+    courtRepository.validateAllExistAndActive(request.courtIds());
 
-    Set<DayOfWeek> effectiveDaysOfWeek = resolveAndValidateDaysOfWeek(request);
-    TimeInterval searchInterval = calculateSearchInterval(request, effectiveDaysOfWeek);
-
-    List<ScheduleEntry> conflicts = findConflicts(request, searchInterval, effectiveDaysOfWeek);
-
-    return buildAndCachePreview(conflicts, request, adminId);
-  }
-
-  private Set<DayOfWeek> resolveAndValidateDaysOfWeek(
-      BlockedTimeConflictsPreviewRequestDto request
-  ) {
-    Set<DayOfWeek> effectiveDaysOfWeek =
-        dateCalculationService.resolveEffectiveDaysOfWeekWithOccurrencesValidation(
+    // Calcula os dias semanais efetivos considerando as ocorrências e o intervalo de horários
+    Set<DayOfWeek> effectiveDaysOfWeek = dateCalculationService.resolveEffectiveDaysOfWeekWithOccurrencesValidation(
             request.selectedDaysOfWeek(),
             request.startDate(),
             request.endDate(),
             request.courtIds().size());
+    TimeInterval searchInterval = dateCalculationService.calculateSearchInterval(
+            request.isFullDay(),
+            request.timeInterval(),
+            effectiveDaysOfWeek);
 
-    dateCalculationService.validateDaysHaveOperatingHours(effectiveDaysOfWeek);
+    // Busca os agendamentos conflitantes com o bloqueio proposto no intervalo de datas e horários especificados
+    List<ScheduleEntry> conflicts = scheduleEntryRepository.findConflicts(
+            request.courtIds(),
+            request.startDate(),
+            request.endDate(),
+            searchInterval,
+            effectiveDaysOfWeek);
 
-    return effectiveDaysOfWeek;
-  }
-
-  private TimeInterval calculateSearchInterval(
-      BlockedTimeConflictsPreviewRequestDto request,
-      Set<DayOfWeek> effectiveDaysOfWeek
-  ) {
-
-    if (!request.isFullDay() && request.timeInterval() == null) {
-      throw new InvalidBlockedTimeException(
-          ErrorCode.BLOCKED_TIME_TIME_INTERVAL_REQUIRED_WHEN_NOT_FULL_DAY);
-    }
-
-    return dateCalculationService.calculateSearchInterval(
-        request.isFullDay(), request.timeInterval(), effectiveDaysOfWeek);
-  }
-
-  private List<ScheduleEntry> findConflicts(
-      BlockedTimeConflictsPreviewRequestDto request,
-      TimeInterval searchInterval,
-      Set<DayOfWeek> effectiveDaysOfWeek
-  ) {
-
-    return scheduleEntryRepository.findConflicts(
-        request.courtIds(),
-        request.startDate(),
-        request.endDate(),
-        searchInterval,
-        effectiveDaysOfWeek);
-  }
-
-  private BlockedTimeConflictsPreview buildAndCachePreview(
-      List<ScheduleEntry> conflicts,
-      BlockedTimeConflictsPreviewRequestDto request,
-      UUID adminId
-  ) {
-
+    // Enriquecer os agendamentos conflitantes com detalhes adicionais
     List<ScheduleDetail> enrichedConflicts = enrichmentService.enrichScheduleEntries(conflicts);
 
-    List<ReservationDetail> allReservations = filterReservations(enrichedConflicts);
-    List<BlockedTimeDetail> blockedTimes = filterBlockedTimes(enrichedConflicts);
-    List<ReservationDetail> inProgressReservations = filterInProgressReservations(allReservations);
-    List<ReservationDetail> reservationsToCancel =
-        excludeInProgressReservations(allReservations, inProgressReservations);
+    // Constrói e armazena em cache a pré-visualização dos conflitos de bloqueio de horário
+    return buildAndCachePreview(enrichedConflicts, request, adminId);
+  }
+
+  /**
+   * Constrói e armazena em cache a pré-visualização dos conflitos de bloqueio de horário.
+   * @param enrichedConflicts Lista de conflitos de agendamento enriquecidos.
+   * @param request Detalhes da solicitação de pré-visualização.
+   * @param adminId ID do administrador que está solicitando a pré-visualização.
+   * @return A pré-visualização dos conflitos de bloqueio de horário.
+   */
+  private BlockedTimeConflictsPreview buildAndCachePreview(
+          List<ScheduleDetail> enrichedConflicts,
+          BlockedTimeConflictsPreviewRequestDto
+          request, UUID adminId
+  ) {
+
+    // Extrai as reservas detalhadas
+    List<ReservationDetail> allReservations = enrichedConflicts.stream()
+            .filter(ReservationDetail.class::isInstance)
+            .map(ReservationDetail.class::cast)
+            .toList();
+
+    // Extrai os bloqueios de horário detalhados
+    List<BlockedTimeDetail> blockedTimes = enrichedConflicts.stream()
+            .filter(BlockedTimeDetail.class::isInstance)
+            .map(BlockedTimeDetail.class::cast)
+            .toList();
+
+    // Extrai as reservas em andamento
+    List<ReservationDetail> inProgressReservations = allReservations.stream()
+            .filter(ReservationDetail::isInProgress)
+            .toList();
+
+    // Filtra as reservas que não estão em andamento
+    List<ReservationDetail> reservationsToCancel = allReservations.stream()
+            .filter(reservation -> !reservation.isInProgress())
+            .toList();
 
     int usersAffected = countDistinctUsers(reservationsToCancel);
     String previewKey = blockedTimePreviewCachePort.generateKey(adminId);
@@ -140,63 +129,15 @@ public class PreviewBlockedTimeConflictsUseCaseImp implements PreviewBlockedTime
     return preview;
   }
 
-  private List<ReservationDetail> filterReservations(List<ScheduleDetail> enrichedConflicts) {
-    return enrichedConflicts.stream()
-        .filter(ReservationDetail.class::isInstance)
-        .map(ReservationDetail.class::cast)
-        .toList();
-  }
-
-  private List<BlockedTimeDetail> filterBlockedTimes(List<ScheduleDetail> enrichedConflicts) {
-    return enrichedConflicts.stream()
-        .filter(BlockedTimeDetail.class::isInstance)
-        .map(BlockedTimeDetail.class::cast)
-        .toList();
-  }
-
-  private List<ReservationDetail> filterInProgressReservations(List<ReservationDetail> reservations) {
-    return reservations.stream().filter(this::isInProgress).toList();
-  }
-
-  private List<ReservationDetail> excludeInProgressReservations(
-          List<ReservationDetail> allReservations,
-          List<ReservationDetail> inProgressReservations
-  ) {
-
-    return allReservations.stream()
-        .filter(reservation -> !inProgressReservations.contains(reservation))
-        .toList();
-  }
-
+  /**
+   * Conta o número de usuários distintos em uma lista de reservas.
+   * @param reservations Lista de detalhes de reservas.
+   * @return O número de usuários distintos.
+   */
   private int countDistinctUsers(List<ReservationDetail> reservations) {
-    return (int) reservations.stream().map(ReservationDetail::userId).distinct().count();
-  }
-
-  private boolean isInProgress(ReservationDetail reservation) {
-    LocalDateTime now = LocalDateTime.now();
-
-    LocalTime startTime = reservation.timeInterval().startTime();
-    LocalTime endTime = reservation.timeInterval().endTime();
-
-    LocalDateTime startDateTime = LocalDateTime.of(reservation.date(), startTime);
-    LocalDateTime endDateTime = calculateEndDateTime(reservation.date(), startTime, endTime);
-
-    return !now.isBefore(startDateTime) && now.isBefore(endDateTime);
-  }
-
-  private LocalDateTime calculateEndDateTime(LocalDate date, LocalTime startTime, LocalTime endTime) {
-    if (endTime.isBefore(startTime)) {
-      return LocalDateTime.of(date.plusDays(1), endTime);
-    }
-    return LocalDateTime.of(date, endTime);
-  }
-
-  private void validateCourtsExist(List<UUID> courtIds) {
-    Set<UUID> courtIdsSet = Set.copyOf(courtIds);
-    List<Court> foundCourts = courtRepository.findAllByIds(courtIdsSet);
-
-    if (foundCourts.size() != courtIdsSet.size()) {
-      throw new CourtNotFoundException(ErrorCode.COURT_NOT_FOUND);
-    }
+    return (int) reservations.stream()
+        .map(ReservationDetail::userId)
+        .distinct()
+        .count();
   }
 }

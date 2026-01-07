@@ -31,7 +31,6 @@ CREATE TABLE tb_reservations
     CONSTRAINT fk_reservations_user FOREIGN KEY (user_id) REFERENCES tb_users (id) ON DELETE CASCADE,
     CONSTRAINT fk_reservations_modality FOREIGN KEY (modality_id) REFERENCES tb_modalities (id) ON DELETE RESTRICT,
     CONSTRAINT fk_reservations_admin FOREIGN KEY (scheduled_by_admin_id) REFERENCES tb_users (id) ON DELETE SET NULL,
-    CONSTRAINT fk_reservations_recurring FOREIGN KEY (recurring_reservation_id) REFERENCES tb_reservations (id) ON DELETE SET NULL,
     CONSTRAINT chk_reservation_price CHECK (price >= 0)
 );
 
@@ -51,8 +50,7 @@ CREATE TABLE tb_blocked_times
     recurring_blocked_time_id UUID,
     PRIMARY KEY (id),
     CONSTRAINT fk_blocked_times_schedule_entry FOREIGN KEY (id) REFERENCES tb_schedule_entries (id) ON DELETE CASCADE,
-    CONSTRAINT fk_blocked_times_admin FOREIGN KEY (blocked_by_admin_id) REFERENCES tb_users (id) ON DELETE RESTRICT,
-    CONSTRAINT fk_blocked_times_recurring FOREIGN KEY (recurring_blocked_time_id) REFERENCES tb_blocked_times (id) ON DELETE SET NULL
+    CONSTRAINT fk_blocked_times_admin FOREIGN KEY (blocked_by_admin_id) REFERENCES tb_users (id) ON DELETE RESTRICT
 );
 
 CREATE INDEX idx_blocked_times_admin ON tb_blocked_times (blocked_by_admin_id);

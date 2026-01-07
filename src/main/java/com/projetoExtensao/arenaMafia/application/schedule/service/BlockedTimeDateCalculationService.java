@@ -3,6 +3,7 @@ package com.projetoExtensao.arenaMafia.application.schedule.service;
 import com.projetoExtensao.arenaMafia.application.operatingHours.port.OperatingHoursRepositoryPort;
 import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidBlockDateException;
+import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidBlockedTimeException;
 import com.projetoExtensao.arenaMafia.domain.exception.notFound.OperatingHoursNotFoundException;
 import com.projetoExtensao.arenaMafia.domain.model.OperatingHours;
 import com.projetoExtensao.arenaMafia.domain.model.enums.DayOfWeek;
@@ -68,32 +69,6 @@ public class BlockedTimeDateCalculationService {
   }
 
   /**
-   * Resolve os dias da semana efetivos baseado na requisição.
-   *
-   * <p>Se dias específicos foram selecionados, valida se todos estão dentro do range
-   * de datas e retorna eles. Caso contrário, deriva todos os dias presentes no
-   * intervalo de datas fornecido.
-   *
-   * @param selectedDaysOfWeek Dias da semana selecionados (pode ser null ou vazio para representar todos os dias)
-   * @param startDate Data inicial do intervalo
-   * @param endDate Data final do intervalo
-   * @return Conjunto de dias da semana efetivos
-   * @throws InvalidBlockDateException se algum dia selecionado estiver fora do range de datas
-   */
-  public Set<DayOfWeek> resolveEffectiveDaysOfWeek(
-      Set<DayOfWeek> selectedDaysOfWeek,
-      LocalDate startDate,
-      LocalDate endDate) {
-
-    if (selectedDaysOfWeek != null && !selectedDaysOfWeek.isEmpty()) {
-      validateSelectedDaysWithinDateRange(selectedDaysOfWeek, startDate, endDate);
-      return selectedDaysOfWeek;
-    }
-
-    return getDaysOfWeekInRange(startDate, endDate);
-  }
-
-  /**
    * Resolve os dias da semana efetivos e valida o limite de ocorrências em uma única operação.
    *
    * <p>Metodo otimizado para cenários onde as datas aplicáveis não são utilizadas,
@@ -105,6 +80,7 @@ public class BlockedTimeDateCalculationService {
    * @param courtsCount Número de quadras selecionadas
    * @return Conjunto de dias da semana efetivos
    * @throws InvalidBlockDateException se algum dia selecionado estiver fora do range de datas ou se exceder limite de ocorrências
+   * @throws OperatingHoursNotFoundException se algum dia não possuir horários de funcionamento definidos
    */
   public Set<DayOfWeek> resolveEffectiveDaysOfWeekWithOccurrencesValidation(
       Set<DayOfWeek> selectedDaysOfWeek,
@@ -112,7 +88,17 @@ public class BlockedTimeDateCalculationService {
       LocalDate endDate,
       int courtsCount) {
 
-    Set<DayOfWeek> effectiveDaysOfWeek = resolveEffectiveDaysOfWeek(selectedDaysOfWeek, startDate, endDate);
+    Set<DayOfWeek> effectiveDaysOfWeek;
+
+    if (selectedDaysOfWeek != null && !selectedDaysOfWeek.isEmpty()) {
+      validateSelectedDaysWithinDateRange(selectedDaysOfWeek, startDate, endDate);
+      effectiveDaysOfWeek = selectedDaysOfWeek;
+    } else {
+      effectiveDaysOfWeek = getDaysOfWeekInRange(startDate, endDate);
+    }
+
+    // Valida se todos os dias efetivos possuem horários de funcionamento
+    validateDaysHaveOperatingHours(effectiveDaysOfWeek);
 
     long datesCount = countApplicableDates(startDate, endDate, effectiveDaysOfWeek);
     validateOccurrencesLimit(courtsCount, (int) datesCount);
@@ -158,6 +144,7 @@ public class BlockedTimeDateCalculationService {
    * @param providedInterval Intervalo fornecido na requisição (usado se não for fullDay)
    * @param effectiveDaysOfWeek Dias da semana efetivos
    * @return TimeInterval calculado
+   * @throws InvalidBlockedTimeException se o intervalo não for fornecido quando isFullDay é false
    * @throws InvalidBlockDateException se o intervalo fornecido estiver fora do horário de funcionamento de algum dos dias selecionados
    */
   public TimeInterval calculateSearchInterval(
@@ -168,6 +155,9 @@ public class BlockedTimeDateCalculationService {
     List<OperatingHours> hoursList = operatingHoursRepository.findByDaysOfWeek(effectiveDaysOfWeek);
 
     if (!isFullDay) {
+      if (providedInterval == null) {
+        throw new InvalidBlockedTimeException(ErrorCode.BLOCKED_TIME_TIME_INTERVAL_REQUIRED_WHEN_NOT_FULL_DAY);
+      }
       validateIntervalWithinOperatingHours(providedInterval, hoursList, effectiveDaysOfWeek);
       return providedInterval;
     }

@@ -203,6 +203,7 @@ public enum ErrorCode {
   RESERVATION_ALREADY_CANCELLED("Esta reserva já foi cancelada."),
   RESERVATION_ALREADY_COMPLETED("Esta reserva já foi concluída."),
   RESERVATION_NOT_POSSIBLE_TO_CANCEL("Não é possível cancelar a reserva com menos de 1:30 horas de antecedência."),
+  RESERVATION_CANCELLATION_IN_BATCH_FAILED("Falha ao cancelar reservas em lote. O processo foi revertido e nenhuma reserva foi cancelada."),
 
   // ==================== ERROS DE CONFLITO DE AGENDAMENTO ====================
   UNSUPPORTED_SCHEDULE_ENTRY_TYPE("O tipo de entrada de agendamento fornecido não é suportado."),
@@ -239,6 +240,7 @@ public enum ErrorCode {
   BLOCKED_TIME_PREVIEW_NOT_FOUND("Preview não encontrado. Pode ter expirado após 5 minutos."),
   BLOCKED_TIME_PREVIEW_EXPIRED("O preview de bloqueio expirou. Gere um novo preview antes de confirmar."),
   BLOCKED_TIME_PREVIEW_OWNERSHIP_INVALID("Esta chave de preview não pertence a você. Não é possível usar um preview gerado por outro usuário."),
+  BLOCKED_TIME_PREVIEW_STALE("Os dados do preview estão desatualizados. Outro administrador pode ter criado bloqueios ou reservas foram alteradas desde a geração do preview. Por favor, gere um novo preview."),
   BLOCKED_TIME_DAYS_OF_WEEK_SIZE_INVALID("É necessário informar entre 1 e 7 dias da semana para bloqueios recorrentes."),
   BLOCKED_TIME_TOO_MANY_OCCURRENCES("O bloqueio recorrente geraria muitas ocorrências. O limite máximo é de 1000 bloqueios (quadras × datas aplicáveis)."),
   BLOCKED_TIME_OUTSIDE_OPERATING_HOURS("O intervalo de tempo informado está fora do horário de funcionamento de um ou mais dias selecionados. Verifique se o horário é válido para todos os dias."),

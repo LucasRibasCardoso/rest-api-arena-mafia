@@ -25,4 +25,6 @@ public interface CourtRepositoryPort {
   Optional<Court> findByName(String name);
 
   boolean existsByName(String name);
+
+  void validateAllExistAndActive(List<UUID> courtIds);
 }
