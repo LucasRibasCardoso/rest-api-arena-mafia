@@ -15,11 +15,13 @@ public interface ScheduleEntryRepositoryPort {
 
   ScheduleEntry findByIdOrElseThrow(UUID id);
 
-  List<ScheduleEntry> findConfirmedSchedulesByCourtAndDate(UUID courtId, LocalDate date);
+  List<ScheduleEntry> findAllActiveSchedulesByCourtAndDate(UUID courtId, LocalDate date);
 
-  List<ScheduleEntry> findAllSchedulesByDate(LocalDate date);
+  List<ScheduleEntry> findAllActiveSchedulesByDate(LocalDate date);
 
-  List<ScheduleEntry> findConflicts(
+  List<ScheduleEntry> findAllActiveSchedulesByCourtIdAfterDate(UUID courtId, LocalDate date);
+
+  List<ScheduleEntry> findAllActiveSchedulesConflicts(
       List<UUID> courtIds,
       LocalDate startDate,
       LocalDate endDate,

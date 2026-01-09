@@ -121,7 +121,6 @@ public enum ErrorCode {
   COURT_NOT_SUPPORTS_MODALITY("A quadra selecionada não suporta a modalidade solicitada."),
   COURT_NOT_FOUND("Quadra não encontrada."),
   COURT_ALREADY_EXISTS("Essa quadra já está cadastrada."),
-  COURT_CANNOT_BE_DISABLED_DUE_TO_FUTURE_RESERVATIONS("Não é possível desativar a quadra pois existem reservas futuras associadas a ela."),
 
   // Court - Name
   COURT_NAME_REQUIRED("O nome da quadra é obrigatório."),
@@ -136,6 +135,9 @@ public enum ErrorCode {
   COURT_ALREADY_DISABLED("A quadra já está desativada."),
   COURT_ALREADY_ENABLED("A quadra já está ativada."),
 
+  // Court - Desativação
+  COURT_DISABLE_DESCRIPTION_REQUIRED("A descrição para desativação da quadra é obrigatória"),
+  COURT_DISABLE_DESCRIPTION_INVALID_LENGTH("A descrição para desativação da quadra deve ter entre 3 e 500 caracteres."),
   // ==================== ERROS DE DIA DA SEMANA ====================
   DAY_OF_WEEK_REQUIRED("O dia da semana é obrigatório."),
   DAY_OF_WEEK_INVALID("O dia da semana fornecido é inválido. Valores válidos: 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'."),
@@ -235,15 +237,17 @@ public enum ErrorCode {
   BLOCKED_TIME_ADMIN_ID_REQUIRED("O ID do administrador que está bloqueando o horário é obrigatório."),
 
   // BlockedTime - Preview e Cache
-  BLOCKED_TIME_PREVIEW_KEY_REQUIRED("A chave do preview é obrigatória."),
-  BLOCKED_TIME_PREVIEW_KEY_INVALID("A chave do preview é inválida."),
-  BLOCKED_TIME_PREVIEW_NOT_FOUND("Preview não encontrado. Pode ter expirado após 5 minutos."),
-  BLOCKED_TIME_PREVIEW_EXPIRED("O preview de bloqueio expirou. Gere um novo preview antes de confirmar."),
-  BLOCKED_TIME_PREVIEW_OWNERSHIP_INVALID("Esta chave de preview não pertence a você. Não é possível usar um preview gerado por outro usuário."),
-  BLOCKED_TIME_PREVIEW_STALE("Os dados do preview estão desatualizados. Outro administrador pode ter criado bloqueios ou reservas foram alteradas desde a geração do preview. Por favor, gere um novo preview."),
   BLOCKED_TIME_DAYS_OF_WEEK_SIZE_INVALID("É necessário informar entre 1 e 7 dias da semana para bloqueios recorrentes."),
   BLOCKED_TIME_TOO_MANY_OCCURRENCES("O bloqueio recorrente geraria muitas ocorrências. O limite máximo é de 1000 bloqueios (quadras × datas aplicáveis)."),
   BLOCKED_TIME_OUTSIDE_OPERATING_HOURS("O intervalo de tempo informado está fora do horário de funcionamento de um ou mais dias selecionados. Verifique se o horário é válido para todos os dias."),
+
+
+  // ==================== ERROS DE CACHE PARA PREVIEW ====================
+  PREVIEW_KEY_REQUIRED("A chave do preview é obrigatória."),
+  PREVIEW_KEY_INVALID("A chave do preview é inválida."),
+  PREVIEW_NOT_FOUND("Preview não encontrado. Pode ter expirado após 5 minutos."),
+  PREVIEW_DATA_STALE("Os dados associados a este preview foram alterados desde a sua geração. Por favor, gere um novo preview antes de confirmar a desativação."),
+  PREVIEW_KEY_OWNERSHIP_INVALID("Esta chave de preview não pertence a você. Não é possível usar um preview gerado por outro usuário."),
 
   // ==================== ERROS DE AGENDA (AGENDA ITEM) ====================
   AVAILABLE_MODALITY_IDS_REQUIRED("Erro interno: Não foi possível gerar a agenda. Nenhuma modalidade disponível encontrada para o horário agrupado."),

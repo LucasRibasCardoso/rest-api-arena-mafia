@@ -1,4 +1,4 @@
-package com.projetoExtensao.arenaMafia.application.court.port;
+package com.projetoExtensao.arenaMafia.application.court.port.repository;
 
 import com.projetoExtensao.arenaMafia.domain.model.Court;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.CourtEntity;
@@ -14,13 +14,15 @@ public interface CourtRepositoryPort {
 
   List<Court> findAll(Specification<CourtEntity> spec);
 
-  List<Court> findAllByIds(Set<UUID> ids);
+  List<Court> findAllActiveByIds(Set<UUID> ids);
 
   Optional<Court> findById(UUID id);
 
   List<Court> findActiveCourtsByModalityId(UUID modalityId);
 
   Court findByIdOrElseThrow(UUID id);
+
+  Court findActiveByIdOrElseThrow(UUID id);
 
   Optional<Court> findByName(String name);
 

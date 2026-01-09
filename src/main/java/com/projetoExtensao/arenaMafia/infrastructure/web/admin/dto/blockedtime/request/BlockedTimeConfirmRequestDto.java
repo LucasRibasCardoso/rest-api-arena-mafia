@@ -4,7 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 public record BlockedTimeConfirmRequestDto(
-    @NotBlank(message = "BLOCKED_TIME_PREVIEW_KEY_REQUIRED")
+    @NotBlank(message = "PREVIEW_KEY_REQUIRED")
     String previewKey,
 
     @NotBlank(message = "BLOCKED_TIME_DESCRIPTION_REQUIRED")

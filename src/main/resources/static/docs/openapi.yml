@@ -155,6 +155,10 @@ components:
       $ref: "./components/schemas/court/UpdateCourtRequestDto.yml"
     AdminCourtResponseDto:
       $ref: "./components/schemas/court/AdminCourtResponseDto.yml"
+    CourtDisablePreviewResponseDto:
+      $ref: "./components/schemas/court/CourtDisablePreviewResponseDto.yml"
+    CourtDisableConfirmRequestDto:
+      $ref: "./components/schemas/court/CourtDisableConfirmRequestDto.yml"
 
     AvailableSlotResponseDto:
       $ref: "./components/schemas/schedule/AvailableSlotResponseDto.yml"
@@ -276,10 +280,12 @@ paths:
     $ref: "./paths/admin/courts/Courts.yml"
   /api/admin/courts/{courtId}:
     $ref: "./paths/admin/courts/CourtsById.yml"
-  /api/admin/courts/{courtId}/disable:
-    $ref: "./paths/admin/courts/DisableCourt.yml"
   /api/admin/courts/{courtId}/enable:
     $ref: "./paths/admin/courts/EnableCourt.yml"
+  /api/admin/courts/{courtId}/preview-disable:
+    $ref: "./paths/admin/courts/PreviewDisableCourt.yml"
+  /api/admin/courts/confirm-disable:
+    $ref: "./paths/admin/courts/ConfirmDisableCourt.yml"
 
 
   /api/admin/price-rules:

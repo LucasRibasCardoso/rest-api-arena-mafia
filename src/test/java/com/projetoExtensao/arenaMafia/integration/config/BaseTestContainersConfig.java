@@ -4,7 +4,7 @@ import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.projetoExtensao.arenaMafia.application.auth.port.repository.RefreshTokenRepositoryPort;
-import com.projetoExtensao.arenaMafia.application.court.port.CourtRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.court.port.repository.CourtRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.modality.port.ModalityRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.operatingHours.port.OperatingHoursRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.priceRule.port.PriceRuleRepositoryPort;
@@ -20,13 +20,10 @@ import com.projetoExtensao.arenaMafia.domain.model.enums.OffsetMinutes;
 import com.projetoExtensao.arenaMafia.domain.model.enums.RoleEnum;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.BlockedTime;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.Reservation;
-import com.projetoExtensao.arenaMafia.domain.model.schedule.ScheduleEntry;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.DateTimeSlot;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.RefreshTokenVO;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.repository.UserJpaRepository;
-import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.blockedtime.request.BlockedTimeConflictsPreviewRequestDto;
-import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.blockedtime.response.BlockedTimeConflictsPreviewResponseDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.auth.dto.request.LoginRequestDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.auth.dto.response.AuthResponseDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.exception.dto.ErrorResponseDto;
@@ -160,29 +157,26 @@ public abstract class BaseTestContainersConfig {
   }
 
   /**
-   * Valida múltiplos erros de validação em uma única resposta.
-   *
-   * @param response A resposta de erro extraída do RestAssured
-   * @param expectedPath O path esperado do endpoint
-   * @param fieldErrorsMap Mapa de fieldName -> ErrorCode esperado
+   * Normaliza um horário para ter minutos válidos (0 ou 30).
+   * Essencial para simular reservas em andamento que sigam a regra de negócio.
+   * Regras de arredondamento:
+   * - 0-14 minutos → arredonda para baixo para 0
+   * - 15-44 minutos → arredonda para 30
+   * - 45-59 minutos → arredonda para hora seguinte com 0 minutos
    */
-  public void assertMultipleValidationErrors(
-          ErrorResponseDto response, String expectedPath, Map<String, ErrorCode> fieldErrorsMap) {
+  public LocalTime normalizeToValidMinutes(LocalTime time) {
+    int minutes = time.getMinute();
 
-    assertThat(response.status()).isEqualTo(400);
-    assertThat(response.errorCode()).isEqualTo(ErrorCode.VALIDATION_FAILED.name());
-    assertThat(response.path()).isEqualTo(expectedPath);
-
-    fieldErrorsMap.forEach(
-            (fieldName, expectedErrorCode) ->
-                    assertThat(response.fieldErrors())
-                            .anyMatch(
-                                    fieldError ->
-                                            fieldError.fieldName().equals(fieldName)
-                                                    && fieldError.errorCode().equals(expectedErrorCode.name())
-                                                    && fieldError
-                                                    .developerMessage()
-                                                    .equals(expectedErrorCode.getMessage())));
+    if (minutes < 15) {
+      // Arredonda para baixo: 14:05 → 14:00
+      return time.withMinute(0).withSecond(0).withNano(0);
+    } else if (minutes < 45) {
+      // Arredonda para 30: 14:25 → 14:30
+      return time.withMinute(30).withSecond(0).withNano(0);
+    } else {
+      // Arredonda para próxima hora: 14:50 → 15:00
+      return time.plusHours(1).withMinute(0).withSecond(0).withNano(0);
+    }
   }
 
   public record AuthTokensTest(

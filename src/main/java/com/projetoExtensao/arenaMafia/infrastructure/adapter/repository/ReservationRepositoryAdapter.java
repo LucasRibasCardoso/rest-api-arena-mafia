@@ -99,7 +99,7 @@ public class ReservationRepositoryAdapter implements ReservationRepositoryPort {
     if (daysOfWeek == null || daysOfWeek.isEmpty()) return false;
 
     Set<Integer> currentPostgresDays =
-        daysOfWeek.stream().map(DayOfWeek::getPostgresDayOfWeekValue).collect(Collectors.toSet());
+        daysOfWeek.stream().map(DayOfWeek::getDayOfWeekValue).collect(Collectors.toSet());
 
     boolean crossesMidnight = endTime.isBefore(startTime);
 
@@ -119,7 +119,7 @@ public class ReservationRepositoryAdapter implements ReservationRepositoryPort {
       Set<Integer> nextDayPostgresDays =
           daysOfWeek.stream()
               .map(DayOfWeek::next)
-              .map(DayOfWeek::getPostgresDayOfWeekValue)
+              .map(DayOfWeek::getDayOfWeekValue)
               .collect(Collectors.toSet());
 
       return scheduleEntryJpaRepository.existsConflictInDays(

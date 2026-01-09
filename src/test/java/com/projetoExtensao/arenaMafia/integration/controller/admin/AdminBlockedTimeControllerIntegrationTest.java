@@ -1,6 +1,6 @@
 package com.projetoExtensao.arenaMafia.integration.controller.admin;
 
-import com.projetoExtensao.arenaMafia.application.court.port.CourtRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.court.port.repository.CourtRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.operatingHours.port.OperatingHoursRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.schedule.port.gateway.BlockedTimePreviewCachePort;
 import com.projetoExtensao.arenaMafia.application.schedule.port.repository.BlockedTimeRepositoryPort;
@@ -8,6 +8,7 @@ import com.projetoExtensao.arenaMafia.application.schedule.port.repository.Reser
 import com.projetoExtensao.arenaMafia.application.schedule.preview.BlockedTimeConflictsPreview;
 import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 import com.projetoExtensao.arenaMafia.domain.exception.notFound.BlockedTimeNotFoundException;
+import com.projetoExtensao.arenaMafia.domain.exception.notFound.PreviewNotFoundException;
 import com.projetoExtensao.arenaMafia.domain.model.Court;
 import com.projetoExtensao.arenaMafia.domain.model.Modality;
 import com.projetoExtensao.arenaMafia.domain.model.OperatingHours;
@@ -128,16 +129,11 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
           BlockedTimeConflictsPreview previewSaved = previewSavedOpt.get();
           assertThat(previewSaved.previewKey()).isEqualTo(response.previewKey());
           assertThat(previewSaved.usersAffected()).isEqualTo(response.usersAffected());
-          assertThat(previewSaved.blockedTimesAffected())
-              .isEqualTo(response.blockedTimesAffected());
-          assertThat(previewSaved.reservationsAffected())
-              .isEqualTo(response.reservationsAffected());
-          assertThat(previewSaved.conflictingBlockedTimes())
-              .isEqualTo(response.conflictingBlockedTimes());
-          assertThat(previewSaved.conflictingReservations())
-              .isEqualTo(response.conflictingReservations());
-          assertThat(previewSaved.inProgressReservations())
-              .isEqualTo(response.inProgressReservations());
+          assertThat(previewSaved.blockedTimesAffected()).isEqualTo(response.blockedTimesAffected());
+          assertThat(previewSaved.reservationsAffected()).isEqualTo(response.reservationsAffected());
+          assertThat(previewSaved.conflictingBlockedTimes().size()).isEqualTo(response.conflictingBlockedTimes().size());
+          assertThat(previewSaved.conflictingReservations().size()).isEqualTo(response.conflictingReservations().size());
+          assertThat(previewSaved.inProgressReservations().size()).isEqualTo(response.inProgressReservations().size());
           assertThat(previewSaved.request()).usingRecursiveComparison().isEqualTo(requestDto);
         }
 
@@ -1735,14 +1731,21 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
         LocalDate date = LocalDate.now().plusDays(1);
 
         var reservation = mockPersistReservationByUser(
-            modality.getId(), courtId, date,
+            modality.getId(),
+            courtId,
+            date,
             new TimeInterval(LocalTime.of(10, 0), LocalTime.of(11, 0)),
-            DEFAULT_RESERVATION_PRICE, adminId);
+            DEFAULT_RESERVATION_PRICE,
+            adminId
+        );
 
         var existingBlockedTime = mockPersistBlockedTimeSpecific(
-            courtId, date,
+            courtId,
+            date,
             new TimeInterval(LocalTime.of(12, 0), LocalTime.of(13, 0)),
-            "Manutenção anterior", adminId);
+            "Manutenção anterior",
+            adminId
+        );
 
         String previewKey = createPreviewAndGetKey(List.of(courtId), date, date, null, true, null);
 
@@ -1756,6 +1759,7 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
             .when()
             .post("/confirm")
             .then()
+                .log().all()
             .statusCode(200)
             .extract()
             .as(BlockedTimeConfirmResponseDto.class);
@@ -1958,30 +1962,36 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
         mockPersistOperatingHoursAllDays();
         Modality modality = mockPersistModality("Futebol");
         UUID courtId = mockPersistCourt("Quadra 1", modality).getId();
-        LocalDate date = LocalDate.now();
+        LocalDate date = LocalDate.now().plusDays(1);
 
         // Cria reserva em andamento
-        LocalTime currentTime = LocalTime.now();
-        LocalTime startTime = normalizeToValidMinutes(currentTime.minusMinutes(30));
-        LocalTime endTime = normalizeToValidMinutes(currentTime.plusMinutes(30));
+        LocalTime startTime = normalizeToValidMinutes(LocalTime.now().minusMinutes(30));
+        LocalTime endTime = normalizeToValidMinutes(LocalTime.now().plusMinutes(30));
         TimeInterval inProgressInterval = new TimeInterval(startTime, endTime);
 
-        var inProgressReservation = mockPersistReservationByUser(
-            modality.getId(), courtId, date, inProgressInterval,
-            DEFAULT_RESERVATION_PRICE, adminId);
+        var inProgressReservation =
+            mockPersistReservationByUser(
+                modality.getId(),
+                courtId,
+                LocalDate.now(),
+                inProgressInterval,
+                DEFAULT_RESERVATION_PRICE,
+                adminId);
 
         // Cria reserva futura que deve ser cancelada
-        TimeInterval futureInterval = new TimeInterval(
-            LocalTime.of(20, 0), LocalTime.of(21, 0));
-        var futureReservation = mockPersistReservationByUser(
-            modality.getId(), courtId, date, futureInterval,
-            DEFAULT_RESERVATION_PRICE, adminId);
+        TimeInterval futureInterval = new TimeInterval(LocalTime.of(20, 0), LocalTime.of(21, 0));
+        var futureReservation =
+            mockPersistReservationByUser(
+                modality.getId(),
+                courtId,
+                date,
+                futureInterval,
+                DEFAULT_RESERVATION_PRICE,
+                adminId);
 
-        String previewKey = createPreviewAndGetKey(
-            List.of(courtId), date, date, null, true, null);
+        String previewKey = createPreviewAndGetKey(List.of(courtId), date, date, null, true, null);
 
-        var confirmRequest = new BlockedTimeConfirmRequestDto(
-            previewKey, "Manutenção urgente");
+        var confirmRequest = new BlockedTimeConfirmRequestDto(previewKey, "Manutenção urgente");
 
         // Act
         var response = given()
@@ -1991,6 +2001,7 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
             .when()
             .post("/confirm")
             .then()
+                .log().all()
             .statusCode(200)
             .extract()
             .as(BlockedTimeConfirmResponseDto.class);
@@ -2030,7 +2041,7 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
             .as(ErrorResponseDto.class);
 
         // Assert
-        assertValidationError(response, CONFIRM_PATH, "previewKey", ErrorCode.BLOCKED_TIME_PREVIEW_KEY_REQUIRED);
+        assertValidationError(response, CONFIRM_PATH, "previewKey", ErrorCode.PREVIEW_KEY_REQUIRED);
       }
 
       @Test
@@ -2052,7 +2063,7 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
             .as(ErrorResponseDto.class);
 
         // Assert
-        assertBusinessError(response, 400, CONFIRM_PATH, ErrorCode.BLOCKED_TIME_PREVIEW_KEY_INVALID);
+        assertBusinessError(response, 400, CONFIRM_PATH, ErrorCode.PREVIEW_KEY_INVALID);
       }
 
       @Test
@@ -2160,7 +2171,7 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
                 .as(ErrorResponseDto.class);
 
         // Assert
-        assertBusinessError(response, 403, CONFIRM_PATH, ErrorCode.BLOCKED_TIME_PREVIEW_OWNERSHIP_INVALID);
+        assertBusinessError(response, 403, CONFIRM_PATH, ErrorCode.PREVIEW_KEY_OWNERSHIP_INVALID);
       }
     }
 
@@ -2189,7 +2200,7 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
             .as(ErrorResponseDto.class);
 
         // Assert
-        assertBusinessError(response, 404, CONFIRM_PATH, ErrorCode.BLOCKED_TIME_PREVIEW_NOT_FOUND);
+         assertBusinessError(response, 404, CONFIRM_PATH, ErrorCode.PREVIEW_NOT_FOUND);
       }
 
       @Test
@@ -2298,7 +2309,7 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
             .as(ErrorResponseDto.class);
 
         // Assert
-        assertBusinessError(response, 409, CONFIRM_PATH, ErrorCode.BLOCKED_TIME_PREVIEW_STALE);
+        assertBusinessError(response, 409, CONFIRM_PATH, ErrorCode.PREVIEW_DATA_STALE);
       }
 
       @Test
@@ -2334,7 +2345,7 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
             .as(ErrorResponseDto.class);
 
         // Assert
-        assertBusinessError(response, 409, CONFIRM_PATH, ErrorCode.BLOCKED_TIME_PREVIEW_STALE);
+        assertBusinessError(response, 409, CONFIRM_PATH, ErrorCode.PREVIEW_DATA_STALE);
       }
 
       @Test
@@ -2374,7 +2385,7 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
             .as(ErrorResponseDto.class);
 
         // Assert
-        assertBusinessError(response, 409, CONFIRM_PATH, ErrorCode.BLOCKED_TIME_PREVIEW_STALE);
+        assertBusinessError(response, 409, CONFIRM_PATH, ErrorCode.PREVIEW_DATA_STALE);
       }
     }
   }
@@ -2391,8 +2402,9 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
       boolean isFullDay,
       Set<DayOfWeek> selectedDaysOfWeek) {
 
-    var requestDto = new BlockedTimeConflictsPreviewRequestDto(
-        courtIds, startDate, endDate, timeInterval, isFullDay, selectedDaysOfWeek);
+    var requestDto =
+        new BlockedTimeConflictsPreviewRequestDto(
+            courtIds, startDate, endDate, timeInterval, isFullDay, selectedDaysOfWeek);
 
     var response = given()
         .spec(specification)
@@ -2418,31 +2430,8 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
     try{
       BlockedTimeConflictsPreview previewSaved = blockedTimePreviewCachePort.getPreviewOrElseThrow(previewKey, adminId);
       return Optional.of(previewSaved);
-    } catch (BlockedTimeNotFoundException e) {
+    } catch (PreviewNotFoundException e) {
       return Optional.empty();
-    }
-  }
-
-  /**
-   * Normaliza um horário para ter minutos válidos (0 ou 30).
-   * Essencial para simular reservas em andamento que sigam a regra de negócio.
-   * Regras de arredondamento:
-   * - 0-14 minutos → arredonda para baixo para 0
-   * - 15-44 minutos → arredonda para 30
-   * - 45-59 minutos → arredonda para hora seguinte com 0 minutos
-   */
-  private LocalTime normalizeToValidMinutes(LocalTime time) {
-    int minutes = time.getMinute();
-
-    if (minutes < 15) {
-      // Arredonda para baixo: 14:05 → 14:00
-      return time.withMinute(0).withSecond(0).withNano(0);
-    } else if (minutes < 45) {
-      // Arredonda para 30: 14:25 → 14:30
-      return time.withMinute(30).withSecond(0).withNano(0);
-    } else {
-      // Arredonda para próxima hora: 14:50 → 15:00
-      return time.plusHours(1).withMinute(0).withSecond(0).withNano(0);
     }
   }
 

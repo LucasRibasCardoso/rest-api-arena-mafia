@@ -1,7 +1,7 @@
 package com.projetoExtensao.arenaMafia.application.agenda.usecase.imp;
 
 import com.projetoExtensao.arenaMafia.application.agenda.usecase.FindAllAgendaItemUseCase;
-import com.projetoExtensao.arenaMafia.application.court.port.CourtRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.court.port.repository.CourtRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.operatingHours.port.OperatingHoursRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.priceRule.port.PriceRuleRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.schedule.port.repository.ScheduleEntryRepositoryPort;
@@ -107,9 +107,7 @@ public class FindAllAgendaItemUseCaseImp implements FindAllAgendaItemUseCase {
    * @return lista de agendamentos ativos ordenados por horário de início
    */
   private List<ScheduleEntry> getActiveSchedulesByDate(LocalDate date) {
-    return scheduleEntryRepositoryPort.findAllSchedulesByDate(date).stream()
-        .filter(ScheduleEntry::isActive)
-        .toList();
+    return scheduleEntryRepositoryPort.findAllActiveSchedulesByDate(date);
   }
 
   /**

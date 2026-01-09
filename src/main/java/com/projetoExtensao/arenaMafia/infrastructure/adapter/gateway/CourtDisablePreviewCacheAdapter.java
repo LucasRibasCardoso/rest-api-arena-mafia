@@ -2,36 +2,35 @@ package com.projetoExtensao.arenaMafia.infrastructure.adapter.gateway;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.projetoExtensao.arenaMafia.application.schedule.port.gateway.BlockedTimePreviewCachePort;
+import com.projetoExtensao.arenaMafia.application.court.port.gateway.CourtDisablePreviewCachePort;
+import com.projetoExtensao.arenaMafia.application.court.preview.CourtDisablePreview;
 import com.projetoExtensao.arenaMafia.application.schedule.preview.BlockedTimeConflictsPreview;
-import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidPreviewKeyException;
 import com.projetoExtensao.arenaMafia.domain.exception.forbidden.InvalidPreviewOwnershipException;
-import java.time.Duration;
-import java.util.UUID;
-
-import com.projetoExtensao.arenaMafia.domain.exception.notFound.BlockedTimeNotFoundException;
 import com.projetoExtensao.arenaMafia.domain.exception.notFound.PreviewNotFoundException;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
-@Component
-public class BlockedTimePreviewCacheAdapter implements BlockedTimePreviewCachePort {
+import java.time.Duration;
+import java.util.UUID;
 
-  private static final String CACHE_PREFIX = "blocked-time-preview:";
+@Component
+public class CourtDisablePreviewCacheAdapter implements CourtDisablePreviewCachePort {
+
+  private static final String CACHE_PREFIX = "court-disable-preview:";
   private static final Duration CACHE_TTL = Duration.ofMinutes(5);
 
   private final RedisTemplate<String, String> redisTemplate;
   private final ObjectMapper objectMapper;
 
-  public BlockedTimePreviewCacheAdapter(
+  public CourtDisablePreviewCacheAdapter(
       RedisTemplate<String, String> redisTemplate, ObjectMapper objectMapper) {
     this.redisTemplate = redisTemplate;
     this.objectMapper = objectMapper;
   }
 
   @Override
-  public void save(String key, BlockedTimeConflictsPreview preview) {
+  public void save(String key, CourtDisablePreview preview) {
     try {
       deleteExistingPreviewsForUser(extractUserIdFromKey(key));
       String jsonValue = objectMapper.writeValueAsString(preview);
@@ -42,7 +41,7 @@ public class BlockedTimePreviewCacheAdapter implements BlockedTimePreviewCachePo
   }
 
   @Override
-  public BlockedTimeConflictsPreview getPreviewOrElseThrow(String key, UUID userId) {
+  public CourtDisablePreview getPreviewOrElseThrow(String key, UUID userId) {
     validateKeyOwnership(key, userId);
 
     String jsonValue = redisTemplate.opsForValue().get(key);
@@ -51,7 +50,7 @@ public class BlockedTimePreviewCacheAdapter implements BlockedTimePreviewCachePo
     }
 
     try {
-      return objectMapper.readValue(jsonValue, BlockedTimeConflictsPreview.class);
+      return objectMapper.readValue(jsonValue, CourtDisablePreview.class);
     } catch (JsonProcessingException e) {
       throw new PreviewNotFoundException();
     }

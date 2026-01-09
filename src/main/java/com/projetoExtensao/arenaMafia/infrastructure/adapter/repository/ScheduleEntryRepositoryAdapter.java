@@ -46,7 +46,7 @@ public class ScheduleEntryRepositoryAdapter implements ScheduleEntryRepositoryPo
   }
 
   @Override
-  public List<ScheduleEntry> findConfirmedSchedulesByCourtAndDate(UUID courtId, LocalDate date) {
+  public List<ScheduleEntry> findAllActiveSchedulesByCourtAndDate(UUID courtId, LocalDate date) {
     return scheduleEntryJpaRepository
         .findSchedulesByCourtAndDate(courtId, date)
         .stream()
@@ -56,7 +56,7 @@ public class ScheduleEntryRepositoryAdapter implements ScheduleEntryRepositoryPo
   }
 
   @Override
-  public List<ScheduleEntry> findAllSchedulesByDate(LocalDate date) {
+  public List<ScheduleEntry> findAllActiveSchedulesByDate(LocalDate date) {
     return scheduleEntryJpaRepository
         .findAllSchedulesByDate(date)
         .stream()
@@ -65,17 +65,27 @@ public class ScheduleEntryRepositoryAdapter implements ScheduleEntryRepositoryPo
   }
 
   @Override
-  public List<ScheduleEntry> findConflicts(
+  public List<ScheduleEntry> findAllActiveSchedulesByCourtIdAfterDate(UUID courtId, LocalDate date) {
+    return scheduleEntryJpaRepository
+        .findAllSchedulesByCourtIdAfterDate(courtId, date)
+        .stream()
+        .map(scheduleEntryMapper::toDomain)
+        .filter(ScheduleEntry::isActive)
+        .toList();
+  }
+
+  @Override
+  public List<ScheduleEntry> findAllActiveSchedulesConflicts(
       List<UUID> courtIds,
       LocalDate startDate,
       LocalDate endDate,
       TimeInterval timeInterval,
       Set<DayOfWeek> selectedDaysOfWeek) {
 
-    Set<Integer> postgresDaysOfWeek = null;
+    Set<Integer> valuesDaysOfWeek = null;
     if (selectedDaysOfWeek != null && !selectedDaysOfWeek.isEmpty()) {
-      postgresDaysOfWeek = selectedDaysOfWeek.stream()
-          .map(DayOfWeek::getPostgresDayOfWeekValue)
+      valuesDaysOfWeek = selectedDaysOfWeek.stream()
+          .map(DayOfWeek::getDayOfWeekValue)
           .collect(Collectors.toSet());
     }
 
@@ -85,11 +95,12 @@ public class ScheduleEntryRepositoryAdapter implements ScheduleEntryRepositoryPo
         startDate,
         endDate,
         selectedDaysOfWeek,
-        postgresDaysOfWeek
+        valuesDaysOfWeek
     );
 
     return entities.stream()
         .map(scheduleEntryMapper::toDomain)
+        .filter(ScheduleEntry::isActive)
         .filter(scheduleEntry -> scheduleEntry.getDateTimeSlot().timeInterval().overlaps(timeInterval))
         .toList();
   }

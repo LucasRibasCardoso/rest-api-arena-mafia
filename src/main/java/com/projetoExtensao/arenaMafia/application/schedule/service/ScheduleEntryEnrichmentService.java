@@ -1,7 +1,8 @@
 package com.projetoExtensao.arenaMafia.application.schedule.service;
 
-import com.projetoExtensao.arenaMafia.application.court.port.CourtRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.court.port.repository.CourtRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.modality.port.ModalityRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.schedule.result.ScheduleEntriesEnrichedResult;
 import com.projetoExtensao.arenaMafia.application.user.port.repository.UserRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.schedule.detail.BlockedTimeDetail;
 import com.projetoExtensao.arenaMafia.application.schedule.detail.ReservationDetail;
@@ -40,11 +41,11 @@ public class ScheduleEntryEnrichmentService {
    * tratar Reservations e BlockedTimes de forma unificada.
    *
    * @param scheduleEntries lista de entradas de agendamento a serem enriquecidas
-   * @return lista de detalhes de agendamento enriquecidos
+   * @return listas de entradas enriquecidas
    */
-  public List<ScheduleDetail> enrichScheduleEntries(List<? extends ScheduleEntry> scheduleEntries) {
+  public ScheduleEntriesEnrichedResult enrichScheduleEntries(List<? extends ScheduleEntry> scheduleEntries) {
     if (scheduleEntries == null || scheduleEntries.isEmpty()) {
-      return Collections.emptyList();
+      return new ScheduleEntriesEnrichedResult(List.of(), List.of(), List.of());
     }
 
     // Separar reservas para buscar dados específicos (usuários e modalidades)
@@ -60,9 +61,22 @@ public class ScheduleEntryEnrichmentService {
     Map<UUID, Modality> modalityMap = loadModalities(reservations);
 
     // Enriquecer cada entrada usando polimorfismo
-    return scheduleEntries.stream()
+    List<ScheduleDetail> scheduleDetails = scheduleEntries.stream()
         .map(entry -> enrichSingleEntry(entry, userMap, courtMap, modalityMap))
         .toList();
+
+    // Separar os detalhes enriquecidos em listas específicas
+    List<ReservationDetail> reservationDetails = scheduleDetails.stream()
+        .filter(detail -> detail instanceof ReservationDetail)
+        .map(detail -> (ReservationDetail) detail)
+        .toList();
+
+    List<BlockedTimeDetail> blockedTimeDetails = scheduleDetails.stream()
+        .filter(detail -> detail instanceof BlockedTimeDetail)
+        .map(detail -> (BlockedTimeDetail) detail)
+        .toList();
+
+    return new ScheduleEntriesEnrichedResult(scheduleDetails, reservationDetails, blockedTimeDetails);
   }
 
   /**
@@ -89,46 +103,6 @@ public class ScheduleEntryEnrichmentService {
     };
   }
 
-  /** Carrega usuários necessários para enriquecer reservas. */
-  private Map<UUID, User> loadUsers(List<Reservation> reservations) {
-    if (reservations.isEmpty()) {
-      return Collections.emptyMap();
-    }
-
-    Set<UUID> userIds =
-        reservations.stream().map(Reservation::getUserId).collect(Collectors.toSet());
-
-    return userRepository.findAllByIds(userIds).stream()
-        .collect(Collectors.toMap(User::getId, Function.identity()));
-  }
-
-  /** Carrega quadras necessárias para enriquecer agendamentos. */
-  private Map<UUID, Court> loadCourts(List<? extends ScheduleEntry> entries) {
-    if (entries.isEmpty()) {
-      return Collections.emptyMap();
-    }
-
-    Set<UUID> courtIds =
-        entries.stream().map(ScheduleEntry::getCourtId).collect(Collectors.toSet());
-
-    return courtRepository.findAllByIds(courtIds).stream()
-        .collect(Collectors.toMap(Court::getId, Function.identity()));
-  }
-
-  /** Carrega modalidades necessárias para enriquecer reservas. */
-  private Map<UUID, Modality> loadModalities(List<Reservation> reservations) {
-    if (reservations.isEmpty()) {
-      return Collections.emptyMap();
-    }
-
-    Set<UUID> modalityIds =
-        reservations.stream().map(Reservation::getModalityId).collect(Collectors.toSet());
-
-    return modalityRepository.findAllByIds(modalityIds).stream()
-        .collect(Collectors.toMap(Modality::getId, Function.identity()));
-  }
-
-  /** Enriquece uma reserva com os dados dos mapas fornecidos. */
   private ReservationDetail enrichReservation(
       Reservation reservation,
       Map<UUID, User> userMap,
@@ -154,8 +128,10 @@ public class ScheduleEntryEnrichmentService {
         reservation.getRecurringReservationId());
   }
 
-  /** Enriquece um bloqueio com os dados do mapa fornecido. */
-  private BlockedTimeDetail enrichBlockedTime(BlockedTime blockedTime, Map<UUID, Court> courtMap) {
+  private BlockedTimeDetail enrichBlockedTime(
+          BlockedTime blockedTime,
+          Map<UUID, Court> courtMap
+  ) {
 
     Court court = courtMap.get(blockedTime.getCourtId());
 
@@ -168,5 +144,41 @@ public class ScheduleEntryEnrichmentService {
         blockedTime.getDescription(),
         blockedTime.isFullDay(),
         blockedTime.getRecurringBlockedTimeId());
+  }
+
+  private Map<UUID, User> loadUsers(List<Reservation> reservations) {
+    if (reservations.isEmpty()) {
+      return Collections.emptyMap();
+    }
+
+    Set<UUID> userIds =
+            reservations.stream().map(Reservation::getUserId).collect(Collectors.toSet());
+
+    return userRepository.findAllByIds(userIds).stream()
+            .collect(Collectors.toMap(User::getId, Function.identity()));
+  }
+
+  private Map<UUID, Court> loadCourts(List<? extends ScheduleEntry> entries) {
+    if (entries.isEmpty()) {
+      return Collections.emptyMap();
+    }
+
+    Set<UUID> courtIds =
+            entries.stream().map(ScheduleEntry::getCourtId).collect(Collectors.toSet());
+
+    return courtRepository.findAllActiveByIds(courtIds).stream()
+            .collect(Collectors.toMap(Court::getId, Function.identity()));
+  }
+
+  private Map<UUID, Modality> loadModalities(List<Reservation> reservations) {
+    if (reservations.isEmpty()) {
+      return Collections.emptyMap();
+    }
+
+    Set<UUID> modalityIds =
+            reservations.stream().map(Reservation::getModalityId).collect(Collectors.toSet());
+
+    return modalityRepository.findAllByIds(modalityIds).stream()
+            .collect(Collectors.toMap(Modality::getId, Function.identity()));
   }
 }

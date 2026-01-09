@@ -1,7 +1,7 @@
 package com.projetoExtensao.arenaMafia.application.court.usecase.imp;
 
 import com.projetoExtensao.arenaMafia.application.court.aggregate.CourtWithModalities;
-import com.projetoExtensao.arenaMafia.application.court.port.CourtRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.court.port.repository.CourtRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.court.usecase.FindAllCourtUseCase;
 import com.projetoExtensao.arenaMafia.application.modality.port.ModalityRepositoryPort;
 import com.projetoExtensao.arenaMafia.domain.model.Court;

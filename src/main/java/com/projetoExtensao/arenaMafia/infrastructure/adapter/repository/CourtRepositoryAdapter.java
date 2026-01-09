@@ -1,6 +1,6 @@
 package com.projetoExtensao.arenaMafia.infrastructure.adapter.repository;
 
-import com.projetoExtensao.arenaMafia.application.court.port.CourtRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.court.port.repository.CourtRepositoryPort;
 import com.projetoExtensao.arenaMafia.domain.exception.notFound.CourtNotFoundException;
 import com.projetoExtensao.arenaMafia.domain.model.Court;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.CourtEntity;
@@ -67,6 +67,11 @@ public class CourtRepositoryAdapter implements CourtRepositoryPort {
   }
 
   @Override
+  public Court findActiveByIdOrElseThrow(UUID id) {
+    return findById(id).filter(Court::isActive).orElseThrow(CourtNotFoundException::new);
+  }
+
+  @Override
   public Court findByIdOrElseThrow(UUID id) {
     return courtJpaRepository
         .findById(id)
@@ -80,7 +85,7 @@ public class CourtRepositoryAdapter implements CourtRepositoryPort {
   }
 
   @Override
-  public List<Court> findAllByIds(Set<UUID> ids) {
+  public List<Court> findAllActiveByIds(Set<UUID> ids) {
     return courtJpaRepository.findAllById(ids).stream()
         .filter(CourtEntity::isActive)
         .map(courtMapper::toDomain)
@@ -94,10 +99,12 @@ public class CourtRepositoryAdapter implements CourtRepositoryPort {
 
   @Override
   public void validateAllExistAndActive(List<UUID> courtIds) {
-    List<Court> activeCourts = findAllByIds(new HashSet<>(courtIds));
+    List<Court> activeCourts = findAllActiveByIds(new HashSet<>(courtIds));
 
     if (activeCourts.size() != courtIds.size()) {
       throw new CourtNotFoundException();
     }
   }
+
+
 }

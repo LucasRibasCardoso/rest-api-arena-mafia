@@ -1,6 +1,6 @@
 package com.projetoExtensao.arenaMafia.application.schedule.usecase.availabletime.imp;
 
-import com.projetoExtensao.arenaMafia.application.court.port.CourtRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.court.port.repository.CourtRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.operatingHours.port.OperatingHoursRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.priceRule.port.PriceRuleRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.schedule.port.repository.ScheduleEntryRepositoryPort;
@@ -64,7 +64,7 @@ public class FindAllAvailableTimesUseCaseImp implements FindAllAvailableTimesUse
         .map(
             court -> {
               var schedules =
-                  scheduleEntryRepositoryPort.findConfirmedSchedulesByCourtAndDate(
+                  scheduleEntryRepositoryPort.findAllActiveSchedulesByCourtAndDate(
                       court.getId(), date);
               return availableSlotGenerationService.generateAvailableSlotsForCourt(
                   court, applicableOperatingHours, schedules, priceRules, dayOfWeek);

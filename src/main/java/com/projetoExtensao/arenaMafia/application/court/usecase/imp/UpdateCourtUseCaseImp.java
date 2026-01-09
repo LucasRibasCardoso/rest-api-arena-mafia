@@ -1,7 +1,7 @@
 package com.projetoExtensao.arenaMafia.application.court.usecase.imp;
 
 import com.projetoExtensao.arenaMafia.application.court.aggregate.CourtWithModalities;
-import com.projetoExtensao.arenaMafia.application.court.port.CourtRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.court.port.repository.CourtRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.court.usecase.UpdateCourtUseCase;
 import com.projetoExtensao.arenaMafia.application.modality.port.ModalityRepositoryPort;
 import com.projetoExtensao.arenaMafia.domain.exception.conflict.CourtAlreadyExistsException;
@@ -30,7 +30,7 @@ public class UpdateCourtUseCaseImp implements UpdateCourtUseCase {
 
   @Override
   public CourtWithModalities execute(UUID courtId, UpdateCourtRequestDto request) {
-    Court court = courtRepositoryPort.findByIdOrElseThrow(courtId);
+    Court court = courtRepositoryPort.findActiveByIdOrElseThrow(courtId);
 
     updateCourtFields(court, request);
     Court updatedCourt = courtRepositoryPort.save(court);

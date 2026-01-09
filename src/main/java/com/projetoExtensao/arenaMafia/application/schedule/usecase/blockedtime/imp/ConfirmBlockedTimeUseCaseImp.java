@@ -1,6 +1,6 @@
 package com.projetoExtensao.arenaMafia.application.schedule.usecase.blockedtime.imp;
 
-import com.projetoExtensao.arenaMafia.application.court.port.CourtRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.court.port.repository.CourtRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.schedule.detail.BlockedTimeDetail;
 import com.projetoExtensao.arenaMafia.application.schedule.detail.ReservationDetail;
 import com.projetoExtensao.arenaMafia.application.schedule.port.gateway.BlockedTimePreviewCachePort;
@@ -12,7 +12,7 @@ import com.projetoExtensao.arenaMafia.application.schedule.result.ConfirmBlocked
 import com.projetoExtensao.arenaMafia.application.schedule.service.BlockedTimeDateCalculationService;
 import com.projetoExtensao.arenaMafia.application.schedule.service.ReservationBatchCancellationService;
 import com.projetoExtensao.arenaMafia.application.schedule.usecase.blockedtime.ConfirmBlockedTimeUseCase;
-import com.projetoExtensao.arenaMafia.domain.exception.conflict.StalePreviewException;
+import com.projetoExtensao.arenaMafia.domain.exception.conflict.PreviewStaleException;
 import com.projetoExtensao.arenaMafia.domain.model.enums.DayOfWeek;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.BlockedTime;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.Reservation;
@@ -29,6 +29,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @Transactional
@@ -39,7 +41,7 @@ public class ConfirmBlockedTimeUseCaseImp implements ConfirmBlockedTimeUseCase {
   private final ReservationRepositoryPort reservationRepository;
   private final ScheduleEntryRepositoryPort scheduleEntryRepository;
   private final CourtRepositoryPort courtRepository;
-  private final ReservationBatchCancellationService batchCancellationService;
+  private final ReservationBatchCancellationService reservationBatchCancellationService;
   private final BlockedTimeDateCalculationService dateCalculationService;
 
   public ConfirmBlockedTimeUseCaseImp(
@@ -48,14 +50,14 @@ public class ConfirmBlockedTimeUseCaseImp implements ConfirmBlockedTimeUseCase {
       ReservationRepositoryPort reservationRepository,
       ScheduleEntryRepositoryPort scheduleEntryRepository,
       CourtRepositoryPort courtRepository,
-      ReservationBatchCancellationService batchCancellationService,
+      ReservationBatchCancellationService reservationBatchCancellationService,
       BlockedTimeDateCalculationService dateCalculationService) {
     this.previewCachePort = previewCachePort;
     this.blockedTimeRepository = blockedTimeRepository;
     this.reservationRepository = reservationRepository;
     this.scheduleEntryRepository = scheduleEntryRepository;
     this.courtRepository = courtRepository;
-    this.batchCancellationService = batchCancellationService;
+    this.reservationBatchCancellationService = reservationBatchCancellationService;
     this.dateCalculationService = dateCalculationService;
   }
 
@@ -80,7 +82,7 @@ public class ConfirmBlockedTimeUseCaseImp implements ConfirmBlockedTimeUseCase {
             effectiveDaysOfWeek
     );
 
-    // Valida se o preview não está obsoleto
+    // Valida se o preview não está desatualizado
     validatePreviewIsNotStale(preview, effectiveDaysOfWeek, searchInterval);
 
     // Processa os conflitos: cancela reservas e remove bloqueios conflitantes
@@ -114,6 +116,7 @@ public class ConfirmBlockedTimeUseCaseImp implements ConfirmBlockedTimeUseCase {
    * @param preview Preview armazenado no cache
    * @param effectiveDaysOfWeek Dias da semana usado na busca por conflitos
    * @param searchInterval Intervalo de tempo usado na busca por conflitos
+   * @throws PreviewStaleException se o preview estiver desatualizado
    */
   private void validatePreviewIsNotStale(
           BlockedTimeConflictsPreview preview,
@@ -122,24 +125,27 @@ public class ConfirmBlockedTimeUseCaseImp implements ConfirmBlockedTimeUseCase {
   ) {
 
     var previewRequest = preview.request();
-    List<ScheduleEntry> currentConflicts = scheduleEntryRepository.findConflicts(
+    List<ScheduleEntry> currentConflicts = scheduleEntryRepository.findAllActiveSchedulesConflicts(
             previewRequest.courtIds(),
             previewRequest.startDate(),
             previewRequest.endDate(),
             searchInterval,
             effectiveDaysOfWeek);
+
+    Set<UUID> currentIds = currentConflicts.stream()
+        .map(ScheduleEntry::getId)
+        .collect(Collectors.toSet());
+
+    Set<UUID> previewIds = Stream.of(
+            preview.conflictingReservations().stream().map(ReservationDetail::reservationId),
+            preview.conflictingBlockedTimes().stream().map(BlockedTimeDetail::blockedTimeId),
+            preview.inProgressReservations().stream().map(ReservationDetail::reservationId))
+        .flatMap(s -> s)
+        .collect(Collectors.toSet()
+    );
     
-    // Contagem do preview (reservas a cancelar + inProgress + blockedTimes)
-    int previewReservationsCount = preview.conflictingReservations().size();
-    int previewInProgressCount = preview.inProgressReservations().size();
-    int previewBlockedTimesCount = preview.conflictingBlockedTimes().size();
-    int previewTotalConflicts = previewReservationsCount + previewInProgressCount + previewBlockedTimesCount;
-
-    // Contagem atual
-    int currentTotalConflicts = currentConflicts.size();
-
-    if (currentTotalConflicts != previewTotalConflicts) {
-      throw new StalePreviewException();
+    if (!currentIds.equals(previewIds)) {
+      throw new PreviewStaleException();
     }
   }
 
@@ -166,7 +172,7 @@ public class ConfirmBlockedTimeUseCaseImp implements ConfirmBlockedTimeUseCase {
     List<Reservation> reservationsToCancel = reservationRepository.findAllByIds(reservationIdsToCancel);
 
     String cancellationReason = String.format("Bloqueio de horário criado: %s", description);
-    return batchCancellationService.cancelReservationsInBatch(reservationsToCancel, cancellationReason);
+    return reservationBatchCancellationService.cancelReservationsInBatch(reservationsToCancel, cancellationReason);
   }
 
 

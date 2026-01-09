@@ -1,18 +1,20 @@
 package com.projetoExtensao.arenaMafia.infrastructure.web.admin;
 
 import com.projetoExtensao.arenaMafia.application.court.aggregate.CourtWithModalities;
-import com.projetoExtensao.arenaMafia.application.court.usecase.CreateCourtUseCase;
-import com.projetoExtensao.arenaMafia.application.court.usecase.DisableCourtUseCase;
-import com.projetoExtensao.arenaMafia.application.court.usecase.EnableCourtUseCase;
-import com.projetoExtensao.arenaMafia.application.court.usecase.FindAllCourtUseCase;
-import com.projetoExtensao.arenaMafia.application.court.usecase.FindCourtByIdUseCase;
-import com.projetoExtensao.arenaMafia.application.court.usecase.UpdateCourtUseCase;
+import com.projetoExtensao.arenaMafia.application.court.preview.CourtDisablePreview;
+import com.projetoExtensao.arenaMafia.application.court.usecase.*;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.mapper.ModalityMapper;
 import com.projetoExtensao.arenaMafia.infrastructure.security.rateLimit.CustomRateLimiter;
+import com.projetoExtensao.arenaMafia.infrastructure.security.userDetails.UserDetailsAdapter;
+import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.court.request.CourtDisableConfirmRequestDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.court.request.CreateCourtRequestDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.court.request.UpdateCourtRequestDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.court.response.AdminCourtResponseDto;
+import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.court.response.CourtDisablePreviewResponseDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.modality.dto.response.ModalityResponseDto;
+import com.projetoExtensao.arenaMafia.infrastructure.web.schedule.dto.response.scheduleDetail.BlockedTimeDetailResponseDto;
+import com.projetoExtensao.arenaMafia.infrastructure.web.schedule.dto.response.scheduleDetail.ReservationDetailResponseDto;
+import com.projetoExtensao.arenaMafia.infrastructure.web.schedule.mapper.ScheduleEntryResponseMapper;
 import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.List;
@@ -20,6 +22,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -37,28 +40,35 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 public class AdminCourtController {
 
   private final ModalityMapper modalityMapper;
+  private final ScheduleEntryResponseMapper scheduleEntryMapper;
+
   private final CreateCourtUseCase createCourtUseCase;
   private final EnableCourtUseCase enableCourtUseCase;
   private final UpdateCourtUseCase updateCourtUseCase;
-  private final DisableCourtUseCase deleteCourtUseCase;
   private final FindAllCourtUseCase findAllCourtUseCase;
   private final FindCourtByIdUseCase findCourtByIdUseCase;
+  private final PreviewCourtDisableUseCase previewCourtDisableUseCase;
+  private final ConfirmCourtDisableUseCase confirmCourtDisableUseCase;
 
   public AdminCourtController(
       ModalityMapper modalityMapper,
+      ScheduleEntryResponseMapper scheduleEntryMapper,
       CreateCourtUseCase createCourtUseCase,
       EnableCourtUseCase enableCourtUseCase,
       UpdateCourtUseCase updateCourtUseCase,
-      DisableCourtUseCase deleteCourtUseCase,
       FindAllCourtUseCase findAllCourtUseCase,
-      FindCourtByIdUseCase findCourtByIdUseCase) {
+      FindCourtByIdUseCase findCourtByIdUseCase,
+      PreviewCourtDisableUseCase previewCourtDisableUseCase,
+      ConfirmCourtDisableUseCase confirmCourtDisableUseCase) {
     this.modalityMapper = modalityMapper;
+    this.scheduleEntryMapper = scheduleEntryMapper;
     this.createCourtUseCase = createCourtUseCase;
-    this.deleteCourtUseCase = deleteCourtUseCase;
     this.updateCourtUseCase = updateCourtUseCase;
     this.enableCourtUseCase = enableCourtUseCase;
     this.findAllCourtUseCase = findAllCourtUseCase;
     this.findCourtByIdUseCase = findCourtByIdUseCase;
+    this.previewCourtDisableUseCase = previewCourtDisableUseCase;
+    this.confirmCourtDisableUseCase = confirmCourtDisableUseCase;
   }
 
   @PostMapping
@@ -96,10 +106,25 @@ public class AdminCourtController {
     return ResponseEntity.ok(response);
   }
 
-  @PatchMapping("/{courtId}/disable")
+  @PostMapping("/{courtId}/preview-disable")
   @CustomRateLimiter(limiterName = "globalLimiter")
-  public ResponseEntity<Void> disable(@PathVariable UUID courtId) {
-    deleteCourtUseCase.execute(courtId);
+  public ResponseEntity<CourtDisablePreviewResponseDto> previewDisable(
+          @PathVariable UUID courtId,
+          @AuthenticationPrincipal UserDetailsAdapter authenticatedAdmin) {
+
+    UUID adminId = authenticatedAdmin.getUser().getId();
+    CourtDisablePreview preview = previewCourtDisableUseCase.execute(courtId, adminId);
+    CourtDisablePreviewResponseDto response = buildResponsePreviewDto(preview);
+    return ResponseEntity.ok(response);
+  }
+
+  @PostMapping("/confirm-disable")
+  @CustomRateLimiter(limiterName = "globalLimiter")
+  public ResponseEntity<Void> confirmDisable(
+          @AuthenticationPrincipal UserDetailsAdapter authenticatedAdmin,
+          @RequestBody @Valid CourtDisableConfirmRequestDto requestDto) {
+    UUID adminId = authenticatedAdmin.getUser().getId();
+    confirmCourtDisableUseCase.execute(adminId, requestDto);
     return ResponseEntity.noContent().build();
   }
 
@@ -117,6 +142,36 @@ public class AdminCourtController {
     CourtWithModalities result = updateCourtUseCase.execute(courtId, request);
     AdminCourtResponseDto response = mapToResponse(result);
     return ResponseEntity.ok(response);
+  }
+
+  /**
+   * Monta o DTO de resposta a partir do preview de desativação de quadra.
+   *
+   * @param preview O preview de desativação gerado pelo caso de uso.
+   * @return O DTO de resposta contendo os detalhes dos conflitos.
+   */
+  private CourtDisablePreviewResponseDto buildResponsePreviewDto(CourtDisablePreview preview) {
+
+    List<BlockedTimeDetailResponseDto> blockedTimesDetails =
+        scheduleEntryMapper.toDetailDtoList(preview.affectedBlockedTimes());
+
+    List<ReservationDetailResponseDto> reservationsDetails =
+        scheduleEntryMapper.toDetailDtoList(preview.affectedReservations());
+
+    List<ReservationDetailResponseDto> inProgressReservationsDetails =
+        scheduleEntryMapper.toDetailDtoList(preview.inProgressReservations());
+
+    return new CourtDisablePreviewResponseDto(
+            preview.previewKey(),
+            preview.courtId(),
+            preview.courtName(),
+            preview.usersAffectedCount(),
+            preview.blockedTimesAffectedCount(),
+            preview.reservationsAffectedCount(),
+            blockedTimesDetails,
+            reservationsDetails,
+            inProgressReservationsDetails
+    );
   }
 
   /**

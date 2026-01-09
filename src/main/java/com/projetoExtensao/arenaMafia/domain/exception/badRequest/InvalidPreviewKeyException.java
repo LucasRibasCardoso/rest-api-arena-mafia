@@ -4,7 +4,7 @@ import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 
 public class InvalidPreviewKeyException extends BadRequestException {
   public InvalidPreviewKeyException() {
-    super(ErrorCode.BLOCKED_TIME_PREVIEW_KEY_INVALID);
+    super(ErrorCode.PREVIEW_KEY_INVALID);
   }
 }
 

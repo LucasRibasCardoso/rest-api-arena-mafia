@@ -6,9 +6,4 @@ public class BlockedTimeNotFoundException extends NotFoundException {
   public BlockedTimeNotFoundException() {
     super(ErrorCode.BLOCKED_TIME_NOT_FOUND);
   }
-
-  public BlockedTimeNotFoundException(ErrorCode errorCode) {
-    super(errorCode);
-  }
 }
-

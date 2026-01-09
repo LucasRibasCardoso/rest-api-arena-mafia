@@ -1,6 +1,6 @@
 package com.projetoExtensao.arenaMafia.application.schedule.usecase.reservation.imp;
 
-import com.projetoExtensao.arenaMafia.application.court.port.CourtRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.court.port.repository.CourtRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.modality.port.ModalityRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.notification.event.OnScheduleCreatedEvent;
 import com.projetoExtensao.arenaMafia.application.priceRule.port.PriceRuleRepositoryPort;
@@ -148,7 +148,7 @@ public class CreateReservationUseCaseImp implements CreateReservationUseCase {
    * @throws CourtNotSupportsModalityException se a quadra não suportar a modalidade
    */
   private void validateCourtSupportsModality(UUID courtId, UUID modalityId) {
-    Court court = courtRepositoryPort.findByIdOrElseThrow(courtId);
+    Court court = courtRepositoryPort.findActiveByIdOrElseThrow(courtId);
 
     if (!court.getModalityIds().contains(modalityId)) {
       throw new CourtNotSupportsModalityException();

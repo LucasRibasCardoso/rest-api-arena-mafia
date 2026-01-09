@@ -73,17 +73,14 @@ public class AdminBlockedTimesController {
    * @return O DTO de resposta contendo os detalhes dos conflitos.
    */
   private BlockedTimeConflictsPreviewResponseDto buildPreviewResponseDto(BlockedTimeConflictsPreview preview) {
-    List<BlockedTimeDetailResponseDto> blockedTimesDetails = preview.conflictingBlockedTimes().stream()
-        .map(detail -> (BlockedTimeDetailResponseDto) scheduleEntryMapper.toDetailDto(detail))
-        .toList();
+    List<BlockedTimeDetailResponseDto> blockedTimesDetails =
+            scheduleEntryMapper.toDetailDtoList(preview.conflictingBlockedTimes());
 
-    List<ReservationDetailResponseDto> reservationsDetails = preview.conflictingReservations().stream()
-        .map(detail -> (ReservationDetailResponseDto) scheduleEntryMapper.toDetailDto(detail))
-        .toList();
+    List<ReservationDetailResponseDto> reservationsDetails =
+            scheduleEntryMapper.toDetailDtoList(preview.conflictingReservations());
 
-    List<ReservationDetailResponseDto> inProgressReservationsDetails = preview.inProgressReservations().stream()
-        .map(detail -> (ReservationDetailResponseDto) scheduleEntryMapper.toDetailDto(detail))
-        .toList();
+    List<ReservationDetailResponseDto> inProgressReservationsDetails =
+            scheduleEntryMapper.toDetailDtoList(preview.inProgressReservations());
 
     return new BlockedTimeConflictsPreviewResponseDto(
         preview.previewKey(),

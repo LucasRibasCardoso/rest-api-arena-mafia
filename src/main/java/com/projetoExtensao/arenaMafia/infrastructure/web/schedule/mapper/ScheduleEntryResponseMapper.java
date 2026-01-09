@@ -30,8 +30,15 @@ public class ScheduleEntryResponseMapper {
     return getEntryStrategy(scheduleEntry).toDto(scheduleEntry);
   }
 
-  public ScheduleDetailResponseDto toDetailDto(ScheduleDetail detail) {
-    return getDetailStrategy(detail).toDetailDto(detail);
+  @SuppressWarnings("unchecked")
+  public <R extends ScheduleDetailResponseDto> R toDetailDto(ScheduleDetail detail) {
+    return (R) getDetailStrategy(detail).toDetailDto(detail);
+  }
+
+  public <D extends ScheduleDetail, R extends ScheduleDetailResponseDto> List<R> toDetailDtoList(List<D> details) {
+    return details.stream()
+        .map(this::<R>toDetailDto)
+        .toList();
   }
 
   @SuppressWarnings("unchecked")

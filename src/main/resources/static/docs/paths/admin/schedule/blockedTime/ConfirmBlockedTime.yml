@@ -22,7 +22,7 @@ post:
     **Validações Importantes:**
     - O `previewKey` deve existir e não estar expirado (válido por 5 minutos)
     - O preview deve pertencer ao administrador que está confirmando
-    - Os dados não podem ter sido alterados desde a geração do preview (validação de staleness)
+    - Os dados não podem ter sido alterados desde a geração do preview (reservas ou bloqueios adicionados/removidos).
     - Todas as quadras referenciadas devem existir e estar ativas
     - Horários de funcionamento devem existir para os dias afetados
     
@@ -35,7 +35,7 @@ post:
   requestBody:
     description: |
       Dados necessários para confirmar a criação dos bloqueios.
-      Inclui a chave do preview gerado anteriormente e a descrição do bloqueio.
+      Inclui a `previewKey` obtida na pré-visualização e a descrição do bloqueio.
     required: true
     content:
       application/json:
@@ -143,14 +143,14 @@ post:
                 path: "/api/admin/blocked-times/confirm"
                 fieldErrors:
                   - fieldName: "previewKey"
-                    errorCode: "BLOCKED_TIME_PREVIEW_KEY_REQUIRED"
+                    errorCode: "PREVIEW_KEY_REQUIRED"
                     developerMessage: "A chave do preview é obrigatória."
             PreviewKeyInvalid:
               summary: PreviewKey com formato inválido
               value:
                 timestamp: "2026-01-15T14:30:00Z"
                 status: 400
-                errorCode: "BLOCKED_TIME_PREVIEW_KEY_INVALID"
+                errorCode: "PREVIEW_KEY_INVALID"
                 developerMessage: "A chave do preview é inválida."
                 path: "/api/admin/blocked-times/confirm"
             DescriptionRequired:
@@ -165,20 +165,8 @@ post:
                   - fieldName: "description"
                     errorCode: "BLOCKED_TIME_DESCRIPTION_REQUIRED"
                     developerMessage: "A descrição do bloqueio é obrigatória."
-            DescriptionTooShort:
-              summary: Descrição muito curta
-              value:
-                timestamp: "2026-01-15T14:30:00Z"
-                status: 400
-                errorCode: "VALIDATION_FAILED"
-                developerMessage: "A validação falhou. Verifique os detalhes dos campos para mais informações."
-                path: "/api/admin/blocked-times/confirm"
-                fieldErrors:
-                  - fieldName: "description"
-                    errorCode: "BLOCKED_TIME_DESCRIPTION_INVALID_LENGTH"
-                    developerMessage: "A descrição do bloqueio deve ter entre 3 e 500 caracteres."
-            DescriptionTooLong:
-              summary: Descrição muito longa
+            DescriptionTooShortOrTooLong:
+              summary: Descrição muito curta ou muito longa
               value:
                 timestamp: "2026-01-15T14:30:00Z"
                 status: 400
@@ -216,7 +204,7 @@ post:
               value:
                 timestamp: "2026-01-15T14:30:00Z"
                 status: 403
-                errorCode: "BLOCKED_TIME_PREVIEW_OWNERSHIP_INVALID"
+                errorCode: "PREVIEW_KEY_OWNERSHIP_INVALID"
                 developerMessage: "Esta chave de preview não pertence a você. Não é possível usar um preview gerado por outro usuário."
                 path: "/api/admin/blocked-times/confirm"
     404:
@@ -237,7 +225,7 @@ post:
               value:
                 timestamp: "2026-01-15T14:30:00Z"
                 status: 404
-                errorCode: "BLOCKED_TIME_PREVIEW_NOT_FOUND"
+                errorCode: "PREVIEW_NOT_FOUND"
                 developerMessage: "Preview não encontrado. Pode ter expirado após 5 minutos."
                 path: "/api/admin/blocked-times/confirm"
             CourtNotFound:
@@ -272,14 +260,14 @@ post:
           schema:
             $ref: "../../../../components/schemas/error/ErrorResponseDto.yml"
           examples:
-            PreviewStaleNewReservation:
-              summary: Nova reserva criada após preview
+            PreviewDataStale:
+              summary: Dados do preview estão desatualizados
               value:
                 timestamp: "2026-01-15T14:30:00Z"
                 status: 409
-                errorCode: "BLOCKED_TIME_PREVIEW_STALE"
-                developerMessage: "Os dados do preview estão desatualizados. Outro administrador pode ter criado bloqueios ou reservas foram alteradas desde a geração do preview. Por favor, gere um novo preview."
-                path: "/api/admin/blocked-times/confirm"
+                errorCode: "PREVIEW_DATA_STALE"
+                developerMessage: "Os dados associados a este preview foram alterados desde a sua geração. Por favor, gere um novo preview antes de confirmar a desativação."
+            path: "/api/admin/blocked-times/confirm"
     429:
       $ref: "../../../../components/responses/TooManyRequestsError.yml"
     500:

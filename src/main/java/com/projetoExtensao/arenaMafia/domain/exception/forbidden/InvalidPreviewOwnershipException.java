@@ -4,7 +4,7 @@ import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 
 public class InvalidPreviewOwnershipException extends ForbiddenException {
   public InvalidPreviewOwnershipException() {
-    super(ErrorCode.BLOCKED_TIME_PREVIEW_OWNERSHIP_INVALID);
+    super(ErrorCode.PREVIEW_KEY_OWNERSHIP_INVALID);
   }
 }
 

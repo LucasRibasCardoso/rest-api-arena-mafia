@@ -1,12 +1,12 @@
 package com.projetoExtensao.arenaMafia.application.schedule.usecase.blockedtime.imp;
 
-import com.projetoExtensao.arenaMafia.application.court.port.CourtRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.court.port.repository.CourtRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.schedule.detail.BlockedTimeDetail;
 import com.projetoExtensao.arenaMafia.application.schedule.detail.ReservationDetail;
-import com.projetoExtensao.arenaMafia.application.schedule.detail.ScheduleDetail;
 import com.projetoExtensao.arenaMafia.application.schedule.port.gateway.BlockedTimePreviewCachePort;
 import com.projetoExtensao.arenaMafia.application.schedule.port.repository.ScheduleEntryRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.schedule.preview.BlockedTimeConflictsPreview;
+import com.projetoExtensao.arenaMafia.application.schedule.result.ScheduleEntriesEnrichedResult;
 import com.projetoExtensao.arenaMafia.application.schedule.service.BlockedTimeDateCalculationService;
 import com.projetoExtensao.arenaMafia.application.schedule.service.ScheduleEntryEnrichmentService;
 import com.projetoExtensao.arenaMafia.application.schedule.usecase.blockedtime.PreviewBlockedTimeConflictsUseCase;
@@ -25,20 +25,20 @@ import java.util.UUID;
 @Transactional(readOnly = true)
 public class PreviewBlockedTimeConflictsUseCaseImp implements PreviewBlockedTimeConflictsUseCase {
 
-  private final ScheduleEntryEnrichmentService enrichmentService;
+  private final ScheduleEntryEnrichmentService scheduleEntryEnrichmentService;
   private final ScheduleEntryRepositoryPort scheduleEntryRepository;
   private final BlockedTimePreviewCachePort blockedTimePreviewCachePort;
   private final BlockedTimeDateCalculationService dateCalculationService;
   private final CourtRepositoryPort courtRepository;
 
   public PreviewBlockedTimeConflictsUseCaseImp(
-      ScheduleEntryEnrichmentService enrichmentService,
+      ScheduleEntryEnrichmentService scheduleEntryEnrichmentService,
       ScheduleEntryRepositoryPort scheduleEntryRepository,
       BlockedTimePreviewCachePort blockedTimePreviewCachePort,
       BlockedTimeDateCalculationService dateCalculationService,
       CourtRepositoryPort courtRepository) {
     this.scheduleEntryRepository = scheduleEntryRepository;
-    this.enrichmentService = enrichmentService;
+    this.scheduleEntryEnrichmentService = scheduleEntryEnrichmentService;
     this.blockedTimePreviewCachePort = blockedTimePreviewCachePort;
     this.dateCalculationService = dateCalculationService;
     this.courtRepository = courtRepository;
@@ -61,7 +61,7 @@ public class PreviewBlockedTimeConflictsUseCaseImp implements PreviewBlockedTime
             effectiveDaysOfWeek);
 
     // Busca os agendamentos conflitantes com o bloqueio proposto no intervalo de datas e horários especificados
-    List<ScheduleEntry> conflicts = scheduleEntryRepository.findConflicts(
+    List<ScheduleEntry> conflicts = scheduleEntryRepository.findAllActiveSchedulesConflicts(
             request.courtIds(),
             request.startDate(),
             request.endDate(),
@@ -69,44 +69,33 @@ public class PreviewBlockedTimeConflictsUseCaseImp implements PreviewBlockedTime
             effectiveDaysOfWeek);
 
     // Enriquecer os agendamentos conflitantes com detalhes adicionais
-    List<ScheduleDetail> enrichedConflicts = enrichmentService.enrichScheduleEntries(conflicts);
+    ScheduleEntriesEnrichedResult enrichedConflicts = scheduleEntryEnrichmentService.enrichScheduleEntries(conflicts);
 
     // Constrói e armazena em cache a pré-visualização dos conflitos de bloqueio de horário
-    return buildAndCachePreview(enrichedConflicts, request, adminId);
+    return buildAndSaveCachePreview(enrichedConflicts, request, adminId);
   }
 
   /**
    * Constrói e armazena em cache a pré-visualização dos conflitos de bloqueio de horário.
-   * @param enrichedConflicts Lista de conflitos de agendamento enriquecidos.
+   * @param enrichedConflictsResult Resultado do enriquecimento dos agendamentos conflitantes.
    * @param request Detalhes da solicitação de pré-visualização.
    * @param adminId ID do administrador que está solicitando a pré-visualização.
    * @return A pré-visualização dos conflitos de bloqueio de horário.
    */
-  private BlockedTimeConflictsPreview buildAndCachePreview(
-          List<ScheduleDetail> enrichedConflicts,
+  private BlockedTimeConflictsPreview buildAndSaveCachePreview(
+          ScheduleEntriesEnrichedResult enrichedConflictsResult,
           BlockedTimeConflictsPreviewRequestDto
           request, UUID adminId
   ) {
 
-    // Extrai as reservas detalhadas
-    List<ReservationDetail> allReservations = enrichedConflicts.stream()
-            .filter(ReservationDetail.class::isInstance)
-            .map(ReservationDetail.class::cast)
-            .toList();
+    List<ReservationDetail> reservations = enrichedConflictsResult.enrichedReservations();
+    List<BlockedTimeDetail> blockedTimes = enrichedConflictsResult.enrichedBlockedTimes();
 
-    // Extrai os bloqueios de horário detalhados
-    List<BlockedTimeDetail> blockedTimes = enrichedConflicts.stream()
-            .filter(BlockedTimeDetail.class::isInstance)
-            .map(BlockedTimeDetail.class::cast)
-            .toList();
-
-    // Extrai as reservas em andamento
-    List<ReservationDetail> inProgressReservations = allReservations.stream()
+    List<ReservationDetail> inProgressReservations = reservations.stream()
             .filter(ReservationDetail::isInProgress)
             .toList();
 
-    // Filtra as reservas que não estão em andamento
-    List<ReservationDetail> reservationsToCancel = allReservations.stream()
+    List<ReservationDetail> reservationsToCancel = reservations.stream()
             .filter(reservation -> !reservation.isInProgress())
             .toList();
 
@@ -125,7 +114,6 @@ public class PreviewBlockedTimeConflictsUseCaseImp implements PreviewBlockedTime
             request);
 
     blockedTimePreviewCachePort.save(previewKey, preview);
-
     return preview;
   }
 

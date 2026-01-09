@@ -30,7 +30,7 @@ public class ScheduleAvailabilityService {
    */
   public void validateAvailability(UUID courtId, LocalDate date, TimeInterval timeInterval) {
     List<ScheduleEntry> confirmedSchedules =
-        scheduleEntryRepositoryPort.findConfirmedSchedulesByCourtAndDate(courtId, date);
+        scheduleEntryRepositoryPort.findAllActiveSchedulesByCourtAndDate(courtId, date);
 
     boolean isOccupied = isSlotOccupied(timeInterval, confirmedSchedules);
 
