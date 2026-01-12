@@ -9,7 +9,6 @@ import java.util.UUID;
 public record OperatingHoursDisablePreviewResponseDto(
     String previewKey,
     UUID operatingHoursId,
-    String operatingHoursName,
     int usersAffectedCount,
     int blockedTimesAffectedCount,
     int reservationsAffectedCount,

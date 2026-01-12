@@ -149,7 +149,6 @@ public class AdminOperatingHoursController {
     return new OperatingHoursDisablePreviewResponseDto(
         preview.previewKey(),
         preview.operatingHoursId(),
-        preview.operatingHoursName(),
         preview.usersAffectedCount(),
         preview.blockedTimesAffectedCount(),
         preview.reservationsAffectedCount(),
