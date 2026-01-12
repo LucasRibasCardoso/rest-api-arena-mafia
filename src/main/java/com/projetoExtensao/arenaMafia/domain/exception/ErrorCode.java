@@ -158,6 +158,10 @@ public enum ErrorCode {
   OPERATING_HOURS_NOT_FOUND("Horário de funcionamento não encontrado."),
   OPERATING_HOURS_APPLICABLE_NOT_FOUND("Não há horários de funcionamento aplicáveis para todos os dias selecionados."),
 
+  // Operating Hours - Desativação
+  OPERATING_HOURS_DISABLE_DESCRIPTION_REQUIRED("A descrição para desativação do horário de funcionamento é obrigatória."),
+  OPERATING_HOURS_DISABLE_DESCRIPTION_INVALID_LENGTH("A descrição para desativação do horário de funcionamento deve ter entre 3 e 500 caracteres."),
+
   // ==================== ERROS DE REGRAS DE PREÇO (PRICE RULES) ====================
   PRICE_RULE_NAME_REQUIRED("O nome da regra de preço é obrigatório."),
   PRICE_RULE_NAME_INVALID_LENGTH("O nome da regra de preço deve ter entre 1 e 100 caracteres."),

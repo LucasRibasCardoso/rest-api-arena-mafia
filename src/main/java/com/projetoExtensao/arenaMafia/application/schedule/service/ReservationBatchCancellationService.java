@@ -90,7 +90,9 @@ public class ReservationBatchCancellationService {
    * @return Optional contendo o evento de cancelamento, ou vazio se usuário não encontrado
    */
   private Optional<OnReservationCancelledByAdminEvent> createCancellationEvent(
-          Reservation reservation, Map<UUID, User> usersMap, String reason) {
+          Reservation reservation,
+          Map<UUID, User> usersMap,
+          String reason) {
 
     return Optional.ofNullable(usersMap.get(reservation.getUserId()))
         .map(user -> new OnReservationCancelledByAdminEvent(reservation, user.getUsername(), user.getPhone(), reason));

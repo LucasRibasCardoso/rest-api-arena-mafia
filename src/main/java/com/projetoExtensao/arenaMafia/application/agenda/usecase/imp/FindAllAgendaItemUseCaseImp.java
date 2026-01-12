@@ -2,7 +2,7 @@ package com.projetoExtensao.arenaMafia.application.agenda.usecase.imp;
 
 import com.projetoExtensao.arenaMafia.application.agenda.usecase.FindAllAgendaItemUseCase;
 import com.projetoExtensao.arenaMafia.application.court.port.repository.CourtRepositoryPort;
-import com.projetoExtensao.arenaMafia.application.operatingHours.port.OperatingHoursRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.operatingHours.port.repository.OperatingHoursRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.priceRule.port.PriceRuleRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.schedule.port.repository.ScheduleEntryRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.schedule.service.AvailableSlotGenerationService;

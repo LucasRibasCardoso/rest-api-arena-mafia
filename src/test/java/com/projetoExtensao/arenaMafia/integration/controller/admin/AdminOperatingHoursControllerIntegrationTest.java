@@ -3,7 +3,7 @@ package com.projetoExtensao.arenaMafia.integration.controller.admin;
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.projetoExtensao.arenaMafia.application.operatingHours.port.OperatingHoursRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.operatingHours.port.repository.OperatingHoursRepositoryPort;
 import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 import com.projetoExtensao.arenaMafia.domain.model.User;
 import com.projetoExtensao.arenaMafia.domain.model.enums.DayOfWeek;
@@ -38,6 +38,7 @@ public class AdminOperatingHoursControllerIntegrationTest extends WebIntegration
   private RequestSpecification specification;
   private String accessToken;
   private User authenticatedUser;
+  private UUID adminId;
 
   @BeforeEach
   void setup() {
@@ -50,6 +51,7 @@ public class AdminOperatingHoursControllerIntegrationTest extends WebIntegration
             .build();
 
     authenticatedUser = mockPersistAdminUser();
+    adminId = authenticatedUser.getId();
     AuthTokensTest tokensTest = mockLogin(defaultUsername, defaultPassword);
     accessToken = "Bearer " + tokensTest.accessToken();
   }
@@ -668,251 +670,53 @@ public class AdminOperatingHoursControllerIntegrationTest extends WebIntegration
   }
 
   @Nested
-  @DisplayName("Testes para o endpoint PATCH /api/admin/operating-hours/{hourId}/disable")
+  @DisplayName("Testes para a funcionalidade de desabilitação de Horários de Funcionamento")
   class DisableOperatingHoursTest {
 
     @Nested
-    @DisplayName("Cenários de sucesso - 204 No Content")
-    class DisableOperatingHoursSuccessScenarios {
-      @Test
-      @DisplayName("Tenta desabilitar um horário de funcionamento ativo")
-      void shouldReturn204_whenDisablingActiveOperatingHours() {
-        // Arrange
-        var operatingHour = mockPersistOperatingHours();
-        UUID operatingHourId = operatingHour.getId();
+    @DisplayName("Testes para o endpoint POST /api/admin/operating-hours/{hourId}/preview-disable")
+    class PreviewDisableOperatingHoursTest {
 
-        // Act
-        given()
-            .spec(specification)
-            .header("Authorization", accessToken)
-            .patch("/{hourId}/disable", operatingHourId)
-            .then()
-            .statusCode(204);
+      @Nested
+      @DisplayName("Cenários de sucesso - 200 OK")
+      class SuccessScenarios {}
 
-        // Assert
-        var updatedOperatingHour = operatingHoursRepository.findByIdOrElseThrow(operatingHourId);
-        assertThat(updatedOperatingHour.isActive()).isFalse();
-      }
+      @Nested
+      @DisplayName("Cenários de erro - 400 Bad Request")
+      class BadRequestScenarios {}
+
+      @Nested
+      @DisplayName("Cenários de erro - 404 Not Found")
+      class NotFoundScenario {}
+
+      @Nested
+      @DisplayName("Cenários de erro - 409 Conflict")
+      class ConflictScenarios {}
     }
 
     @Nested
-    @DisplayName("Cenários de erro - 400 Bad Request")
-    class DisableOperatingHoursBadRequestScenarios {
-      @Test
-      @DisplayName("Tenta desabilitar um horário com ID inválido")
-      void shouldReturn400_whenDisablingWithInvalidIdFormat() {
-        // Act
-        var response =
-            given()
-                .spec(specification)
-                .header("Authorization", accessToken)
-                .when()
-                .patch("/{hourId}/disable", "invalid-uuid")
-                .then()
-                .statusCode(400)
-                .extract()
-                .as(ErrorResponseDto.class);
+    @DisplayName("Testes para o endpoint POST /api/admin/operating-hours/confirm-disable")
+    class ConfirmDisableOperatingHoursTest {
 
-        ErrorCode errorCode = ErrorCode.INVALID_REQUEST_PARAMETER;
+      @Nested
+      @DisplayName("Cenários de sucesso - 200 OK")
+      class SuccessScenarios {}
 
-        // Assert
-        assertThat(response.status()).isEqualTo(400);
-        assertThat(response.errorCode()).isEqualTo(errorCode.name());
-        assertThat(response.developerMessage()).isEqualTo(errorCode.getMessage());
-        assertThat(response.path()).contains("/api/admin/operating-hours/invalid-uuid/disable");
-      }
-    }
+      @Nested
+      @DisplayName("Cenários de erro - 400 Bad Request")
+      class BadRequestScenarios {}
 
-    @Nested
-    @DisplayName("Cenários de erro - 404 Not Found")
-    class NonExistentDisabling {
-      @Test
-      @DisplayName("Tenta desabilitar um horário inexistente")
-      void shouldReturn404NotFound_whenDisablingNonExistentOperatingHours() {
-        // Arrange
-        UUID nonExistentId = UUID.randomUUID();
+      @Nested
+      @DisplayName("Cenários de erro - 403 Forbidden")
+      class ForbiddenScenarios {}
 
-        // Act
-        var response =
-            given()
-                .spec(specification)
-                .header("Authorization", accessToken)
-                .when()
-                .patch("/{hourId}/disable", nonExistentId)
-                .then()
-                .statusCode(404)
-                .extract()
-                .as(ErrorResponseDto.class);
+      @Nested
+      @DisplayName("Cenários de erro - 404 Not Found")
+      class NotFoundScenario {}
 
-        ErrorCode errorCode = ErrorCode.OPERATING_HOURS_NOT_FOUND;
-
-        // Assert
-        assertThat(response.status()).isEqualTo(404);
-        assertThat(response.errorCode()).isEqualTo(errorCode.name());
-        assertThat(response.developerMessage()).isEqualTo(errorCode.getMessage());
-        assertThat(response.path())
-            .isEqualTo("/api/admin/operating-hours/" + nonExistentId + "/disable");
-      }
-    }
-
-    @Nested
-    @DisplayName("Cenários de erro - 409 Conflict")
-    class ConflictingDisabling {
-      @Test
-      @DisplayName("Tenta desabilitar um horário já desabilitado")
-      void shouldReturn409Conflict_whenDisablingAlreadyDisabledOperatingHours() {
-        // Arrange
-        var operatingHours = mockPersistDisabledOperatingHours();
-        UUID operatingHoursId = operatingHours.getId();
-
-        // Act
-        var response =
-            given()
-                .spec(specification)
-                .header("Authorization", accessToken)
-                .when()
-                .patch("/{hourId}/disable", operatingHoursId)
-                .then()
-                .statusCode(409)
-                .extract()
-                .as(ErrorResponseDto.class);
-
-        ErrorCode errorCode = ErrorCode.OPERATING_HOURS_ALREADY_DISABLED;
-
-        // Assert
-        assertThat(response.status()).isEqualTo(409);
-        assertThat(response.errorCode()).isEqualTo(errorCode.name());
-        assertThat(response.developerMessage()).isEqualTo(errorCode.getMessage());
-        assertThat(response.path())
-            .isEqualTo("/api/admin/operating-hours/" + operatingHoursId + "/disable");
-      }
-
-      @Test
-      @DisplayName("Tenta desabilitar um horário com reservas futuras associadas")
-      void shouldReturn409Conflict_whenDisablingOperatingHoursWithFutureReservations() {
-        // Arrange
-        var operatingHours = mockPersistOperatingHoursAllDays();
-
-        var modality = mockPersistModality("Volei");
-        var court = mockPersistCourt("Quadra A", modality);
-        mockPersistReservationByUser(
-            modality.getId(),
-            court.getId(),
-            LocalDate.now().plusDays(1),
-            new TimeInterval(LocalTime.of(8, 0), LocalTime.of(9, 0)),
-            BigDecimal.valueOf(50),
-            authenticatedUser.getId());
-
-        // Act
-        var response =
-            given()
-                .spec(specification)
-                .header("Authorization", accessToken)
-                .when()
-                .patch("/{hourId}/disable", operatingHours.getId())
-                .then()
-                .statusCode(409)
-                .extract()
-                .as(ErrorResponseDto.class);
-
-        ErrorCode errorCode = ErrorCode.OPERATING_HOURS_CANNOT_BE_DISABLED_DUE_TO_RESERVATIONS;
-
-        // Assert
-        assertThat(response.status()).isEqualTo(409);
-        assertThat(response.errorCode()).isEqualTo(errorCode.name());
-        assertThat(response.developerMessage()).isEqualTo(errorCode.getMessage());
-        assertThat(response.path())
-            .isEqualTo("/api/admin/operating-hours/" + operatingHours.getId() + "/disable");
-      }
-
-      @Test
-      @DisplayName("Tenta desabilitar um horário com reservas futuras associadas em dias específicos")
-      void shouldReturn409Conflict_whenDisablingOperatingHoursWithFutureReservationsOnSpecificDays() {
-        // Arrange
-        var operatingHours = mockPersistOperatingHours();
-
-        var modality = mockPersistModality("Futebol");
-        var court = mockPersistCourt("Quadra B", modality);
-        // Supondo que o horário de funcionamento seja na segunda-feira
-        LocalDate nextMonday = LocalDate.now().with(java.time.DayOfWeek.MONDAY);
-        if (!nextMonday.isAfter(LocalDate.now())) {
-          nextMonday = nextMonday.plusWeeks(1);
-        }
-        mockPersistReservationByUser(
-            modality.getId(),
-            court.getId(),
-            nextMonday,
-            new TimeInterval(LocalTime.of(8, 0), LocalTime.of(9, 0)),
-            BigDecimal.valueOf(70),
-            authenticatedUser.getId());
-
-        // Act
-        var response =
-            given()
-                .spec(specification)
-                .header("Authorization", accessToken)
-                .when()
-                .patch("/{hourId}/disable", operatingHours.getId())
-                .then()
-                .statusCode(409)
-                .extract()
-                .as(ErrorResponseDto.class);
-
-        ErrorCode errorCode = ErrorCode.OPERATING_HOURS_CANNOT_BE_DISABLED_DUE_TO_RESERVATIONS;
-
-        // Assert
-        assertThat(response.status()).isEqualTo(409);
-        assertThat(response.errorCode()).isEqualTo(errorCode.name());
-        assertThat(response.developerMessage()).isEqualTo(errorCode.getMessage());
-        assertThat(response.path())
-            .isEqualTo("/api/admin/operating-hours/" + operatingHours.getId() + "/disable");
-      }
-
-      @Test
-      @DisplayName("Tenta desabilitar um horario que não atravessa a meia-noite com reservas futuras")
-      void shouldReturn409Conflict_whenDisablingOperatingHoursNotCrossingMidnightWithFutureReservations() {
-        // Arrange
-        var operatingHours =
-            mockPersistOperatingHoursFixedInterval(
-                Set.of(DayOfWeek.WEDNESDAY),
-                new TimeInterval(LocalTime.of(13, 30), LocalTime.of(23, 0)));
-
-        var modality = mockPersistModality("Tênis");
-        var court = mockPersistCourt("Quadra C", modality);
-        // Supondo que o horário de funcionamento seja na quarta-feira
-        LocalDate nextWednesday = LocalDate.now().with(java.time.DayOfWeek.WEDNESDAY);
-        if (!nextWednesday.isAfter(LocalDate.now())) {
-          nextWednesday = nextWednesday.plusWeeks(1);
-        }
-        mockPersistReservationByUser(
-            modality.getId(),
-            court.getId(),
-            nextWednesday,
-            new TimeInterval(LocalTime.of(10, 0), LocalTime.of(11, 0)),
-            BigDecimal.valueOf(80),
-            authenticatedUser.getId());
-
-        // Act
-        var response =
-            given()
-                .spec(specification)
-                .header("Authorization", accessToken)
-                .when()
-                .patch("/{hourId}/disable", operatingHours.getId())
-                .then()
-                .statusCode(409)
-                .extract()
-                .as(ErrorResponseDto.class);
-
-        ErrorCode errorCode = ErrorCode.OPERATING_HOURS_CANNOT_BE_DISABLED_DUE_TO_RESERVATIONS;
-
-        // Assert
-        assertThat(response.status()).isEqualTo(409);
-        assertThat(response.errorCode()).isEqualTo(errorCode.name());
-        assertThat(response.developerMessage()).isEqualTo(errorCode.getMessage());
-        assertThat(response.path())
-            .isEqualTo("/api/admin/operating-hours/" + operatingHours.getId() + "/disable");
-      }
+      @Nested
+      @DisplayName("Cenários de erro - 409 Conflict")
+      class ConflictScenarios {}
     }
   }
 }

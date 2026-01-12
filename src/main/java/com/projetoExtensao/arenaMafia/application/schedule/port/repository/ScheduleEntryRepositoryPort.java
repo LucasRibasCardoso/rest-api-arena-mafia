@@ -19,7 +19,7 @@ public interface ScheduleEntryRepositoryPort {
 
   List<ScheduleEntry> findAllActiveSchedulesByDate(LocalDate date);
 
-  List<ScheduleEntry> findAllActiveSchedulesByCourtIdAfterDate(UUID courtId, LocalDate date);
+  List<ScheduleEntry> findAllActiveSchedulesByCourtIdFromToday(UUID courtId);
 
   List<ScheduleEntry> findAllActiveSchedulesConflicts(
       List<UUID> courtIds,
@@ -27,4 +27,8 @@ public interface ScheduleEntryRepositoryPort {
       LocalDate endDate,
       TimeInterval timeInterval,
       Set<DayOfWeek> selectedDaysOfWeek);
+
+  List<ScheduleEntry> findAllActiveSchedulesFromTodayByDaysOfWeekAndTimeInterval(
+          Set<DayOfWeek> daysOfWeek,
+          TimeInterval timeInterval);
 }

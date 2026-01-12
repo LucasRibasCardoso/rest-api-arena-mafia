@@ -1,6 +1,6 @@
 package com.projetoExtensao.arenaMafia.application.court.usecase.imp;
 
-import com.projetoExtensao.arenaMafia.application.court.port.gateway.CourtDisablePreviewCachePort;
+import com.projetoExtensao.arenaMafia.application.court.port.gateway.CourtPreviewCachePort;
 import com.projetoExtensao.arenaMafia.application.court.port.repository.CourtRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.court.preview.CourtDisablePreview;
 import com.projetoExtensao.arenaMafia.application.court.usecase.PreviewCourtDisableUseCase;
@@ -25,14 +25,14 @@ import java.util.UUID;
 public class PreviewCourtDisableUseCaseImp implements PreviewCourtDisableUseCase {
 
   private final CourtRepositoryPort courtRepositoryPort;
+  private final CourtPreviewCachePort courtDisablePreviewCachePort;
   private final ScheduleEntryRepositoryPort scheduleEntryRepositoryPort;
-  private final CourtDisablePreviewCachePort courtDisablePreviewCachePort;
   private final ScheduleEntryEnrichmentService scheduleEntryEnrichmentService;
 
   public PreviewCourtDisableUseCaseImp(
       CourtRepositoryPort courtRepositoryPort,
       ScheduleEntryRepositoryPort scheduleEntryRepositoryPort,
-      CourtDisablePreviewCachePort courtDisablePreviewCachePort,
+      CourtPreviewCachePort courtDisablePreviewCachePort,
       ScheduleEntryEnrichmentService scheduleEntryEnrichmentService) {
     this.courtRepositoryPort = courtRepositoryPort;
     this.scheduleEntryRepositoryPort = scheduleEntryRepositoryPort;
@@ -70,8 +70,7 @@ public class PreviewCourtDisableUseCaseImp implements PreviewCourtDisableUseCase
    * @return Lista de agendamentos afetados.
    */
   private List<ScheduleEntry> fetchAffectedSchedules(UUID courtId) {
-    LocalDate today = LocalDate.now();
-    return scheduleEntryRepositoryPort.findAllActiveSchedulesByCourtIdAfterDate(courtId, today);
+    return scheduleEntryRepositoryPort.findAllActiveSchedulesByCourtIdFromToday(courtId);
   }
 
   /**

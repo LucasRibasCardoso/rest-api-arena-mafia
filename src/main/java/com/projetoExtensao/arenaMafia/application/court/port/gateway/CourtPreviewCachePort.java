@@ -4,7 +4,7 @@ import com.projetoExtensao.arenaMafia.application.court.preview.CourtDisablePrev
 
 import java.util.UUID;
 
-public interface CourtDisablePreviewCachePort {
+public interface CourtPreviewCachePort {
 
   void save(String key, CourtDisablePreview preview);
 

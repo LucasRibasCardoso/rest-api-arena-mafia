@@ -1,6 +1,6 @@
 package com.projetoExtensao.arenaMafia.application.court.usecase.imp;
 
-import com.projetoExtensao.arenaMafia.application.court.port.gateway.CourtDisablePreviewCachePort;
+import com.projetoExtensao.arenaMafia.application.court.port.gateway.CourtPreviewCachePort;
 import com.projetoExtensao.arenaMafia.application.court.port.repository.CourtRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.court.preview.CourtDisablePreview;
 import com.projetoExtensao.arenaMafia.application.court.usecase.ConfirmCourtDisableUseCase;
@@ -19,8 +19,7 @@ import com.projetoExtensao.arenaMafia.domain.model.schedule.ScheduleEntry;
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.court.request.CourtDisableConfirmRequestDto;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDate;
+import com.projetoExtensao.arenaMafia.domain.exception.notFound.CourtNotFoundException;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -35,7 +34,7 @@ public class ConfirmCourtDisableUseCaseImp implements ConfirmCourtDisableUseCase
   private final ReservationRepositoryPort reservationRepositoryPort;
   private final BlockedTimeRepositoryPort blockedTimeRepositoryPort;
   private final ScheduleEntryRepositoryPort scheduleEntryRepositoryPort;
-  private final CourtDisablePreviewCachePort courtDisablePreviewCachePort;
+  private final CourtPreviewCachePort courtDisablePreviewCachePort;
   private final ReservationBatchCancellationService reservationBatchCancellationService;
 
   public ConfirmCourtDisableUseCaseImp(
@@ -43,7 +42,7 @@ public class ConfirmCourtDisableUseCaseImp implements ConfirmCourtDisableUseCase
       ReservationRepositoryPort reservationRepositoryPort,
       BlockedTimeRepositoryPort blockedTimeRepositoryPort,
       ScheduleEntryRepositoryPort scheduleEntryRepositoryPort,
-      CourtDisablePreviewCachePort courtDisablePreviewCachePort,
+      CourtPreviewCachePort courtDisablePreviewCachePort,
       ReservationBatchCancellationService reservationBatchCancellationService) {
     this.courtRepositoryPort = courtRepositoryPort;
     this.reservationRepositoryPort = reservationRepositoryPort;
@@ -69,15 +68,13 @@ public class ConfirmCourtDisableUseCaseImp implements ConfirmCourtDisableUseCase
   }
 
   /**
-   * Valida se o preview de desativação da quadra não está desatualizado.
+   * Validar se o preview de desativação da quadra não está desatualizado.
    *
    * @param preview O preview de desativação da quadra.
    * @throws PreviewStaleException se o preview estiver desatualizado.
    */
   private void validatePreviewIsNotStale(CourtDisablePreview preview) {
-    LocalDate today = LocalDate.now();
-    List<ScheduleEntry> currentSchedules =
-        scheduleEntryRepositoryPort.findAllActiveSchedulesByCourtIdAfterDate(preview.courtId(), today);
+    List<ScheduleEntry> currentSchedules = scheduleEntryRepositoryPort.findAllActiveSchedulesByCourtIdFromToday(preview.courtId());
 
     Set<UUID> currentIds = currentSchedules.stream()
         .map(ScheduleEntry::getId)
@@ -120,7 +117,7 @@ public class ConfirmCourtDisableUseCaseImp implements ConfirmCourtDisableUseCase
   }
 
   /**
-   * Deleta os horários bloqueados afetados pela desativação da quadra.
+   * Deletar os horários bloqueados afetados pela desativação da quadra.
    *
    * @param blockedTimes Os horários bloqueados afetados.
    */
@@ -142,7 +139,8 @@ public class ConfirmCourtDisableUseCaseImp implements ConfirmCourtDisableUseCase
    *
    * @param courtId O ID da quadra.
    * @return A quadra válida.
-   * @throws com.projetoExtensao.arenaMafia.domain.exception.notFound.CourtNotFoundException se a quadra não existir ou não estiver ativa.
+   * @throws CourtNotFoundException se a quadra não existir
+   * @throws CourtStatusConflictException se a quadra já estiver desativada
    */
   private Court validateCourtExistsAndActive(UUID courtId) {
     Court court = courtRepositoryPort.findByIdOrElseThrow(courtId);

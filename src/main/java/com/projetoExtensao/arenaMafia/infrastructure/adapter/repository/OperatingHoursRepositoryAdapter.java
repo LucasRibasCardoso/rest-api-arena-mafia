@@ -1,6 +1,6 @@
 package com.projetoExtensao.arenaMafia.infrastructure.adapter.repository;
 
-import com.projetoExtensao.arenaMafia.application.operatingHours.port.OperatingHoursRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.operatingHours.port.repository.OperatingHoursRepositoryPort;
 import com.projetoExtensao.arenaMafia.domain.exception.notFound.OperatingHoursNotFoundException;
 import com.projetoExtensao.arenaMafia.domain.model.OperatingHours;
 import com.projetoExtensao.arenaMafia.domain.model.enums.DayOfWeek;

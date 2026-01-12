@@ -132,16 +132,17 @@ public record TimeInterval(
     return this.contains(other.endTime()) || other.endTime().equals(this.endTime);
   }
 
+  /** Verifica se o intervalo atravessa a meia-noite. */
+  public boolean crossesMidnight() {
+    return endTime.isBefore(startTime);
+  }
+
   private void validateDuration(LocalTime startTime, LocalTime endTime) {
     long durationInMinutes = calculateDurationInMinutes(startTime, endTime);
 
     if (durationInMinutes >= 24 * 60) {
       throw new InvalidTimeIntervalException(ErrorCode.TIME_INTERVAL_EXCEEDS_24_HOURS);
     }
-  }
-
-  private boolean crossesMidnight() {
-    return endTime.isBefore(startTime);
   }
 
   private long calculateDurationInMinutes(LocalTime startTime, LocalTime endTime) {

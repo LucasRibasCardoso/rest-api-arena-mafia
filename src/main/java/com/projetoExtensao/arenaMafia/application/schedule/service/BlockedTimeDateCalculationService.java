@@ -1,6 +1,6 @@
 package com.projetoExtensao.arenaMafia.application.schedule.service;
 
-import com.projetoExtensao.arenaMafia.application.operatingHours.port.OperatingHoursRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.operatingHours.port.repository.OperatingHoursRepositoryPort;
 import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidBlockDateException;
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidBlockedTimeException;

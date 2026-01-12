@@ -2,9 +2,8 @@ package com.projetoExtensao.arenaMafia.infrastructure.adapter.gateway;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.projetoExtensao.arenaMafia.application.court.port.gateway.CourtDisablePreviewCachePort;
+import com.projetoExtensao.arenaMafia.application.court.port.gateway.CourtPreviewCachePort;
 import com.projetoExtensao.arenaMafia.application.court.preview.CourtDisablePreview;
-import com.projetoExtensao.arenaMafia.application.schedule.preview.BlockedTimeConflictsPreview;
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidPreviewKeyException;
 import com.projetoExtensao.arenaMafia.domain.exception.forbidden.InvalidPreviewOwnershipException;
 import com.projetoExtensao.arenaMafia.domain.exception.notFound.PreviewNotFoundException;
@@ -15,7 +14,7 @@ import java.time.Duration;
 import java.util.UUID;
 
 @Component
-public class CourtDisablePreviewCacheAdapter implements CourtDisablePreviewCachePort {
+public class CourtPreviewCacheAdapter implements CourtPreviewCachePort {
 
   private static final String CACHE_PREFIX = "court-disable-preview:";
   private static final Duration CACHE_TTL = Duration.ofMinutes(5);
@@ -23,7 +22,7 @@ public class CourtDisablePreviewCacheAdapter implements CourtDisablePreviewCache
   private final RedisTemplate<String, String> redisTemplate;
   private final ObjectMapper objectMapper;
 
-  public CourtDisablePreviewCacheAdapter(
+  public CourtPreviewCacheAdapter(
       RedisTemplate<String, String> redisTemplate, ObjectMapper objectMapper) {
     this.redisTemplate = redisTemplate;
     this.objectMapper = objectMapper;

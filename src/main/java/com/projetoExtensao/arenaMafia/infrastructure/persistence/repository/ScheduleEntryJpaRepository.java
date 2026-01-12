@@ -32,12 +32,15 @@ public interface ScheduleEntryJpaRepository extends JpaRepository<ScheduleEntryE
       """
       SELECT s FROM ScheduleEntryEntity s
       WHERE s.dateTimeSlot.date = :date
+      AND (TYPE(s) = BlockedTimeEntity
+          OR
+          (TYPE(s) = ReservationEntity AND TREAT(s AS ReservationEntity).status = 'CONFIRMED'))
       ORDER BY s.dateTimeSlot.timeInterval.startTime ASC
       """)
   List<ScheduleEntryEntity> findAllSchedulesByDate(@Param("date") LocalDate date);
 
   /**
-   * Busca todos os agendamentos ativos (Reservations e BlockedTimes) para uma quadra específica
+   * Buscar todos os agendamentos ativos (Reservations e BlockedTimes) para uma quadra específica
    * após uma data determinada.
    *
    * @param courtId ID da quadra
@@ -58,7 +61,7 @@ public interface ScheduleEntryJpaRepository extends JpaRepository<ScheduleEntryE
       @Param("courtId") UUID courtId, @Param("date") LocalDate date);
 
   /**
-   * Busca conflitos (Reservations confirmadas e BlockedTimes) com filtro opcional de dias da
+   * Buscar conflitos (Reservations confirmadas e BlockedTimes) com filtro opcional de dias da
    * semana.
    *
    * <p>Se selectedDaysOfWeek for null ou vazio, retorna conflitos para todos os dias. Caso
@@ -94,11 +97,47 @@ public interface ScheduleEntryJpaRepository extends JpaRepository<ScheduleEntryE
       @Param("selectedDaysOfWeek") Set<DayOfWeek> selectedDaysOfWeek,
       @Param("valuesDaysOfWeek") Set<Integer> valuesDaysOfWeek);
 
+  /**
+   * Buscar todos os agendamentos ativos (Reservations confirmadas e BlockedTimes) a partir de uma data específica,
+   * filtrando por dias da semana e intervalo de horário.
+   *
+   * @param afterDate Data a partir da qual verificar os conflitos
+   * @param valuesDaysOfWeek Conjunto de inteiros representando os dias da semana
+   * @param checkStartTime Horário inicial do escopo a ser verificado
+   * @param checkEndTime Horário final do escopo a ser verificado
+   * @return true se existir conflito, false caso contrário
+   */
+  @Query(
+      """
+    SELECT s FROM ScheduleEntryEntity s
+    WHERE s.dateTimeSlot.date >= :afterDate
+    AND (TYPE(s) = BlockedTimeEntity
+          OR
+          (TYPE(s) = ReservationEntity AND TREAT(s AS ReservationEntity).status = 'CONFIRMED'))
+    AND FUNCTION('date_part', 'dow', s.dateTimeSlot.date) IN :valuesDaysOfWeek
+    AND (
+        (s.dateTimeSlot.timeInterval.startTime < s.dateTimeSlot.timeInterval.endTime
+         AND
+         s.dateTimeSlot.timeInterval.startTime < :checkEndTime
+         AND
+         s.dateTimeSlot.timeInterval.endTime > :checkStartTime)
+         OR
+         (s.dateTimeSlot.timeInterval.startTime > s.dateTimeSlot.timeInterval.endTime
+            AND (s.dateTimeSlot.timeInterval.startTime < :checkEndTime
+                 OR
+                  s.dateTimeSlot.timeInterval.endTime > :checkStartTime))
+    )
+    """)
+  List<ScheduleEntryEntity> findSchedulesByDaysOfWeekAndTimeInterval(
+      @Param("afterDate") LocalDate afterDate,
+      @Param("valuesDaysOfWeek") Set<Integer> valuesDaysOfWeek,
+      @Param("checkStartTime") LocalTime checkStartTime,
+      @Param("checkEndTime") LocalTime checkEndTime);
+
   // ==================== QUERIES ESPECÍFICAS DE RESERVATION ====================
 
   /**
-   * Busca todos os agendamentos (Reservations e BlockedTimes) para uma quadra específica em uma
-   * data específica.
+   * Buscar todos os agendamentos (Reservations e BlockedTimes) ativos para uma quadra numa data específica.
    *
    * @param courtId ID da quadra
    * @param date data do agendamento
@@ -109,13 +148,16 @@ public interface ScheduleEntryJpaRepository extends JpaRepository<ScheduleEntryE
       SELECT s FROM ScheduleEntryEntity s
       WHERE s.courtId = :courtId
       AND s.dateTimeSlot.date = :date
+      AND (TYPE(s) = BlockedTimeEntity
+          OR
+          (TYPE(s) = ReservationEntity AND TREAT(s AS ReservationEntity).status = 'CONFIRMED'))
       ORDER BY s.dateTimeSlot.timeInterval.startTime ASC
       """)
   List<ScheduleEntryEntity> findSchedulesByCourtAndDate(
       @Param("courtId") UUID courtId, @Param("date") LocalDate date);
 
   /**
-   * Busca todas as reservas de um usuário específico com paginação. Ordena por data e horário de
+   * Buscar todas as reservas de um usuário específico com paginação. Ordena por data e horário de
    * início em ordem decrescente (mais recentes primeiro).
    *
    * @param userId ID do usuário
@@ -131,7 +173,7 @@ public interface ScheduleEntryJpaRepository extends JpaRepository<ScheduleEntryE
   Page<ReservationEntity> findReservationsByUserId(@Param("userId") UUID userId, Pageable pageable);
 
   /**
-   * Busca uma reserva específica por ID e usuário. Garante que a reserva pertence ao usuário
+   * Buscar uma reserva específica por ID e usuário. Garante que a reserva pertence ao usuário
    * autenticado.
    *
    * @param reservationId ID da reserva
@@ -148,7 +190,7 @@ public interface ScheduleEntryJpaRepository extends JpaRepository<ScheduleEntryE
       @Param("reservationId") UUID reservationId, @Param("userId") UUID userId);
 
   /**
-   * Busca todas as reservas confirmadas cujo horário de término é posterior ao momento
+   * Buscar todas as reservas confirmadas cujo horário de término é posterior ao momento
    * especificado. Utilizado para reagendar conclusão automática de reservas quando a aplicação é
    * reiniciada.
    *
@@ -168,54 +210,7 @@ public interface ScheduleEntryJpaRepository extends JpaRepository<ScheduleEntryE
       @Param("date") LocalDate date, @Param("time") LocalTime time);
 
   /**
-   * Verifica se existem reservas confirmadas para uma quadra específica após uma data
-   * determinada. Utilizado para validar se uma quadra pode ser desativada.
-   * @param courtId identificador da quadra
-   * @param date data de referência
-   * @return true se existirem reservas confirmadas após a data, false caso contrário
-   */
-  @Query(
-      """
-      SELECT COUNT(r) > 0 FROM ReservationEntity r
-      WHERE r.courtId = :courtId
-      AND r.status = 'CONFIRMED'
-      AND r.dateTimeSlot.date >= :date
-      """)
-  boolean existsConfirmedReservationsAfter(
-      @Param("courtId") UUID courtId, @Param("date") LocalDate date);
-
-  /**
-   * Verifica se existem conflitos de reservas confirmadas em dias específicos da semana após uma
-   * data determinada. Verifica sobreposição de horários para o mesmo dia, o restante da validação de sobreposição
-   * de intervalos que cruzam a meia-noite está no adapter.
-   *
-   * @param afterDate Data a partir da qual verificar os conflitos
-   * @param valuesDaysOfWeek Conjunto de inteiros representando os dias da semana no formato PostgreSQL (0=Sunday, 1=Monday, ..., 6=Saturday)
-   * @param checkStartTime horário de início do intervalo a ser verificado
-   * @param checkEndTime horário de término do intervalo a ser verificado
-   * @return true se existir conflito, false caso contrário
-   */
-  @Query("""
-    SELECT COUNT(r) > 0
-    FROM ReservationEntity r
-    WHERE r.status = 'CONFIRMED'
-    AND r.dateTimeSlot.date >= :afterDate
-    AND FUNCTION('date_part', 'dow', r.dateTimeSlot.date) IN :valuesDaysOfWeek
-    AND (
-        r.dateTimeSlot.timeInterval.startTime < :checkEndTime
-        AND
-        r.dateTimeSlot.timeInterval.endTime > :checkStartTime
-    )
-    """)
-  boolean existsConflictInDays(
-          @Param("afterDate") LocalDate afterDate,
-          @Param("valuesDaysOfWeek") Set<Integer> valuesDaysOfWeek,
-          @Param("checkStartTime") LocalTime checkStartTime,
-          @Param("checkEndTime") LocalTime checkEndTime
-  );
-
-  /**
-   * Busca todas as reservas confirmadas cujo horário de término é anterior ou igual ao momento
+   * Buscar todas as reservas confirmadas cujo horário de término é anterior ou igual ao momento
    * especificado. Utilizado para completar reservas expiradas quando a aplicação é reiniciada.
    *
    * @param date data de referência
@@ -236,7 +231,7 @@ public interface ScheduleEntryJpaRepository extends JpaRepository<ScheduleEntryE
   // ==================== QUERIES ESPECÍFICAS DE BLOCKED TIME ====================
 
   /**
-   * Busca todos os bloqueios que fazem parte de um grupo recorrente.
+   * Buscar todos os bloqueios que fazem parte de um grupo recorrente.
    *
    * @param recurringBlockedTimeId identificador do grupo de bloqueios recorrentes
    * @return lista de bloqueios do grupo
@@ -251,7 +246,7 @@ public interface ScheduleEntryJpaRepository extends JpaRepository<ScheduleEntryE
       @Param("recurringBlockedTimeId") UUID recurringBlockedTimeId);
 
   /**
-   * Busca todos os bloqueios de uma quadra em um intervalo de datas.
+   * Buscar todos os bloqueios de uma quadra num intervalo de datas.
    *
    * @param courtId identificador da quadra
    * @param startDate data inicial (inclusive)
@@ -271,7 +266,7 @@ public interface ScheduleEntryJpaRepository extends JpaRepository<ScheduleEntryE
       @Param("endDate") LocalDate endDate);
 
   /**
-   * Busca bloqueios de múltiplas quadras em um intervalo de datas.
+   * Buscar bloqueios de múltiplas quadras num intervalo de datas.
    *
    * @param courtIds lista de identificadores de quadras
    * @param startDate data inicial (inclusive)
@@ -291,7 +286,7 @@ public interface ScheduleEntryJpaRepository extends JpaRepository<ScheduleEntryE
       @Param("endDate") LocalDate endDate);
 
   /**
-   * Deleta todos os bloqueios de um grupo recorrente.
+   * Deletar todos os bloqueios de um grupo recorrente.
    *
    * @param recurringBlockedTimeId identificador do grupo de bloqueios recorrentes
    */
@@ -304,7 +299,7 @@ public interface ScheduleEntryJpaRepository extends JpaRepository<ScheduleEntryE
   void deleteByRecurringBlockedTimeId(@Param("recurringBlockedTimeId") UUID recurringBlockedTimeId);
 
   /**
-   * Verifica se existe algum bloqueio ativo para uma quadra em uma data específica.
+   * Verificar se existe algum bloqueio ativo para numa data específica.
    *
    * @param courtId identificador da quadra
    * @param date data a verificar
