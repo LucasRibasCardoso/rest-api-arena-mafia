@@ -95,7 +95,7 @@ public class PreviewOperatingHoursDisableUseCaseImp implements PreviewOperatingH
    * @param enrichedAffectedSchedulesResult Resultado dos agendamentos enriquecidos.
    * @param adminId ID do administrador.
    * @param operatingHours Horário de funcionamento.
-   * @return Preview do desativamento do horário de funcionamento.
+   * @return Preview de desativação do horário de funcionamento.
    */
   private OperatingHoursDisablePreview buildAndSaveCachePreview(
           ScheduleEntriesEnrichedResult enrichedAffectedSchedulesResult,

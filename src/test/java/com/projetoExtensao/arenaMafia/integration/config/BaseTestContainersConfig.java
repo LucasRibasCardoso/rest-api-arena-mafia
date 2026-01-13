@@ -33,6 +33,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.temporal.TemporalAdjusters;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -176,6 +177,14 @@ public abstract class BaseTestContainersConfig {
       // Arredonda para próxima hora: 14:50 → 15:00
       return time.plusHours(1).withMinute(0).withSecond(0).withNano(0);
     }
+  }
+
+  /**
+   * Retorna a próxima data que corresponde ao dia da semana especificado.
+   * Se hoje for o mesmo dia da semana, retorna a próxima semana.
+   */
+  public LocalDate nextDayOfWeek(java.time.DayOfWeek dayOfWeek) {
+    return LocalDate.now().with(TemporalAdjusters.next(dayOfWeek));
   }
 
   public record AuthTokensTest(

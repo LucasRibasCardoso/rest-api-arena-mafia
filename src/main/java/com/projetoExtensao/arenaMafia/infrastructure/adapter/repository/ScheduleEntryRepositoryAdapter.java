@@ -135,7 +135,7 @@ public class ScheduleEntryRepositoryAdapter implements ScheduleEntryRepositoryPo
           .filter(ScheduleEntry::isActive)
           .toList();
     } else {
-      // CENÁRIO COMPLEXO (Ex: 22:00 as 02:00)
+      // CENÁRIO COMPLEXO (Ex: 8:00 as 00:00)
 
       // Parte A: Verificar o final da noite nos dias originais (startTime -> 23:59)
       List<ScheduleEntryEntity> schedulesBeforeMidnight =

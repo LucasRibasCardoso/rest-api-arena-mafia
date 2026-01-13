@@ -3,12 +3,19 @@ package com.projetoExtensao.arenaMafia.integration.controller.admin;
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.projetoExtensao.arenaMafia.application.operatingHours.port.gateway.OperatingHoursPreviewCachePort;
 import com.projetoExtensao.arenaMafia.application.operatingHours.port.repository.OperatingHoursRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.operatingHours.preview.OperatingHoursDisablePreview;
 import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
+import com.projetoExtensao.arenaMafia.domain.exception.notFound.PreviewNotFoundException;
+import com.projetoExtensao.arenaMafia.domain.model.Court;
+import com.projetoExtensao.arenaMafia.domain.model.Modality;
 import com.projetoExtensao.arenaMafia.domain.model.User;
 import com.projetoExtensao.arenaMafia.domain.model.enums.DayOfWeek;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
+import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.court.response.CourtDisablePreviewResponseDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.operatingHours.request.CreateOperatingHoursRequestDto;
+import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.operatingHours.response.OperatingHoursDisablePreviewResponseDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.exception.dto.ErrorResponseDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.exception.dto.FieldErrorResponseDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.operatingHours.dto.response.OperatingHoursResponseDto;
@@ -34,6 +41,7 @@ import org.springframework.test.annotation.DirtiesContext;
 @DisplayName("Testes de integração para AdminOperatingHoursController")
 public class AdminOperatingHoursControllerIntegrationTest extends WebIntegrationTestConfig {
 
+  @Autowired private OperatingHoursPreviewCachePort operatingHoursPreviewCache;
   @Autowired private OperatingHoursRepositoryPort operatingHoursRepository;
   private RequestSpecification specification;
   private String accessToken;
@@ -679,19 +687,202 @@ public class AdminOperatingHoursControllerIntegrationTest extends WebIntegration
 
       @Nested
       @DisplayName("Cenários de sucesso - 200 OK")
-      class SuccessScenarios {}
+      class SuccessScenarios {
+
+        @Test
+        @DisplayName("Deve criar preview de desativação para um horário sem conflitos com agendamentos futuros")
+        void shouldReturn200_whenCreatingPreviewForValidOperatingHours() {
+          // Arrange
+          var operatingHour = mockPersistOperatingHoursAllDays();
+          UUID operatingHourId = operatingHour.getId();
+
+          // Act
+          var response =
+              given()
+                  .spec(specification)
+                  .header("Authorization", accessToken)
+                  .when()
+                  .post("/{operatingHourId}/preview-disable", operatingHourId)
+                  .then()
+                  .statusCode(200)
+                  .extract()
+                  .as(OperatingHoursDisablePreviewResponseDto.class);
+
+          // Assert
+          assertThat(response.previewKey()).isNotEmpty();
+          assertThat(response.operatingHoursId()).isEqualTo(operatingHourId);
+          assertThat(response.usersAffectedCount()).isZero();
+          assertThat(response.blockedTimesAffectedCount()).isZero();
+          assertThat(response.reservationsAffectedCount()).isZero();
+          assertThat(response.blockedTimesAffectedCount()).isZero();
+          assertThat(response.reservationsAffectedCount()).isZero();
+          assertThat(response.inProgressReservations().size()).isZero();
+
+          Optional<OperatingHoursDisablePreview> previewInCache = getPreviewFromCache(response.previewKey());
+          assertThat(previewInCache).isPresent();
+
+          assertResponsePreviewMatchesPreviewSaved(response, previewInCache.get());
+        }
+
+        @Test
+        @DisplayName("Deve criar preview de desativação para um horário com agendamentos futuros")
+        void shouldReturn200_whenCreatingPreviewForOperatingHoursWithFutureSchedules() {
+          // Arrange
+          var operatingHour = mockPersistOperatingHours();
+          UUID operatingHourId = operatingHour.getId();
+
+          // Criar agendamentos futuros que serão afetados
+          Modality modality = mockPersistModality("Volei");
+          Court court = mockPersistCourt("Quadra A", modality);
+
+          mockPersistBlockedTimeSpecific(
+              court.getId(),
+              nextDayOfWeek(java.time.DayOfWeek.FRIDAY),
+              new TimeInterval(LocalTime.of(22, 0), LocalTime.of(0, 0)),
+              "Manutenção",
+              adminId
+          );
+          mockPersistReservationByUser(
+              modality.getId(),
+              court.getId(),
+              nextDayOfWeek(java.time.DayOfWeek.TUESDAY),
+              new TimeInterval(LocalTime.of(14, 0), LocalTime.of(15, 0)),
+              new BigDecimal(85),
+              adminId
+          );
+          // Reserva no passado que não deve ser afetada
+          mockPersistReservationByUser(
+              modality.getId(),
+              court.getId(),
+              LocalDate.now().minusDays(1),
+              new TimeInterval(LocalTime.of(14, 0), LocalTime.of(15, 0)),
+              new BigDecimal(85),
+              adminId);
+          // Reserva em andamento que não deve ser afetada
+          mockPersistReservationByUser(
+              modality.getId(),
+              court.getId(),
+              LocalDate.now(),
+              new TimeInterval(
+                  normalizeToValidMinutes(LocalTime.now().minusMinutes(30)),
+                  normalizeToValidMinutes(LocalTime.now().plusMinutes(30))),
+              BigDecimal.valueOf(80),
+              adminId);
+
+          // Act
+          var response =
+              given()
+                  .spec(specification)
+                  .header("Authorization", accessToken)
+                  .when()
+                  .post("/{operatingHourId}/preview-disable", operatingHourId)
+                  .then()
+                  .statusCode(200)
+                  .extract()
+                  .as(OperatingHoursDisablePreviewResponseDto.class);
+
+          // Assert
+          assertThat(response.previewKey()).isNotEmpty();
+          assertThat(response.operatingHoursId()).isEqualTo(operatingHourId);
+          assertThat(response.usersAffectedCount()).isOne();
+          assertThat(response.blockedTimesAffectedCount()).isOne();
+          assertThat(response.reservationsAffectedCount()).isOne();
+          assertThat(response.blockedTimesAffectedCount()).isOne();
+          assertThat(response.reservationsAffectedCount()).isOne();
+          assertThat(response.inProgressReservations().size()).isOne();
+
+          Optional<OperatingHoursDisablePreview> previewInCache = getPreviewFromCache(response.previewKey());
+          assertThat(previewInCache).isPresent();
+
+          assertResponsePreviewMatchesPreviewSaved(response, previewInCache.get());
+        }
+      }
 
       @Nested
       @DisplayName("Cenários de erro - 400 Bad Request")
-      class BadRequestScenarios {}
+      class BadRequestScenarios {
+
+        @Test
+        @DisplayName("Tenta criar preview de desativação com ID inválido")
+        void shouldReturn400_whenCreatingPreviewWithInvalidIdFormat() {
+          // Arrange
+          String invalidId = "invalid-id";
+
+          // Act
+          var response =
+              given()
+                  .spec(specification)
+                  .header("Authorization", accessToken)
+                  .when()
+                  .post("/{operatingHourId}/preview-disable", invalidId)
+                  .then()
+                  .statusCode(400)
+                  .extract()
+                  .as(ErrorResponseDto.class);
+
+          // Assert
+          String path = "/api/admin/operating-hours/" + invalidId + "/preview-disable";
+          assertBusinessError(response, 400, path, ErrorCode.INVALID_REQUEST_PARAMETER);
+        }
+      }
 
       @Nested
       @DisplayName("Cenários de erro - 404 Not Found")
-      class NotFoundScenario {}
+      class NotFoundScenario {
+
+        @Test
+        @DisplayName("Tenta criar preview de desativação para um horário inexistente")
+        void shouldReturn404_whenCreatingPreviewForNonExistentOperatingHours() {
+          // Arrange
+          UUID nonExistentId = UUID.randomUUID();
+
+          // Act
+          var response =
+              given()
+                  .spec(specification)
+                  .header("Authorization", accessToken)
+                  .when()
+                  .post("/{operatingHourId}/preview-disable", nonExistentId)
+                  .then()
+                  .statusCode(404)
+                  .extract()
+                  .as(ErrorResponseDto.class);
+
+          // Assert
+          String path = "/api/admin/operating-hours/" + nonExistentId + "/preview-disable";
+          assertBusinessError(response, 404, path, ErrorCode.OPERATING_HOURS_NOT_FOUND);
+        }
+
+      }
 
       @Nested
       @DisplayName("Cenários de erro - 409 Conflict")
-      class ConflictScenarios {}
+      class ConflictScenarios {
+
+        @Test
+        @DisplayName("Tenta criar preview de desativação para um horário já desativado")
+        void shouldReturn409_whenCreatingPreviewForAlreadyDisabledOperatingHours() {
+          // Arrange
+          var operatingHour = mockPersistDisabledOperatingHours();
+          UUID operatingHourId = operatingHour.getId();
+
+          // Act
+          var response =
+              given()
+                  .spec(specification)
+                  .header("Authorization", accessToken)
+                  .when()
+                  .post("/{operatingHourId}/preview-disable", operatingHourId)
+                  .then()
+                  .statusCode(409)
+                  .extract()
+                  .as(ErrorResponseDto.class);
+
+          // Assert
+          String path = "/api/admin/operating-hours/" + operatingHourId + "/preview-disable";
+          assertBusinessError(response, 409, path, ErrorCode.OPERATING_HOURS_ALREADY_DISABLED);
+        }
+      }
     }
 
     @Nested
@@ -717,6 +908,47 @@ public class AdminOperatingHoursControllerIntegrationTest extends WebIntegration
       @Nested
       @DisplayName("Cenários de erro - 409 Conflict")
       class ConflictScenarios {}
+    }
+  }
+
+  private void assertResponsePreviewMatchesPreviewSaved(
+          OperatingHoursDisablePreviewResponseDto previewResponse,
+          OperatingHoursDisablePreview previewSaved
+  ) {
+
+    assertThat(previewResponse.previewKey()).isEqualTo(previewSaved.previewKey());
+    assertThat(previewResponse.operatingHoursId()).isEqualTo(previewSaved.operatingHoursId());
+    assertThat(previewResponse.usersAffectedCount()).isEqualTo(previewSaved.usersAffectedCount());
+    assertThat(previewResponse.blockedTimesAffectedCount()).isEqualTo(previewSaved.blockedTimesAffectedCount());
+    assertThat(previewResponse.reservationsAffectedCount()).isEqualTo(previewSaved.reservationsAffectedCount());
+
+    assertThat(previewResponse.affectedBlockedTimes().size()).isEqualTo(previewSaved.affectedBlockedTimes().size());
+    assertThat(previewResponse.affectedReservations().size()).isEqualTo(previewSaved.affectedReservations().size());
+    assertThat(previewResponse.inProgressReservations().size()).isEqualTo(previewSaved.inProgressReservations().size());
+  }
+
+  private String createPreviewAndGetKey(UUID operatingHourId) {
+    var response =
+            given()
+                    .spec(specification)
+                    .header("Authorization", accessToken)
+                    .when()
+                    .post("/{operatingHourId}/preview-disable", operatingHourId)
+                    .then()
+                    .statusCode(200)
+                    .extract()
+                    .as(OperatingHoursDisablePreviewResponseDto.class);
+
+    return response.previewKey();
+  }
+
+  private Optional<OperatingHoursDisablePreview> getPreviewFromCache(String previewKey) {
+    try {
+      OperatingHoursDisablePreview preview =
+          operatingHoursPreviewCache.getPreviewOrElseThrow(previewKey, adminId);
+      return Optional.of(preview);
+    } catch (PreviewNotFoundException e) {
+      return Optional.empty();
     }
   }
 }

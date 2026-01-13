@@ -2438,12 +2438,4 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
     }
   }
 
-  /**
-   * Retorna a próxima data que corresponde ao dia da semana especificado.
-   * Se hoje for o mesmo dia da semana, retorna a próxima semana.
-   */
-  private LocalDate nextDayOfWeek(java.time.DayOfWeek dayOfWeek) {
-    return LocalDate.now().with(TemporalAdjusters.next(dayOfWeek));
-  }
-
 }
