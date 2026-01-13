@@ -13,4 +13,5 @@ public record BlockedTimeDetailResponseDto(
     TimeIntervalDto timeInterval,
     String description,
     boolean isFullDay,
-    UUID recurringBlockedTimeId) implements ScheduleDetailResponseDto {}
+    UUID recurringBlockedTimeId)
+    implements ScheduleDetailResponseDto {}

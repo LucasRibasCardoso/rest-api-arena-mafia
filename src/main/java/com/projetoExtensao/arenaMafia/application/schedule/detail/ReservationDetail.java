@@ -3,7 +3,6 @@ package com.projetoExtensao.arenaMafia.application.schedule.detail;
 import com.projetoExtensao.arenaMafia.domain.model.enums.ReservationStatus;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.DateTimeSlot;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;

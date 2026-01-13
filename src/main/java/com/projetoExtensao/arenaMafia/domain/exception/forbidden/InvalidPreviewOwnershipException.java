@@ -7,4 +7,3 @@ public class InvalidPreviewOwnershipException extends ForbiddenException {
     super(ErrorCode.PREVIEW_KEY_OWNERSHIP_INVALID);
   }
 }
-

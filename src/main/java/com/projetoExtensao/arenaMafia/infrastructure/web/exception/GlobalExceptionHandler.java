@@ -190,9 +190,8 @@ public class GlobalExceptionHandler {
   }
 
   /**
-   * Extrai o nome do campo a partir do path de uma JsonMappingException. Percorre o path da
-   * exceção do início para o fim para encontrar o primeiro elemento que contenha um fieldName
-   * não-nulo.
+   * Extrai o nome do campo a partir do path de uma JsonMappingException. Percorre o path da exceção
+   * do início para o fim para encontrar o primeiro elemento que contenha um fieldName não-nulo.
    *
    * @param exception A JsonMappingException que contém o path
    * @return O nome do campo onde ocorreu o erro, ou "unknown" se não for possível determinar

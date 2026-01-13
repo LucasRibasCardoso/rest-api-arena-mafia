@@ -2,22 +2,21 @@ package com.projetoExtensao.arenaMafia.application.schedule.service;
 
 import com.projetoExtensao.arenaMafia.application.court.port.repository.CourtRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.modality.port.ModalityRepositoryPort;
-import com.projetoExtensao.arenaMafia.application.schedule.result.ScheduleEntriesEnrichedResult;
-import com.projetoExtensao.arenaMafia.application.user.port.repository.UserRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.schedule.detail.BlockedTimeDetail;
 import com.projetoExtensao.arenaMafia.application.schedule.detail.ReservationDetail;
 import com.projetoExtensao.arenaMafia.application.schedule.detail.ScheduleDetail;
+import com.projetoExtensao.arenaMafia.application.schedule.result.ScheduleEntriesEnrichedResult;
+import com.projetoExtensao.arenaMafia.application.user.port.repository.UserRepositoryPort;
 import com.projetoExtensao.arenaMafia.domain.model.Court;
 import com.projetoExtensao.arenaMafia.domain.model.Modality;
 import com.projetoExtensao.arenaMafia.domain.model.User;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.BlockedTime;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.Reservation;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.ScheduleEntry;
-import org.springframework.stereotype.Service;
-
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.springframework.stereotype.Service;
 
 @Service
 public class ScheduleEntryEnrichmentService {

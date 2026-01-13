@@ -1,8 +1,6 @@
 package com.projetoExtensao.arenaMafia.application.schedule.port.gateway;
 
 import com.projetoExtensao.arenaMafia.application.schedule.preview.BlockedTimeConflictsPreview;
-
-import java.util.Optional;
 import java.util.UUID;
 
 public interface BlockedTimePreviewCachePort {
@@ -21,7 +19,8 @@ public interface BlockedTimePreviewCachePort {
    * @param userId id do usuário
    * @param key chave do preview
    * @return preview se encontrado
-   * @throws com.projetoExtensao.arenaMafia.domain.exception.notFound.BlockedTimeNotFoundException se o preview não for encontrado
+   * @throws com.projetoExtensao.arenaMafia.domain.exception.notFound.BlockedTimeNotFoundException
+   *     se o preview não for encontrado
    */
   BlockedTimeConflictsPreview getPreviewOrElseThrow(String key, UUID userId);
 
@@ -39,5 +38,4 @@ public interface BlockedTimePreviewCachePort {
    * @return chave única
    */
   String generateKey(UUID userId);
-
 }

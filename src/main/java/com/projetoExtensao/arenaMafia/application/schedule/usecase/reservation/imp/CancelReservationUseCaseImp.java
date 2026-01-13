@@ -9,12 +9,11 @@ import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidReserva
 import com.projetoExtensao.arenaMafia.domain.model.User;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.Reservation;
 import jakarta.transaction.Transactional;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.stereotype.Service;
-
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.UUID;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.stereotype.Service;
 
 @Service
 @Transactional

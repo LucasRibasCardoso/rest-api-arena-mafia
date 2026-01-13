@@ -1,7 +1,6 @@
 package com.projetoExtensao.arenaMafia.domain.model.agenda;
 
 import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
-
 import java.util.Set;
 import java.util.UUID;
 

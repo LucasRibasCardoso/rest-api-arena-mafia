@@ -4,14 +4,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.projetoExtensao.arenaMafia.application.schedule.port.gateway.BlockedTimePreviewCachePort;
 import com.projetoExtensao.arenaMafia.application.schedule.preview.BlockedTimeConflictsPreview;
-import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidPreviewKeyException;
 import com.projetoExtensao.arenaMafia.domain.exception.forbidden.InvalidPreviewOwnershipException;
+import com.projetoExtensao.arenaMafia.domain.exception.notFound.PreviewNotFoundException;
 import java.time.Duration;
 import java.util.UUID;
-
-import com.projetoExtensao.arenaMafia.domain.exception.notFound.BlockedTimeNotFoundException;
-import com.projetoExtensao.arenaMafia.domain.exception.notFound.PreviewNotFoundException;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 

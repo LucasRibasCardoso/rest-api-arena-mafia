@@ -1,7 +1,6 @@
 package com.projetoExtensao.arenaMafia.application.court.port.gateway;
 
 import com.projetoExtensao.arenaMafia.application.court.preview.CourtDisablePreview;
-
 import java.util.UUID;
 
 public interface CourtPreviewCachePort {

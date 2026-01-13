@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidDayOfWeekException;
-
 import java.time.LocalDate;
 
 public enum DayOfWeek {
@@ -15,11 +14,6 @@ public enum DayOfWeek {
   FRIDAY,
   SATURDAY,
   SUNDAY;
-
-  @JsonValue
-  public String getDayName() {
-    return name();
-  }
 
   @JsonCreator
   public static DayOfWeek fromString(String value) {
@@ -38,6 +32,10 @@ public enum DayOfWeek {
     return DayOfWeek.valueOf(javaDayOfWeek.name());
   }
 
+  @JsonValue
+  public String getDayName() {
+    return name();
+  }
 
   /**
    * Converte o DayOfWeek para o valor usado pela função PostgreSQL EXTRACT(DOW).

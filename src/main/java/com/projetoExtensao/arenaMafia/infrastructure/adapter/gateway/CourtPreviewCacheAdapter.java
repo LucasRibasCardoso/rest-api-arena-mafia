@@ -7,11 +7,10 @@ import com.projetoExtensao.arenaMafia.application.court.preview.CourtDisablePrev
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidPreviewKeyException;
 import com.projetoExtensao.arenaMafia.domain.exception.forbidden.InvalidPreviewOwnershipException;
 import com.projetoExtensao.arenaMafia.domain.exception.notFound.PreviewNotFoundException;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.stereotype.Component;
-
 import java.time.Duration;
 import java.util.UUID;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.stereotype.Component;
 
 @Component
 public class CourtPreviewCacheAdapter implements CourtPreviewCachePort {

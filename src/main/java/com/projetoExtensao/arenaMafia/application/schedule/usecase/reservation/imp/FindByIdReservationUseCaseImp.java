@@ -4,10 +4,9 @@ import com.projetoExtensao.arenaMafia.application.schedule.port.repository.Reser
 import com.projetoExtensao.arenaMafia.application.schedule.usecase.reservation.FindByIdReservationUseCase;
 import com.projetoExtensao.arenaMafia.domain.exception.forbidden.ReservationAccessDeniedException;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.Reservation;
+import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.UUID;
 
 @Service
 @Transactional(readOnly = true)

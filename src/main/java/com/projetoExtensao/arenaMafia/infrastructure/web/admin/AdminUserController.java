@@ -56,7 +56,7 @@ public class AdminUserController {
       @PathVariable UUID userId,
       @RequestBody @Valid UpdateUserStatusRequestDto request) {
 
-    UUID adminId = authenticatedAdmin.getUser().getId();
+    UUID adminId = authenticatedAdmin.user().getId();
     adminUpdateUserStatusUseCase.execute(adminId, userId, request.status());
     return ResponseEntity.noContent().build();
   }
@@ -68,7 +68,7 @@ public class AdminUserController {
       @PathVariable UUID userId,
       @RequestBody @Valid UpdateUserRoleRequestDto request) {
 
-    UUID adminId = authenticatedAdmin.getUser().getId();
+    UUID adminId = authenticatedAdmin.user().getId();
     adminUpdateUserRoleUseCase.execute(adminId, userId, request.role());
     return ResponseEntity.noContent().build();
   }

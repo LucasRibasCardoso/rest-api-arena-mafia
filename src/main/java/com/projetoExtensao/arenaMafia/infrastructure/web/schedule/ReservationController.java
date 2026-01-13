@@ -13,7 +13,6 @@ import com.projetoExtensao.arenaMafia.infrastructure.web.schedule.mapper.Reserva
 import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.UUID;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -50,7 +49,7 @@ public class ReservationController {
       @AuthenticationPrincipal UserDetailsAdapter authenticatedUser,
       @Valid @RequestBody CreateReservationRequestDto request) {
 
-    UUID authenticateUserId = authenticatedUser.getUser().getId();
+    UUID authenticateUserId = authenticatedUser.user().getId();
     Reservation reservation = createReservationUseCase.execute(authenticateUserId, request);
     ReservationResponseDto response = reservationMapper.toDto(reservation);
 
@@ -66,13 +65,11 @@ public class ReservationController {
   @GetMapping
   @CustomRateLimiter(limiterName = "globalLimiter")
   public ResponseEntity<Page<ReservationResponseDto>> findAll(
-      Pageable pageable,
-      @AuthenticationPrincipal UserDetailsAdapter authenticatedUser) {
+      Pageable pageable, @AuthenticationPrincipal UserDetailsAdapter authenticatedUser) {
 
     UUID userId = extractUserId(authenticatedUser);
     Page<Reservation> reservationsPage = findAllReservationUseCase.execute(userId, pageable);
-    Page<ReservationResponseDto> responsePage =
-        reservationsPage.map(reservationMapper::toDto);
+    Page<ReservationResponseDto> responsePage = reservationsPage.map(reservationMapper::toDto);
 
     return ResponseEntity.ok(responsePage);
   }
@@ -100,6 +97,6 @@ public class ReservationController {
   }
 
   private UUID extractUserId(UserDetailsAdapter authenticatedUser) {
-    return authenticatedUser.getUser().getId();
+    return authenticatedUser.user().getId();
   }
 }

@@ -1,10 +1,10 @@
 package com.projetoExtensao.arenaMafia.infrastructure.web.schedule.mapper;
 
 import com.projetoExtensao.arenaMafia.application.schedule.detail.ReservationDetail;
-import com.projetoExtensao.arenaMafia.domain.model.schedule.Reservation;
 import com.projetoExtensao.arenaMafia.domain.model.enums.ScheduleEntryType;
-import com.projetoExtensao.arenaMafia.infrastructure.web.schedule.dto.response.scheduleDetail.ReservationDetailResponseDto;
+import com.projetoExtensao.arenaMafia.domain.model.schedule.Reservation;
 import com.projetoExtensao.arenaMafia.infrastructure.web.operatingHours.dto.response.TimeIntervalDto;
+import com.projetoExtensao.arenaMafia.infrastructure.web.schedule.dto.response.scheduleDetail.ReservationDetailResponseDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.schedule.dto.response.scheduleNormal.ReservationResponseDto;
 import org.springframework.stereotype.Component;
 

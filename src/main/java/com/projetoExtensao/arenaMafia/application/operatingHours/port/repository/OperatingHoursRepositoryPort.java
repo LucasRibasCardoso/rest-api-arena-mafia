@@ -3,7 +3,6 @@ package com.projetoExtensao.arenaMafia.application.operatingHours.port.repositor
 import com.projetoExtensao.arenaMafia.domain.model.OperatingHours;
 import com.projetoExtensao.arenaMafia.domain.model.enums.DayOfWeek;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.OperatingHoursEntity;
-
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;

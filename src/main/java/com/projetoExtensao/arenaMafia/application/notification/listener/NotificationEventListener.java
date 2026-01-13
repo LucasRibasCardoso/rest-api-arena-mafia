@@ -119,8 +119,8 @@ public class NotificationEventListener {
    * SMS ao usuário informando sobre o cancelamento feito pelo admin.
    *
    * <p>Usa {@link TransactionalEventListener} com fase AFTER_COMMIT para garantir que a notificação
-   * só seja enviada após o commit bem-sucedido da transação. Isso evita enviar notificações
-   * para cancelamentos que falharam e sofreram rollback.
+   * só seja enviada após o commit bem-sucedido da transação. Isso evita enviar notificações para
+   * cancelamentos que falharam e sofreram rollback.
    *
    * @param eventData evento contendo dados do cancelamento pelo admin
    */
@@ -218,7 +218,8 @@ public class NotificationEventListener {
    * @param adminReason motivo do cancelamento fornecido pelo admin
    * @return mensagem formatada para envio
    */
-  private String buildReservationCancellationByAdminMessage(String username, Reservation reservation, String adminReason) {
+  private String buildReservationCancellationByAdminMessage(
+      String username, Reservation reservation, String adminReason) {
     String date = reservation.getDateTimeSlot().date().toString();
     String startTime = reservation.getDateTimeSlot().timeInterval().startTime().toString();
     String endTime = reservation.getDateTimeSlot().timeInterval().endTime().toString();

@@ -7,4 +7,3 @@ public class InvalidBlockedTimeException extends BadRequestException {
     super(errorCode);
   }
 }
-

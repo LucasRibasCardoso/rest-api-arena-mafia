@@ -5,7 +5,6 @@ import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidReserva
 import com.projetoExtensao.arenaMafia.domain.exception.conflict.ReservationStatusConflictException;
 import com.projetoExtensao.arenaMafia.domain.model.enums.ReservationStatus;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.DateTimeSlot;
-
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
@@ -15,10 +14,38 @@ public class Reservation extends ScheduleEntry {
   private final UUID userId;
   private final UUID modalityId;
   private final UUID scheduledByAdminId;
-  private UUID cancelledByAdminId;
   private final BigDecimal price;
-  private ReservationStatus status;
   private final UUID recurringReservationId;
+  private UUID cancelledByAdminId;
+  private ReservationStatus status;
+
+  private Reservation(
+          UUID id,
+          UUID courtId,
+          UUID modalityId,
+          UUID userId,
+          UUID scheduledByAdminId,
+          UUID cancelledByAdminId,
+          BigDecimal price,
+          DateTimeSlot dateTimeSlot,
+          ReservationStatus status,
+          UUID recurringReservationId,
+          Instant createdAt) {
+
+    super(id, courtId, dateTimeSlot, createdAt);
+
+    validateModalityId(modalityId);
+    validateUserId(userId);
+    validatePrice(price);
+
+    this.userId = userId;
+    this.modalityId = modalityId;
+    this.scheduledByAdminId = scheduledByAdminId;
+    this.cancelledByAdminId = cancelledByAdminId;
+    this.price = price;
+    this.status = status;
+    this.recurringReservationId = recurringReservationId;
+  }
 
   /**
    * Factory method para criar uma reserva feita pelo próprio usuário. Uso: quando o usuário
@@ -171,34 +198,6 @@ public class Reservation extends ScheduleEntry {
             status,
             recurringReservationId,
             createdAt);
-  }
-
-  private Reservation(
-          UUID id,
-          UUID courtId,
-          UUID modalityId,
-          UUID userId,
-          UUID scheduledByAdminId,
-          UUID cancelledByAdminId,
-          BigDecimal price,
-          DateTimeSlot dateTimeSlot,
-          ReservationStatus status,
-          UUID recurringReservationId,
-          Instant createdAt) {
-
-    super(id, courtId, dateTimeSlot, createdAt);
-
-    validateModalityId(modalityId);
-    validateUserId(userId);
-    validatePrice(price);
-
-    this.userId = userId;
-    this.modalityId = modalityId;
-    this.scheduledByAdminId = scheduledByAdminId;
-    this.cancelledByAdminId = cancelledByAdminId;
-    this.price = price;
-    this.status = status;
-    this.recurringReservationId = recurringReservationId;
   }
 
   // --- Validações ---

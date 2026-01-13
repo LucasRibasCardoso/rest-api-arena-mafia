@@ -11,20 +11,20 @@ import com.projetoExtensao.arenaMafia.application.schedule.port.repository.Reser
 import com.projetoExtensao.arenaMafia.application.schedule.port.repository.ScheduleEntryRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.schedule.service.ReservationBatchCancellationService;
 import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
-import com.projetoExtensao.arenaMafia.domain.exception.conflict.PreviewStaleException;
 import com.projetoExtensao.arenaMafia.domain.exception.conflict.CourtStatusConflictException;
+import com.projetoExtensao.arenaMafia.domain.exception.conflict.PreviewStaleException;
+import com.projetoExtensao.arenaMafia.domain.exception.notFound.CourtNotFoundException;
 import com.projetoExtensao.arenaMafia.domain.model.Court;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.Reservation;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.ScheduleEntry;
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.court.request.CourtDisableConfirmRequestDto;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import com.projetoExtensao.arenaMafia.domain.exception.notFound.CourtNotFoundException;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional

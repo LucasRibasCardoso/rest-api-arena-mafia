@@ -4,9 +4,7 @@ import com.projetoExtensao.arenaMafia.application.modality.port.ModalityReposito
 import com.projetoExtensao.arenaMafia.application.modality.usecase.DisableModalityUseCase;
 import com.projetoExtensao.arenaMafia.domain.exception.conflict.ModalityInUseException;
 import com.projetoExtensao.arenaMafia.domain.model.Modality;
-
 import java.util.UUID;
-
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

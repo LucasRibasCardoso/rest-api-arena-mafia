@@ -6,11 +6,12 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 /**
- * Interface base para DTOs de resposta de detalhes de agendamentos.
- * Utilizada para representar informações enriquecidas de reservas e bloqueios,
- * com dados adicionais como nome da quadra, nome do usuário, etc.
+ * Interface base para DTOs de resposta de detalhes de agendamentos. Utilizada para representar
+ * informações enriquecidas de reservas e bloqueios, com dados adicionais como nome da quadra, nome
+ * do usuário, etc.
  */
-public sealed interface ScheduleDetailResponseDto permits ReservationDetailResponseDto, BlockedTimeDetailResponseDto {
+public sealed interface ScheduleDetailResponseDto
+    permits ReservationDetailResponseDto, BlockedTimeDetailResponseDto {
 
   UUID courtId();
 
@@ -20,4 +21,3 @@ public sealed interface ScheduleDetailResponseDto permits ReservationDetailRespo
 
   TimeIntervalDto timeInterval();
 }
-

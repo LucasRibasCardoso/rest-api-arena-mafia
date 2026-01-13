@@ -2,7 +2,6 @@ package com.projetoExtensao.arenaMafia.domain.exception;
 
 import com.projetoExtensao.arenaMafia.domain.model.enums.AccountStatus;
 import com.projetoExtensao.arenaMafia.domain.model.enums.RoleEnum;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -271,10 +270,6 @@ public enum ErrorCode {
     this.message = message;
   }
 
-  public String getMessage() {
-    return message;
-  }
-
   /**
    * Retorna o ErrorCode associado a um tipo de enum específico, se existir.
    *
@@ -283,5 +278,9 @@ public enum ErrorCode {
    */
   public static Optional<ErrorCode> getForEnumType(Class<?> enumType) {
     return Optional.ofNullable(ENUM_ERROR_MAP.get(enumType));
+  }
+
+  public String getMessage() {
+    return message;
   }
 }

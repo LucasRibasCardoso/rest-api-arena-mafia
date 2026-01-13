@@ -7,4 +7,3 @@ public class ReservationAccessDeniedException extends ForbiddenException {
     super(ErrorCode.RESERVATION_ACCESS_DENIED);
   }
 }
-

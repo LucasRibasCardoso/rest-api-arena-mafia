@@ -1,7 +1,6 @@
 package com.projetoExtensao.arenaMafia.application.schedule.port.repository;
 
 import com.projetoExtensao.arenaMafia.domain.model.schedule.BlockedTime;
-
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;

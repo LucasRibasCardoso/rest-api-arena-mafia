@@ -55,7 +55,7 @@ public class UserController {
   public ResponseEntity<UserProfileResponseDto> getMyProfile(
       @AuthenticationPrincipal UserDetailsAdapter authenticatedUser) {
 
-    User user = getUserProfileUseCase.execute(authenticatedUser.getUser().getId());
+    User user = getUserProfileUseCase.execute(authenticatedUser.user().getId());
     return ResponseEntity.ok(buildUserProfileResponseDto(user));
   }
 
@@ -66,7 +66,7 @@ public class UserController {
       @Valid @RequestBody UpdateProfileRequestDto requestDTO) {
 
     User updatedUser =
-        updateProfileUseCase.execute(authenticatedUser.getUser().getId(), requestDTO);
+        updateProfileUseCase.execute(authenticatedUser.user().getId(), requestDTO);
     return ResponseEntity.ok(buildUserProfileResponseDto(updatedUser));
   }
 
@@ -76,7 +76,7 @@ public class UserController {
       @AuthenticationPrincipal UserDetailsAdapter authenticatedUser,
       @Valid @RequestBody ChangeUsernameRequestDto request) {
 
-    User updatedUser = changeUsernameUseCase.execute(authenticatedUser.getUser().getId(), request);
+    User updatedUser = changeUsernameUseCase.execute(authenticatedUser.user().getId(), request);
     return ResponseEntity.ok(buildUserProfileResponseDto(updatedUser));
   }
 
@@ -86,7 +86,7 @@ public class UserController {
       @AuthenticationPrincipal UserDetailsAdapter authenticatedUser,
       @Valid @RequestBody ChangePasswordRequestDto request) {
 
-    changePasswordUseCase.execute(authenticatedUser.getUser().getId(), request);
+    changePasswordUseCase.execute(authenticatedUser.user().getId(), request);
     return ResponseEntity.noContent().build();
   }
 
@@ -96,7 +96,7 @@ public class UserController {
       @AuthenticationPrincipal UserDetailsAdapter authenticatedUser,
       @Valid @RequestBody InitiateChangePhoneRequestDto request) {
 
-    initiateChangePhoneUseCase.execute(authenticatedUser.getUser().getId(), request);
+    initiateChangePhoneUseCase.execute(authenticatedUser.user().getId(), request);
     return ResponseEntity.accepted().build();
   }
 
@@ -107,7 +107,7 @@ public class UserController {
       @Valid @RequestBody CompletePhoneChangeRequestDto request) {
 
     User updatedUser =
-        completeChangePhoneUseCase.execute(authenticatedUser.getUser().getId(), request);
+        completeChangePhoneUseCase.execute(authenticatedUser.user().getId(), request);
     return ResponseEntity.ok(buildUserProfileResponseDto(updatedUser));
   }
 
@@ -115,7 +115,7 @@ public class UserController {
   @CustomRateLimiter(limiterName = "sensitiveOperationLimiter")
   public ResponseEntity<Void> resendPhoneVerificationCode(
       @AuthenticationPrincipal UserDetailsAdapter authenticatedUser) {
-    resendChangePhoneOtpUseCase.execute(authenticatedUser.getUser().getId());
+    resendChangePhoneOtpUseCase.execute(authenticatedUser.user().getId());
     return ResponseEntity.noContent().build();
   }
 
@@ -123,7 +123,7 @@ public class UserController {
   @CustomRateLimiter(limiterName = "sensitiveOperationLimiter")
   public ResponseEntity<Void> deactivateAccount(
       @AuthenticationPrincipal UserDetailsAdapter authenticatedUser) {
-    disableMyAccountUseCase.execute(authenticatedUser.getUser().getId());
+    disableMyAccountUseCase.execute(authenticatedUser.user().getId());
     return ResponseEntity.noContent().build();
   }
 

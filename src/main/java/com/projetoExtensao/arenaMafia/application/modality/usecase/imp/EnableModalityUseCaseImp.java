@@ -4,9 +4,8 @@ import com.projetoExtensao.arenaMafia.application.modality.port.ModalityReposito
 import com.projetoExtensao.arenaMafia.application.modality.usecase.EnableModalityUseCase;
 import com.projetoExtensao.arenaMafia.domain.model.Modality;
 import jakarta.transaction.Transactional;
-import org.springframework.stereotype.Service;
-
 import java.util.UUID;
+import org.springframework.stereotype.Service;
 
 @Service
 @Transactional

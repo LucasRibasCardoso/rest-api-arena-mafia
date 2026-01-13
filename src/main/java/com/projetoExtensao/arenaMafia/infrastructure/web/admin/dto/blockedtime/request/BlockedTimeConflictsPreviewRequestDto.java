@@ -2,13 +2,12 @@ package com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.blockedtime.
 
 import com.projetoExtensao.arenaMafia.domain.model.enums.DayOfWeek;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
+import com.projetoExtensao.arenaMafia.infrastructure.web.admin.validator.ValidConditionalSelectedDaysOfWeek;
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.validator.ValidConditionalTimeInterval;
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.validator.ValidDateRange;
-import com.projetoExtensao.arenaMafia.infrastructure.web.admin.validator.ValidConditionalSelectedDaysOfWeek;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;

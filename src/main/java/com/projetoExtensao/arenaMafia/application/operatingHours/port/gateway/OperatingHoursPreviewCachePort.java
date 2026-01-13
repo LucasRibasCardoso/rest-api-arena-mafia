@@ -1,7 +1,6 @@
 package com.projetoExtensao.arenaMafia.application.operatingHours.port.gateway;
 
 import com.projetoExtensao.arenaMafia.application.operatingHours.preview.OperatingHoursDisablePreview;
-
 import java.util.UUID;
 
 public interface OperatingHoursPreviewCachePort {

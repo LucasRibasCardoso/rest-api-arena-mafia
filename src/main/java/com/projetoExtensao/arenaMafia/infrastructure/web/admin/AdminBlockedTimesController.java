@@ -6,21 +6,20 @@ import com.projetoExtensao.arenaMafia.application.schedule.usecase.blockedtime.C
 import com.projetoExtensao.arenaMafia.application.schedule.usecase.blockedtime.PreviewBlockedTimeConflictsUseCase;
 import com.projetoExtensao.arenaMafia.infrastructure.security.rateLimit.CustomRateLimiter;
 import com.projetoExtensao.arenaMafia.infrastructure.security.userDetails.UserDetailsAdapter;
-import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.blockedtime.request.BlockedTimeConflictsPreviewRequestDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.blockedtime.request.BlockedTimeConfirmRequestDto;
+import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.blockedtime.request.BlockedTimeConflictsPreviewRequestDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.blockedtime.response.BlockedTimeConfirmResponseDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.blockedtime.response.BlockedTimeConflictsPreviewResponseDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.schedule.dto.response.scheduleDetail.BlockedTimeDetailResponseDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.schedule.dto.response.scheduleDetail.ReservationDetailResponseDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.schedule.mapper.ScheduleEntryResponseMapper;
 import jakarta.validation.Valid;
+import java.util.List;
+import java.util.UUID;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/admin/blocked-times")
@@ -46,7 +45,7 @@ public class AdminBlockedTimesController {
       @AuthenticationPrincipal UserDetailsAdapter authenticatedAdmin,
       @RequestBody @Valid BlockedTimeConflictsPreviewRequestDto requestDto) {
 
-    UUID adminId = authenticatedAdmin.getUser().getId();
+    UUID adminId = authenticatedAdmin.user().getId();
     BlockedTimeConflictsPreview preview = previewBlockedTimeConflictsUseCase.execute(requestDto, adminId);
     BlockedTimeConflictsPreviewResponseDto response = buildPreviewResponseDto(preview);
 
@@ -59,7 +58,7 @@ public class AdminBlockedTimesController {
       @AuthenticationPrincipal UserDetailsAdapter authenticatedAdmin,
       @RequestBody @Valid BlockedTimeConfirmRequestDto requestDto) {
 
-    UUID adminId = authenticatedAdmin.getUser().getId();
+    UUID adminId = authenticatedAdmin.user().getId();
     ConfirmBlockedTimeResult result = confirmBlockedTimeUseCase.execute(adminId, requestDto);
     BlockedTimeConfirmResponseDto responseDto = buildConfirmResponseDto(result);
 

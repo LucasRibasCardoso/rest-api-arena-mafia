@@ -3,7 +3,6 @@ package com.projetoExtensao.arenaMafia.application.schedule.port.repository;
 import com.projetoExtensao.arenaMafia.domain.model.enums.DayOfWeek;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.ScheduleEntry;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
-
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
@@ -29,6 +28,5 @@ public interface ScheduleEntryRepositoryPort {
       Set<DayOfWeek> selectedDaysOfWeek);
 
   List<ScheduleEntry> findAllActiveSchedulesFromTodayByDaysOfWeekAndTimeInterval(
-          Set<DayOfWeek> daysOfWeek,
-          TimeInterval timeInterval);
+      Set<DayOfWeek> daysOfWeek, TimeInterval timeInterval);
 }

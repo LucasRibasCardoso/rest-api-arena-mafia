@@ -105,6 +105,4 @@ public class CourtRepositoryAdapter implements CourtRepositoryPort {
       throw new CourtNotFoundException();
     }
   }
-
-
 }

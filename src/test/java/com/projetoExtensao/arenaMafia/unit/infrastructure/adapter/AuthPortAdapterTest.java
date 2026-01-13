@@ -59,7 +59,7 @@ public class AuthPortAdapterTest {
 
     // Assert
     assertThat(actualUser).isNotNull();
-    assertThat(actualUser).isEqualTo(userDetails.getUser());
+    assertThat(actualUser).isEqualTo(userDetails.user());
 
     verify(authenticationManager, times(1))
         .authenticate(any(UsernamePasswordAuthenticationToken.class));

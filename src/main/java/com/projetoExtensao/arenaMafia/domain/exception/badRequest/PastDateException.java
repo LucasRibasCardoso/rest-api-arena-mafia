@@ -8,4 +8,3 @@ public class PastDateException extends BadRequestException {
     super(ErrorCode.PAST_DATE_NOT_ALLOWED);
   }
 }
-

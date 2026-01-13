@@ -2,7 +2,6 @@ package com.projetoExtensao.arenaMafia.application.court.preview;
 
 import com.projetoExtensao.arenaMafia.application.schedule.detail.BlockedTimeDetail;
 import com.projetoExtensao.arenaMafia.application.schedule.detail.ReservationDetail;
-
 import java.util.List;
 import java.util.UUID;
 

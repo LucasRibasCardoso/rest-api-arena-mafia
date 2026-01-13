@@ -69,12 +69,12 @@ public class PriceRuleEntity {
     this.name = name;
   }
 
-  public void setDaysOfWeek(Set<DayOfWeek> daysOfWeek) {
-    this.daysOfWeek = daysOfWeek;
-  }
-
   public Set<DayOfWeek> getDaysOfWeek() {
     return this.daysOfWeek;
+  }
+
+  public void setDaysOfWeek(Set<DayOfWeek> daysOfWeek) {
+    this.daysOfWeek = daysOfWeek;
   }
 
   public TimeInterval getTimeInterval() {

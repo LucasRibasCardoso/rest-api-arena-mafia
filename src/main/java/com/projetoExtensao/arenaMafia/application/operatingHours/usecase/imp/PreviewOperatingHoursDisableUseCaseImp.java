@@ -2,7 +2,6 @@ package com.projetoExtensao.arenaMafia.application.operatingHours.usecase.imp;
 
 import com.projetoExtensao.arenaMafia.application.operatingHours.port.gateway.OperatingHoursPreviewCachePort;
 import com.projetoExtensao.arenaMafia.application.operatingHours.port.repository.OperatingHoursRepositoryPort;
-
 import com.projetoExtensao.arenaMafia.application.operatingHours.preview.OperatingHoursDisablePreview;
 import com.projetoExtensao.arenaMafia.application.operatingHours.usecase.PreviewOperatingHoursDisableUseCase;
 import com.projetoExtensao.arenaMafia.application.schedule.detail.BlockedTimeDetail;
@@ -14,11 +13,10 @@ import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 import com.projetoExtensao.arenaMafia.domain.exception.conflict.OperatingHoursStatusConflictException;
 import com.projetoExtensao.arenaMafia.domain.model.OperatingHours;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.ScheduleEntry;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.util.List;
 import java.util.UUID;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional

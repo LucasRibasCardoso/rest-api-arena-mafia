@@ -109,10 +109,9 @@ public class AdminCourtController {
   @PostMapping("/{courtId}/preview-disable")
   @CustomRateLimiter(limiterName = "globalLimiter")
   public ResponseEntity<CourtDisablePreviewResponseDto> previewDisable(
-          @PathVariable UUID courtId,
-          @AuthenticationPrincipal UserDetailsAdapter authenticatedAdmin) {
+      @PathVariable UUID courtId, @AuthenticationPrincipal UserDetailsAdapter authenticatedAdmin) {
 
-    UUID adminId = authenticatedAdmin.getUser().getId();
+    UUID adminId = authenticatedAdmin.user().getId();
     CourtDisablePreview preview = previewCourtDisableUseCase.execute(courtId, adminId);
     CourtDisablePreviewResponseDto response = buildResponsePreviewDto(preview);
     return ResponseEntity.ok(response);
@@ -121,9 +120,9 @@ public class AdminCourtController {
   @PostMapping("/confirm-disable")
   @CustomRateLimiter(limiterName = "globalLimiter")
   public ResponseEntity<Void> confirmDisable(
-          @AuthenticationPrincipal UserDetailsAdapter authenticatedAdmin,
-          @RequestBody @Valid CourtDisableConfirmRequestDto requestDto) {
-    UUID adminId = authenticatedAdmin.getUser().getId();
+      @AuthenticationPrincipal UserDetailsAdapter authenticatedAdmin,
+      @RequestBody @Valid CourtDisableConfirmRequestDto requestDto) {
+    UUID adminId = authenticatedAdmin.user().getId();
     confirmCourtDisableUseCase.execute(adminId, requestDto);
     return ResponseEntity.noContent().build();
   }
@@ -162,16 +161,15 @@ public class AdminCourtController {
         scheduleEntryMapper.toDetailDtoList(preview.inProgressReservations());
 
     return new CourtDisablePreviewResponseDto(
-            preview.previewKey(),
-            preview.courtId(),
-            preview.courtName(),
-            preview.usersAffectedCount(),
-            preview.blockedTimesAffectedCount(),
-            preview.reservationsAffectedCount(),
-            blockedTimesDetails,
-            reservationsDetails,
-            inProgressReservationsDetails
-    );
+        preview.previewKey(),
+        preview.courtId(),
+        preview.courtName(),
+        preview.usersAffectedCount(),
+        preview.blockedTimesAffectedCount(),
+        preview.reservationsAffectedCount(),
+        blockedTimesDetails,
+        reservationsDetails,
+        inProgressReservationsDetails);
   }
 
   /**

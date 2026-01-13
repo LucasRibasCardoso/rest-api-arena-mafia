@@ -7,4 +7,3 @@ public class InvalidPreviewKeyException extends BadRequestException {
     super(ErrorCode.PREVIEW_KEY_INVALID);
   }
 }
-

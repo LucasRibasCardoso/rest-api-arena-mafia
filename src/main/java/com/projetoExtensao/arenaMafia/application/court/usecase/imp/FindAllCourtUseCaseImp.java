@@ -68,8 +68,7 @@ public class FindAllCourtUseCaseImp implements FindAllCourtUseCase {
         .collect(Collectors.toList());
   }
 
-  private CourtWithModalities enrichSingleCourt(
-      Court court, Map<UUID, Modality> modalityMap) {
+  private CourtWithModalities enrichSingleCourt(Court court, Map<UUID, Modality> modalityMap) {
 
     List<Modality> courtModalities = getModalitiesForCourt(court, modalityMap);
     return new CourtWithModalities(court, courtModalities);

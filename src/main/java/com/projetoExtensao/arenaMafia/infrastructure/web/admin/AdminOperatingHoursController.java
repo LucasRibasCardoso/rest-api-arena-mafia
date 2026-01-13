@@ -65,7 +65,8 @@ public class AdminOperatingHoursController {
 
   @PostMapping
   @CustomRateLimiter(limiterName = "globalLimiter")
-  public ResponseEntity<OperatingHoursResponseDto> create(@RequestBody @Valid CreateOperatingHoursRequestDto request) {
+  public ResponseEntity<OperatingHoursResponseDto> create(
+      @RequestBody @Valid CreateOperatingHoursRequestDto request) {
 
     OperatingHours operatingHours = createOperatingHoursUseCase.execute(request);
     OperatingHoursResponseDto response = operatingHoursMapper.toDto(operatingHours);
@@ -81,7 +82,8 @@ public class AdminOperatingHoursController {
 
   @GetMapping
   @CustomRateLimiter(limiterName = "globalLimiter")
-  public ResponseEntity<List<OperatingHoursResponseDto>> getAll(@RequestParam(required = false) Boolean isActive) {
+  public ResponseEntity<List<OperatingHoursResponseDto>> getAll(
+      @RequestParam(required = false) Boolean isActive) {
 
     List<OperatingHoursResponseDto> operatingHours =
         findAllOperatingHoursUseCase.execute(isActive).stream()
@@ -109,11 +111,11 @@ public class AdminOperatingHoursController {
   @PostMapping("/{hourId}/preview-disable")
   @CustomRateLimiter(limiterName = "globalLimiter")
   public ResponseEntity<OperatingHoursDisablePreviewResponseDto> previewDisable(
-          @AuthenticationPrincipal UserDetailsAdapter authenticatedAdmin,
-          @PathVariable UUID hourId) {
+      @AuthenticationPrincipal UserDetailsAdapter authenticatedAdmin, @PathVariable UUID hourId) {
 
-    UUID adminId = authenticatedAdmin.getUser().getId();
-    OperatingHoursDisablePreview preview = previewOperatingHoursDisableUseCase.execute(adminId, hourId);
+    UUID adminId = authenticatedAdmin.user().getId();
+    OperatingHoursDisablePreview preview =
+        previewOperatingHoursDisableUseCase.execute(adminId, hourId);
     OperatingHoursDisablePreviewResponseDto response = buildResponsePreviewDto(preview);
     return ResponseEntity.ok().body(response);
   }
@@ -121,10 +123,10 @@ public class AdminOperatingHoursController {
   @PostMapping("/confirm-disable")
   @CustomRateLimiter(limiterName = "globalLimiter")
   public ResponseEntity<Void> confirmDisable(
-          @AuthenticationPrincipal UserDetailsAdapter authenticatedAdmin,
-          @RequestBody @Valid OperatingHoursDisableConfirmRequestDto requestDto) {
+      @AuthenticationPrincipal UserDetailsAdapter authenticatedAdmin,
+      @RequestBody @Valid OperatingHoursDisableConfirmRequestDto requestDto) {
 
-    UUID adminId = authenticatedAdmin.getUser().getId();
+    UUID adminId = authenticatedAdmin.user().getId();
     confirmDisableOperatingHoursUseCase.execute(adminId, requestDto);
     return ResponseEntity.noContent().build();
   }
@@ -135,7 +137,8 @@ public class AdminOperatingHoursController {
    * @param preview O preview de desativação gerado pelo caso de uso.
    * @return O DTO de resposta contendo os detalhes dos conflitos.
    */
-  private OperatingHoursDisablePreviewResponseDto buildResponsePreviewDto(OperatingHoursDisablePreview preview) {
+  private OperatingHoursDisablePreviewResponseDto buildResponsePreviewDto(
+      OperatingHoursDisablePreview preview) {
 
     List<BlockedTimeDetailResponseDto> blockedTimesDetails =
         scheduleEntryMapper.toDetailDtoList(preview.affectedBlockedTimes());

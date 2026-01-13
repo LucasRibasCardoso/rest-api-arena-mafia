@@ -16,14 +16,40 @@ import java.util.UUID;
 public class User {
 
   private final UUID id;
+  private final Instant createdAt;
   private String username;
   private String fullName;
   private String phone;
   private String passwordHash;
   private AccountStatus status;
   private RoleEnum role;
-  private final Instant createdAt;
   private Instant updatedAt;
+
+  private User(
+      UUID id,
+      String username,
+      String fullName,
+      String phone,
+      String passwordHash,
+      AccountStatus status,
+      RoleEnum role,
+      Instant createdAt,
+      Instant updatedAt) {
+
+    validateUsername(username);
+    validateFullName(fullName);
+    validatePhone(phone);
+    validatePasswordHash(passwordHash);
+    this.id = id;
+    this.username = username;
+    this.fullName = fullName;
+    this.phone = phone;
+    this.passwordHash = passwordHash;
+    this.status = status;
+    this.role = role;
+    this.createdAt = createdAt;
+    this.updatedAt = updatedAt;
+  }
 
   /**
    * Factory Method para criar uma instância de User. Por padrão um usuário será criado com a role
@@ -55,32 +81,6 @@ public class User {
 
     return new User(
         id, username, fullName, phone, passwordHash, status, role, createdAt, updatedAt);
-  }
-
-  private User(
-      UUID id,
-      String username,
-      String fullName,
-      String phone,
-      String passwordHash,
-      AccountStatus status,
-      RoleEnum role,
-      Instant createdAt,
-      Instant updatedAt) {
-
-    validateUsername(username);
-    validateFullName(fullName);
-    validatePhone(phone);
-    validatePasswordHash(passwordHash);
-    this.id = id;
-    this.username = username;
-    this.fullName = fullName;
-    this.phone = phone;
-    this.passwordHash = passwordHash;
-    this.status = status;
-    this.role = role;
-    this.createdAt = createdAt;
-    this.updatedAt = updatedAt;
   }
 
   // Validações

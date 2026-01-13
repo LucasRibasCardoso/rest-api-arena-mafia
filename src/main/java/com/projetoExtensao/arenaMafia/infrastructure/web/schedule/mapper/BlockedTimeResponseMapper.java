@@ -1,10 +1,10 @@
 package com.projetoExtensao.arenaMafia.infrastructure.web.schedule.mapper;
 
 import com.projetoExtensao.arenaMafia.application.schedule.detail.BlockedTimeDetail;
-import com.projetoExtensao.arenaMafia.domain.model.schedule.BlockedTime;
 import com.projetoExtensao.arenaMafia.domain.model.enums.ScheduleEntryType;
-import com.projetoExtensao.arenaMafia.infrastructure.web.schedule.dto.response.scheduleDetail.BlockedTimeDetailResponseDto;
+import com.projetoExtensao.arenaMafia.domain.model.schedule.BlockedTime;
 import com.projetoExtensao.arenaMafia.infrastructure.web.operatingHours.dto.response.TimeIntervalDto;
+import com.projetoExtensao.arenaMafia.infrastructure.web.schedule.dto.response.scheduleDetail.BlockedTimeDetailResponseDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.schedule.dto.response.scheduleNormal.BlockedTimeResponseDto;
 import org.springframework.stereotype.Component;
 

@@ -11,12 +11,11 @@ import com.projetoExtensao.arenaMafia.infrastructure.persistence.mapper.Operatin
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.mapper.PriceRuleMapper;
 import com.projetoExtensao.arenaMafia.infrastructure.security.rateLimit.CustomRateLimiter;
 import com.projetoExtensao.arenaMafia.infrastructure.web.pages.dto.HomePageDataResponseDto;
+import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/public/homepage")

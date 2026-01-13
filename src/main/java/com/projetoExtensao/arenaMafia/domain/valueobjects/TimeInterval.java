@@ -94,12 +94,12 @@ public record TimeInterval(
   /**
    * Verifica se outro intervalo está completamente contido dentro deste intervalo.
    *
-   * <p>Um intervalo está contido se seu horário de início está dentro deste intervalo
-   * (usando a semântica de {@link #contains(LocalTime)}) e seu horário de término
-   * não ultrapassa o endTime deste intervalo.
+   * <p>Um intervalo está contido se seu horário de início está dentro deste intervalo (usando a
+   * semântica de {@link #contains(LocalTime)}) e seu horário de término não ultrapassa o endTime
+   * deste intervalo.
    *
-   * <p>O endTime do intervalo interno pode coincidir com o endTime deste intervalo
-   * (limite inclusivo no fim para esta verificação).
+   * <p>O endTime do intervalo interno pode coincidir com o endTime deste intervalo (limite
+   * inclusivo no fim para esta verificação).
    *
    * <p>Considera intervalos que atravessam a meia-noite.
    *

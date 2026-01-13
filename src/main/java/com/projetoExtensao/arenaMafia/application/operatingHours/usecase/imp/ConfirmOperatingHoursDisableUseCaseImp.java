@@ -12,20 +12,19 @@ import com.projetoExtensao.arenaMafia.application.schedule.port.repository.Sched
 import com.projetoExtensao.arenaMafia.application.schedule.service.ReservationBatchCancellationService;
 import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 import com.projetoExtensao.arenaMafia.domain.exception.conflict.OperatingHoursStatusConflictException;
+import com.projetoExtensao.arenaMafia.domain.exception.conflict.PreviewStaleException;
+import com.projetoExtensao.arenaMafia.domain.exception.notFound.OperatingHoursNotFoundException;
 import com.projetoExtensao.arenaMafia.domain.model.OperatingHours;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.Reservation;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.ScheduleEntry;
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.operatingHours.request.OperatingHoursDisableConfirmRequestDto;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import com.projetoExtensao.arenaMafia.domain.exception.conflict.PreviewStaleException;
-import com.projetoExtensao.arenaMafia.domain.exception.notFound.OperatingHoursNotFoundException;
-
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional

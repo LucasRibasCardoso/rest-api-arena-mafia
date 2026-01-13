@@ -75,7 +75,8 @@ public interface ScheduleEntryJpaRepository extends JpaRepository<ScheduleEntryE
    * @param startDate data inicial (inclusive)
    * @param endDate data final (inclusive)
    * @param selectedDaysOfWeek dias da semana para filtrar (null/vazio = todos)
-   * @param valuesDaysOfWeek conjunto de inteiros representando os dias da semana no formato PostgreSQL (0=Sunday, 1=Monday, ..., 6=Saturday)
+   * @param valuesDaysOfWeek conjunto de inteiros representando os dias da semana no formato
+   *     PostgreSQL (0=Sunday, 1=Monday, ..., 6=Saturday)
    * @return lista de agendamentos ativos no intervalo de datas e dias da semana especificados
    */
   @Query(
@@ -98,8 +99,8 @@ public interface ScheduleEntryJpaRepository extends JpaRepository<ScheduleEntryE
       @Param("valuesDaysOfWeek") Set<Integer> valuesDaysOfWeek);
 
   /**
-   * Buscar todos os agendamentos ativos (Reservations confirmadas e BlockedTimes) a partir de uma data específica,
-   * filtrando por dias da semana e intervalo de horário.
+   * Buscar todos os agendamentos ativos (Reservations confirmadas e BlockedTimes) a partir de uma
+   * data específica, filtrando por dias da semana e intervalo de horário.
    *
    * @param afterDate Data a partir da qual verificar os conflitos
    * @param valuesDaysOfWeek Conjunto de inteiros representando os dias da semana
@@ -137,7 +138,8 @@ public interface ScheduleEntryJpaRepository extends JpaRepository<ScheduleEntryE
   // ==================== QUERIES ESPECÍFICAS DE RESERVATION ====================
 
   /**
-   * Buscar todos os agendamentos (Reservations e BlockedTimes) ativos para uma quadra numa data específica.
+   * Buscar todos os agendamentos (Reservations e BlockedTimes) ativos para uma quadra numa data
+   * específica.
    *
    * @param courtId ID da quadra
    * @param date data do agendamento
@@ -218,15 +220,15 @@ public interface ScheduleEntryJpaRepository extends JpaRepository<ScheduleEntryE
    * @return lista de reservas confirmadas ordenadas por data e horário de término
    */
   @Query(
-        """
+      """
         SELECT r FROM ReservationEntity r
         WHERE r.status = 'CONFIRMED'
         AND (r.dateTimeSlot.date < :date
              OR (r.dateTimeSlot.date = :date AND r.dateTimeSlot.timeInterval.endTime <= :time))
         ORDER BY r.dateTimeSlot.date ASC, r.dateTimeSlot.timeInterval.endTime ASC
-        """
-  )
-  List<ReservationEntity> findConfirmedReservationsEndedBeforeOrEqual(@Param("date") LocalDate date, @Param("time") LocalTime time);
+        """)
+  List<ReservationEntity> findConfirmedReservationsEndedBeforeOrEqual(
+      @Param("date") LocalDate date, @Param("time") LocalTime time);
 
   // ==================== QUERIES ESPECÍFICAS DE BLOCKED TIME ====================
 

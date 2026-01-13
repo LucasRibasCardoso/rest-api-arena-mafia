@@ -7,4 +7,3 @@ public class BatchCancellationFailedException extends ConflictException {
     super(ErrorCode.RESERVATION_CANCELLATION_IN_BATCH_FAILED);
   }
 }
-

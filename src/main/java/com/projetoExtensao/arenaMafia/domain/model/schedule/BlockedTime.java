@@ -3,7 +3,6 @@ package com.projetoExtensao.arenaMafia.domain.model.schedule;
 import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidBlockedTimeException;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.DateTimeSlot;
-
 import java.time.Instant;
 import java.util.UUID;
 
@@ -13,6 +12,27 @@ public class BlockedTime extends ScheduleEntry {
   private final UUID blockedByAdminId;
   private final boolean isFullDay;
   private final UUID recurringBlockedTimeId;
+
+  private BlockedTime(
+      UUID id,
+      UUID courtId,
+      DateTimeSlot dateTimeSlot,
+      String description,
+      UUID blockedByAdminId,
+      boolean isFullDay,
+      UUID recurringBlockedTimeId,
+      Instant createdAt) {
+
+    super(id, courtId, dateTimeSlot, createdAt);
+
+    validateDescription(description);
+    validateBlockedByAdminId(blockedByAdminId);
+
+    this.description = description;
+    this.blockedByAdminId = blockedByAdminId;
+    this.isFullDay = isFullDay;
+    this.recurringBlockedTimeId = recurringBlockedTimeId;
+  }
 
   /**
    * Factory method para criar um bloqueio de horário específico em um único dia. Uso: quando um
@@ -139,27 +159,6 @@ public class BlockedTime extends ScheduleEntry {
         isFullDay,
         recurringBlockedTimeId,
         createdAt);
-  }
-
-  private BlockedTime(
-      UUID id,
-      UUID courtId,
-      DateTimeSlot dateTimeSlot,
-      String description,
-      UUID blockedByAdminId,
-      boolean isFullDay,
-      UUID recurringBlockedTimeId,
-      Instant createdAt) {
-
-    super(id, courtId, dateTimeSlot, createdAt);
-
-    validateDescription(description);
-    validateBlockedByAdminId(blockedByAdminId);
-
-    this.description = description;
-    this.blockedByAdminId = blockedByAdminId;
-    this.isFullDay = isFullDay;
-    this.recurringBlockedTimeId = recurringBlockedTimeId;
   }
 
   // --- Validações ---

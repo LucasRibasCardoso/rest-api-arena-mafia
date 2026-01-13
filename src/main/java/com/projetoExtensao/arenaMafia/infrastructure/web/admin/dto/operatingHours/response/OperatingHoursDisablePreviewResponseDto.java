@@ -2,7 +2,6 @@ package com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.operatingHou
 
 import com.projetoExtensao.arenaMafia.infrastructure.web.schedule.dto.response.scheduleDetail.BlockedTimeDetailResponseDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.schedule.dto.response.scheduleDetail.ReservationDetailResponseDto;
-
 import java.util.List;
 import java.util.UUID;
 

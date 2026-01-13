@@ -2,7 +2,6 @@ package com.projetoExtensao.arenaMafia.infrastructure.web.schedule.dto.response.
 
 import com.projetoExtensao.arenaMafia.domain.model.enums.ReservationStatus;
 import com.projetoExtensao.arenaMafia.infrastructure.web.operatingHours.dto.response.TimeIntervalDto;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
@@ -19,5 +18,5 @@ public record ReservationDetailResponseDto(
     String modalityName,
     BigDecimal price,
     ReservationStatus status,
-    UUID recurringReservationId) implements ScheduleDetailResponseDto {}
-
+    UUID recurringReservationId)
+    implements ScheduleDetailResponseDto {}

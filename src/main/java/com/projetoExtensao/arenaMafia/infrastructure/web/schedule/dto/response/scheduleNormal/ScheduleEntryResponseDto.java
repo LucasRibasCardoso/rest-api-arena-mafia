@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.projetoExtensao.arenaMafia.domain.model.enums.ScheduleEntryType;
 import com.projetoExtensao.arenaMafia.infrastructure.web.operatingHours.dto.response.TimeIntervalDto;
-
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;

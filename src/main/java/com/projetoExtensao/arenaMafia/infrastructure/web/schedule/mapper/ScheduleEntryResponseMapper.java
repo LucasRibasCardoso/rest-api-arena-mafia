@@ -35,14 +35,14 @@ public class ScheduleEntryResponseMapper {
     return (R) getDetailStrategy(detail).toDetailDto(detail);
   }
 
-  public <D extends ScheduleDetail, R extends ScheduleDetailResponseDto> List<R> toDetailDtoList(List<D> details) {
-    return details.stream()
-        .map(this::<R>toDetailDto)
-        .toList();
+  public <D extends ScheduleDetail, R extends ScheduleDetailResponseDto> List<R> toDetailDtoList(
+      List<D> details) {
+    return details.stream().map(this::<R>toDetailDto).toList();
   }
 
   @SuppressWarnings("unchecked")
-  private <T extends ScheduleEntry> ScheduleEntryMapperStrategy<T, ?> getEntryStrategy(T scheduleEntry) {
+  private <T extends ScheduleEntry> ScheduleEntryMapperStrategy<T, ?> getEntryStrategy(
+      T scheduleEntry) {
     ScheduleEntryMapperStrategy<T, ?> strategy =
         (ScheduleEntryMapperStrategy<T, ?>) entryStrategies.get(scheduleEntry.getClass());
 
@@ -56,7 +56,7 @@ public class ScheduleEntryResponseMapper {
   @SuppressWarnings("unchecked")
   private <D extends ScheduleDetail> ScheduleEntryMapperStrategy<?, D> getDetailStrategy(D detail) {
     ScheduleEntryMapperStrategy<?, D> strategy =
-            (ScheduleEntryMapperStrategy<?, D>) detailStrategies.get(detail.getClass());
+        (ScheduleEntryMapperStrategy<?, D>) detailStrategies.get(detail.getClass());
 
     if (strategy == null) {
       throw new UnsupportedScheduleEntryTypeException();

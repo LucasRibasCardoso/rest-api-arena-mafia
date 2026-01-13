@@ -3,12 +3,11 @@ package com.projetoExtensao.arenaMafia.application.schedule.usecase.reservation.
 import com.projetoExtensao.arenaMafia.application.schedule.port.repository.ReservationRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.schedule.usecase.reservation.FindAllReservationUseCase;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.Reservation;
+import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.UUID;
 
 @Service
 @Transactional(readOnly = true)

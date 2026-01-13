@@ -7,4 +7,3 @@ public class BlockedTimeConflictException extends ConflictException {
     super(errorCode);
   }
 }
-

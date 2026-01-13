@@ -2,8 +2,6 @@ package com.projetoExtensao.arenaMafia.infrastructure.persistence.repository;
 
 import com.projetoExtensao.arenaMafia.domain.model.enums.DayOfWeek;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.OperatingHoursEntity;
-
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;

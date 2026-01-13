@@ -3,7 +3,6 @@ package com.projetoExtensao.arenaMafia.infrastructure.web.schedule.dto.response.
 import com.projetoExtensao.arenaMafia.domain.model.enums.ReservationStatus;
 import com.projetoExtensao.arenaMafia.domain.model.enums.ScheduleEntryType;
 import com.projetoExtensao.arenaMafia.infrastructure.web.operatingHours.dto.response.TimeIntervalDto;
-
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;

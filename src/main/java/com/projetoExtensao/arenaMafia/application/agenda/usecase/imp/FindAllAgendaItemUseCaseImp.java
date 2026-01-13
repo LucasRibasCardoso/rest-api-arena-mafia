@@ -17,20 +17,19 @@ import com.projetoExtensao.arenaMafia.domain.model.agenda.AgendaItem;
 import com.projetoExtensao.arenaMafia.domain.model.agenda.GroupedAvailableSlotAgendaItem;
 import com.projetoExtensao.arenaMafia.domain.model.agenda.ScheduleEntryAgendaItem;
 import com.projetoExtensao.arenaMafia.domain.model.enums.DayOfWeek;
+import com.projetoExtensao.arenaMafia.domain.model.schedule.ScheduleEntry;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.AvailableSlot;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.AvailableSlotWithModalities;
-import com.projetoExtensao.arenaMafia.domain.model.schedule.ScheduleEntry;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.specification.CourtSpecification;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.specification.OperatingHoursSpecification;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.specification.PriceRuleSpecification;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDate;
 import java.util.*;
 import java.util.Comparator;
 import java.util.stream.Collectors;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional(readOnly = true)
