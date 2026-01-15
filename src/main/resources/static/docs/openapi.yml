@@ -145,6 +145,10 @@ components:
       $ref: "./components/schemas/operatingHours/CreateOperatingHoursRequestDto.yml"
     OperatingHoursResponseDto:
       $ref: "./components/schemas/operatingHours/OperatingHoursResponseDto.yml"
+    OperatingHoursDisablePreviewResponseDto:
+      $ref: "./components/schemas/operatingHours/OperatingHoursDisablePreviewResponseDto.yml"
+    OperatingHoursDisableConfirmRequestDto:
+      $ref: "./components/schemas/operatingHours/OperatingHoursDisableConfirmRequestDto.yml"
 
     HomePageDataResponseDto:
       $ref: "./components/schemas/homepage/HomePageDataResponseDto.yml"
@@ -292,23 +296,23 @@ paths:
     $ref: "./paths/admin/priceRule/PriceRules.yml"
   /api/admin/price-rules/{priceRuleId}:
     $ref: "./paths/admin/priceRule/PriceRuleById.yml"
-  /api/admin/operating-rules/{priceRuleId}/enable:
+  /api/admin/price-rules/{priceRuleId}/enable:
     $ref: "./paths/admin/priceRule/PriceRuleEnable.yml"
-  /api/admin/operating-rules/{priceRuleId}/disable:
+  /api/admin/price-rules/{priceRuleId}/disable:
     $ref: "./paths/admin/priceRule/PriceRuleDisable.yml"
   /api/admin/price-rules/default:
     $ref: "./paths/admin/priceRule/DefaultPriceRule.yml"
 
-  /api/admin/operating-rules:
+  /api/admin/operating-hours:
     $ref: "./paths/admin/operatingHours/OperatingHours.yml"
-  /api/admin/operating-rules/{operatingHoursId}:
+  /api/admin/operating-hours/{operatingHoursId}:
     $ref: "./paths/admin/operatingHours/OperatingHoursById.yml"
-  /api/admin/operating-rules/{operatingHoursId}/enable:
+  /api/admin/operating-hours/{operatingHoursId}/enable:
     $ref: "./paths/admin/operatingHours/OperatingHoursEnable.yml"
-  /api/admin/operating-rules/{operatingHoursId}/preview-disable:
-    # endpoint de preview
-  /api/admin/operating-rules/confirm-disable:
-    # endpoint de confirmação
+  /api/admin/operating-hours/{operatingHoursId}/preview-disable:
+    $ref: "./paths/admin/operatingHours/PreviewDisableOperatingHours.yml"
+  /api/admin/operating-hours/confirm-disable:
+    $ref: "./paths/admin/operatingHours/ConfirmDisableOperatingHours.yml"
 
   /api/admin/blocked-times/preview-conflicts:
     $ref: "./paths/admin/schedule/blockedTime/PreviewBlockedTimeConflicts.yml"

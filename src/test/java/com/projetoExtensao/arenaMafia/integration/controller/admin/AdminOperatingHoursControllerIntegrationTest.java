@@ -16,6 +16,7 @@ import com.projetoExtensao.arenaMafia.domain.model.schedule.Reservation;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.court.response.CourtDisablePreviewResponseDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.operatingHours.request.CreateOperatingHoursRequestDto;
+import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.operatingHours.request.OperatingHoursDisableConfirmRequestDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.operatingHours.response.OperatingHoursDisablePreviewResponseDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.exception.dto.ErrorResponseDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.exception.dto.FieldErrorResponseDto;
@@ -1047,23 +1048,366 @@ public class AdminOperatingHoursControllerIntegrationTest extends WebIntegration
 
       @Nested
       @DisplayName("Cenários de sucesso - 200 OK")
-      class SuccessScenarios {}
+      class SuccessScenarios {
+
+        @Test
+        @DisplayName("Deve confirmar desativação de um horário de funcionamento com preview válido sem conflitos")
+        void shouldReturn200_whenConfirmingDisableWithValidPreview() {
+          // Arrange
+          var operatingHour = mockPersistOperatingHoursAllDays();
+          UUID operatingHourId = operatingHour.getId();
+
+          String previewKey = createPreviewAndGetKey(operatingHourId);
+
+          var request = new OperatingHoursDisableConfirmRequestDto(previewKey, "Desativação temporária");
+
+          // Act
+          given()
+              .spec(specification)
+              .header("Authorization", accessToken)
+              .body(request)
+              .when()
+              .post("/confirm-disable")
+              .then()
+              .statusCode(204);
+
+          // Assert
+          var updatedOperatingHour = operatingHoursRepository.findByIdOrElseThrow(operatingHourId);
+          assertThat(updatedOperatingHour.isActive()).isFalse();
+
+          Optional<OperatingHoursDisablePreview> previewInCache = getPreviewFromCache(previewKey);
+          assertThat(previewInCache).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Deve confirmar desativação de um horário de funcionamento com preview válido com conflitos")
+        void shouldReturn200_whenConfirmingDisableWithValidPreviewWithConflicts() {
+          // Arrange
+          TimeInterval timeInterval = new TimeInterval(LocalTime.of(8, 0), LocalTime.of(23, 0));
+          var operatingHour = mockPersistOperatingHoursAllDaysWithTimeInterval(timeInterval);
+          UUID operatingHourId = operatingHour.getId();
+
+          // Criar múltiplos agendamentos futuros que serão afetados
+          Modality modality = mockPersistModality("Futebol");
+          Court court = mockPersistCourt("Quadra B", modality);
+
+          mockPersistBlockedTimeSpecific(
+              court.getId(),
+              nextDayOfWeek(java.time.DayOfWeek.WEDNESDAY),
+              new TimeInterval(LocalTime.of(18, 0), LocalTime.of(20, 0)),
+              "Evento Especial",
+              adminId
+          );
+          mockPersistReservationByUser(
+              modality.getId(),
+              court.getId(),
+              nextDayOfWeek(java.time.DayOfWeek.THURSDAY),
+              new TimeInterval(LocalTime.of(16, 0), LocalTime.of(17, 0)),
+              new BigDecimal(100),
+              adminId
+          );
+
+          String previewKey = createPreviewAndGetKey(operatingHourId);
+
+          var request = new OperatingHoursDisableConfirmRequestDto(previewKey, "Desativação temporária");
+
+          // Act
+          given()
+              .spec(specification)
+              .header("Authorization", accessToken)
+              .body(request)
+              .when()
+              .post("/confirm-disable")
+              .then()
+              .statusCode(204);
+
+          // Assert
+          var updatedOperatingHour = operatingHoursRepository.findByIdOrElseThrow(operatingHourId);
+          assertThat(updatedOperatingHour.isActive()).isFalse();
+
+          Optional<OperatingHoursDisablePreview> previewInCache = getPreviewFromCache(previewKey);
+          assertThat(previewInCache).isEmpty();
+        }
+      }
 
       @Nested
       @DisplayName("Cenários de erro - 400 Bad Request")
-      class BadRequestScenarios {}
+      class BadRequestScenarios {
+
+        @Test
+        @DisplayName("Tenta confirmar desativação com chave de preview vazia")
+        void shouldReturn400_whenConfirmingDisableWithEmptyPreviewKey() {
+          // Arrange
+          var request = new OperatingHoursDisableConfirmRequestDto("", "Desativação temporária");
+
+          // Act
+          var response =
+              given()
+                  .spec(specification)
+                  .header("Authorization", accessToken)
+                  .body(request)
+                  .when()
+                  .post("/confirm-disable")
+                  .then()
+                  .statusCode(400)
+                  .extract()
+                  .as(ErrorResponseDto.class);
+
+          // Assert
+          String path = "/api/admin/operating-hours/confirm-disable";
+          assertValidationError(response, path, "previewKey", ErrorCode.PREVIEW_KEY_REQUIRED);
+        }
+
+        @Test
+        @DisplayName("Tenta confirmar desativação com a chave de preview inválida")
+        void shouldReturn400_whenConfirmingDisableWithInvalidPreviewKey() {
+          // Arrange
+          var request = new OperatingHoursDisableConfirmRequestDto("invalid-preview-key", "Desativação temporária");
+
+          // Act
+          var response =
+              given()
+                  .spec(specification)
+                  .header("Authorization", accessToken)
+                  .body(request)
+                  .when()
+                  .post("/confirm-disable")
+                  .then()
+                  .statusCode(400)
+                  .extract()
+                  .as(ErrorResponseDto.class);
+
+          // Assert
+          String path = "/api/admin/operating-hours/confirm-disable";
+          assertBusinessError(response, 400, path, ErrorCode.PREVIEW_KEY_INVALID);
+        }
+
+        @Test
+        @DisplayName("Tenta confirmar desativação com motivo vazio")
+        void shouldReturn400_whenConfirmingDisableWithEmptyReason() {
+          // Arrange
+          String previewKey = operatingHoursPreviewCache.generateKey(adminId);
+
+          var request = new OperatingHoursDisableConfirmRequestDto(previewKey, "");
+
+          // Act
+          var response =
+              given()
+                  .spec(specification)
+                  .header("Authorization", accessToken)
+                  .body(request)
+                  .when()
+                  .post("/confirm-disable")
+                  .then()
+                  .statusCode(400)
+                  .extract()
+                  .as(ErrorResponseDto.class);
+
+          // Assert
+          String path = "/api/admin/operating-hours/confirm-disable";
+          assertValidationError(response, path, "description", ErrorCode.OPERATING_HOURS_DISABLE_DESCRIPTION_REQUIRED);
+        }
+
+        @Test
+        @DisplayName("Tenta confirmar desativação com motivo muito longo")
+        void shouldReturn400_whenConfirmingDisableWithTooLongReason() {
+          // Arrange
+          String previewKey = operatingHoursPreviewCache.generateKey(adminId);
+          String longDescription = "A".repeat(501);
+
+          var request = new OperatingHoursDisableConfirmRequestDto(previewKey, longDescription);
+
+          // Act
+          var response =
+              given()
+                  .spec(specification)
+                  .header("Authorization", accessToken)
+                  .body(request)
+                  .when()
+                  .post("/confirm-disable")
+                  .then()
+                  .statusCode(400)
+                  .extract()
+                  .as(ErrorResponseDto.class);
+
+          // Assert
+          String path = "/api/admin/operating-hours/confirm-disable";
+          assertValidationError(response, path, "description", ErrorCode.OPERATING_HOURS_DISABLE_DESCRIPTION_INVALID_LENGTH);
+        }
+
+        @Test
+        @DisplayName("Tenta confirmar desativação com motivo muito curto")
+        void shouldReturn400_whenConfirmingDisableWithTooShortReason() {
+          // Arrange
+          String previewKey = operatingHoursPreviewCache.generateKey(adminId);
+          String shortDescription = "AA";
+
+          var request = new OperatingHoursDisableConfirmRequestDto(previewKey, shortDescription);
+
+          // Act
+          var response =
+              given()
+                  .spec(specification)
+                  .header("Authorization", accessToken)
+                  .body(request)
+                  .when()
+                  .post("/confirm-disable")
+                  .then()
+                  .statusCode(400)
+                  .extract()
+                  .as(ErrorResponseDto.class);
+
+          // Assert
+          String path = "/api/admin/operating-hours/confirm-disable";
+          assertValidationError(response, path, "description", ErrorCode.OPERATING_HOURS_DISABLE_DESCRIPTION_INVALID_LENGTH);
+        }
+      }
 
       @Nested
       @DisplayName("Cenários de erro - 403 Forbidden")
-      class ForbiddenScenarios {}
+      class ForbiddenScenarios {
+
+        @Test
+        @DisplayName("Tenta confirmar desativação com preview pertencente a outro admin")
+        void shouldReturn403_whenConfirmingDisableWithPreviewOfAnotherAdmin() {
+          // Arrange
+          User otherAdmin = mockPersistOtherAdminUser();
+          AuthTokensTest otherAdminTokens = mockLogin(otherAdmin.getUsername(), defaultPassword);
+          String anotherAdminAccessToken = "Bearer " + otherAdminTokens.accessToken();
+
+          var operatingHour = mockPersistOperatingHoursAllDays();
+          UUID operatingHourId = operatingHour.getId();
+
+          String previewKey = createPreviewAndGetKey(operatingHourId);
+
+          var request = new OperatingHoursDisableConfirmRequestDto(previewKey, "Desativação temporária");
+
+          // Act
+          var response =
+              given()
+                  .spec(specification)
+                  .header("Authorization", anotherAdminAccessToken)
+                  .body(request)
+                  .when()
+                  .post("/confirm-disable")
+                  .then()
+                  .statusCode(403)
+                  .extract()
+                  .as(ErrorResponseDto.class);
+
+          // Assert
+          String path = "/api/admin/operating-hours/confirm-disable";
+          assertBusinessError(response, 403, path, ErrorCode.PREVIEW_KEY_OWNERSHIP_INVALID);
+        }
+      }
 
       @Nested
       @DisplayName("Cenários de erro - 404 Not Found")
-      class NotFoundScenario {}
+      class NotFoundScenario {
+
+        @Test
+        @DisplayName("Tenta confirmar desativação com preview inexistente")
+        void shouldReturn404_whenConfirmingDisableWithNonExistentPreview() {
+          // Arrange
+          String nonExistentPreviewKey = operatingHoursPreviewCache.generateKey(adminId);
+
+          var request = new OperatingHoursDisableConfirmRequestDto(nonExistentPreviewKey, "Desativação temporária");
+
+          // Act
+          var response =
+              given()
+                  .spec(specification)
+                  .header("Authorization", accessToken)
+                  .body(request)
+                  .when()
+                  .post("/confirm-disable")
+                  .then()
+                  .statusCode(404)
+                  .extract()
+                  .as(ErrorResponseDto.class);
+
+          // Assert
+          String path = "/api/admin/operating-hours/confirm-disable";
+          assertBusinessError(response, 404, path, ErrorCode.PREVIEW_NOT_FOUND);
+        }
+      }
 
       @Nested
       @DisplayName("Cenários de erro - 409 Conflict")
-      class ConflictScenarios {}
+      class ConflictScenarios {
+
+        @Test
+        @DisplayName("Tenta confirmar desativação com preview desatualizado devido a mudanças nos agendamentos")
+        void shouldReturn409_whenConfirmingDisableWithStalePreviewDueToScheduleChanges() {
+          // Arrange
+          var operatingHour = mockPersistOperatingHoursAllDays();
+          UUID operatingHourId = operatingHour.getId();
+
+          String previewKey = createPreviewAndGetKey(operatingHourId);
+          var request = new OperatingHoursDisableConfirmRequestDto(previewKey, "Desativação temporária");
+
+          // Criar um agendamento futuro que tornará o preview desatualizado
+          Modality modality = mockPersistModality("Volei");
+          Court court = mockPersistCourt("Quadra A", modality);
+
+          mockPersistReservationByUser(
+              modality.getId(),
+              court.getId(),
+              nextDayOfWeek(java.time.DayOfWeek.TUESDAY),
+              new TimeInterval(LocalTime.of(14, 0), LocalTime.of(15, 0)),
+              new BigDecimal(85),
+              adminId
+          );
+
+          // Act
+          var response =
+              given()
+                  .spec(specification)
+                  .header("Authorization", accessToken)
+                  .body(request)
+                  .when()
+                  .post("/confirm-disable")
+                  .then()
+                  .statusCode(409)
+                  .extract()
+                  .as(ErrorResponseDto.class);
+
+          // Assert
+          String path = "/api/admin/operating-hours/confirm-disable";
+          assertBusinessError(response, 409, path, ErrorCode.PREVIEW_DATA_STALE);
+        }
+
+        @Test
+        @DisplayName("Tenta confirmar desativação com preview de horário já desativado")
+        void shouldReturn409_whenConfirmingDisableWithPreviewOfAlreadyDisabledOperatingHours() {
+          // Arrange
+          var operatingHour = mockPersistOperatingHours();
+          UUID operatingHourId = operatingHour.getId();
+
+          String previewKey = createPreviewAndGetKey(operatingHourId);
+          var request = new OperatingHoursDisableConfirmRequestDto(previewKey, "Desativação temporária");
+
+          operatingHour.disable();
+          operatingHoursRepository.save(operatingHour);
+
+          // Act
+          var response =
+              given()
+                  .spec(specification)
+                  .header("Authorization", accessToken)
+                  .body(request)
+                  .when()
+                  .post("/confirm-disable")
+                  .then()
+                  .statusCode(409)
+                  .extract()
+                  .as(ErrorResponseDto.class);
+
+          // Assert
+          String path = "/api/admin/operating-hours/confirm-disable";
+          assertBusinessError(response, 409, path, ErrorCode.OPERATING_HOURS_ALREADY_DISABLED);
+        }
+      }
     }
   }
 

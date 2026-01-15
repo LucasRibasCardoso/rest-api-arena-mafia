@@ -1,0 +1,27 @@
+type: object
+description: |
+  DTO para confirmar a desativação de um OperatingHours previamente pré-visualizado.
+  Contém a chave de pré-visualização gerada na etapa de preview (`previewKey`) e uma
+  `description` explicando o motivo da desativação.
+
+required:
+  - previewKey
+  - description
+
+properties:
+  previewKey:
+    type: string
+    format: uuid
+    description: |
+      Chave única de pré-visualização retornada pela operação de preview.
+      Deve ser informada para confirmar a desativação dos horários.
+    example: "operating-hours-disable-preview:960289b9-d32d-4f00-8df7-02f4c04a017c:5a2f25cb-6a58-4920-994d-b9336317eb90"
+
+  description:
+    type: string
+    description: |
+      Descrição curta explicando o motivo da desativação. Obrigatório.
+      Deve conter entre 3 e 500 caracteres.
+    minLength: 3
+    maxLength: 500
+    example: "Encerramento temporário para manutenção da arena entre 08:00 e 01:00."

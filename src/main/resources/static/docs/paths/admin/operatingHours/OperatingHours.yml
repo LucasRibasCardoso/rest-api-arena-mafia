@@ -1,6 +1,6 @@
 get:
   operationId: adminGetAllOperatingHours
-  tags: [ Administração - Gerenciamento de Horários de Funcionamento ]
+  tags: [ "Administração - Gerenciamento de Horários de Funcionamento" ]
   summary: Lista todos os horários de funcionamento
   description: |
     Retorna uma lista contendo todos os horários de funcionamento cadastrados no sistema.
