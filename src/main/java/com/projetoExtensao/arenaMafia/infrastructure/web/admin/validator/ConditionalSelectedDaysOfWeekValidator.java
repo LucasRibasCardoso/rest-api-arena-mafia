@@ -7,17 +7,18 @@ import java.time.LocalDate;
 import java.util.Set;
 
 /**
- * Validador customizado que garante que selectedDaysOfWeek seja null quando
- * startDate é igual a endDate (bloqueio para um único dia).
+ * Validador customizado que garante que selectedDaysOfWeek seja null quando startDate é igual a
+ * endDate (bloqueio para um único dia).
  *
  * <p>Lógica:
+ *
  * <ul>
- *   <li>Se startDate == endDate → selectedDaysOfWeek deve ser null ou vazio</li>
- *   <li>Se startDate != endDate → selectedDaysOfWeek pode ser qualquer valor</li>
+ *   <li>Se startDate == endDate → selectedDaysOfWeek deve ser null ou vazio
+ *   <li>Se startDate != endDate → selectedDaysOfWeek pode ser qualquer valor
  * </ul>
  */
-public class ConditionalSelectedDaysOfWeekValidator implements
-    ConstraintValidator<ValidConditionalSelectedDaysOfWeek, Object> {
+public class ConditionalSelectedDaysOfWeekValidator
+    implements ConstraintValidator<ValidConditionalSelectedDaysOfWeek, Object> {
 
   @Override
   public boolean isValid(Object value, ConstraintValidatorContext context) {
@@ -54,9 +55,7 @@ public class ConditionalSelectedDaysOfWeekValidator implements
     }
   }
 
-  /**
-   * Obtém o valor de um campo usando reflexão
-   */
+  /** Obtém o valor de um campo usando reflexão */
   private <T> T getFieldValue(Object object, String fieldName, Class<T> fieldType)
       throws Exception {
     Field field = object.getClass().getDeclaredField(fieldName);

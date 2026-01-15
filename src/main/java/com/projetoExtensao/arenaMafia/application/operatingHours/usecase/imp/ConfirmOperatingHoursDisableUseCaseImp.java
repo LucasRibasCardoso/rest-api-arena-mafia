@@ -55,7 +55,8 @@ public class ConfirmOperatingHoursDisableUseCaseImp implements ConfirmOperatingH
   @Override
   public void execute(UUID adminId, OperatingHoursDisableConfirmRequestDto request) {
     OperatingHoursDisablePreview preview = getPreviewFromCache(request.previewKey(), adminId);
-    OperatingHours operatingHours = validateOperatingHoursExistsAndActive(preview.operatingHoursId());
+    OperatingHours operatingHours =
+        validateOperatingHoursExistsAndActive(preview.operatingHoursId());
     validatePreviewIsNotStale(preview, operatingHours);
 
     cancelAffectedReservations(preview.affectedReservations(), request.description());
@@ -69,6 +70,7 @@ public class ConfirmOperatingHoursDisableUseCaseImp implements ConfirmOperatingH
 
   /**
    * Buscar o preview no cache
+   *
    * @param previewKey Chave do preview
    * @param adminId ID do admin
    * @return Preview do desativamento do horário de funcionamento
@@ -79,13 +81,16 @@ public class ConfirmOperatingHoursDisableUseCaseImp implements ConfirmOperatingH
 
   /**
    * Buscar o horário de funcionamento e validar se está ativo
+   *
    * @param operatingHoursId Identificador do horário de funcionamento
    * @return Horário de funcionamento
    * @throws OperatingHoursNotFoundException se o horário de funcionamento não for encontrado
-   * @throws OperatingHoursStatusConflictException se o horário de funcionamento já estiver desativado
+   * @throws OperatingHoursStatusConflictException se o horário de funcionamento já estiver
+   *     desativado
    */
   private OperatingHours validateOperatingHoursExistsAndActive(UUID operatingHoursId) {
-    OperatingHours operatingHours = operatingHoursRepositoryPort.findByIdOrElseThrow(operatingHoursId);
+    OperatingHours operatingHours =
+        operatingHoursRepositoryPort.findByIdOrElseThrow(operatingHoursId);
     if (!operatingHours.isActive()) {
       throw new OperatingHoursStatusConflictException(ErrorCode.OPERATING_HOURS_ALREADY_DISABLED);
     }
@@ -94,21 +99,20 @@ public class ConfirmOperatingHoursDisableUseCaseImp implements ConfirmOperatingH
 
   /**
    * Validar se o preview não está desatualizado
+   *
    * @param preview Preview de desativação do horário de funcionamento
    * @param operatingHours Horário de funcionamento
    * @throws PreviewStaleException se o preview estiver desatualizado
    */
-  private void validatePreviewIsNotStale(OperatingHoursDisablePreview preview, OperatingHours operatingHours) {
+  private void validatePreviewIsNotStale(
+      OperatingHoursDisablePreview preview, OperatingHours operatingHours) {
     List<ScheduleEntry> currentSchedules =
-            scheduleEntryRepositoryPort.findAllActiveSchedulesFromTodayByDaysOfWeekAndTimeInterval(
-                    operatingHours.getDaysOfWeek(),
-                    operatingHours.getTimeInterval()
-            );
+        scheduleEntryRepositoryPort.findAllActiveSchedulesFromTodayByDaysOfWeekAndTimeInterval(
+            operatingHours.getDaysOfWeek(), operatingHours.getTimeInterval());
 
     // Extrair os IDs dos horários de funcionamento atuais
-    Set<UUID> currentIds = currentSchedules.stream()
-            .map(ScheduleEntry::getId)
-            .collect(Collectors.toSet());
+    Set<UUID> currentIds =
+        currentSchedules.stream().map(ScheduleEntry::getId).collect(Collectors.toSet());
 
     // Extrair os IDs dos horários de funcionamento do preview
     Set<UUID> previewIds =
@@ -130,21 +134,24 @@ public class ConfirmOperatingHoursDisableUseCaseImp implements ConfirmOperatingH
    * @param reservations As reservas afetadas.
    * @param description A descrição da desativação.
    */
-  private void cancelAffectedReservations(List<ReservationDetail> reservations, String description) {
+  private void cancelAffectedReservations(
+      List<ReservationDetail> reservations, String description) {
     List<UUID> reservationIdsToCancel =
-            reservations.stream()
-                    .filter(detail -> !detail.isInProgress())
-                    .map(ReservationDetail::reservationId)
-                    .toList();
+        reservations.stream()
+            .filter(detail -> !detail.isInProgress())
+            .map(ReservationDetail::reservationId)
+            .toList();
 
     if (reservationIdsToCancel.isEmpty()) {
       return;
     }
 
-    List<Reservation> reservationsToCancel = reservationRepositoryPort.findAllByIds(reservationIdsToCancel);
+    List<Reservation> reservationsToCancel =
+        reservationRepositoryPort.findAllByIds(reservationIdsToCancel);
 
     String cancellationReason = String.format("Quadra desativada: %s", description);
-    reservationBatchCancellationService.cancelReservationsInBatch(reservationsToCancel, cancellationReason);
+    reservationBatchCancellationService.cancelReservationsInBatch(
+        reservationsToCancel, cancellationReason);
   }
 
   /**
@@ -154,9 +161,7 @@ public class ConfirmOperatingHoursDisableUseCaseImp implements ConfirmOperatingH
    */
   private void deleteAffectedBlockedTimes(List<BlockedTimeDetail> blockedTimes) {
     List<UUID> blockedTimeIdsToDelete =
-            blockedTimes.stream()
-                    .map(BlockedTimeDetail::blockedTimeId)
-                    .toList();
+        blockedTimes.stream().map(BlockedTimeDetail::blockedTimeId).toList();
 
     if (blockedTimeIdsToDelete.isEmpty()) {
       return;

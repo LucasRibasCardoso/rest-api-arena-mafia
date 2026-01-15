@@ -102,7 +102,8 @@ public interface ScheduleEntryJpaRepository extends JpaRepository<ScheduleEntryE
    * @param timeIntervalEndTime Horário final do escopo a ser verificado
    * @return true se existir conflito, false caso contrário
    */
-  @Query("""
+  @Query(
+      """
   SELECT s FROM ScheduleEntryEntity s
   WHERE s.dateTimeSlot.date >= CURRENT_DATE
   AND (TYPE(s) = BlockedTimeEntity

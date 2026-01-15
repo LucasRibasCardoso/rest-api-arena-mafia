@@ -65,8 +65,7 @@ public class UserController {
       @AuthenticationPrincipal UserDetailsAdapter authenticatedUser,
       @Valid @RequestBody UpdateProfileRequestDto requestDTO) {
 
-    User updatedUser =
-        updateProfileUseCase.execute(authenticatedUser.user().getId(), requestDTO);
+    User updatedUser = updateProfileUseCase.execute(authenticatedUser.user().getId(), requestDTO);
     return ResponseEntity.ok(buildUserProfileResponseDto(updatedUser));
   }
 

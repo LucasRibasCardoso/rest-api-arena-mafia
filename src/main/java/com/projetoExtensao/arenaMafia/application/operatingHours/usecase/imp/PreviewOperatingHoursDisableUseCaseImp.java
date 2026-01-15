@@ -38,19 +38,20 @@ public class PreviewOperatingHoursDisableUseCaseImp implements PreviewOperatingH
     this.operatingHoursPreviewCachePort = operatingHoursPreviewCachePort;
   }
 
-
   @Override
   public OperatingHoursDisablePreview execute(UUID adminId, UUID operatingHoursId) {
     OperatingHours operatingHours = validateCourtExistsAndIsActive(operatingHoursId);
 
     List<ScheduleEntry> affectedSchedules = fetchAffectedSchedules(operatingHours);
-    ScheduleEntriesEnrichedResult enrichedAffectedSchedules = enrichScheduleEntries(affectedSchedules);
+    ScheduleEntriesEnrichedResult enrichedAffectedSchedules =
+        enrichScheduleEntries(affectedSchedules);
 
     return buildAndSaveCachePreview(enrichedAffectedSchedules, adminId, operatingHours);
   }
 
   /**
    * Valida se o horário de funcionamento existe e está ativo.
+   *
    * @param operatingHoursId ID do horário de funcionamento.
    * @return O horário de funcionamento validado.
    */
@@ -72,9 +73,7 @@ public class PreviewOperatingHoursDisableUseCaseImp implements PreviewOperatingH
    */
   private List<ScheduleEntry> fetchAffectedSchedules(OperatingHours operatingHours) {
     return scheduleEntryRepository.findAllActiveSchedulesFromTodayByDaysOfWeekAndTimeInterval(
-            operatingHours.getDaysOfWeek(),
-            operatingHours.getTimeInterval()
-    );
+        operatingHours.getDaysOfWeek(), operatingHours.getTimeInterval());
   }
 
   /**
@@ -83,7 +82,8 @@ public class PreviewOperatingHoursDisableUseCaseImp implements PreviewOperatingH
    * @param affectedSchedules Lista de agendamentos afetados.
    * @return Resultado dos agendamentos enriquecidos.
    */
-  private ScheduleEntriesEnrichedResult enrichScheduleEntries(List<ScheduleEntry> affectedSchedules) {
+  private ScheduleEntriesEnrichedResult enrichScheduleEntries(
+      List<ScheduleEntry> affectedSchedules) {
     return scheduleEntryEnrichmentService.enrichScheduleEntries(affectedSchedules);
   }
 
@@ -96,25 +96,24 @@ public class PreviewOperatingHoursDisableUseCaseImp implements PreviewOperatingH
    * @return Preview de desativação do horário de funcionamento.
    */
   private OperatingHoursDisablePreview buildAndSaveCachePreview(
-          ScheduleEntriesEnrichedResult enrichedAffectedSchedulesResult,
-          UUID adminId,
-          OperatingHours operatingHours) {
+      ScheduleEntriesEnrichedResult enrichedAffectedSchedulesResult,
+      UUID adminId,
+      OperatingHours operatingHours) {
 
     List<ReservationDetail> reservations = enrichedAffectedSchedulesResult.enrichedReservations();
     List<BlockedTimeDetail> blockedTimes = enrichedAffectedSchedulesResult.enrichedBlockedTimes();
 
-    List<ReservationDetail> inProgressReservations = reservations.stream()
-            .filter(ReservationDetail::isInProgress)
-            .toList();
+    List<ReservationDetail> inProgressReservations =
+        reservations.stream().filter(ReservationDetail::isInProgress).toList();
 
-    List<ReservationDetail> reservationsToCancel = reservations.stream()
-            .filter(reservation -> !reservation.isInProgress())
-            .toList();
+    List<ReservationDetail> reservationsToCancel =
+        reservations.stream().filter(reservation -> !reservation.isInProgress()).toList();
 
     int usersAffected = countDistinctUsers(reservations);
     String previewKey = operatingHoursPreviewCachePort.generateKey(adminId);
 
-    OperatingHoursDisablePreview preview = new OperatingHoursDisablePreview(
+    OperatingHoursDisablePreview preview =
+        new OperatingHoursDisablePreview(
             previewKey,
             operatingHours.getId(),
             usersAffected,
@@ -122,8 +121,7 @@ public class PreviewOperatingHoursDisableUseCaseImp implements PreviewOperatingH
             reservationsToCancel.size(),
             blockedTimes,
             reservationsToCancel,
-            inProgressReservations
-    );
+            inProgressReservations);
 
     operatingHoursPreviewCachePort.save(previewKey, preview);
     return preview;
@@ -131,13 +129,11 @@ public class PreviewOperatingHoursDisableUseCaseImp implements PreviewOperatingH
 
   /**
    * Conta o número de usuários distintos em uma lista de reservas.
+   *
    * @param reservations Lista de detalhes de reservas.
    * @return O número de usuários distintos.
    */
   private int countDistinctUsers(List<ReservationDetail> reservations) {
-    return (int) reservations.stream()
-            .map(ReservationDetail::userId)
-            .distinct()
-            .count();
+    return (int) reservations.stream().map(ReservationDetail::userId).distinct().count();
   }
 }

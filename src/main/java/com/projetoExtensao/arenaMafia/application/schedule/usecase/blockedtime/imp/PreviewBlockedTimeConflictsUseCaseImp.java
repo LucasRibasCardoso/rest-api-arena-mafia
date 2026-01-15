@@ -44,23 +44,26 @@ public class PreviewBlockedTimeConflictsUseCaseImp implements PreviewBlockedTime
   }
 
   @Override
-  public BlockedTimeConflictsPreview execute(BlockedTimeConflictsPreviewRequestDto request, UUID adminId) {
+  public BlockedTimeConflictsPreview execute(
+      BlockedTimeConflictsPreviewRequestDto request, UUID adminId) {
     // Valida se todas as quadras existem e estão ativas
     courtRepository.validateAllExistAndActive(request.courtIds());
 
     // Calcula os dias semanais efetivos considerando as ocorrências e o intervalo de horários
-    Set<DayOfWeek> effectiveDaysOfWeek = dateCalculationService.resolveEffectiveDaysOfWeekWithOccurrencesValidation(
+    Set<DayOfWeek> effectiveDaysOfWeek =
+        dateCalculationService.resolveEffectiveDaysOfWeekWithOccurrencesValidation(
             request.selectedDaysOfWeek(),
             request.startDate(),
             request.endDate(),
             request.courtIds().size());
-    TimeInterval searchInterval = dateCalculationService.calculateSearchInterval(
-            request.isFullDay(),
-            request.timeInterval(),
-            effectiveDaysOfWeek);
+    TimeInterval searchInterval =
+        dateCalculationService.calculateSearchInterval(
+            request.isFullDay(), request.timeInterval(), effectiveDaysOfWeek);
 
-    // Busca os agendamentos conflitantes com o bloqueio proposto no intervalo de datas e horários especificados
-    List<ScheduleEntry> conflicts = scheduleEntryRepository.findAllActiveSchedulesConflicts(
+    // Busca os agendamentos conflitantes com o bloqueio proposto no intervalo de datas e horários
+    // especificados
+    List<ScheduleEntry> conflicts =
+        scheduleEntryRepository.findAllActiveSchedulesConflicts(
             request.courtIds(),
             request.startDate(),
             request.endDate(),
@@ -68,7 +71,8 @@ public class PreviewBlockedTimeConflictsUseCaseImp implements PreviewBlockedTime
             effectiveDaysOfWeek);
 
     // Enriquecer os agendamentos conflitantes com detalhes adicionais
-    ScheduleEntriesEnrichedResult enrichedConflicts = scheduleEntryEnrichmentService.enrichScheduleEntries(conflicts);
+    ScheduleEntriesEnrichedResult enrichedConflicts =
+        scheduleEntryEnrichmentService.enrichScheduleEntries(conflicts);
 
     // Constrói e armazena em cache a pré-visualização dos conflitos de bloqueio de horário
     return buildAndSaveCachePreview(enrichedConflicts, request, adminId);
@@ -76,27 +80,25 @@ public class PreviewBlockedTimeConflictsUseCaseImp implements PreviewBlockedTime
 
   /**
    * Constrói e armazena em cache a pré-visualização dos conflitos de bloqueio de horário.
+   *
    * @param enrichedConflictsResult Resultado do enriquecimento dos agendamentos conflitantes.
    * @param request Detalhes da solicitação de pré-visualização.
    * @param adminId ID do administrador que está solicitando a pré-visualização.
    * @return A pré-visualização dos conflitos de bloqueio de horário.
    */
   private BlockedTimeConflictsPreview buildAndSaveCachePreview(
-          ScheduleEntriesEnrichedResult enrichedConflictsResult,
-          BlockedTimeConflictsPreviewRequestDto
-          request, UUID adminId
-  ) {
+      ScheduleEntriesEnrichedResult enrichedConflictsResult,
+      BlockedTimeConflictsPreviewRequestDto request,
+      UUID adminId) {
 
     List<ReservationDetail> reservations = enrichedConflictsResult.enrichedReservations();
     List<BlockedTimeDetail> blockedTimes = enrichedConflictsResult.enrichedBlockedTimes();
 
-    List<ReservationDetail> inProgressReservations = reservations.stream()
-            .filter(ReservationDetail::isInProgress)
-            .toList();
+    List<ReservationDetail> inProgressReservations =
+        reservations.stream().filter(ReservationDetail::isInProgress).toList();
 
-    List<ReservationDetail> reservationsToCancel = reservations.stream()
-            .filter(reservation -> !reservation.isInProgress())
-            .toList();
+    List<ReservationDetail> reservationsToCancel =
+        reservations.stream().filter(reservation -> !reservation.isInProgress()).toList();
 
     int usersAffected = countDistinctUsers(reservationsToCancel);
     String previewKey = blockedTimePreviewCachePort.generateKey(adminId);
@@ -118,13 +120,11 @@ public class PreviewBlockedTimeConflictsUseCaseImp implements PreviewBlockedTime
 
   /**
    * Conta o número de usuários distintos em uma lista de reservas.
+   *
    * @param reservations Lista de detalhes de reservas.
    * @return O número de usuários distintos.
    */
   private int countDistinctUsers(List<ReservationDetail> reservations) {
-    return (int) reservations.stream()
-        .map(ReservationDetail::userId)
-        .distinct()
-        .count();
+    return (int) reservations.stream().map(ReservationDetail::userId).distinct().count();
   }
 }

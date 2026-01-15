@@ -31,9 +31,9 @@ public class ReservationBatchCancellationService {
   /**
    * Cancela reservas em lote e lança exception se qualquer uma falhar.
    *
-   * <p>Garante atomicidade: ou todas as reservas são canceladas com sucesso,
-   * ou nenhuma é cancelada (rollback). As notificações só são enviadas após
-   * confirmar que todas as operações foram bem-sucedidas.
+   * <p>Garante atomicidade: ou todas as reservas são canceladas com sucesso, ou nenhuma é cancelada
+   * (rollback). As notificações só são enviadas após confirmar que todas as operações foram
+   * bem-sucedidas.
    *
    * @param reservations Lista de reservas a serem canceladas
    * @param reason Motivo do cancelamento
@@ -55,8 +55,7 @@ public class ReservationBatchCancellationService {
         reservationRepository.save(reservation);
         createCancellationEvent(reservation, usersMap, reason).ifPresent(pendingEvents::add);
       }
-    }
-    catch (Exception e) {
+    } catch (Exception e) {
       throw new BatchCancellationFailedException();
     }
 
@@ -89,11 +88,12 @@ public class ReservationBatchCancellationService {
    * @return Optional contendo o evento de cancelamento, ou vazio se usuário não encontrado
    */
   private Optional<OnReservationCancelledByAdminEvent> createCancellationEvent(
-          Reservation reservation,
-          Map<UUID, User> usersMap,
-          String reason) {
+      Reservation reservation, Map<UUID, User> usersMap, String reason) {
 
     return Optional.ofNullable(usersMap.get(reservation.getUserId()))
-        .map(user -> new OnReservationCancelledByAdminEvent(reservation, user.getUsername(), user.getPhone(), reason));
+        .map(
+            user ->
+                new OnReservationCancelledByAdminEvent(
+                    reservation, user.getUsername(), user.getPhone(), reason));
   }
 }

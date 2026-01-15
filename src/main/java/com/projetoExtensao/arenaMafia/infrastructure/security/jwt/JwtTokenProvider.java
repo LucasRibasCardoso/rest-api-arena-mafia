@@ -23,12 +23,16 @@ import org.springframework.stereotype.Component;
 public class JwtTokenProvider {
 
   private final CustomUserDetailsService customUserDetailsService;
+
   @Value("${spring.security.jwt.secret-key}")
   private String secretKey;
+
   @Value("${spring.security.jwt.access-token-expiration-ms}")
   private Long expirationMs;
+
   @Value("${spring.security.jwt.issuer}")
   private String issuerUrl;
+
   private Algorithm algorithm;
 
   public JwtTokenProvider(CustomUserDetailsService customUserDetailsService) {

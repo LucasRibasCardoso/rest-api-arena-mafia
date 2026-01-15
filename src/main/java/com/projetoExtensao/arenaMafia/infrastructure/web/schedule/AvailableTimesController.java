@@ -30,8 +30,7 @@ public class AvailableTimesController {
   @GetMapping
   @CustomRateLimiter(limiterName = "globalLimiter")
   public ResponseEntity<List<AvailableSlotResponseDto>> getAvailableTimes(
-      @RequestParam("date") LocalDate date,
-      @RequestParam("modalityId") UUID modalityId) {
+      @RequestParam("date") LocalDate date, @RequestParam("modalityId") UUID modalityId) {
 
     List<AvailableSlotResponseDto> availableSlots =
         findAllAvailableTimesUseCase.execute(modalityId, date).stream()

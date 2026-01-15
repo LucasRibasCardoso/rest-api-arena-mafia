@@ -45,10 +45,7 @@ public class BlockedTime extends ScheduleEntry {
    * @return uma nova instância de BlockedTime
    */
   public static BlockedTime createSpecificTime(
-      UUID courtId,
-      DateTimeSlot dateTimeSlot,
-      String description,
-      UUID blockedByAdminId) {
+      UUID courtId, DateTimeSlot dateTimeSlot, String description, UUID blockedByAdminId) {
 
     UUID id = UUID.randomUUID();
     Instant createdAt = Instant.now();
@@ -73,10 +70,7 @@ public class BlockedTime extends ScheduleEntry {
    * @return uma nova instância de BlockedTime
    */
   public static BlockedTime createFullDay(
-      UUID courtId,
-      DateTimeSlot dateTimeSlot,
-      String description,
-      UUID blockedByAdminId) {
+      UUID courtId, DateTimeSlot dateTimeSlot, String description, UUID blockedByAdminId) {
 
     UUID id = UUID.randomUUID();
     Instant createdAt = Instant.now();

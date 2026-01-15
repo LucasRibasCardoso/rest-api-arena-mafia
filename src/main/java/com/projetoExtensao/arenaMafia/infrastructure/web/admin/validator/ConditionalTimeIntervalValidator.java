@@ -6,9 +6,9 @@ import jakarta.validation.ConstraintValidatorContext;
 import java.lang.reflect.Field;
 
 /**
- * Validador customizado que garante a consistência entre isFullDay e timeInterval:
- * - Se isFullDay = false → timeInterval é obrigatório
- * - Se isFullDay = true → timeInterval deve ser null (será calculado baseado nos OperatingHours)
+ * Validador customizado que garante a consistência entre isFullDay e timeInterval: - Se isFullDay =
+ * false → timeInterval é obrigatório - Se isFullDay = true → timeInterval deve ser null (será
+ * calculado baseado nos OperatingHours)
  */
 public class ConditionalTimeIntervalValidator
     implements ConstraintValidator<ValidConditionalTimeInterval, Object> {
@@ -57,9 +57,7 @@ public class ConditionalTimeIntervalValidator
     }
   }
 
-  /**
-   * Obtém o valor de um campo usando reflexão
-   */
+  /** Obtém o valor de um campo usando reflexão */
   private <T> T getFieldValue(Object object, String fieldName, Class<T> fieldType)
       throws Exception {
     Field field = object.getClass().getDeclaredField(fieldName);
@@ -67,4 +65,3 @@ public class ConditionalTimeIntervalValidator
     return fieldType.cast(field.get(object));
   }
 }
-

@@ -23,6 +23,7 @@ public class AuthAdapter implements AuthPort {
   private final JwtTokenProvider jwtTokenProvider;
   private final AuthenticationManager authenticationManager;
   private final RefreshTokenRepositoryPort refreshTokenRepositoryPort;
+
   @Value("${spring.security.jwt.refresh-token-expiration-days}")
   private Long refreshTokenExpirationDays;
 

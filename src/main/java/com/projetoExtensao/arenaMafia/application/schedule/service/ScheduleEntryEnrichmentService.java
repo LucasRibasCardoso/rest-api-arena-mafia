@@ -42,7 +42,8 @@ public class ScheduleEntryEnrichmentService {
    * @param scheduleEntries lista de entradas de agendamento a serem enriquecidas
    * @return listas de entradas enriquecidas
    */
-  public ScheduleEntriesEnrichedResult enrichScheduleEntries(List<? extends ScheduleEntry> scheduleEntries) {
+  public ScheduleEntriesEnrichedResult enrichScheduleEntries(
+      List<? extends ScheduleEntry> scheduleEntries) {
     if (scheduleEntries == null || scheduleEntries.isEmpty()) {
       return new ScheduleEntriesEnrichedResult(List.of(), List.of(), List.of());
     }
@@ -60,22 +61,26 @@ public class ScheduleEntryEnrichmentService {
     Map<UUID, Modality> modalityMap = loadModalities(reservations);
 
     // Enriquecer cada entrada usando polimorfismo
-    List<ScheduleDetail> scheduleDetails = scheduleEntries.stream()
-        .map(entry -> enrichSingleEntry(entry, userMap, courtMap, modalityMap))
-        .toList();
+    List<ScheduleDetail> scheduleDetails =
+        scheduleEntries.stream()
+            .map(entry -> enrichSingleEntry(entry, userMap, courtMap, modalityMap))
+            .toList();
 
     // Separar os detalhes enriquecidos em listas específicas
-    List<ReservationDetail> reservationDetails = scheduleDetails.stream()
-        .filter(detail -> detail instanceof ReservationDetail)
-        .map(detail -> (ReservationDetail) detail)
-        .toList();
+    List<ReservationDetail> reservationDetails =
+        scheduleDetails.stream()
+            .filter(detail -> detail instanceof ReservationDetail)
+            .map(detail -> (ReservationDetail) detail)
+            .toList();
 
-    List<BlockedTimeDetail> blockedTimeDetails = scheduleDetails.stream()
-        .filter(detail -> detail instanceof BlockedTimeDetail)
-        .map(detail -> (BlockedTimeDetail) detail)
-        .toList();
+    List<BlockedTimeDetail> blockedTimeDetails =
+        scheduleDetails.stream()
+            .filter(detail -> detail instanceof BlockedTimeDetail)
+            .map(detail -> (BlockedTimeDetail) detail)
+            .toList();
 
-    return new ScheduleEntriesEnrichedResult(scheduleDetails, reservationDetails, blockedTimeDetails);
+    return new ScheduleEntriesEnrichedResult(
+        scheduleDetails, reservationDetails, blockedTimeDetails);
   }
 
   /**
@@ -94,7 +99,8 @@ public class ScheduleEntryEnrichmentService {
       Map<UUID, Modality> modalityMap) {
 
     return switch (entry) {
-      case Reservation reservation -> enrichReservation(reservation, userMap, courtMap, modalityMap);
+      case Reservation reservation ->
+          enrichReservation(reservation, userMap, courtMap, modalityMap);
       case BlockedTime blockedTime -> enrichBlockedTime(blockedTime, courtMap);
       default ->
           throw new IllegalStateException(
@@ -127,10 +133,7 @@ public class ScheduleEntryEnrichmentService {
         reservation.getRecurringReservationId());
   }
 
-  private BlockedTimeDetail enrichBlockedTime(
-          BlockedTime blockedTime,
-          Map<UUID, Court> courtMap
-  ) {
+  private BlockedTimeDetail enrichBlockedTime(BlockedTime blockedTime, Map<UUID, Court> courtMap) {
 
     Court court = courtMap.get(blockedTime.getCourtId());
 
@@ -151,10 +154,10 @@ public class ScheduleEntryEnrichmentService {
     }
 
     Set<UUID> userIds =
-            reservations.stream().map(Reservation::getUserId).collect(Collectors.toSet());
+        reservations.stream().map(Reservation::getUserId).collect(Collectors.toSet());
 
     return userRepository.findAllByIds(userIds).stream()
-            .collect(Collectors.toMap(User::getId, Function.identity()));
+        .collect(Collectors.toMap(User::getId, Function.identity()));
   }
 
   private Map<UUID, Court> loadCourts(List<? extends ScheduleEntry> entries) {
@@ -163,10 +166,10 @@ public class ScheduleEntryEnrichmentService {
     }
 
     Set<UUID> courtIds =
-            entries.stream().map(ScheduleEntry::getCourtId).collect(Collectors.toSet());
+        entries.stream().map(ScheduleEntry::getCourtId).collect(Collectors.toSet());
 
     return courtRepository.findAllActiveByIds(courtIds).stream()
-            .collect(Collectors.toMap(Court::getId, Function.identity()));
+        .collect(Collectors.toMap(Court::getId, Function.identity()));
   }
 
   private Map<UUID, Modality> loadModalities(List<Reservation> reservations) {
@@ -175,9 +178,9 @@ public class ScheduleEntryEnrichmentService {
     }
 
     Set<UUID> modalityIds =
-            reservations.stream().map(Reservation::getModalityId).collect(Collectors.toSet());
+        reservations.stream().map(Reservation::getModalityId).collect(Collectors.toSet());
 
     return modalityRepository.findAllByIds(modalityIds).stream()
-            .collect(Collectors.toMap(Modality::getId, Function.identity()));
+        .collect(Collectors.toMap(Modality::getId, Function.identity()));
   }
 }

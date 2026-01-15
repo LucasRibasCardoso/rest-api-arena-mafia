@@ -83,7 +83,8 @@ public class CreateReservationUseCaseImp implements CreateReservationUseCase {
 
     // Calcula o preço da reserva
     BigDecimal price = calculatePrice(request);
-    Reservation reservation = saveReservation(request.modalityId(), request.courtId(), userId, price, dateTimeSlot);
+    Reservation reservation =
+        saveReservation(request.modalityId(), request.courtId(), userId, price, dateTimeSlot);
 
     // Envia notificação de confirmação de reserva de forma assíncrona
     publishConfirmationEvent(user, reservation);

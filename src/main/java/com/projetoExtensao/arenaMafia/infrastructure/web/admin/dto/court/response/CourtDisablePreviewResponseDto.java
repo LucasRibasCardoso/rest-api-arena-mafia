@@ -6,13 +6,12 @@ import java.util.List;
 import java.util.UUID;
 
 public record CourtDisablePreviewResponseDto(
-        String previewKey,
-        UUID courtId,
-        String courtName,
-        int usersAffectedCount,
-        int blockedTimesAffectedCount,
-        int reservationsAffectedCount,
-        List<BlockedTimeDetailResponseDto> affectedBlockedTimes,
-        List<ReservationDetailResponseDto> affectedReservations,
-        List<ReservationDetailResponseDto> inProgressReservations
-) {}
+    String previewKey,
+    UUID courtId,
+    String courtName,
+    int usersAffectedCount,
+    int blockedTimesAffectedCount,
+    int reservationsAffectedCount,
+    List<BlockedTimeDetailResponseDto> affectedBlockedTimes,
+    List<ReservationDetailResponseDto> affectedReservations,
+    List<ReservationDetailResponseDto> inProgressReservations) {}

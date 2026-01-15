@@ -9,7 +9,8 @@ import com.projetoExtensao.arenaMafia.infrastructure.web.schedule.dto.response.s
 import org.springframework.stereotype.Component;
 
 @Component
-public class ReservationResponseMapper implements ScheduleEntryMapperStrategy<Reservation, ReservationDetail> {
+public class ReservationResponseMapper
+    implements ScheduleEntryMapperStrategy<Reservation, ReservationDetail> {
 
   @Override
   public Class<Reservation> getSupportedType() {
@@ -24,23 +25,23 @@ public class ReservationResponseMapper implements ScheduleEntryMapperStrategy<Re
   @Override
   public ReservationResponseDto toDto(Reservation reservation) {
     TimeIntervalDto timeIntervalDto =
-            new TimeIntervalDto(
-                    reservation.getDateTimeSlot().timeInterval().startTime(),
-                    reservation.getDateTimeSlot().timeInterval().endTime());
+        new TimeIntervalDto(
+            reservation.getDateTimeSlot().timeInterval().startTime(),
+            reservation.getDateTimeSlot().timeInterval().endTime());
 
     return new ReservationResponseDto(
-            reservation.getId(),
-            ScheduleEntryType.RESERVATION,
-            reservation.getCourtId(),
-            reservation.getDateTimeSlot().date(),
-            timeIntervalDto,
-            reservation.getCreatedAt(),
-            reservation.getUserId(),
-            reservation.getModalityId(),
-            reservation.getScheduledByAdminId(),
-            reservation.getPrice(),
-            reservation.getStatus(),
-            reservation.getRecurringReservationId());
+        reservation.getId(),
+        ScheduleEntryType.RESERVATION,
+        reservation.getCourtId(),
+        reservation.getDateTimeSlot().date(),
+        timeIntervalDto,
+        reservation.getCreatedAt(),
+        reservation.getUserId(),
+        reservation.getModalityId(),
+        reservation.getScheduledByAdminId(),
+        reservation.getPrice(),
+        reservation.getStatus(),
+        reservation.getRecurringReservationId());
   }
 
   @Override

@@ -24,6 +24,7 @@ public record ReservationDetail(
 
   /**
    * Verifica se a reserva está em andamento no momento atual.
+   *
    * @return true se a reserva estiver em andamento, false caso contrário.
    */
   public boolean isInProgress() {

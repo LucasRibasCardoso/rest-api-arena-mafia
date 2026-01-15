@@ -28,7 +28,8 @@ public class AgendaMapper {
       case ScheduleEntryAgendaItem scheduleEntry -> mapScheduleEntry(scheduleEntry.scheduleEntry());
       case AvailableSlotAgendaItem availableSlot -> mapAvailableSlot(availableSlot);
       case GroupedAvailableSlotAgendaItem groupedSlot -> mapGroupedAvailableSlot(groupedSlot);
-      case GroupedBlockedTimeAgendaItem groupedBlockedTime -> mapGroupedBlockedTime(groupedBlockedTime);
+      case GroupedBlockedTimeAgendaItem groupedBlockedTime ->
+          mapGroupedBlockedTime(groupedBlockedTime);
     };
   }
 
@@ -55,16 +56,15 @@ public class AgendaMapper {
    * @return DTO com tipo RESERVED
    */
   private AgendaSlotResponseDto mapReservation(Reservation reservation) {
-    TimeIntervalDto timeInterval =
-            toTimeIntervalDto(reservation.getDateTimeSlot().timeInterval());
+    TimeIntervalDto timeInterval = toTimeIntervalDto(reservation.getDateTimeSlot().timeInterval());
 
     return new AgendaSlotResponseDto(
-            reservation.getCourtId(),
-            timeInterval,
-            AgendaSlotType.RESERVED,
-            null, // availableModalityIds
-            null // description
-    );
+        reservation.getCourtId(),
+        timeInterval,
+        AgendaSlotType.RESERVED,
+        null, // availableModalityIds
+        null // description
+        );
   }
 
   /**
@@ -77,13 +77,12 @@ public class AgendaMapper {
     TimeIntervalDto timeInterval = toTimeIntervalDto(blockedTime.getDateTimeSlot().timeInterval());
 
     return new AgendaSlotResponseDto(
-            blockedTime.getCourtId(),
-            timeInterval,
-            AgendaSlotType.BLOCKED_TIME,
-            null, // availableModalityIds
-            blockedTime.getDescription());
+        blockedTime.getCourtId(),
+        timeInterval,
+        AgendaSlotType.BLOCKED_TIME,
+        null, // availableModalityIds
+        blockedTime.getDescription());
   }
-
 
   /**
    * Mapeia um AvailableSlotAgendaItem (horário disponível individual) para DTO.
@@ -93,15 +92,15 @@ public class AgendaMapper {
    */
   private AgendaSlotResponseDto mapAvailableSlot(AvailableSlotAgendaItem availableSlotAgendaItem) {
     TimeIntervalDto timeInterval =
-            toTimeIntervalDto(availableSlotAgendaItem.availableSlot().timeInterval());
+        toTimeIntervalDto(availableSlotAgendaItem.availableSlot().timeInterval());
 
     return new AgendaSlotResponseDto(
-            availableSlotAgendaItem.availableSlot().courtId(),
-            timeInterval,
-            AgendaSlotType.AVAILABLE,
-            null, // availableModalityIds
-            null // description
-    );
+        availableSlotAgendaItem.availableSlot().courtId(),
+        timeInterval,
+        AgendaSlotType.AVAILABLE,
+        null, // availableModalityIds
+        null // description
+        );
   }
 
   /**
@@ -110,37 +109,39 @@ public class AgendaMapper {
    * @param groupedSlot slots agrupados por modalidade
    * @return DTO com tipo AVAILABLE e IDs das modalidades disponíveis
    */
-  private AgendaSlotResponseDto mapGroupedAvailableSlot(GroupedAvailableSlotAgendaItem groupedSlot) {
+  private AgendaSlotResponseDto mapGroupedAvailableSlot(
+      GroupedAvailableSlotAgendaItem groupedSlot) {
     TimeIntervalDto timeInterval = toTimeIntervalDto(groupedSlot.timeInterval());
 
     return new AgendaSlotResponseDto(
-            null, // courtId (agrupado, sem quadra específica)
-            timeInterval,
-            AgendaSlotType.AVAILABLE,
-            groupedSlot.availableModalityIds(),
-            null // description
-    );
+        null, // courtId (agrupado, sem quadra específica)
+        timeInterval,
+        AgendaSlotType.AVAILABLE,
+        groupedSlot.availableModalityIds(),
+        null // description
+        );
   }
 
   /**
-   * Mapeia um GroupedBlockedTimeAgendaItem (bloqueios agrupados pelo mesmo horário e descrição) para DTO.
+   * Mapeia um GroupedBlockedTimeAgendaItem (bloqueios agrupados pelo mesmo horário e descrição)
+   * para DTO.
    *
-   * <p>Quando múltiplas quadras são bloqueadas no mesmo horário com a mesma descrição,
-   * este metodo agrupa os bloqueios em um único item sem especificar a quadra.
+   * <p>Quando múltiplas quadras são bloqueadas no mesmo horário com a mesma descrição, este metodo
+   * agrupa os bloqueios em um único item sem especificar a quadra.
    *
    * @param groupedBlockedTime bloqueios agrupados
    * @return DTO com tipo BLOCKED_TIME, sem courtId (agrupado) e com descrição
    */
-  private AgendaSlotResponseDto mapGroupedBlockedTime(GroupedBlockedTimeAgendaItem groupedBlockedTime) {
+  private AgendaSlotResponseDto mapGroupedBlockedTime(
+      GroupedBlockedTimeAgendaItem groupedBlockedTime) {
     TimeIntervalDto timeInterval = toTimeIntervalDto(groupedBlockedTime.timeInterval());
 
     return new AgendaSlotResponseDto(
-            null, // courtId (agrupado, múltiplas quadras bloqueadas)
-            timeInterval,
-            AgendaSlotType.BLOCKED_TIME,
-            null, // availableModalityIds
-            groupedBlockedTime.description()
-    );
+        null, // courtId (agrupado, múltiplas quadras bloqueadas)
+        timeInterval,
+        AgendaSlotType.BLOCKED_TIME,
+        null, // availableModalityIds
+        groupedBlockedTime.description());
   }
 
   /**

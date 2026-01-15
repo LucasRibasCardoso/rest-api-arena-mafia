@@ -53,7 +53,8 @@ public class ConfirmCourtDisableUseCaseImp implements ConfirmCourtDisableUseCase
   }
 
   public void execute(UUID adminId, CourtDisableConfirmRequestDto request) {
-    CourtDisablePreview preview = courtDisablePreviewCachePort.getPreviewOrElseThrow(request.previewKey(), adminId);
+    CourtDisablePreview preview =
+        courtDisablePreviewCachePort.getPreviewOrElseThrow(request.previewKey(), adminId);
     validatePreviewIsNotStale(preview);
 
     Court court = validateCourtExistsAndActive(preview.courtId());
@@ -74,11 +75,11 @@ public class ConfirmCourtDisableUseCaseImp implements ConfirmCourtDisableUseCase
    * @throws PreviewStaleException se o preview estiver desatualizado.
    */
   private void validatePreviewIsNotStale(CourtDisablePreview preview) {
-    List<ScheduleEntry> currentSchedules = scheduleEntryRepositoryPort.findAllActiveSchedulesByCourtIdFromToday(preview.courtId());
+    List<ScheduleEntry> currentSchedules =
+        scheduleEntryRepositoryPort.findAllActiveSchedulesByCourtIdFromToday(preview.courtId());
 
-    Set<UUID> currentIds = currentSchedules.stream()
-        .map(ScheduleEntry::getId)
-        .collect(Collectors.toSet());
+    Set<UUID> currentIds =
+        currentSchedules.stream().map(ScheduleEntry::getId).collect(Collectors.toSet());
 
     Set<UUID> previewIds =
         Stream.of(
@@ -99,7 +100,8 @@ public class ConfirmCourtDisableUseCaseImp implements ConfirmCourtDisableUseCase
    * @param reservations As reservas afetadas.
    * @param description A descrição da desativação.
    */
-  private void cancelAffectedReservations(List<ReservationDetail> reservations, String description) {
+  private void cancelAffectedReservations(
+      List<ReservationDetail> reservations, String description) {
     List<UUID> reservationIdsToCancel =
         reservations.stream()
             .filter(detail -> !detail.isInProgress())
@@ -110,10 +112,12 @@ public class ConfirmCourtDisableUseCaseImp implements ConfirmCourtDisableUseCase
       return;
     }
 
-    List<Reservation> reservationsToCancel = reservationRepositoryPort.findAllByIds(reservationIdsToCancel);
+    List<Reservation> reservationsToCancel =
+        reservationRepositoryPort.findAllByIds(reservationIdsToCancel);
 
     String cancellationReason = String.format("Quadra desativada: %s", description);
-    reservationBatchCancellationService.cancelReservationsInBatch(reservationsToCancel, cancellationReason);
+    reservationBatchCancellationService.cancelReservationsInBatch(
+        reservationsToCancel, cancellationReason);
   }
 
   /**
@@ -123,9 +127,7 @@ public class ConfirmCourtDisableUseCaseImp implements ConfirmCourtDisableUseCase
    */
   private void deleteAffectedBlockedTimes(List<BlockedTimeDetail> blockedTimes) {
     List<UUID> blockedTimeIdsToDelete =
-        blockedTimes.stream()
-            .map(BlockedTimeDetail::blockedTimeId)
-            .toList();
+        blockedTimes.stream().map(BlockedTimeDetail::blockedTimeId).toList();
 
     if (blockedTimeIdsToDelete.isEmpty()) {
       return;

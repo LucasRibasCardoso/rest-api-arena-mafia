@@ -16,10 +16,7 @@ public @interface ValidDateRange {
 
   Class<? extends Payload>[] payload() default {};
 
-
   String startDateField() default "startDate";
-
 
   String endDateField() default "endDate";
 }
-

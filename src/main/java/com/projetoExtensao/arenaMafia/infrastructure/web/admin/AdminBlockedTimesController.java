@@ -46,7 +46,8 @@ public class AdminBlockedTimesController {
       @RequestBody @Valid BlockedTimeConflictsPreviewRequestDto requestDto) {
 
     UUID adminId = authenticatedAdmin.user().getId();
-    BlockedTimeConflictsPreview preview = previewBlockedTimeConflictsUseCase.execute(requestDto, adminId);
+    BlockedTimeConflictsPreview preview =
+        previewBlockedTimeConflictsUseCase.execute(requestDto, adminId);
     BlockedTimeConflictsPreviewResponseDto response = buildPreviewResponseDto(preview);
 
     return ResponseEntity.ok(response);
@@ -71,15 +72,16 @@ public class AdminBlockedTimesController {
    * @param preview O preview de conflitos gerado pelo caso de uso.
    * @return O DTO de resposta contendo os detalhes dos conflitos.
    */
-  private BlockedTimeConflictsPreviewResponseDto buildPreviewResponseDto(BlockedTimeConflictsPreview preview) {
+  private BlockedTimeConflictsPreviewResponseDto buildPreviewResponseDto(
+      BlockedTimeConflictsPreview preview) {
     List<BlockedTimeDetailResponseDto> blockedTimesDetails =
-            scheduleEntryMapper.toDetailDtoList(preview.conflictingBlockedTimes());
+        scheduleEntryMapper.toDetailDtoList(preview.conflictingBlockedTimes());
 
     List<ReservationDetailResponseDto> reservationsDetails =
-            scheduleEntryMapper.toDetailDtoList(preview.conflictingReservations());
+        scheduleEntryMapper.toDetailDtoList(preview.conflictingReservations());
 
     List<ReservationDetailResponseDto> inProgressReservationsDetails =
-            scheduleEntryMapper.toDetailDtoList(preview.inProgressReservations());
+        scheduleEntryMapper.toDetailDtoList(preview.inProgressReservations());
 
     return new BlockedTimeConflictsPreviewResponseDto(
         preview.previewKey(),
@@ -103,8 +105,7 @@ public class AdminBlockedTimesController {
         result.totalBlockedTimesCreated(),
         result.reservationsCancelled(),
         result.blockedTimesCancelled(),
-        result.usersAffected()
-    );
+        result.usersAffected());
   }
 
   // TODO: Implementar endpoint DELETE para deletar um ou todos horários bloqueados

@@ -63,39 +63,36 @@ public class ConfirmBlockedTimeUseCaseImp implements ConfirmBlockedTimeUseCase {
   @Override
   public ConfirmBlockedTimeResult execute(UUID adminId, BlockedTimeConfirmRequestDto request) {
     // Recupera o preview salvo no cache
-    BlockedTimeConflictsPreview preview = previewCachePort.getPreviewOrElseThrow(request.previewKey(), adminId);
+    BlockedTimeConflictsPreview preview =
+        previewCachePort.getPreviewOrElseThrow(request.previewKey(), adminId);
 
     // Valida se todas as quadras existem e estão ativas
     courtRepository.validateAllExistAndActive(preview.request().courtIds());
 
     // Calcula os dias da semana efetivos e o intervalo de horários que será utilizado nos bloqueios
-    Set<DayOfWeek> effectiveDaysOfWeek = dateCalculationService.resolveEffectiveDaysOfWeekWithOccurrencesValidation(
+    Set<DayOfWeek> effectiveDaysOfWeek =
+        dateCalculationService.resolveEffectiveDaysOfWeekWithOccurrencesValidation(
             preview.request().selectedDaysOfWeek(),
             preview.request().startDate(),
             preview.request().endDate(),
-            preview.request().courtIds().size()
-    );
-    TimeInterval searchInterval = dateCalculationService.calculateSearchInterval(
-            preview.request().isFullDay(),
-            preview.request().timeInterval(),
-            effectiveDaysOfWeek
-    );
+            preview.request().courtIds().size());
+    TimeInterval searchInterval =
+        dateCalculationService.calculateSearchInterval(
+            preview.request().isFullDay(), preview.request().timeInterval(), effectiveDaysOfWeek);
 
     // Valida se o preview não está desatualizado
     validatePreviewIsNotStale(preview, effectiveDaysOfWeek, searchInterval);
 
     // Processa os conflitos: cancela reservas e remove bloqueios conflitantes
-    int reservationsCancelled = cancelConflictingReservations(preview.conflictingReservations(), request.description());
+    int reservationsCancelled =
+        cancelConflictingReservations(preview.conflictingReservations(), request.description());
     int blockedTimesCancelled = removeConflictingBlockedTimes(preview.conflictingBlockedTimes());
 
     // Cria e salva os novos BlockedTimes
-    List<UUID> blockedTimesCreated = createAndSaveBlockedTime(
-            preview.request(),
-            effectiveDaysOfWeek,
-            searchInterval,
-            adminId,
-            request.description());
-    
+    List<UUID> blockedTimesCreated =
+        createAndSaveBlockedTime(
+            preview.request(), effectiveDaysOfWeek, searchInterval, adminId, request.description());
+
     // Limpa o preview do cache após a confirmação
     previewCachePort.delete(request.previewKey());
 
@@ -107,10 +104,9 @@ public class ConfirmBlockedTimeUseCaseImp implements ConfirmBlockedTimeUseCase {
         preview.usersAffected());
   }
 
-
   /**
-   * Valida se o preview armazenado no cache ainda é válido, comparando os conflitos atuais
-   * com os conflitos registrados no preview.
+   * Valida se o preview armazenado no cache ainda é válido, comparando os conflitos atuais com os
+   * conflitos registrados no preview.
    *
    * @param preview Preview armazenado no cache
    * @param effectiveDaysOfWeek Dias da semana usado na busca por conflitos
@@ -118,31 +114,30 @@ public class ConfirmBlockedTimeUseCaseImp implements ConfirmBlockedTimeUseCase {
    * @throws PreviewStaleException se o preview estiver desatualizado
    */
   private void validatePreviewIsNotStale(
-          BlockedTimeConflictsPreview preview,
-          Set<DayOfWeek> effectiveDaysOfWeek,
-          TimeInterval searchInterval
-  ) {
+      BlockedTimeConflictsPreview preview,
+      Set<DayOfWeek> effectiveDaysOfWeek,
+      TimeInterval searchInterval) {
 
     var previewRequest = preview.request();
-    List<ScheduleEntry> currentConflicts = scheduleEntryRepository.findAllActiveSchedulesConflicts(
+    List<ScheduleEntry> currentConflicts =
+        scheduleEntryRepository.findAllActiveSchedulesConflicts(
             previewRequest.courtIds(),
             previewRequest.startDate(),
             previewRequest.endDate(),
             searchInterval,
             effectiveDaysOfWeek);
 
-    Set<UUID> currentIds = currentConflicts.stream()
-        .map(ScheduleEntry::getId)
-        .collect(Collectors.toSet());
+    Set<UUID> currentIds =
+        currentConflicts.stream().map(ScheduleEntry::getId).collect(Collectors.toSet());
 
-    Set<UUID> previewIds = Stream.of(
-            preview.conflictingReservations().stream().map(ReservationDetail::reservationId),
-            preview.conflictingBlockedTimes().stream().map(BlockedTimeDetail::blockedTimeId),
-            preview.inProgressReservations().stream().map(ReservationDetail::reservationId))
-        .flatMap(s -> s)
-        .collect(Collectors.toSet()
-    );
-    
+    Set<UUID> previewIds =
+        Stream.of(
+                preview.conflictingReservations().stream().map(ReservationDetail::reservationId),
+                preview.conflictingBlockedTimes().stream().map(BlockedTimeDetail::blockedTimeId),
+                preview.inProgressReservations().stream().map(ReservationDetail::reservationId))
+            .flatMap(s -> s)
+            .collect(Collectors.toSet());
+
     if (!currentIds.equals(previewIds)) {
       throw new PreviewStaleException();
     }
@@ -151,29 +146,32 @@ public class ConfirmBlockedTimeUseCaseImp implements ConfirmBlockedTimeUseCase {
   /**
    * Cancela as reservas conflitantes.
    *
-   * <p>Reservas que entraram em andamento entre o preview e a confirmação são
-   * automaticamente filtradas e não são canceladas.
+   * <p>Reservas que entraram em andamento entre o preview e a confirmação são automaticamente
+   * filtradas e não são canceladas.
    *
    * @param conflictingReservations Lista de reservas conflitantes a serem canceladas
    * @param description Descrição do bloqueio (usada como motivo do cancelamento)
    * @return Quantidade de reservas canceladas com sucesso
    */
-  private int cancelConflictingReservations(List<ReservationDetail> conflictingReservations, String description) {
-    List<UUID> reservationIdsToCancel = conflictingReservations.stream()
-        .filter(detail -> !detail.isInProgress())
-        .map(ReservationDetail::reservationId)
-        .toList();
+  private int cancelConflictingReservations(
+      List<ReservationDetail> conflictingReservations, String description) {
+    List<UUID> reservationIdsToCancel =
+        conflictingReservations.stream()
+            .filter(detail -> !detail.isInProgress())
+            .map(ReservationDetail::reservationId)
+            .toList();
 
     if (reservationIdsToCancel.isEmpty()) {
       return 0;
     }
 
-    List<Reservation> reservationsToCancel = reservationRepository.findAllByIds(reservationIdsToCancel);
+    List<Reservation> reservationsToCancel =
+        reservationRepository.findAllByIds(reservationIdsToCancel);
 
     String cancellationReason = String.format("Bloqueio de horário criado: %s", description);
-    return reservationBatchCancellationService.cancelReservationsInBatch(reservationsToCancel, cancellationReason);
+    return reservationBatchCancellationService.cancelReservationsInBatch(
+        reservationsToCancel, cancellationReason);
   }
-
 
   /**
    * Remove os BlockedTimes conflitantes em batch.
@@ -182,9 +180,8 @@ public class ConfirmBlockedTimeUseCaseImp implements ConfirmBlockedTimeUseCase {
    * @return Quantidade de bloqueios removidos
    */
   private int removeConflictingBlockedTimes(List<BlockedTimeDetail> blockedTimesToRemove) {
-    List<UUID> blockedTimeIdsToDelete = blockedTimesToRemove.stream()
-        .map(BlockedTimeDetail::blockedTimeId)
-        .toList();
+    List<UUID> blockedTimeIdsToDelete =
+        blockedTimesToRemove.stream().map(BlockedTimeDetail::blockedTimeId).toList();
 
     if (blockedTimeIdsToDelete.isEmpty()) {
       return 0;
@@ -200,35 +197,35 @@ public class ConfirmBlockedTimeUseCaseImp implements ConfirmBlockedTimeUseCase {
    * @param previewRequest Dados da request salvo no cache durante geração do preview
    * @param effectiveDaysOfWeek Dias da semana efetivos para os bloqueios
    * @param timeInterval Intervalo de tempo a ser usado para os bloqueios
-   * @param adminId Id do administrador responsável pela criação dos bloqueios               
+   * @param adminId Id do administrador responsável pela criação dos bloqueios
    * @return Lista de IDs dos BlockedTimes criados
    */
   private List<UUID> createAndSaveBlockedTime(
-          BlockedTimeConflictsPreviewRequestDto previewRequest,
-          Set<DayOfWeek> effectiveDaysOfWeek,
-          TimeInterval timeInterval,
-          UUID adminId,
-          String description
-  ) {
-    List<LocalDate> applicableDates = dateCalculationService.calculateApplicableDates(
-        previewRequest.startDate(),
-        previewRequest.endDate(),
-        effectiveDaysOfWeek);
+      BlockedTimeConflictsPreviewRequestDto previewRequest,
+      Set<DayOfWeek> effectiveDaysOfWeek,
+      TimeInterval timeInterval,
+      UUID adminId,
+      String description) {
+    List<LocalDate> applicableDates =
+        dateCalculationService.calculateApplicableDates(
+            previewRequest.startDate(), previewRequest.endDate(), effectiveDaysOfWeek);
 
-    UUID recurringBlockedTimeId = createRecurringIdIfNeeded(previewRequest.courtIds(), applicableDates);
+    UUID recurringBlockedTimeId =
+        createRecurringIdIfNeeded(previewRequest.courtIds(), applicableDates);
 
     List<BlockedTime> blockedTimesToCreate = new ArrayList<>();
 
     for (UUID courtId : previewRequest.courtIds()) {
       for (LocalDate date : applicableDates) {
-        BlockedTime blockedTime = createBlockedTime(
-            courtId,
-            date,
-            timeInterval,
-            previewRequest.isFullDay(),
-            description,
-            adminId,
-            recurringBlockedTimeId);
+        BlockedTime blockedTime =
+            createBlockedTime(
+                courtId,
+                date,
+                timeInterval,
+                previewRequest.isFullDay(),
+                description,
+                adminId,
+                recurringBlockedTimeId);
 
         blockedTimesToCreate.add(blockedTime);
       }
@@ -264,36 +261,21 @@ public class ConfirmBlockedTimeUseCaseImp implements ConfirmBlockedTimeUseCase {
     // Cria um BlockedTime recorrente
     if (recurringBlockedTimeId != null) {
       return BlockedTime.createRecurring(
-          courtId,
-          dateTimeSlot,
-          description,
-          adminId,
-          isFullDay,
-          recurringBlockedTimeId
-      );
+          courtId, dateTimeSlot, description, adminId, isFullDay, recurringBlockedTimeId);
     }
 
     // Cria um BlockedTime para dia inteiro
     if (isFullDay) {
-      return BlockedTime.createFullDay(
-              courtId,
-              dateTimeSlot,
-              description,
-              adminId
-      );
+      return BlockedTime.createFullDay(courtId, dateTimeSlot, description, adminId);
     }
 
     // Cria um BlockedTime para horário específico
-    return BlockedTime.createSpecificTime(
-            courtId,
-            dateTimeSlot,
-            description,
-            adminId
-    );
+    return BlockedTime.createSpecificTime(courtId, dateTimeSlot, description, adminId);
   }
 
   /**
    * Gera um recurringBlockedTimeId se múltiplos bloqueios forem criados.
+   *
    * @param courtIds Lista de IDs das quadras
    * @param applicableDates Lista de datas aplicáveis
    * @return UUID do recurringBlockedTimeId ou null se for um único bloqueio

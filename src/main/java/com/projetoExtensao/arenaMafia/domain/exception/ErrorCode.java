@@ -29,7 +29,8 @@ public enum ErrorCode {
   // ==================== ERROS DE AUTENTICAÇÃO E AUTORIZAÇÃO ====================
   INVALID_CREDENTIALS("Credenciais inválidas. Por favor, verifique seu usuário e senha."),
   JWT_TOKEN_INVALID_OR_EXPIRED("Token JWT expirado ou inválido."),
-  TOO_MANY_LOGIN_ATTEMPTS("Você realizou muitas tentativas de login. Por favor, aguarde um minuto antes de tentar novamente."),
+  TOO_MANY_LOGIN_ATTEMPTS(
+      "Você realizou muitas tentativas de login. Por favor, aguarde um minuto antes de tentar novamente."),
 
   // ==================== ERROS DE USUÁRIO (USER) ====================
   // User - Geral
@@ -52,10 +53,12 @@ public enum ErrorCode {
 
   // User - Phone
   PHONE_REQUIRED("O número de telefone é obrigatório."),
-  PHONE_INVALID_FORMAT("O número de telefone não está em um formato válido. Use o padrão internacional E.164 (ex: +5511987654321)."),
+  PHONE_INVALID_FORMAT(
+      "O número de telefone não está em um formato válido. Use o padrão internacional E.164 (ex: +5511987654321)."),
   PHONE_INVALID("O número de telefone é inválido. Verifique o código do país e o número."),
   PHONE_ALREADY_EXISTS("Esse número de telefone já está em uso."),
-  PHONE_CHANGE_NOT_INITIATED("Sua solicitação de alteração de telefone não foi encontrada ou já expirou. Por favor, inicie o processo novamente."),
+  PHONE_CHANGE_NOT_INITIATED(
+      "Sua solicitação de alteração de telefone não foi encontrada ou já expirou. Por favor, inicie o processo novamente."),
 
   // User - Full Name
   FULL_NAME_REQUIRED("O nome completo é obrigatório."),
@@ -67,8 +70,10 @@ public enum ErrorCode {
   ACCOUNT_STATE_CONFLICT("O status atual da conta não permite essa operação."),
   ACCOUNT_PENDING_VERIFICATION("Você precisa ativar sua conta. Conclua o processo de cadastro."),
   ACCOUNT_LOCKED("Sua conta está bloqueada. Por favor, contate o suporte."),
-  ACCOUNT_DISABLED("Sua conta está desativada e será deletada em breve. Entre em contato com o suporte para reativá-la."),
-  ACCOUNT_NOT_PENDING_VERIFICATION("Esta operação só pode ser executada em contas com verificação pendente."),
+  ACCOUNT_DISABLED(
+      "Sua conta está desativada e será deletada em breve. Entre em contato com o suporte para reativá-la."),
+  ACCOUNT_NOT_PENDING_VERIFICATION(
+      "Esta operação só pode ser executada em contas com verificação pendente."),
   ACCOUNT_ALREADY_ACTIVE("A conta já está ativa."),
   ACCOUNT_ALREADY_LOCKED("A conta já está bloqueada."),
   ACCOUNT_ALREADY_DISABLED("A conta já está desativada."),
@@ -82,8 +87,10 @@ public enum ErrorCode {
   // User - Admin Operations
   ADMIN_CANNOT_UPDATE_OWN_STATUS("Um administrador não pode alterar o próprio status."),
   ADMIN_CANNOT_UPDATE_OWN_ROLE("Um administrador não pode alterar o próprio papel (role)."),
-  ADMIN_CANNOT_UPDATE_ROLE_OF_UNVERIFIED_USER("Não é possível alterar a permissão de um usuário não verificado."),
-  ADMIN_CANNOT_UPDATE_STATUS_OF_UNVERIFIED_USER("Um administrador não pode alterar o status de um usuário não verificado."),
+  ADMIN_CANNOT_UPDATE_ROLE_OF_UNVERIFIED_USER(
+      "Não é possível alterar a permissão de um usuário não verificado."),
+  ADMIN_CANNOT_UPDATE_STATUS_OF_UNVERIFIED_USER(
+      "Um administrador não pode alterar o status de um usuário não verificado."),
 
   // ==================== ERROS DE TOKENS ====================
   // OTP (One-Time Password)
@@ -112,7 +119,8 @@ public enum ErrorCode {
   MODALITY_NAME_REQUIRED("O nome da modalidade é obrigatório."),
   MODALITY_NAME_INVALID_LENGTH("O nome da modalidade deve ter entre 3 e 100 caracteres."),
   MODALITY_ALREADY_EXISTS("Essa modalidade já está cadastrada."),
-  MODALITY_IN_USE("Não é possível deletar esta modalidade pois ela está sendo utilizada por uma ou mais quadras."),
+  MODALITY_IN_USE(
+      "Não é possível deletar esta modalidade pois ela está sendo utilizada por uma ou mais quadras."),
 
   // ==================== ERROS DE QUADRA (COURT) ====================
   // Court - Geral
@@ -128,7 +136,8 @@ public enum ErrorCode {
 
   // Court - Offset Minutes
   OFFSET_MINUTES_REQUIRED("O offset de minutos é obrigatório."),
-  OFFSET_MINUTES_INVALID("O valor de minutos de offset fornecido é inválido. Valores válidos: 0 ou 30."),
+  OFFSET_MINUTES_INVALID(
+      "O valor de minutos de offset fornecido é inválido. Valores válidos: 0 ou 30."),
 
   // Court - Status
   COURT_ALREADY_DISABLED("A quadra já está desativada."),
@@ -136,30 +145,39 @@ public enum ErrorCode {
 
   // Court - Desativação
   COURT_DISABLE_DESCRIPTION_REQUIRED("A descrição para desativação da quadra é obrigatória"),
-  COURT_DISABLE_DESCRIPTION_INVALID_LENGTH("A descrição para desativação da quadra deve ter entre 3 e 500 caracteres."),
+  COURT_DISABLE_DESCRIPTION_INVALID_LENGTH(
+      "A descrição para desativação da quadra deve ter entre 3 e 500 caracteres."),
   // ==================== ERROS DE DIA DA SEMANA ====================
   DAY_OF_WEEK_REQUIRED("O dia da semana é obrigatório."),
-  DAY_OF_WEEK_INVALID("O dia da semana fornecido é inválido. Valores válidos: 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'."),
+  DAY_OF_WEEK_INVALID(
+      "O dia da semana fornecido é inválido. Valores válidos: 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'."),
 
   // =================== ERROS DE TIME INTERVAL ====================
   TIME_INTERVAL_REQUIRED("O intervalo de tempo é obrigatório."),
-  TIME_INTERVAL_OPEN_AFTER_CLOSE("O horário de abertura deve ser anterior ao horário de fechamento."),
-  TIME_INTERVAL_INVALID_MINUTES("Os minutos do horário de abertura ou fechamento são inválidos. Valores válidos: 0 ou 30."),
+  TIME_INTERVAL_OPEN_AFTER_CLOSE(
+      "O horário de abertura deve ser anterior ao horário de fechamento."),
+  TIME_INTERVAL_INVALID_MINUTES(
+      "Os minutos do horário de abertura ou fechamento são inválidos. Valores válidos: 0 ou 30."),
   TIME_INTERVAL_OVERLAP("Este intervalo de horário sobrepõe-se a um intervalo existente."),
   TIME_INTERVAL_SAME_TIME("O horário de abertura não pode ser igual ao horário de fechamento."),
   TIME_INTERVAL_EXCEEDS_24_HOURS("O intervalo de tempo não pode exceder 24 horas."),
 
   // ==================== ERROS DE HORÁRIO DE FUNCIONAMENTO (OPERATING HOURS) ====================
-  OPERATING_HOURS_ALREADY_EXISTS("Já existe um horário de funcionamento ativo para este dia da semana."),
+  OPERATING_HOURS_ALREADY_EXISTS(
+      "Já existe um horário de funcionamento ativo para este dia da semana."),
   OPERATING_HOURS_ALREADY_DISABLED("O horário de funcionamento já está desativado."),
-  OPERATING_HOURS_CANNOT_BE_DISABLED_DUE_TO_RESERVATIONS("Não é possível desativar o horário de funcionamento pois existem reservas futuras associadas a ele."),
+  OPERATING_HOURS_CANNOT_BE_DISABLED_DUE_TO_RESERVATIONS(
+      "Não é possível desativar o horário de funcionamento pois existem reservas futuras associadas a ele."),
   OPERATING_HOURS_ALREADY_ENABLED("O horário de funcionamento já está ativado."),
   OPERATING_HOURS_NOT_FOUND("Horário de funcionamento não encontrado."),
-  OPERATING_HOURS_APPLICABLE_NOT_FOUND("Não há horários de funcionamento aplicáveis para todos os dias selecionados."),
+  OPERATING_HOURS_APPLICABLE_NOT_FOUND(
+      "Não há horários de funcionamento aplicáveis para todos os dias selecionados."),
 
   // Operating Hours - Desativação
-  OPERATING_HOURS_DISABLE_DESCRIPTION_REQUIRED("A descrição para desativação do horário de funcionamento é obrigatória."),
-  OPERATING_HOURS_DISABLE_DESCRIPTION_INVALID_LENGTH("A descrição para desativação do horário de funcionamento deve ter entre 3 e 500 caracteres."),
+  OPERATING_HOURS_DISABLE_DESCRIPTION_REQUIRED(
+      "A descrição para desativação do horário de funcionamento é obrigatória."),
+  OPERATING_HOURS_DISABLE_DESCRIPTION_INVALID_LENGTH(
+      "A descrição para desativação do horário de funcionamento deve ter entre 3 e 500 caracteres."),
 
   // ==================== ERROS DE REGRAS DE PREÇO (PRICE RULES) ====================
   PRICE_RULE_NAME_REQUIRED("O nome da regra de preço é obrigatório."),
@@ -190,7 +208,8 @@ public enum ErrorCode {
   SCHEDULE_ENTRY_DATE_TIME_SLOT_REQUIRED("O slot de data/hora é obrigatório."),
   SCHEDULE_ENTRY_CREATED_AT_REQUIRED("A data de criação é obrigatória."),
   SCHEDULE_ENTRY_NOT_FOUND("Agendamento não encontrado."),
-  SCHEDULE_ENTRY_NOT_AVAILABLE("O horário selecionado não está mais disponível. Por favor, escolha outro horário."),
+  SCHEDULE_ENTRY_NOT_AVAILABLE(
+      "O horário selecionado não está mais disponível. Por favor, escolha outro horário."),
 
   // =================== ERROS DE CONSULTA DE HORÁRIOS DISPONÍVEIS ====================
   PAST_DATE_NOT_ALLOWED("Não é possível consultar horários disponíveis para datas passadas."),
@@ -203,12 +222,16 @@ public enum ErrorCode {
   RESERVATION_COURT_ID_REQUIRED("A quadra da reserva é obrigatória."),
   RESERVATION_USER_ID_REQUIRED("O usuário da reserva é obrigatório."),
   RESERVATION_ADMIN_USER_ID_REQUIRED("O ID do administrador é obrigatório para o cancelamento."),
-  RESERVATION_ACCESS_DENIED("Você não tem permissão para acessar esta reserva. Apenas o dono da reserva ou um administrador podem visualizá-la."),
-  RESERVATION_PAST_DATE_NOT_ALLOWED("Não é possível fazer reservas para datas passadas. A data deve ser hoje ou no futuro."),
+  RESERVATION_ACCESS_DENIED(
+      "Você não tem permissão para acessar esta reserva. Apenas o dono da reserva ou um administrador podem visualizá-la."),
+  RESERVATION_PAST_DATE_NOT_ALLOWED(
+      "Não é possível fazer reservas para datas passadas. A data deve ser hoje ou no futuro."),
   RESERVATION_ALREADY_CANCELLED("Esta reserva já foi cancelada."),
   RESERVATION_ALREADY_COMPLETED("Esta reserva já foi concluída."),
-  RESERVATION_NOT_POSSIBLE_TO_CANCEL("Não é possível cancelar a reserva com menos de 1:30 horas de antecedência."),
-  RESERVATION_CANCELLATION_IN_BATCH_FAILED("Falha ao cancelar reservas em lote. O processo foi revertido e nenhuma reserva foi cancelada."),
+  RESERVATION_NOT_POSSIBLE_TO_CANCEL(
+      "Não é possível cancelar a reserva com menos de 1:30 horas de antecedência."),
+  RESERVATION_CANCELLATION_IN_BATCH_FAILED(
+      "Falha ao cancelar reservas em lote. O processo foi revertido e nenhuma reserva foi cancelada."),
 
   // ==================== ERROS DE CONFLITO DE AGENDAMENTO ====================
   UNSUPPORTED_SCHEDULE_ENTRY_TYPE("O tipo de entrada de agendamento fornecido não é suportado."),
@@ -220,8 +243,10 @@ public enum ErrorCode {
   BLOCKED_TIME_START_DATE_IN_PAST("A data inicial do bloqueio não pode estar no passado."),
   BLOCKED_TIME_START_DATE_AFTER_END_DATE("A data inicial não pode ser posterior à data final."),
   BLOCKED_TIME_END_DATE_IN_PAST("A data final do bloqueio não pode estar no passado."),
-  BLOCKED_TIME_SELECTED_DAYS_OUTSIDE_DATE_RANGE("Um ou mais dias da semana selecionados estão fora do intervalo de datas informado."),
-  BLOCKED_TIME_SELECTED_DAYS_NOT_ALLOWED_FOR_SINGLE_DATE("Para bloqueios de um único dia (startDate = endDate), não é necessário informar dias da semana específicos."),
+  BLOCKED_TIME_SELECTED_DAYS_OUTSIDE_DATE_RANGE(
+      "Um ou mais dias da semana selecionados estão fora do intervalo de datas informado."),
+  BLOCKED_TIME_SELECTED_DAYS_NOT_ALLOWED_FOR_SINGLE_DATE(
+      "Para bloqueios de um único dia (startDate = endDate), não é necessário informar dias da semana específicos."),
 
   // BlockedTime - Validação de Input
   BLOCKED_TIME_COURT_IDS_REQUIRED("É obrigatório informar ao menos uma quadra para o bloqueio."),
@@ -229,31 +254,40 @@ public enum ErrorCode {
   BLOCKED_TIME_START_DATE_REQUIRED("A data inicial do bloqueio é obrigatória."),
   BLOCKED_TIME_END_DATE_REQUIRED("A data final do bloqueio é obrigatória."),
   BLOCKED_TIME_IS_FULL_DAY_REQUIRED("É obrigatório informar se o bloqueio é para o dia todo."),
-  BLOCKED_TIME_TIME_INTERVAL_REQUIRED_WHEN_NOT_FULL_DAY("O intervalo de tempo é obrigatório quando o bloqueio não é para o dia todo."),
-  BLOCKED_TIME_TIME_INTERVAL_NOT_ALLOWED_WHEN_FULL_DAY("O intervalo de tempo não deve ser informado quando o bloqueio é para o dia todo. O horário será calculado automaticamente baseado no funcionamento da quadra."),
+  BLOCKED_TIME_TIME_INTERVAL_REQUIRED_WHEN_NOT_FULL_DAY(
+      "O intervalo de tempo é obrigatório quando o bloqueio não é para o dia todo."),
+  BLOCKED_TIME_TIME_INTERVAL_NOT_ALLOWED_WHEN_FULL_DAY(
+      "O intervalo de tempo não deve ser informado quando o bloqueio é para o dia todo. O horário será calculado automaticamente baseado no funcionamento da quadra."),
 
   // BlockedTime - Description
   BLOCKED_TIME_DESCRIPTION_REQUIRED("A descrição do bloqueio é obrigatória."),
-  BLOCKED_TIME_DESCRIPTION_INVALID_LENGTH("A descrição do bloqueio deve ter entre 3 e 500 caracteres."),
+  BLOCKED_TIME_DESCRIPTION_INVALID_LENGTH(
+      "A descrição do bloqueio deve ter entre 3 e 500 caracteres."),
 
   // BlockedTime - Admin
-  BLOCKED_TIME_ADMIN_ID_REQUIRED("O ID do administrador que está bloqueando o horário é obrigatório."),
+  BLOCKED_TIME_ADMIN_ID_REQUIRED(
+      "O ID do administrador que está bloqueando o horário é obrigatório."),
 
   // BlockedTime - Preview e Cache
-  BLOCKED_TIME_DAYS_OF_WEEK_SIZE_INVALID("É necessário informar entre 1 e 7 dias da semana para bloqueios recorrentes."),
-  BLOCKED_TIME_TOO_MANY_OCCURRENCES("O bloqueio recorrente geraria muitas ocorrências. O limite máximo é de 1000 bloqueios (quadras × datas aplicáveis)."),
-  BLOCKED_TIME_OUTSIDE_OPERATING_HOURS("O intervalo de tempo informado está fora do horário de funcionamento de um ou mais dias selecionados. Verifique se o horário é válido para todos os dias."),
-
+  BLOCKED_TIME_DAYS_OF_WEEK_SIZE_INVALID(
+      "É necessário informar entre 1 e 7 dias da semana para bloqueios recorrentes."),
+  BLOCKED_TIME_TOO_MANY_OCCURRENCES(
+      "O bloqueio recorrente geraria muitas ocorrências. O limite máximo é de 1000 bloqueios (quadras × datas aplicáveis)."),
+  BLOCKED_TIME_OUTSIDE_OPERATING_HOURS(
+      "O intervalo de tempo informado está fora do horário de funcionamento de um ou mais dias selecionados. Verifique se o horário é válido para todos os dias."),
 
   // ==================== ERROS DE CACHE PARA PREVIEW ====================
   PREVIEW_KEY_REQUIRED("A chave do preview é obrigatória."),
   PREVIEW_KEY_INVALID("A chave do preview é inválida."),
   PREVIEW_NOT_FOUND("Preview não encontrado. Pode ter expirado após 5 minutos."),
-  PREVIEW_DATA_STALE("Os dados associados a este preview foram alterados desde a sua geração. Por favor, gere um novo preview antes de confirmar a desativação."),
-  PREVIEW_KEY_OWNERSHIP_INVALID("Esta chave de preview não pertence a você. Não é possível usar um preview gerado por outro usuário."),
+  PREVIEW_DATA_STALE(
+      "Os dados associados a este preview foram alterados desde a sua geração. Por favor, gere um novo preview antes de confirmar a desativação."),
+  PREVIEW_KEY_OWNERSHIP_INVALID(
+      "Esta chave de preview não pertence a você. Não é possível usar um preview gerado por outro usuário."),
 
   // ==================== ERROS DE AGENDA (AGENDA ITEM) ====================
-  AVAILABLE_MODALITY_IDS_REQUIRED("Erro interno: Não foi possível gerar a agenda. Nenhuma modalidade disponível encontrada para o horário agrupado."),
+  AVAILABLE_MODALITY_IDS_REQUIRED(
+      "Erro interno: Não foi possível gerar a agenda. Nenhuma modalidade disponível encontrada para o horário agrupado."),
   ;
 
   // ==================== CONFIGURAÇÃO ====================

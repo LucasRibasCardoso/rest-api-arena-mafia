@@ -58,6 +58,7 @@ public enum DayOfWeek {
 
   /**
    * Retorna o próximo dia da semana. Se for domingo, retorna segunda-feira.
+   *
    * @return Próximo DayOfWeek
    */
   public DayOfWeek next() {

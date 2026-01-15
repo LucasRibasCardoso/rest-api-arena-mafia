@@ -9,7 +9,8 @@ import com.projetoExtensao.arenaMafia.infrastructure.web.schedule.dto.response.s
 import org.springframework.stereotype.Component;
 
 @Component
-public class BlockedTimeResponseMapper implements ScheduleEntryMapperStrategy<BlockedTime, BlockedTimeDetail> {
+public class BlockedTimeResponseMapper
+    implements ScheduleEntryMapperStrategy<BlockedTime, BlockedTimeDetail> {
 
   @Override
   public Class<BlockedTime> getSupportedType() {
@@ -42,9 +43,7 @@ public class BlockedTimeResponseMapper implements ScheduleEntryMapperStrategy<Bl
   @Override
   public BlockedTimeDetailResponseDto toDetailDto(BlockedTimeDetail detail) {
     TimeIntervalDto timeIntervalDto =
-        new TimeIntervalDto(
-                detail.timeInterval().startTime(),
-                detail.timeInterval().endTime());
+        new TimeIntervalDto(detail.timeInterval().startTime(), detail.timeInterval().endTime());
 
     return new BlockedTimeDetailResponseDto(
         detail.blockedTimeId(),

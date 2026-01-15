@@ -6,7 +6,6 @@ import com.projetoExtensao.arenaMafia.infrastructure.web.priceRule.dto.response.
 import java.util.List;
 
 public record HomePageDataResponseDto(
-        List<OperatingHoursResponseDto> operatingHours,
-        List<ModalityResponseDto> modalities,
-        List<PriceRuleResponseDto> priceRules
-) {}
+    List<OperatingHoursResponseDto> operatingHours,
+    List<ModalityResponseDto> modalities,
+    List<PriceRuleResponseDto> priceRules) {}

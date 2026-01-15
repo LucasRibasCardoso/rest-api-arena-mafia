@@ -20,7 +20,8 @@ public interface BlockedTimeRepositoryPort {
 
   List<BlockedTime> findByCourtIdAndDateRange(UUID courtId, LocalDate startDate, LocalDate endDate);
 
-  List<BlockedTime> findByCourtIdsAndDateRange(List<UUID> courtIds, LocalDate startDate, LocalDate endDate);
+  List<BlockedTime> findByCourtIdsAndDateRange(
+      List<UUID> courtIds, LocalDate startDate, LocalDate endDate);
 
   void deleteAllByIds(List<UUID> ids);
 
