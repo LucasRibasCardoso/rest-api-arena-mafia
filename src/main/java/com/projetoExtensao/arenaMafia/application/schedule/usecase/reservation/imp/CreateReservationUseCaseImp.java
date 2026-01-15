@@ -67,21 +67,28 @@ public class CreateReservationUseCaseImp implements CreateReservationUseCase {
 
   @Override
   public Reservation execute(UUID userId, CreateReservationRequestDto request) {
+    // Valida se a data da reserva não está no passado
     validateReservationDate(request.date());
 
+    // Busca o usuário que está fazendo a reserva
     User user = userRepositoryPort.findByIdOrElseThrow(userId);
 
+    // Valida se a modalidade existe e se a quadra suporta a modalidade
     validateModalityExists(request.modalityId());
     validateCourtSupportsModality(request.courtId(), request.modalityId());
 
+    // Valida a disponibilidade da quadra para o intervalo solicitado
     DateTimeSlot dateTimeSlot = buildDateTimeSlot(request);
     validateScheduleAvailability(request.courtId(), dateTimeSlot);
 
+    // Calcula o preço da reserva
     BigDecimal price = calculatePrice(request);
     Reservation reservation = saveReservation(request.modalityId(), request.courtId(), userId, price, dateTimeSlot);
 
+    // Envia notificação de confirmação de reserva de forma assíncrona
     publishConfirmationEvent(user, reservation);
 
+    // Agenda a conclusão automática da reserva
     scheduleAutomaticCompletion(reservation);
     return reservation;
   }

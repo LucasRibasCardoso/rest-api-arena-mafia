@@ -1,6 +1,5 @@
 package com.projetoExtensao.arenaMafia.infrastructure.persistence.repository;
 
-import com.projetoExtensao.arenaMafia.domain.model.enums.DayOfWeek;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.BlockedTimeEntity;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.ReservationEntity;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.ScheduleEntryEntity;
@@ -44,7 +43,6 @@ public interface ScheduleEntryJpaRepository extends JpaRepository<ScheduleEntryE
    * após uma data determinada.
    *
    * @param courtId ID da quadra
-   * @param date data de referência
    * @return lista de agendamentos ativos ordenados por data e horário de início
    */
   @Query(
@@ -54,11 +52,10 @@ public interface ScheduleEntryJpaRepository extends JpaRepository<ScheduleEntryE
        AND (TYPE(s) = BlockedTimeEntity
           OR
           (TYPE(s) = ReservationEntity AND TREAT(s AS ReservationEntity).status = 'CONFIRMED'))
-        AND s.dateTimeSlot.date >= :date
+        AND s.dateTimeSlot.date >= CURRENT_DATE
         ORDER BY s.dateTimeSlot.date ASC, s.dateTimeSlot.timeInterval.startTime ASC
        """)
-  List<ScheduleEntryEntity> findAllSchedulesByCourtIdAfterDate(
-      @Param("courtId") UUID courtId, @Param("date") LocalDate date);
+  List<ScheduleEntryEntity> findAllSchedulesByCourtIdFromToday(@Param("courtId") UUID courtId);
 
   /**
    * Buscar conflitos (Reservations confirmadas e BlockedTimes) com filtro opcional de dias da
@@ -74,7 +71,6 @@ public interface ScheduleEntryJpaRepository extends JpaRepository<ScheduleEntryE
    * @param courtIds IDs das quadras
    * @param startDate data inicial (inclusive)
    * @param endDate data final (inclusive)
-   * @param selectedDaysOfWeek dias da semana para filtrar (null/vazio = todos)
    * @param valuesDaysOfWeek conjunto de inteiros representando os dias da semana no formato
    *     PostgreSQL (0=Sunday, 1=Monday, ..., 6=Saturday)
    * @return lista de agendamentos ativos no intervalo de datas e dias da semana especificados
@@ -95,45 +91,45 @@ public interface ScheduleEntryJpaRepository extends JpaRepository<ScheduleEntryE
       @Param("courtIds") List<UUID> courtIds,
       @Param("startDate") LocalDate startDate,
       @Param("endDate") LocalDate endDate,
-      @Param("selectedDaysOfWeek") Set<DayOfWeek> selectedDaysOfWeek,
       @Param("valuesDaysOfWeek") Set<Integer> valuesDaysOfWeek);
 
   /**
-   * Buscar todos os agendamentos ativos (Reservations confirmadas e BlockedTimes) a partir de uma
-   * data específica, filtrando por dias da semana e intervalo de horário.
+   * Buscar todos os agendamentos ativos (Reservations confirmadas e BlockedTimes) a partir de hoje,
+   * filtrando por dias da semana e intervalo de horário.
    *
-   * @param afterDate Data a partir da qual verificar os conflitos
-   * @param valuesDaysOfWeek Conjunto de inteiros representando os dias da semana
-   * @param checkStartTime Horário inicial do escopo a ser verificado
-   * @param checkEndTime Horário final do escopo a ser verificado
+   * @param indexDaysOfWeek Conjunto de inteiros representando os dias da semana
+   * @param timeIntervalStartTime Horário inicial do escopo a ser verificado
+   * @param timeIntervalEndTime Horário final do escopo a ser verificado
    * @return true se existir conflito, false caso contrário
    */
-  @Query(
-      """
-    SELECT s FROM ScheduleEntryEntity s
-    WHERE s.dateTimeSlot.date >= :afterDate
-    AND (TYPE(s) = BlockedTimeEntity
-          OR
-          (TYPE(s) = ReservationEntity AND TREAT(s AS ReservationEntity).status = 'CONFIRMED'))
-    AND FUNCTION('date_part', 'dow', s.dateTimeSlot.date) IN :valuesDaysOfWeek
-    AND (
-        (s.dateTimeSlot.timeInterval.startTime < s.dateTimeSlot.timeInterval.endTime
-         AND
-         s.dateTimeSlot.timeInterval.startTime < :checkEndTime
-         AND
-         s.dateTimeSlot.timeInterval.endTime > :checkStartTime)
-         OR
-         (s.dateTimeSlot.timeInterval.startTime > s.dateTimeSlot.timeInterval.endTime
-            AND (s.dateTimeSlot.timeInterval.startTime < :checkEndTime
-                 OR
-                  s.dateTimeSlot.timeInterval.endTime > :checkStartTime))
-    )
-    """)
-  List<ScheduleEntryEntity> findSchedulesByDaysOfWeekAndTimeInterval(
-      @Param("afterDate") LocalDate afterDate,
-      @Param("valuesDaysOfWeek") Set<Integer> valuesDaysOfWeek,
-      @Param("checkStartTime") LocalTime checkStartTime,
-      @Param("checkEndTime") LocalTime checkEndTime);
+  @Query("""
+  SELECT s FROM ScheduleEntryEntity s
+  WHERE s.dateTimeSlot.date >= CURRENT_DATE
+  AND (TYPE(s) = BlockedTimeEntity
+       OR (TYPE(s) = ReservationEntity AND TREAT(s AS ReservationEntity).status = 'CONFIRMED'))
+  AND FUNCTION('date_part', 'dow', s.dateTimeSlot.date) IN :indexDaysOfWeek
+  AND (
+      (s.dateTimeSlot.timeInterval.startTime < s.dateTimeSlot.timeInterval.endTime
+       AND (
+            s.dateTimeSlot.timeInterval.startTime < :timeIntervalEndTime
+            AND
+            s.dateTimeSlot.timeInterval.endTime > :timeIntervalStartTime
+       )
+      )
+      OR
+      (s.dateTimeSlot.timeInterval.startTime > s.dateTimeSlot.timeInterval.endTime
+       AND (
+            s.dateTimeSlot.timeInterval.startTime < :timeIntervalEndTime
+            OR
+            s.dateTimeSlot.timeInterval.endTime > :timeIntervalStartTime
+       )
+      )
+  )
+  """)
+  List<ScheduleEntryEntity> findSchedulesFromTodayByDaysOfWeekAndTimeInterval(
+      @Param("indexDaysOfWeek") Set<Integer> indexDaysOfWeek,
+      @Param("timeIntervalStartTime") LocalTime timeIntervalStartTime,
+      @Param("timeIntervalEndTime") LocalTime timeIntervalEndTime);
 
   // ==================== QUERIES ESPECÍFICAS DE RESERVATION ====================
 

@@ -44,7 +44,7 @@ public enum DayOfWeek {
    *
    * @return valor inteiro correspondente ao dia da semana no PostgreSQL
    */
-  public int getDayOfWeekValue() {
+  public int getDayOfWeekIndex() {
     return switch (this) {
       case SUNDAY -> 0;
       case MONDAY -> 1;

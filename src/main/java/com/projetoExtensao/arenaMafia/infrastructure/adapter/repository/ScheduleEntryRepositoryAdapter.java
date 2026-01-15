@@ -66,9 +66,8 @@ public class ScheduleEntryRepositoryAdapter implements ScheduleEntryRepositoryPo
 
   @Override
   public List<ScheduleEntry> findAllActiveSchedulesByCourtIdFromToday(UUID courtId) {
-    LocalDate today = LocalDate.now();
     return scheduleEntryJpaRepository
-        .findAllSchedulesByCourtIdAfterDate(courtId, today)
+        .findAllSchedulesByCourtIdFromToday(courtId)
         .stream()
         .map(scheduleEntryMapper::toDomain)
         .filter(ScheduleEntry::isActive)
@@ -86,7 +85,7 @@ public class ScheduleEntryRepositoryAdapter implements ScheduleEntryRepositoryPo
     Set<Integer> valuesDaysOfWeek = null;
     if (selectedDaysOfWeek != null && !selectedDaysOfWeek.isEmpty()) {
       valuesDaysOfWeek = selectedDaysOfWeek.stream()
-          .map(DayOfWeek::getDayOfWeekValue)
+          .map(DayOfWeek::getDayOfWeekIndex)
           .collect(Collectors.toSet());
     }
 
@@ -95,7 +94,6 @@ public class ScheduleEntryRepositoryAdapter implements ScheduleEntryRepositoryPo
         courtIds,
         startDate,
         endDate,
-        selectedDaysOfWeek,
         valuesDaysOfWeek
     );
 
@@ -110,56 +108,51 @@ public class ScheduleEntryRepositoryAdapter implements ScheduleEntryRepositoryPo
   public List<ScheduleEntry> findAllActiveSchedulesFromTodayByDaysOfWeekAndTimeInterval(
           Set<DayOfWeek> daysOfWeek,
           TimeInterval timeInterval) {
+    
+    final LocalTime FINAL_DAY_TIME = LocalTime.of(23, 59, 59);
 
-    // Se nulo/vazio, pega todos os dias
     Set<DayOfWeek> searchDays = (daysOfWeek == null || daysOfWeek.isEmpty())
             ? Set.of(DayOfWeek.values())
             : daysOfWeek;
 
-    // Converte de DayOfWeek para valores inteiros que representam os dias
-    Set<Integer> valuesDaysWeek = searchDays.stream()
-            .map(DayOfWeek::getDayOfWeekValue)
+    Set<Integer> indexDaysWeek = searchDays.stream()
+            .map(DayOfWeek::getDayOfWeekIndex)
             .collect(Collectors.toSet());
 
     LocalTime startTime = timeInterval.startTime();
     LocalTime endTime = timeInterval.endTime();
-    LocalDate today = LocalDate.now();
 
     if (!timeInterval.crossesMidnight()) {
-      // Cenário Simples
+      LocalTime effectiveEndTime = (endTime.equals(LocalTime.MIDNIGHT) ? FINAL_DAY_TIME : endTime);
+
       return scheduleEntryJpaRepository
-          .findSchedulesByDaysOfWeekAndTimeInterval(today, valuesDaysWeek, startTime, endTime)
+          .findSchedulesFromTodayByDaysOfWeekAndTimeInterval(indexDaysWeek, startTime, effectiveEndTime)
           .stream()
           .map(scheduleEntryMapper::toDomain)
           .filter(ScheduleEntry::isActive)
           .toList();
-    } else {
-      // CENÁRIO COMPLEXO (Ex: 8:00 as 00:00)
-
-      // Parte A: Verificar o final da noite nos dias originais (startTime -> 23:59)
-      List<ScheduleEntryEntity> schedulesBeforeMidnight =
-          scheduleEntryJpaRepository
-              .findSchedulesByDaysOfWeekAndTimeInterval(today, valuesDaysWeek, startTime, LocalTime.MAX)
-              .stream()
-              .toList();
-
-      // Parte B: Verificar o início da manhã no dia seguinte (00:00 -> endTime)
-      Set<Integer> valuesNextDays = searchDays.stream()
-              .map(DayOfWeek::next)
-              .map(DayOfWeek::getDayOfWeekValue)
-              .collect(Collectors.toSet());
-
-      List<ScheduleEntryEntity> scheduleAfterMidnight =
-              scheduleEntryJpaRepository
-                      .findSchedulesByDaysOfWeekAndTimeInterval(today, valuesNextDays, LocalTime.MIN, endTime)
-                      .stream()
-                      .toList();
-
-      // Combina as duas listas de agendamentos
-      return Stream.concat(schedulesBeforeMidnight.stream(), scheduleAfterMidnight.stream())
+    }
+    else {
+      List<ScheduleEntry> schedulesBeforeMidnight = scheduleEntryJpaRepository
+          .findSchedulesFromTodayByDaysOfWeekAndTimeInterval(indexDaysWeek, startTime, FINAL_DAY_TIME)
+          .stream()
           .map(scheduleEntryMapper::toDomain)
           .filter(ScheduleEntry::isActive)
           .toList();
+
+      Set<Integer> nextIndexDaysWeek = searchDays.stream()
+              .map(DayOfWeek::next)
+              .map(DayOfWeek::getDayOfWeekIndex)
+              .collect(Collectors.toSet());
+
+      List<ScheduleEntry> schedulesAfterMidnight = scheduleEntryJpaRepository
+          .findSchedulesFromTodayByDaysOfWeekAndTimeInterval(nextIndexDaysWeek, LocalTime.MIDNIGHT, endTime)
+          .stream()
+          .map(scheduleEntryMapper::toDomain)
+          .filter(ScheduleEntry::isActive)
+          .toList();
+
+      return Stream.concat(schedulesBeforeMidnight.stream(), schedulesAfterMidnight.stream()).toList();
     }
   }
 }

@@ -12,6 +12,7 @@ import com.projetoExtensao.arenaMafia.domain.model.Court;
 import com.projetoExtensao.arenaMafia.domain.model.Modality;
 import com.projetoExtensao.arenaMafia.domain.model.User;
 import com.projetoExtensao.arenaMafia.domain.model.enums.DayOfWeek;
+import com.projetoExtensao.arenaMafia.domain.model.schedule.Reservation;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.court.response.CourtDisablePreviewResponseDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.operatingHours.request.CreateOperatingHoursRequestDto;
@@ -725,10 +726,11 @@ public class AdminOperatingHoursControllerIntegrationTest extends WebIntegration
         }
 
         @Test
-        @DisplayName("Deve criar preview de desativação para um horário com agendamentos futuros")
+        @DisplayName("Deve criar preview de desativação para um horário que o fim é meia noite em ponto  e possui agendamentos futuros")
         void shouldReturn200_whenCreatingPreviewForOperatingHoursWithFutureSchedules() {
           // Arrange
-          var operatingHour = mockPersistOperatingHours();
+          TimeInterval timeInterval = new TimeInterval(LocalTime.of(8, 0), LocalTime.of(0, 0));
+          var operatingHour = mockPersistOperatingHoursAllDaysWithTimeInterval(timeInterval);
           UUID operatingHourId = operatingHour.getId();
 
           // Criar agendamentos futuros que serão afetados
@@ -757,8 +759,9 @@ public class AdminOperatingHoursControllerIntegrationTest extends WebIntegration
               LocalDate.now().minusDays(1),
               new TimeInterval(LocalTime.of(14, 0), LocalTime.of(15, 0)),
               new BigDecimal(85),
-              adminId);
-          // Reserva em andamento que não deve ser afetada
+              adminId
+          );
+          // Reserva em andamento que não deve ser afetada mas deve constar no preview
           mockPersistReservationByUser(
               modality.getId(),
               court.getId(),
@@ -777,6 +780,159 @@ public class AdminOperatingHoursControllerIntegrationTest extends WebIntegration
                   .when()
                   .post("/{operatingHourId}/preview-disable", operatingHourId)
                   .then()
+                      .log().all()
+                  .statusCode(200)
+                  .extract()
+                  .as(OperatingHoursDisablePreviewResponseDto.class);
+
+          // Assert
+          assertThat(response.previewKey()).isNotEmpty();
+          assertThat(response.operatingHoursId()).isEqualTo(operatingHourId);
+          assertThat(response.usersAffectedCount()).isOne();
+          assertThat(response.blockedTimesAffectedCount()).isOne();
+          assertThat(response.reservationsAffectedCount()).isOne();
+          assertThat(response.blockedTimesAffectedCount()).isOne();
+          assertThat(response.reservationsAffectedCount()).isOne();
+          assertThat(response.inProgressReservations().size()).isOne();
+
+          Optional<OperatingHoursDisablePreview> previewInCache = getPreviewFromCache(response.previewKey());
+          assertThat(previewInCache).isPresent();
+
+          assertResponsePreviewMatchesPreviewSaved(response, previewInCache.get());
+        }
+
+        @Test
+        @DisplayName("Deve criar preview de desativação para um horário que o fim atravessa a meia noite e possui agendamentos futuros")
+        void shouldReturn200_whenCreatingPreviewForOperatingHoursCrossMidnightWithFutureSchedules() {
+          // Arrange
+          TimeInterval timeInterval = new TimeInterval(LocalTime.of(8, 0), LocalTime.of(1, 0));
+          var operatingHour = mockPersistOperatingHoursAllDaysWithTimeInterval(timeInterval);
+          UUID operatingHourId = operatingHour.getId();
+
+          // Criar agendamentos futuros que serão afetados
+          Modality modality = mockPersistModality("Volei");
+          Court court = mockPersistCourt("Quadra A", modality);
+
+          mockPersistBlockedTimeSpecific(
+                  court.getId(),
+                  nextDayOfWeek(java.time.DayOfWeek.FRIDAY),
+                  new TimeInterval(LocalTime.of(22, 0), LocalTime.of(0, 0)),
+                  "Manutenção",
+                  adminId
+          );
+          mockPersistReservationByUser(
+                  modality.getId(),
+                  court.getId(),
+                  nextDayOfWeek(java.time.DayOfWeek.TUESDAY),
+                  new TimeInterval(LocalTime.of(14, 0), LocalTime.of(15, 0)),
+                  new BigDecimal(85),
+                  adminId
+          );
+          // Reserva no passado que não deve ser afetada
+          mockPersistReservationByUser(
+                  modality.getId(),
+                  court.getId(),
+                  LocalDate.now().minusDays(1),
+                  new TimeInterval(LocalTime.of(14, 0), LocalTime.of(15, 0)),
+                  new BigDecimal(85),
+                  adminId
+          );
+          // Reserva em andamento que não deve ser afetada mas deve constar no preview
+          mockPersistReservationByUser(
+                  modality.getId(),
+                  court.getId(),
+                  LocalDate.now(),
+                  new TimeInterval(
+                          normalizeToValidMinutes(LocalTime.now().minusMinutes(30)),
+                          normalizeToValidMinutes(LocalTime.now().plusMinutes(30))),
+                  BigDecimal.valueOf(80),
+                  adminId);
+
+          // Act
+          var response =
+                  given()
+                          .spec(specification)
+                          .header("Authorization", accessToken)
+                          .when()
+                          .post("/{operatingHourId}/preview-disable", operatingHourId)
+                          .then()
+                          .log().all()
+                          .statusCode(200)
+                          .extract()
+                          .as(OperatingHoursDisablePreviewResponseDto.class);
+
+          // Assert
+          assertThat(response.previewKey()).isNotEmpty();
+          assertThat(response.operatingHoursId()).isEqualTo(operatingHourId);
+          assertThat(response.usersAffectedCount()).isOne();
+          assertThat(response.blockedTimesAffectedCount()).isOne();
+          assertThat(response.reservationsAffectedCount()).isOne();
+          assertThat(response.blockedTimesAffectedCount()).isOne();
+          assertThat(response.reservationsAffectedCount()).isOne();
+          assertThat(response.inProgressReservations().size()).isOne();
+
+          Optional<OperatingHoursDisablePreview> previewInCache = getPreviewFromCache(response.previewKey());
+          assertThat(previewInCache).isPresent();
+
+          assertResponsePreviewMatchesPreviewSaved(response, previewInCache.get());
+        }
+
+        @Test
+        @DisplayName("Deve criar preview de desativação para um horário que não atravesse a meia noite e possui múltiplos agendamentos futuros")
+        void shouldReturn200_whenCreatingPreviewForOperatingHoursWithMultipleFutureSchedules() {
+          // Arrange
+          TimeInterval timeInterval = new TimeInterval(LocalTime.of(8, 0), LocalTime.of(23, 0));
+          var operatingHour = mockPersistOperatingHoursAllDaysWithTimeInterval(timeInterval);
+          UUID operatingHourId = operatingHour.getId();
+
+          // Criar múltiplos agendamentos futuros que serão afetados
+          Modality modality = mockPersistModality("Futebol");
+          Court court = mockPersistCourt("Quadra B", modality);
+
+          mockPersistBlockedTimeSpecific(
+              court.getId(),
+              nextDayOfWeek(java.time.DayOfWeek.WEDNESDAY),
+              new TimeInterval(LocalTime.of(18, 0), LocalTime.of(20, 0)),
+              "Evento Especial",
+              adminId
+          );
+          mockPersistReservationByUser(
+              modality.getId(),
+              court.getId(),
+              nextDayOfWeek(java.time.DayOfWeek.THURSDAY),
+              new TimeInterval(LocalTime.of(16, 0), LocalTime.of(17, 0)),
+              new BigDecimal(100),
+              adminId
+          );
+          // Reserva no passado que não deve ser afetada
+          mockPersistReservationByUser(
+              modality.getId(),
+              court.getId(),
+              LocalDate.now().minusDays(1),
+              new TimeInterval(LocalTime.of(14, 0), LocalTime.of(15, 0)),
+              new BigDecimal(85),
+              adminId
+          );
+          // Reserva em andamento que não deve ser afetada mas deve constar no preview
+          mockPersistReservationByUser(
+              modality.getId(),
+              court.getId(),
+              LocalDate.now(),
+              new TimeInterval(
+                  normalizeToValidMinutes(LocalTime.now().minusMinutes(30)),
+                  normalizeToValidMinutes(LocalTime.now().plusMinutes(30))),
+              BigDecimal.valueOf(80),
+              adminId);
+
+          // Act
+          var response =
+              given()
+                  .spec(specification)
+                  .header("Authorization", accessToken)
+                  .when()
+                  .post("/{operatingHourId}/preview-disable", operatingHourId)
+                  .then()
+                      .log().all()
                   .statusCode(200)
                   .extract()
                   .as(OperatingHoursDisablePreviewResponseDto.class);
