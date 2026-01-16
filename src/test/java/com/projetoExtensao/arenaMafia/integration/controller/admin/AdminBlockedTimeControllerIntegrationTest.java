@@ -1425,7 +1425,7 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
         @DisplayName("Tenta criar bloqueio fora do horário de funcionamento")
         void shouldReturn400WhenOutsideOperatingHours() {
           // Arrange
-          mockPersistOperatingHours();
+          mockPersistOperatingHoursAllDays();
           Modality modality = mockPersistModality("Futebol");
           UUID courtId = mockPersistCourt("Quadra 1", modality).getId();
 
