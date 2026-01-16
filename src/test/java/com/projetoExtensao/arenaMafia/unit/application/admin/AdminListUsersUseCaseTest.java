@@ -13,7 +13,7 @@ import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidDateRangeException;
 import com.projetoExtensao.arenaMafia.domain.model.User;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.UserEntity;
-import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.request.AdminUserSearchRequestDto;
+import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.user.request.AdminUserSearchRequestDto;
 import com.projetoExtensao.arenaMafia.unit.config.TestDataProvider;
 import java.time.LocalDate;
 import java.util.List;

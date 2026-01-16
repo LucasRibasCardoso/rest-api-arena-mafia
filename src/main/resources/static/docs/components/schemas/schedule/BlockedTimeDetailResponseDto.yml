@@ -1,0 +1,45 @@
+type: object
+description: |
+  Detalhes enriquecidos de um bloqueio de horário.
+  Contém todas as informações relevantes sobre o bloqueio, incluindo dados da quadra.
+  Utilizado em previews de conflitos e listagens administrativas.
+properties:
+  blockedTimeId:
+    type: string
+    format: uuid
+    description: Identificador único do bloqueio de horário.
+    example: "f1a2b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5c"
+  courtId:
+    type: string
+    format: uuid
+    description: Identificador único da quadra bloqueada.
+    example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+  courtName:
+    type: string
+    description: Nome da quadra bloqueada.
+    example: "Quadra A"
+  date:
+    type: string
+    format: date
+    description: Data do bloqueio no formato ISO 8601 (yyyy-MM-dd).
+    example: "2026-01-15"
+  timeInterval:
+    $ref: "../timeInterval/TimeIntervalDto.yml"
+  description:
+    type: string
+    nullable: true
+    description: Descrição ou motivo do bloqueio.
+    example: "Manutenção preventiva do sistema de iluminação"
+  isFullDay:
+    type: boolean
+    description: Indica se o bloqueio cobre o dia inteiro de funcionamento.
+    example: false
+  recurringBlockedTimeId:
+    type: string
+    format: uuid
+    nullable: true
+    description: |
+      Identificador do bloqueio recorrente ao qual este bloqueio pertence.
+      Será `null` para bloqueios individuais.
+    example: null
+

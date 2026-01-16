@@ -1,8 +1,8 @@
 package com.projetoExtensao.arenaMafia.unit.application.schedule.scheduler;
 
-import com.projetoExtensao.arenaMafia.application.schedule.port.repository.ScheduleEntryRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.schedule.port.repository.ReservationRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.schedule.scheduler.DynamicReservationCompletionScheduler;
-import com.projetoExtensao.arenaMafia.application.schedule.usecase.CompleteReservationUseCase;
+import com.projetoExtensao.arenaMafia.application.schedule.usecase.reservation.CompleteReservationUseCase;
 import com.projetoExtensao.arenaMafia.domain.model.enums.ReservationStatus;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.Reservation;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.DateTimeSlot;
@@ -38,23 +38,26 @@ class DynamicReservationCompletionSchedulerTest {
 
   private static final ZoneId ZONE_ID = ZoneId.of("America/Sao_Paulo");
 
-  @Mock private TaskScheduler taskScheduler;
-  @Mock private CompleteReservationUseCase completeReservationUseCase;
-  @Mock private ScheduleEntryRepositoryPort scheduleEntryRepositoryPort;
+  @Mock
+  private TaskScheduler taskScheduler;
+  @Mock
+  private CompleteReservationUseCase completeReservationUseCase;
+  @Mock
+  private ReservationRepositoryPort reservationRepositoryPort;
 
   private DynamicReservationCompletionScheduler scheduler;
 
   @BeforeEach
   void setUp() {
     scheduler =
-        new DynamicReservationCompletionScheduler(
-            taskScheduler, completeReservationUseCase, scheduleEntryRepositoryPort);
+            new DynamicReservationCompletionScheduler(
+                    taskScheduler, completeReservationUseCase, reservationRepositoryPort);
   }
 
   private void mockSchedulerToReturnFuture() {
     doAnswer(invocation -> mock(ScheduledFuture.class))
-        .when(taskScheduler)
-        .schedule(any(Runnable.class), any(Instant.class));
+            .when(taskScheduler)
+            .schedule(any(Runnable.class), any(Instant.class));
   }
 
   @Nested
@@ -106,8 +109,8 @@ class DynamicReservationCompletionSchedulerTest {
 
       ArgumentCaptor<Runnable> runnableCaptor = ArgumentCaptor.forClass(Runnable.class);
       doAnswer(invocation -> mock(ScheduledFuture.class))
-          .when(taskScheduler)
-          .schedule(runnableCaptor.capture(), any(Instant.class));
+              .when(taskScheduler)
+              .schedule(runnableCaptor.capture(), any(Instant.class));
 
       scheduler.scheduleCompletion(reservationId, endDateTime);
 
@@ -127,12 +130,12 @@ class DynamicReservationCompletionSchedulerTest {
 
       ArgumentCaptor<Runnable> runnableCaptor = ArgumentCaptor.forClass(Runnable.class);
       doAnswer(invocation -> mock(ScheduledFuture.class))
-          .when(taskScheduler)
-          .schedule(runnableCaptor.capture(), any(Instant.class));
+              .when(taskScheduler)
+              .schedule(runnableCaptor.capture(), any(Instant.class));
 
       doThrow(new RuntimeException("Erro simulado"))
-          .when(completeReservationUseCase)
-          .execute(reservationId);
+              .when(completeReservationUseCase)
+              .execute(reservationId);
 
       scheduler.scheduleCompletion(reservationId, endDateTime);
 
@@ -153,9 +156,9 @@ class DynamicReservationCompletionSchedulerTest {
       // Arrange
       List<Reservation> confirmedReservations = createConfirmedReservations(3);
 
-      when(scheduleEntryRepositoryPort.findAllConfirmedReservationsWithEndTimeAfter(
+      when(reservationRepositoryPort.findAllConfirmedReservationsWithEndTimeAfter(
               any(LocalDateTime.class)))
-          .thenReturn(confirmedReservations);
+              .thenReturn(confirmedReservations);
 
       mockSchedulerToReturnFuture();
 
@@ -163,8 +166,8 @@ class DynamicReservationCompletionSchedulerTest {
       scheduler.rescheduleExistingReservations();
 
       // Assert
-      verify(scheduleEntryRepositoryPort)
-          .findAllConfirmedReservationsWithEndTimeAfter(any(LocalDateTime.class));
+      verify(reservationRepositoryPort)
+              .findAllConfirmedReservationsWithEndTimeAfter(any(LocalDateTime.class));
       verify(taskScheduler, times(3)).schedule(any(Runnable.class), any(Instant.class));
     }
 
@@ -172,16 +175,16 @@ class DynamicReservationCompletionSchedulerTest {
     @DisplayName("Não deve agendar nenhuma tarefa quando não há reservas confirmadas")
     void shouldNotScheduleAnyTaskWhenNoConfirmedReservations() {
       // Arrange
-      when(scheduleEntryRepositoryPort.findAllConfirmedReservationsWithEndTimeAfter(
+      when(reservationRepositoryPort.findAllConfirmedReservationsWithEndTimeAfter(
               any(LocalDateTime.class)))
-          .thenReturn(Collections.emptyList());
+              .thenReturn(Collections.emptyList());
 
       // Act
       scheduler.rescheduleExistingReservations();
 
       // Assert
-      verify(scheduleEntryRepositoryPort)
-          .findAllConfirmedReservationsWithEndTimeAfter(any(LocalDateTime.class));
+      verify(reservationRepositoryPort)
+              .findAllConfirmedReservationsWithEndTimeAfter(any(LocalDateTime.class));
       verify(taskScheduler, never()).schedule(any(Runnable.class), any(Instant.class));
     }
 
@@ -196,9 +199,9 @@ class DynamicReservationCompletionSchedulerTest {
       Reservation reservation1 = createReservation(tomorrow, timeInterval1);
       Reservation reservation2 = createReservation(tomorrow, timeInterval2);
 
-      when(scheduleEntryRepositoryPort.findAllConfirmedReservationsWithEndTimeAfter(
+      when(reservationRepositoryPort.findAllConfirmedReservationsWithEndTimeAfter(
               any(LocalDateTime.class)))
-          .thenReturn(List.of(reservation1, reservation2));
+              .thenReturn(List.of(reservation1, reservation2));
 
       mockSchedulerToReturnFuture();
 
@@ -211,9 +214,9 @@ class DynamicReservationCompletionSchedulerTest {
 
       List<Instant> capturedInstants = instantCaptor.getAllValues();
       Instant expectedInstant1 =
-          LocalDateTime.of(tomorrow, LocalTime.of(11, 0)).atZone(ZONE_ID).toInstant();
+              LocalDateTime.of(tomorrow, LocalTime.of(11, 0)).atZone(ZONE_ID).toInstant();
       Instant expectedInstant2 =
-          LocalDateTime.of(tomorrow, LocalTime.of(15, 0)).atZone(ZONE_ID).toInstant();
+              LocalDateTime.of(tomorrow, LocalTime.of(15, 0)).atZone(ZONE_ID).toInstant();
 
       assertThat(capturedInstants).containsExactlyInAnyOrder(expectedInstant1, expectedInstant2);
     }
@@ -223,27 +226,28 @@ class DynamicReservationCompletionSchedulerTest {
 
   private List<Reservation> createConfirmedReservations(int count) {
     return java.util.stream.IntStream.range(0, count)
-        .mapToObj(
-            i -> {
-              LocalDate date = LocalDate.now().plusDays(1);
-              TimeInterval timeInterval =
-                  new TimeInterval(LocalTime.of(10 + i, 0), LocalTime.of(11 + i, 0));
-              return createReservation(date, timeInterval);
-            })
-        .toList();
+            .mapToObj(
+                    i -> {
+                      LocalDate date = LocalDate.now().plusDays(1);
+                      TimeInterval timeInterval =
+                              new TimeInterval(LocalTime.of(10 + i, 0), LocalTime.of(11 + i, 0));
+                      return createReservation(date, timeInterval);
+                    })
+            .toList();
   }
 
   private Reservation createReservation(LocalDate date, TimeInterval timeInterval) {
     return Reservation.reconstitute(
-        UUID.randomUUID(),
-        UUID.randomUUID(), // courtId
-        UUID.randomUUID(), // modalityId
-        UUID.randomUUID(), // userId
-        null, // scheduledByAdminId
-        BigDecimal.valueOf(50.00),
-        new DateTimeSlot(date, timeInterval),
-        ReservationStatus.CONFIRMED,
-        null, // recurringReservationId
-        Instant.now());
+            UUID.randomUUID(),
+            UUID.randomUUID(), // courtId
+            UUID.randomUUID(), // modalityId
+            UUID.randomUUID(), // userId
+            null, // scheduledByAdminId
+            null, // canceledByAdminId
+            BigDecimal.valueOf(50.00),
+            new DateTimeSlot(date, timeInterval),
+            ReservationStatus.CONFIRMED,
+            null, // recurringReservationId
+            Instant.now());
   }
 }

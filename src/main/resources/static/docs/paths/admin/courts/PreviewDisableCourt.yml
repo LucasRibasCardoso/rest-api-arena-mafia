@@ -1,0 +1,141 @@
+post:
+  operationId: previewDisableCourt
+  tags: [ "Administração - Gerenciamento de Quadras" ]
+  summary: Pré-visualizar desativação de quadra
+  description: | 
+    Permite pré-visualizar a desativação de uma quadra específica, fornecendo detalhes sobre o impacto da desativação.
+    
+    **Funcionalidade:**
+    - Identifica reservas confirmadas que serão afetadas pela desativação.
+    - Identifica bloqueios de horários existentes que serão removidos.
+    - Identifica reservas em andamento, elas não serão canceladas mas serão retornadas na pré-visualização.
+    - Calcula a quantidade de usuários afetados pela desativação.
+    
+    **Fluxo de Uso:**
+    1. O administrador envia uma solicitação para pré-visualizar a desativação de uma quadra.
+    2. O sistema analisa as reservas e bloqueios relacionados à quadra.
+    3. O sistema retorna um resumo detalhado do impacto da desativação
+    
+    **Validações:**
+    - Verifica se a quadra existe e está ativa.
+  security:
+    - bearerAuth: []
+  parameters:
+    - $ref: "../../../components/parameters/CourtId.yml"
+  responses:
+    200:
+      description: |
+        Pré-visualização gerada com sucesso.
+
+        Retorna todos os conflitos identificados e uma `previewKey` para confirmação.
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/court/CourtDisablePreviewResponseDto.yml"
+          examples:
+            PreviewWithoutConflicts:
+              summary: Pré-visualização sem conflitos
+              value:
+                previewKey: "court-disable-preview:960289b9-d32d-4f00-8df7-02f4c04a017c:5a2f25cb-6a58-4920-994d-b9336317eb90"
+                courtId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                courtName: "Quadra A"
+                usersAffectedCount: 0
+                blockedTimesAffectedCount: 0
+                reservationsAffectedCount: 0
+                affectedBlockedTimes: [ ]
+                affectedReservations: [ ]
+                inProgressReservations: [ ]
+            PreviewWithConflicts:
+              summary: Pré-visualização com conflitos e reserva em andamento
+              value:
+                previewKey: "court-disable-preview:960289b9-d32d-4f00-8df7-02f4c04a017c:5a2f25cb-6a58-4920-994d-b9336317eb90"
+                courtId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                courtName: "Quadra A"
+                usersAffectedCount: 1
+                blockedTimesAffectedCount: 1
+                reservationsAffectedCount: 1
+                affectedBlockedTimes:
+                  - blockedTimeId: "f1a2b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5c"
+                    courtId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                    courtName: "Quadra A"
+                    date: "2026-01-15"
+                    timeInterval:
+                      startTime: "16:00"
+                      endTime: "17:00"
+                    description: "Manutenção preventiva"
+                    isFullDay: false
+                    recurringBlockedTimeId: null
+                affectedReservations:
+                  - reservationId: "3e7a9b2c-5d8f-4c3e-9a1b-7f6e4d2c1a0b"
+                    userId: "123e4567-e89b-12d3-a456-426614174000"
+                    courtId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                    username: "João da Silva"
+                    userPhone: "+5511999000001"
+                    courtName: "Quadra A"
+                    date: "2026-01-15"
+                    timeInterval:
+                      startTime: "08:00"
+                      endTime: "09:00"
+                    modalityName: "Vôlei de Praia"
+                    price: 80.00
+                    status: "CONFIRMED"
+                    recurringReservationId: null
+                inProgressReservations:
+                  - reservationId: "7f8e9d0c-1b2a-3c4d-5e6f-7a8b9c0d1e2f"
+                    userId: "456e7890-e12b-34d5-a678-901234567890"
+                    courtId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                    username: "Maria Santos"
+                    userPhone: "+5511999000002"
+                    courtName: "Quadra A"
+                    date: "2026-01-15"
+                    timeInterval:
+                      startTime: "14:00"
+                      endTime: "15:00"
+                    modalityName: "Beach Tênis"
+                    price: 75.00
+                    status: "CONFIRMED"
+                    recurringReservationId: null
+    400:
+        $ref: "../../../components/responses/BadRequestInvalidUUID.yml"
+    401:
+      $ref: "../../../components/responses/UnauthorizedError.yml"
+    403:
+      $ref: "../../../components/responses/ForbiddenError.yml"
+    404:
+      description: Quadra não encontrada.
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
+          examples:
+            CourtNotFound:
+              summary: Quadra não encontrada
+              value:
+                timestamp: "2026-01-15T14:30:00Z"
+                status: 404
+                errorCode: "COURT_NOT_FOUND"
+                developerMessage: "Quadra não encontrada."
+                path: "/api/admin/courts/{courtId}/preview-disable"
+    409:
+      description: |
+        Conflito ao gerar pré-visualização da desativação da quadra.
+
+        Possíveis causas:
+        - A quadra já está desativada.
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
+          examples:
+            CourtAlreadyDisabled:
+              summary: Quadra já desativada
+              value:
+                timestamp: "2026-01-15T14:30:00Z"
+                status: 409
+                errorCode: "COURT_ALREADY_DISABLED"
+                developerMessage: "A quadra já está desativada."
+                path: "/api/admin/courts/{courtId}/preview-disable"
+    429:
+      $ref: "../../../components/responses/TooManyRequestsError.yml"
+    500:
+      $ref: "../../../components/responses/InternalServerError.yml"

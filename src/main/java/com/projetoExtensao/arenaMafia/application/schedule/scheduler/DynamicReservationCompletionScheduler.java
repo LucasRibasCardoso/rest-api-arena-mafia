@@ -1,15 +1,8 @@
 package com.projetoExtensao.arenaMafia.application.schedule.scheduler;
 
-import com.projetoExtensao.arenaMafia.application.schedule.port.repository.ScheduleEntryRepositoryPort;
-import com.projetoExtensao.arenaMafia.application.schedule.usecase.CompleteReservationUseCase;
+import com.projetoExtensao.arenaMafia.application.schedule.port.repository.ReservationRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.schedule.usecase.reservation.CompleteReservationUseCase;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.Reservation;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.event.EventListener;
-import org.springframework.scheduling.TaskScheduler;
-import org.springframework.stereotype.Component;
-
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -18,25 +11,32 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.TaskScheduler;
+import org.springframework.stereotype.Component;
 
 @Component
 public class DynamicReservationCompletionScheduler {
 
-  private static final Logger logger = LoggerFactory.getLogger(DynamicReservationCompletionScheduler.class);
+  private static final Logger logger =
+      LoggerFactory.getLogger(DynamicReservationCompletionScheduler.class);
   private static final ZoneId ZONE_ID = ZoneId.of("America/Sao_Paulo");
 
   private final TaskScheduler taskScheduler;
   private final CompleteReservationUseCase completeReservationUseCase;
-  private final ScheduleEntryRepositoryPort scheduleEntryRepositoryPort;
+  private final ReservationRepositoryPort reservationRepositoryPort;
   private final Map<UUID, ScheduledFuture<?>> scheduledTasks;
 
   public DynamicReservationCompletionScheduler(
       TaskScheduler taskScheduler,
       CompleteReservationUseCase completeReservationUseCase,
-      ScheduleEntryRepositoryPort scheduleEntryRepositoryPort) {
+      ReservationRepositoryPort reservationRepositoryPort) {
     this.taskScheduler = taskScheduler;
     this.completeReservationUseCase = completeReservationUseCase;
-    this.scheduleEntryRepositoryPort = scheduleEntryRepositoryPort;
+    this.reservationRepositoryPort = reservationRepositoryPort;
     this.scheduledTasks = new ConcurrentHashMap<>();
   }
 
@@ -83,8 +83,22 @@ public class DynamicReservationCompletionScheduler {
     logger.info("INICIANDO: Reagendamento de reservas confirmadas existentes");
 
     LocalDateTime now = LocalDateTime.now(ZONE_ID);
+    List<Reservation> expiredReservations =
+        reservationRepositoryPort.findAllConfirmedReservationsWithEndTimeBeforeOrEqual(now);
+
+    for (Reservation reservation : expiredReservations) {
+      try {
+        completeReservationUseCase.execute(reservation.getId());
+      } catch (Exception e) {
+        logger.warn(
+            "Falha ao completar reserva {} durante startup: {}",
+            reservation.getId(),
+            e.getMessage());
+      }
+    }
+
     List<Reservation> confirmedReservations =
-        scheduleEntryRepositoryPort.findAllConfirmedReservationsWithEndTimeAfter(now);
+        reservationRepositoryPort.findAllConfirmedReservationsWithEndTimeAfter(now);
 
     if (confirmedReservations.isEmpty()) {
       logger.info("Nenhuma reserva confirmada encontrada para reagendar");

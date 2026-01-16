@@ -1,7 +1,7 @@
 package com.projetoExtensao.arenaMafia.application.court.usecase;
 
-import com.projetoExtensao.arenaMafia.application.court.dto.CourtWithModalitiesResult;
-import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.request.UpdateCourtRequestDto;
+import com.projetoExtensao.arenaMafia.application.court.aggregate.CourtWithModalities;
+import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.court.request.UpdateCourtRequestDto;
 import java.util.UUID;
 
 /**
@@ -24,5 +24,5 @@ public interface UpdateCourtUseCase {
    * @throws com.projetoExtensao.arenaMafia.domain.exception.conflict.CourtAlreadyExistsException se
    *     o novo nome já estiver em uso por outra quadra
    */
-  CourtWithModalitiesResult execute(UUID courtId, UpdateCourtRequestDto request);
+  CourtWithModalities execute(UUID courtId, UpdateCourtRequestDto request);
 }

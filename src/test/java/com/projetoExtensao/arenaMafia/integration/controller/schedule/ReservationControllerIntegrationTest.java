@@ -12,7 +12,7 @@ import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
 import com.projetoExtensao.arenaMafia.infrastructure.web.exception.dto.ErrorResponseDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.exception.dto.FieldErrorResponseDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.schedule.dto.request.CreateReservationRequestDto;
-import com.projetoExtensao.arenaMafia.infrastructure.web.schedule.dto.response.ScheduleEntryResponseDto;
+import com.projetoExtensao.arenaMafia.infrastructure.web.schedule.dto.response.scheduleNormal.ScheduleEntryResponseDto;
 import com.projetoExtensao.arenaMafia.integration.config.WebIntegrationTestConfig;
 import com.projetoExtensao.arenaMafia.integration.config.util.timeInterval.InvalidTimeIntervalProvider;
 import io.restassured.builder.RequestSpecBuilder;

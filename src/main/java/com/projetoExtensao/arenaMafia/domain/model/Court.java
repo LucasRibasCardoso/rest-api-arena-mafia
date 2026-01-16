@@ -16,12 +16,33 @@ import java.util.UUID;
 public class Court {
 
   private final UUID id;
+  private final Instant createdAt;
   private String name;
   private String description;
   private OffsetMinutes offsetMinutes;
   private boolean isActive;
   private Set<UUID> modalityIds;
-  private final Instant createdAt;
+
+  private Court(
+      UUID id,
+      String name,
+      String description,
+      OffsetMinutes offsetMinutes,
+      boolean isActive,
+      Set<UUID> modalityIds,
+      Instant createdAt) {
+
+    validateName(name);
+    validateModalityIds(modalityIds);
+    validateOffsetMinutes(offsetMinutes);
+    this.id = id;
+    this.name = name;
+    this.description = description;
+    this.offsetMinutes = offsetMinutes;
+    this.isActive = isActive;
+    this.modalityIds = modalityIds != null ? new HashSet<>(modalityIds) : new HashSet<>();
+    this.createdAt = createdAt;
+  }
 
   /**
    * Cria uma nova instância de Court com um ID gerado e a data de criação atual. Por padrão, uma
@@ -64,27 +85,6 @@ public class Court {
       Set<UUID> modalityIds,
       Instant createdAt) {
     return new Court(id, name, description, offsetMinutes, isActive, modalityIds, createdAt);
-  }
-
-  private Court(
-      UUID id,
-      String name,
-      String description,
-      OffsetMinutes offsetMinutes,
-      boolean isActive,
-      Set<UUID> modalityIds,
-      Instant createdAt) {
-
-    validateName(name);
-    validateModalityIds(modalityIds);
-    validateOffsetMinutes(offsetMinutes);
-    this.id = id;
-    this.name = name;
-    this.description = description;
-    this.offsetMinutes = offsetMinutes;
-    this.isActive = isActive;
-    this.modalityIds = modalityIds != null ? new HashSet<>(modalityIds) : new HashSet<>();
-    this.createdAt = createdAt;
   }
 
   // --- Validações ---

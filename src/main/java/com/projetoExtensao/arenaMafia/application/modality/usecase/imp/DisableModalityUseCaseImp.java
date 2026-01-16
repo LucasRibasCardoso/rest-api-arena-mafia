@@ -4,9 +4,7 @@ import com.projetoExtensao.arenaMafia.application.modality.port.ModalityReposito
 import com.projetoExtensao.arenaMafia.application.modality.usecase.DisableModalityUseCase;
 import com.projetoExtensao.arenaMafia.domain.exception.conflict.ModalityInUseException;
 import com.projetoExtensao.arenaMafia.domain.model.Modality;
-
 import java.util.UUID;
-
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,23 +12,23 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class DisableModalityUseCaseImp implements DisableModalityUseCase {
 
-    private final ModalityRepositoryPort modalityRepositoryPort;
+  private final ModalityRepositoryPort modalityRepositoryPort;
 
-    public DisableModalityUseCaseImp(ModalityRepositoryPort modalityRepositoryPort) {
-        this.modalityRepositoryPort = modalityRepositoryPort;
-    }
+  public DisableModalityUseCaseImp(ModalityRepositoryPort modalityRepositoryPort) {
+    this.modalityRepositoryPort = modalityRepositoryPort;
+  }
 
-    @Override
-    public void execute(UUID id) {
-        Modality modality = modalityRepositoryPort.findByIdOrElseThrow(id);
-        validateModalityNotInUse(id);
-        modality.disable();
-        modalityRepositoryPort.save(modality);
-    }
+  @Override
+  public void execute(UUID id) {
+    Modality modality = modalityRepositoryPort.findByIdOrElseThrow(id);
+    validateModalityNotInUse(id);
+    modality.disable();
+    modalityRepositoryPort.save(modality);
+  }
 
-    private void validateModalityNotInUse(UUID modalityId) {
-        if (modalityRepositoryPort.existsCourtsByModalityId(modalityId)) {
-            throw new ModalityInUseException();
-        }
+  private void validateModalityNotInUse(UUID modalityId) {
+    if (modalityRepositoryPort.existsCourtsByModalityId(modalityId)) {
+      throw new ModalityInUseException();
     }
+  }
 }

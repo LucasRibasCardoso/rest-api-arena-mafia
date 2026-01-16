@@ -1,35 +1,39 @@
 package com.projetoExtensao.arenaMafia.integration.config;
 
 import static io.restassured.RestAssured.given;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import com.projetoExtensao.arenaMafia.application.auth.port.repository.RefreshTokenRepositoryPort;
-import com.projetoExtensao.arenaMafia.application.court.port.CourtRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.court.port.repository.CourtRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.modality.port.ModalityRepositoryPort;
-import com.projetoExtensao.arenaMafia.application.operatingHours.ports.OperatingHoursRepositoryPort;
-import com.projetoExtensao.arenaMafia.application.priceRule.ports.PriceRuleRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.operatingHours.port.repository.OperatingHoursRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.priceRule.port.PriceRuleRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.schedule.port.repository.BlockedTimeRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.schedule.port.repository.ScheduleEntryRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.security.port.gateway.PasswordEncoderPort;
 import com.projetoExtensao.arenaMafia.application.user.port.repository.UserRepositoryPort;
+import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 import com.projetoExtensao.arenaMafia.domain.model.*;
 import com.projetoExtensao.arenaMafia.domain.model.enums.AccountStatus;
 import com.projetoExtensao.arenaMafia.domain.model.enums.DayOfWeek;
 import com.projetoExtensao.arenaMafia.domain.model.enums.OffsetMinutes;
 import com.projetoExtensao.arenaMafia.domain.model.enums.RoleEnum;
+import com.projetoExtensao.arenaMafia.domain.model.schedule.BlockedTime;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.Reservation;
-import com.projetoExtensao.arenaMafia.domain.model.schedule.ScheduleEntry;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.DateTimeSlot;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.RefreshTokenVO;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.repository.UserJpaRepository;
 import com.projetoExtensao.arenaMafia.infrastructure.web.auth.dto.request.LoginRequestDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.auth.dto.response.AuthResponseDto;
-import com.projetoExtensao.arenaMafia.infrastructure.web.schedule.dto.response.ScheduleEntryResponseDto;
+import com.projetoExtensao.arenaMafia.infrastructure.web.exception.dto.ErrorResponseDto;
 import io.restassured.http.Cookie;
 import io.restassured.response.Response;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.temporal.TemporalAdjusters;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -72,6 +76,7 @@ public abstract class BaseTestContainersConfig {
   @Autowired private OperatingHoursRepositoryPort operatingHoursRepository;
   @Autowired private PriceRuleRepositoryPort priceRuleRepository;
   @Autowired private ScheduleEntryRepositoryPort scheduleEntryRepository;
+  @Autowired private BlockedTimeRepositoryPort blockedTimeRepository;
 
   public final String defaultUsername = "testuser";
   public final String defaultPassword = "123456";
@@ -102,6 +107,84 @@ public abstract class BaseTestContainersConfig {
         "tb_modalities",
         "tb_users");
     redisTemplate.getConnectionFactory().getConnection().serverCommands().flushAll();
+  }
+
+  /**
+   * Valida uma resposta de erro de validação (400 Bad Request) com fieldErrors. Útil para validar
+   * erros de Bean Validation em DTOs de request.
+   *
+   * @param response A resposta de erro extraída do RestAssured
+   * @param expectedPath O path esperado do endpoint
+   * @param fieldName O nome do campo com erro
+   * @param expectedErrorCode O ErrorCode esperado para o campo
+   */
+  public void assertValidationError(
+          ErrorResponseDto response,
+          String expectedPath,
+          String fieldName,
+          ErrorCode expectedErrorCode) {
+
+    assertThat(response.status()).isEqualTo(400);
+    assertThat(response.errorCode()).isEqualTo(ErrorCode.VALIDATION_FAILED.name());
+    assertThat(response.developerMessage()).isEqualTo(ErrorCode.VALIDATION_FAILED.getMessage());
+    assertThat(response.path()).isEqualTo(expectedPath);
+    assertThat(response.fieldErrors())
+            .anyMatch(
+                    fieldError ->
+                            fieldError.fieldName().equals(fieldName)
+                                    && fieldError.errorCode().equals(expectedErrorCode.name())
+                                    && fieldError.developerMessage().equals(expectedErrorCode.getMessage()));
+  }
+
+  /**
+   * Valida uma resposta de erro de negócio (404, 409, 403, etc.) sem fieldErrors.
+   *
+   * @param response A resposta de erro extraída do RestAssured
+   * @param expectedStatus O status HTTP esperado (404, 409, etc.)
+   * @param expectedPath O path esperado do endpoint
+   * @param expectedErrorCode O ErrorCode esperado
+   */
+  public void assertBusinessError(
+          ErrorResponseDto response,
+          int expectedStatus,
+          String expectedPath,
+          ErrorCode expectedErrorCode) {
+
+    assertThat(response.status()).isEqualTo(expectedStatus);
+    assertThat(response.errorCode()).isEqualTo(expectedErrorCode.name());
+    assertThat(response.developerMessage()).isEqualTo(expectedErrorCode.getMessage());
+    assertThat(response.path()).isEqualTo(expectedPath);
+  }
+
+  /**
+   * Normaliza um horário para ter minutos válidos (0 ou 30).
+   * Essencial para simular reservas em andamento que sigam a regra de negócio.
+   * Regras de arredondamento:
+   * - 0-14 minutos → arredonda para baixo para 0
+   * - 15-44 minutos → arredonda para 30
+   * - 45-59 minutos → arredonda para hora seguinte com 0 minutos
+   */
+  public LocalTime normalizeToValidMinutes(LocalTime time) {
+    int minutes = time.getMinute();
+
+    if (minutes < 15) {
+      // Arredonda para baixo: 14:05 → 14:00
+      return time.withMinute(0).withSecond(0).withNano(0);
+    } else if (minutes < 45) {
+      // Arredonda para 30: 14:25 → 14:30
+      return time.withMinute(30).withSecond(0).withNano(0);
+    } else {
+      // Arredonda para próxima hora: 14:50 → 15:00
+      return time.plusHours(1).withMinute(0).withSecond(0).withNano(0);
+    }
+  }
+
+  /**
+   * Retorna a próxima data que corresponde ao dia da semana especificado.
+   * Se hoje for o mesmo dia da semana, retorna a próxima semana.
+   */
+  public LocalDate nextDayOfWeek(java.time.DayOfWeek dayOfWeek) {
+    return LocalDate.now().with(TemporalAdjusters.next(dayOfWeek));
   }
 
   public record AuthTokensTest(
@@ -237,6 +320,23 @@ public abstract class BaseTestContainersConfig {
             now,
             now);
     return userRepository.save(adminUser);
+  }
+
+  public User mockPersistOtherAdminUser() {
+    String passwordEncoded = passwordEncoder.encode(defaultPassword);
+    Instant now = Instant.now();
+    User otherAdminUser =
+        User.reconstitute(
+            UUID.randomUUID(),
+            "outro_admin",
+            "Outro Administrador",
+            "+5511988887777",
+            passwordEncoded,
+            AccountStatus.ACTIVE,
+            RoleEnum.ROLE_ADMIN,
+            now,
+            now);
+    return userRepository.save(otherAdminUser);
   }
 
   public void mockPersistListOfUsers() {
@@ -393,6 +493,12 @@ public abstract class BaseTestContainersConfig {
     operatingHoursRepository.save(operatingHours4);
   }
 
+  public OperatingHours mockPersistOperatingHoursFixedInterval(
+      Set<DayOfWeek> daysOfWeeks, TimeInterval timeInterval) {
+    OperatingHours operatingHours = OperatingHours.create(daysOfWeeks, timeInterval);
+    return operatingHoursRepository.save(operatingHours);
+  }
+
   public OperatingHours mockPersistOperatingHours() {
     TimeInterval timeInterval = new TimeInterval(LocalTime.of(8, 0), LocalTime.of(0, 0));
     Set<DayOfWeek> daysOfWeek =
@@ -417,6 +523,20 @@ public abstract class BaseTestContainersConfig {
             DayOfWeek.FRIDAY,
             DayOfWeek.SATURDAY,
             DayOfWeek.SUNDAY);
+    OperatingHours operatingHours = OperatingHours.create(daysOfWeek, timeInterval);
+    return operatingHoursRepository.save(operatingHours);
+  }
+
+  public OperatingHours mockPersistOperatingHoursAllDaysWithTimeInterval(TimeInterval timeInterval) {
+    Set<DayOfWeek> daysOfWeek =
+            Set.of(
+                    DayOfWeek.MONDAY,
+                    DayOfWeek.TUESDAY,
+                    DayOfWeek.WEDNESDAY,
+                    DayOfWeek.THURSDAY,
+                    DayOfWeek.FRIDAY,
+                    DayOfWeek.SATURDAY,
+                    DayOfWeek.SUNDAY);
     OperatingHours operatingHours = OperatingHours.create(daysOfWeek, timeInterval);
     return operatingHoursRepository.save(operatingHours);
   }
@@ -507,7 +627,7 @@ public abstract class BaseTestContainersConfig {
     return priceRuleRepository.save(priceRule);
   }
 
-  public ScheduleEntry mockPersistReservationByUser(
+  public Reservation mockPersistReservationByUser(
       UUID modalityId,
       UUID courtId,
       LocalDate date,
@@ -518,6 +638,17 @@ public abstract class BaseTestContainersConfig {
     DateTimeSlot dateTimeSlot = new DateTimeSlot(date, timeInterval);
     Reservation reservation =
         Reservation.createByUser(modalityId, courtId, userId, price, dateTimeSlot);
-    return scheduleEntryRepository.save(reservation);
+    return (Reservation) scheduleEntryRepository.save(reservation);
   }
+
+  // =================== Blocked Time Helpers ===================
+  public BlockedTime mockPersistBlockedTimeSpecific(
+      UUID courtId, LocalDate date, TimeInterval timeInterval, String reason, UUID adminId) {
+
+    DateTimeSlot dateTimeSlot = new DateTimeSlot(date, timeInterval);
+    BlockedTime blockedTime = BlockedTime.createSpecificTime(courtId, dateTimeSlot, reason, adminId);
+    return blockedTimeRepository.save(blockedTime);
+  }
+
+
 }

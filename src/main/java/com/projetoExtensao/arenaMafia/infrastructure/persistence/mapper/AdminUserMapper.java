@@ -1,7 +1,7 @@
 package com.projetoExtensao.arenaMafia.infrastructure.persistence.mapper;
 
 import com.projetoExtensao.arenaMafia.domain.model.User;
-import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.response.AdminUserResponseDto;
+import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.user.response.AdminUserResponseDto;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;

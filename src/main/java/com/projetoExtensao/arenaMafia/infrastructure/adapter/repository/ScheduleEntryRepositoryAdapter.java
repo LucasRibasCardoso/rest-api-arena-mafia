@@ -3,21 +3,20 @@ package com.projetoExtensao.arenaMafia.infrastructure.adapter.repository;
 import com.projetoExtensao.arenaMafia.application.schedule.port.repository.ScheduleEntryRepositoryPort;
 import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 import com.projetoExtensao.arenaMafia.domain.exception.notFound.ScheduleNotFoundException;
-import com.projetoExtensao.arenaMafia.domain.model.schedule.Reservation;
+import com.projetoExtensao.arenaMafia.domain.model.enums.DayOfWeek;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.ScheduleEntry;
+import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.ScheduleEntryEntity;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.mapper.ScheduleEntryMapper;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.repository.ScheduleEntryJpaRepository;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import org.springframework.stereotype.Repository;
 
 @Repository
 public class ScheduleEntryRepositoryAdapter implements ScheduleEntryRepositoryPort {
@@ -40,7 +39,6 @@ public class ScheduleEntryRepositoryAdapter implements ScheduleEntryRepositoryPo
   }
 
   @Override
-  @Transactional(readOnly = true)
   public ScheduleEntry findByIdOrElseThrow(UUID id) {
     return scheduleEntryJpaRepository
         .findById(id)
@@ -49,48 +47,108 @@ public class ScheduleEntryRepositoryAdapter implements ScheduleEntryRepositoryPo
   }
 
   @Override
-  @Transactional(readOnly = true)
-  public List<ScheduleEntry> findConfirmedSchedulesByCourtAndDate(UUID courtId, LocalDate date) {
-    return scheduleEntryJpaRepository
-        .findConfirmedReservationsByCourtAndDate(courtId, date)
-        .stream()
+  public List<ScheduleEntry> findAllActiveSchedulesByCourtAndDate(UUID courtId, LocalDate date) {
+    return scheduleEntryJpaRepository.findSchedulesByCourtAndDate(courtId, date).stream()
         .map(scheduleEntryMapper::toDomain)
+        .filter(ScheduleEntry::isActive)
         .toList();
   }
 
   @Override
-  @Transactional(readOnly = true)
-  public List<ScheduleEntry> findAllSchedulesByDate(LocalDate date) {
+  public List<ScheduleEntry> findAllActiveSchedulesByDate(LocalDate date) {
     return scheduleEntryJpaRepository.findAllSchedulesByDate(date).stream()
         .map(scheduleEntryMapper::toDomain)
+        .filter(ScheduleEntry::isActive)
         .toList();
   }
 
   @Override
-  @Transactional(readOnly = true)
-  public Page<Reservation> findReservationsByUserId(UUID userId, Pageable pageable) {
-    return scheduleEntryJpaRepository
-        .findReservationsByUserId(userId, pageable)
-        .map(entity -> (Reservation) scheduleEntryMapper.toDomain(entity));
-  }
-
-  @Override
-  @Transactional(readOnly = true)
-  public Reservation findReservationByIdAndUserIdOrElseThrow(UUID reservationId, UUID userId) {
-    return scheduleEntryJpaRepository
-        .findReservationByIdAndUser(reservationId, userId)
-        .map(entity -> (Reservation) scheduleEntryMapper.toDomain(entity))
-        .orElseThrow(() -> new ScheduleNotFoundException(ErrorCode.SCHEDULE_ENTRY_NOT_FOUND));
-  }
-
-  @Override
-  @Transactional(readOnly = true)
-  public List<Reservation> findAllConfirmedReservationsWithEndTimeAfter(LocalDateTime dateTime) {
-    LocalDate date = dateTime.toLocalDate();
-    LocalTime time = dateTime.toLocalTime();
-
-    return scheduleEntryJpaRepository.findConfirmedReservationsEndedAfter(date, time).stream()
-        .map(entity -> (Reservation) scheduleEntryMapper.toDomain(entity))
+  public List<ScheduleEntry> findAllActiveSchedulesByCourtIdFromToday(UUID courtId) {
+    return scheduleEntryJpaRepository.findAllSchedulesByCourtIdFromToday(courtId).stream()
+        .map(scheduleEntryMapper::toDomain)
+        .filter(ScheduleEntry::isActive)
         .toList();
+  }
+
+  @Override
+  public List<ScheduleEntry> findAllActiveSchedulesConflicts(
+      List<UUID> courtIds,
+      LocalDate startDate,
+      LocalDate endDate,
+      TimeInterval timeInterval,
+      Set<DayOfWeek> selectedDaysOfWeek) {
+
+    Set<Integer> valuesDaysOfWeek = null;
+    if (selectedDaysOfWeek != null && !selectedDaysOfWeek.isEmpty()) {
+      valuesDaysOfWeek =
+          selectedDaysOfWeek.stream().map(DayOfWeek::getDayOfWeekIndex).collect(Collectors.toSet());
+    }
+
+    // Buscar agendamentos filtrados por data e dia da semana (no SQL)
+    List<ScheduleEntryEntity> entities =
+        scheduleEntryJpaRepository.findConflictingSchedules(
+            courtIds, startDate, endDate, valuesDaysOfWeek);
+
+    return entities.stream()
+        .map(scheduleEntryMapper::toDomain)
+        .filter(ScheduleEntry::isActive)
+        .filter(
+            scheduleEntry -> scheduleEntry.getDateTimeSlot().timeInterval().overlaps(timeInterval))
+        .toList();
+  }
+
+  @Override
+  public List<ScheduleEntry> findAllActiveSchedulesFromTodayByDaysOfWeekAndTimeInterval(
+      Set<DayOfWeek> daysOfWeek, TimeInterval timeInterval) {
+
+    final LocalTime FINAL_DAY_TIME = LocalTime.of(23, 59, 59);
+
+    Set<DayOfWeek> searchDays =
+        (daysOfWeek == null || daysOfWeek.isEmpty()) ? Set.of(DayOfWeek.values()) : daysOfWeek;
+
+    Set<Integer> indexDaysWeek =
+        searchDays.stream().map(DayOfWeek::getDayOfWeekIndex).collect(Collectors.toSet());
+
+    LocalTime startTime = timeInterval.startTime();
+    LocalTime endTime = timeInterval.endTime();
+
+    if (!timeInterval.crossesMidnight()) {
+      LocalTime effectiveEndTime = (endTime.equals(LocalTime.MIDNIGHT) ? FINAL_DAY_TIME : endTime);
+
+      return scheduleEntryJpaRepository
+          .findSchedulesFromTodayByDaysOfWeekAndTimeInterval(
+              indexDaysWeek, startTime, effectiveEndTime)
+          .stream()
+          .map(scheduleEntryMapper::toDomain)
+          .filter(ScheduleEntry::isActive)
+          .toList();
+    } else {
+      List<ScheduleEntry> schedulesBeforeMidnight =
+          scheduleEntryJpaRepository
+              .findSchedulesFromTodayByDaysOfWeekAndTimeInterval(
+                  indexDaysWeek, startTime, FINAL_DAY_TIME)
+              .stream()
+              .map(scheduleEntryMapper::toDomain)
+              .filter(ScheduleEntry::isActive)
+              .toList();
+
+      Set<Integer> nextIndexDaysWeek =
+          searchDays.stream()
+              .map(DayOfWeek::next)
+              .map(DayOfWeek::getDayOfWeekIndex)
+              .collect(Collectors.toSet());
+
+      List<ScheduleEntry> schedulesAfterMidnight =
+          scheduleEntryJpaRepository
+              .findSchedulesFromTodayByDaysOfWeekAndTimeInterval(
+                  nextIndexDaysWeek, LocalTime.MIDNIGHT, endTime)
+              .stream()
+              .map(scheduleEntryMapper::toDomain)
+              .filter(ScheduleEntry::isActive)
+              .toList();
+
+      return Stream.concat(schedulesBeforeMidnight.stream(), schedulesAfterMidnight.stream())
+          .toList();
+    }
   }
 }

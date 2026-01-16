@@ -1,6 +1,7 @@
 package com.projetoExtensao.arenaMafia.application.notification.listener;
 
-import com.projetoExtensao.arenaMafia.application.notification.event.OnReservationCancelledEvent;
+import com.projetoExtensao.arenaMafia.application.notification.event.OnReservationCancelledByAdminEvent;
+import com.projetoExtensao.arenaMafia.application.notification.event.OnReservationCancelledByUserEvent;
 import com.projetoExtensao.arenaMafia.application.notification.event.OnScheduleCreatedEvent;
 import com.projetoExtensao.arenaMafia.application.notification.event.OnVerificationRequiredEvent;
 import com.projetoExtensao.arenaMafia.application.notification.gateway.OtpPort;
@@ -14,6 +15,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 @Component
 public class NotificationEventListener {
@@ -94,12 +97,11 @@ public class NotificationEventListener {
    */
   @Async
   @EventListener
-  public void onReservationCancelled(OnReservationCancelledEvent eventData) {
+  public void onReservationCancelledByUser(OnReservationCancelledByUserEvent eventData) {
     try {
       Reservation reservation = eventData.reservation();
 
-      String message =
-          buildReservationCancellationMessage(eventData.username(), reservation);
+      String message = buildReservationCancellationMessage(eventData.username(), reservation);
       smsPort.send(eventData.userPhone(), message);
 
       logger.info(
@@ -109,6 +111,38 @@ public class NotificationEventListener {
 
     } catch (Exception e) {
       logger.error("Falha ao processar evento de cancelamento de reserva: {}", e.getMessage(), e);
+    }
+  }
+
+  /**
+   * Listener que processa eventos de cancelamento de reserva por administrador. Envia notificação
+   * SMS ao usuário informando sobre o cancelamento feito pelo admin.
+   *
+   * <p>Usa {@link TransactionalEventListener} com fase AFTER_COMMIT para garantir que a notificação
+   * só seja enviada após o commit bem-sucedido da transação. Isso evita enviar notificações para
+   * cancelamentos que falharam e sofreram rollback.
+   *
+   * @param eventData evento contendo dados do cancelamento pelo admin
+   */
+  @Async
+  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+  public void onReservationCancelledByAdmin(OnReservationCancelledByAdminEvent eventData) {
+    try {
+      Reservation reservation = eventData.reservation();
+
+      String message =
+          buildReservationCancellationByAdminMessage(
+              eventData.username(), reservation, eventData.adminReason());
+      smsPort.send(eventData.userPhone(), message);
+
+      logger.info(
+          "SMS de cancelamento de reserva por admin enviado para o usuário: {} - Reserva ID: {}",
+          eventData.username(),
+          reservation.getId());
+
+    } catch (Exception e) {
+      logger.error(
+          "Falha ao processar evento de cancelamento de reserva por admin: {}", e.getMessage(), e);
     }
   }
 
@@ -174,5 +208,33 @@ public class NotificationEventListener {
 
         Código da reserva: %s"""
         .formatted(username, date, startTime, endTime, reservation.getId());
+  }
+
+  /**
+   * Constrói a mensagem de cancelamento de reserva feito por um administrador.
+   *
+   * @param username nome do usuário
+   * @param reservation reserva cancelada
+   * @param adminReason motivo do cancelamento fornecido pelo admin
+   * @return mensagem formatada para envio
+   */
+  private String buildReservationCancellationByAdminMessage(
+      String username, Reservation reservation, String adminReason) {
+    String date = reservation.getDateTimeSlot().date().toString();
+    String startTime = reservation.getDateTimeSlot().timeInterval().startTime().toString();
+    String endTime = reservation.getDateTimeSlot().timeInterval().endTime().toString();
+
+    return """
+        Arena Máfia - Reserva cancelada pela administração
+
+        Olá %s,
+        Sua reserva para o dia %s, no horário de %s às %s, foi cancelada pela administração.
+
+        Motivo: %s
+
+        Código da reserva: %s
+
+        Para mais informações, entre em contato com nossa central."""
+        .formatted(username, date, startTime, endTime, adminReason, reservation.getId());
   }
 }

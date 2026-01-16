@@ -12,7 +12,6 @@ import com.projetoExtensao.arenaMafia.infrastructure.persistence.repository.Refr
 import java.util.List;
 import java.util.Optional;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 @Repository
 public class RefreshTokenRepositoryAdapter implements RefreshTokenRepositoryPort {
@@ -31,20 +30,17 @@ public class RefreshTokenRepositoryAdapter implements RefreshTokenRepositoryPort
   }
 
   @Override
-  @Transactional(readOnly = true)
   public Optional<RefreshToken> findByToken(RefreshTokenVO token) {
     return tokenJpaRepository.findByToken(token.toString()).map(tokenMapper::toDomain);
   }
 
   @Override
-  @Transactional
   public RefreshToken save(RefreshToken refreshToken) {
     RefreshTokenEntity refreshTokenEntity = tokenMapper.toEntity(refreshToken);
     return tokenMapper.toDomain(tokenJpaRepository.save(refreshTokenEntity));
   }
 
   @Override
-  @Transactional
   public void deleteByUser(User user) {
     UserEntity userEntity = userMapper.toEntity(user);
     tokenJpaRepository.deleteByUser(userEntity);
@@ -52,7 +48,6 @@ public class RefreshTokenRepositoryAdapter implements RefreshTokenRepositoryPort
   }
 
   @Override
-  @Transactional
   public void delete(RefreshToken refreshToken) {
     RefreshTokenEntity refreshTokenEntity = tokenMapper.toEntity(refreshToken);
     tokenJpaRepository.delete(refreshTokenEntity);

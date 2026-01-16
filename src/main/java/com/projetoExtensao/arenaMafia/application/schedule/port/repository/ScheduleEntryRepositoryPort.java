@@ -1,14 +1,11 @@
 package com.projetoExtensao.arenaMafia.application.schedule.port.repository;
 
-import com.projetoExtensao.arenaMafia.domain.model.schedule.Reservation;
+import com.projetoExtensao.arenaMafia.domain.model.enums.DayOfWeek;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.ScheduleEntry;
-
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-
+import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 public interface ScheduleEntryRepositoryPort {
@@ -17,13 +14,19 @@ public interface ScheduleEntryRepositoryPort {
 
   ScheduleEntry findByIdOrElseThrow(UUID id);
 
-  List<ScheduleEntry> findConfirmedSchedulesByCourtAndDate(UUID courtId, LocalDate date);
+  List<ScheduleEntry> findAllActiveSchedulesByCourtAndDate(UUID courtId, LocalDate date);
 
-  List<ScheduleEntry> findAllSchedulesByDate(LocalDate date);
+  List<ScheduleEntry> findAllActiveSchedulesByDate(LocalDate date);
 
-  Page<Reservation> findReservationsByUserId(UUID userId, Pageable pageable);
+  List<ScheduleEntry> findAllActiveSchedulesByCourtIdFromToday(UUID courtId);
 
-  Reservation findReservationByIdAndUserIdOrElseThrow(UUID reservationId, UUID userId);
+  List<ScheduleEntry> findAllActiveSchedulesConflicts(
+      List<UUID> courtIds,
+      LocalDate startDate,
+      LocalDate endDate,
+      TimeInterval timeInterval,
+      Set<DayOfWeek> selectedDaysOfWeek);
 
-  List<Reservation> findAllConfirmedReservationsWithEndTimeAfter(LocalDateTime dateTime);
+  List<ScheduleEntry> findAllActiveSchedulesFromTodayByDaysOfWeekAndTimeInterval(
+      Set<DayOfWeek> daysOfWeek, TimeInterval timeInterval);
 }

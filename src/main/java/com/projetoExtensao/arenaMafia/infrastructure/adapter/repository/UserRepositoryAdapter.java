@@ -10,9 +10,9 @@ import com.projetoExtensao.arenaMafia.infrastructure.persistence.repository.User
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 @Repository
 public class UserRepositoryAdapter implements UserRepositoryPort {
@@ -36,7 +36,6 @@ public class UserRepositoryAdapter implements UserRepositoryPort {
   }
 
   @Override
-  @Transactional(readOnly = true)
   public Optional<User> findById(UUID id) {
     return userJpaRepository.findById(id).map(userMapper::toDomain);
   }
@@ -50,19 +49,21 @@ public class UserRepositoryAdapter implements UserRepositoryPort {
   }
 
   @Override
-  @Transactional(readOnly = true)
   public Optional<User> findByUsername(String username) {
     return userJpaRepository.findByUsername(username).map(userMapper::toDomain);
   }
 
   @Override
-  @Transactional(readOnly = true)
+  public List<User> findAllByIds(Set<UUID> ids) {
+    return userJpaRepository.findAllById(ids).stream().map(userMapper::toDomain).toList();
+  }
+
+  @Override
   public Optional<User> findByPhone(String phone) {
     return userJpaRepository.findByPhone(phone).map(userMapper::toDomain);
   }
 
   @Override
-  @Transactional
   public User save(User user) {
     UserEntity userEntity = userMapper.toEntity(user);
     UserEntity savedUserEntity = userJpaRepository.save(userEntity);
@@ -70,7 +71,6 @@ public class UserRepositoryAdapter implements UserRepositoryPort {
   }
 
   @Override
-  @Transactional(readOnly = true)
   public List<User> findByStatusAndCreatedAtBefore(AccountStatus status, Instant dateTime) {
     return userJpaRepository.findByStatusAndCreatedAtBefore(status, dateTime).stream()
         .map(userMapper::toDomain)
@@ -78,7 +78,6 @@ public class UserRepositoryAdapter implements UserRepositoryPort {
   }
 
   @Override
-  @Transactional(readOnly = true)
   public List<User> findByStatusAndUpdateAtBefore(AccountStatus status, Instant dateTime) {
     return userJpaRepository.findByStatusAndUpdatedAtBefore(status, dateTime).stream()
         .map(userMapper::toDomain)
@@ -86,7 +85,6 @@ public class UserRepositoryAdapter implements UserRepositoryPort {
   }
 
   @Override
-  @Transactional
   public void deleteAll(List<User> users) {
     List<UserEntity> entitiesToDelete = users.stream().map(userMapper::toEntity).toList();
     userJpaRepository.deleteAllInBatch(entitiesToDelete);

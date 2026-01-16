@@ -1,0 +1,74 @@
+type: object
+description: |
+  Resposta da confirmação de criação de bloqueios de horário.
+  
+  Contém informações detalhadas sobre:
+  - Bloqueios criados com sucesso
+  - Reservas que foram canceladas
+  - Bloqueios anteriores que foram removidos
+  - Usuários afetados pelas mudanças
+  
+  **Importante:**
+  - Todos os bloqueios são criados em uma única transação atômica
+  - Se algum bloqueio falhar, toda a operação é revertida
+  - Reservas em andamento são preservadas (não são canceladas)
+  - O preview é removido do cache após confirmação bem-sucedida
+properties:
+  blockedTimesCreatedSuccessfully:
+    type: array
+    description: |
+      Lista de IDs dos bloqueios de horário criados com sucesso.
+      
+      Cada ID representa um bloqueio individual que foi persistido no banco de dados.
+      Para bloqueios recorrentes ou em múltiplas quadras, haverá múltiplos IDs.
+    items:
+      type: string
+      format: uuid
+    example:
+      - "f1a2b3c4-d5e6-7890-abcd-ef1234567890"
+      - "a2b3c4d5-e6f7-8901-bcde-f12345678901"
+      - "b3c4d5e6-f7a8-9012-cdef-123456789012"
+  totalBlockedTimesCreated:
+    type: integer
+    description: |
+      Quantidade total de bloqueios criados.
+      
+      **Cálculo:**
+      - Bloqueio pontual (1 dia, 1 quadra) = 1
+      - Bloqueio pontual (1 dia, 2 quadras) = 2
+      - Bloqueio consecutivo (14 dias, 1 quadra) = 14
+      - Bloqueio recorrente (2 semanas, terças e quintas, 1 quadra) = 4
+      - Bloqueio recorrente (2 semanas, todos os dias, 2 quadras) = 28
+    minimum: 0
+    example: 15
+  reservationsCancelled:
+    type: integer
+    description: |
+      Quantidade de reservas que foram canceladas devido ao bloqueio.
+      
+      **Importante:**
+      - Apenas reservas com status CONFIRMED são canceladas
+      - Reservas em andamento são preservadas e **não** são contabilizadas aqui
+      - Os usuários dessas reservas canceladas recebem notificação de cancelamento
+    minimum: 0
+    example: 3
+  blockedTimesCancelled:
+    type: integer
+    description: |
+      Quantidade de bloqueios de horário anteriores que foram removidos/sobrescritos.
+      
+      Bloqueios antigos que conflitavam com o novo período são automaticamente removidos.
+    minimum: 0
+    example: 1
+  usersAffected:
+    type: integer
+    description: |
+      Quantidade de usuários distintos que tiveram reservas canceladas.
+      
+      **Importante:**
+      - Conta apenas usuários únicos (mesmo se um usuário teve múltiplas reservas canceladas)
+      - Útil para dimensionar o impacto da operação
+      - Cada usuário afetado recebe uma notificação
+    minimum: 0
+    example: 5
+

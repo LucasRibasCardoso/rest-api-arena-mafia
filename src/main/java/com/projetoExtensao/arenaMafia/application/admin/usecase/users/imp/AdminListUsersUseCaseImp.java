@@ -6,7 +6,7 @@ import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidDateRan
 import com.projetoExtensao.arenaMafia.domain.model.User;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.UserEntity;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.specification.UserSpecification;
-import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.request.AdminUserSearchRequestDto;
+import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.user.request.AdminUserSearchRequestDto;
 import java.time.Instant;
 import java.time.LocalTime;
 import java.time.ZoneId;

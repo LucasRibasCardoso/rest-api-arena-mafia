@@ -108,7 +108,6 @@
             <artifactId>libphonenumber</artifactId>
             <version>9.0.12</version>
         </dependency>
-
         <!-- Testes -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

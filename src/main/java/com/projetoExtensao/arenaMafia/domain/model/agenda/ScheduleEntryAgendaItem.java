@@ -10,4 +10,3 @@ public record ScheduleEntryAgendaItem(ScheduleEntry scheduleEntry) implements Ag
     return scheduleEntry.getDateTimeSlot().timeInterval();
   }
 }
-

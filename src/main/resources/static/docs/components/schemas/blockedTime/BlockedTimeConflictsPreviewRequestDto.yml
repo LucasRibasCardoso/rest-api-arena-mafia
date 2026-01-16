@@ -1,0 +1,88 @@
+type: object
+description: |
+  Dados para solicitar uma pré-visualização de conflitos antes de criar bloqueios de horário.
+  
+  **Regras de Validação:**
+  - Para bloqueio de um único dia: `startDate` = `endDate`
+  - Para bloqueio de múltiplos dias: `endDate` >= `startDate`
+  - `startDate` deve ser a data atual ou uma data futura (não permite datas passadas)
+  - Se `isFullDay` = `true`: `timeInterval` pode ser omitido (será calculado com base nos horários de funcionamento)
+  - Se `isFullDay` = `false`: `timeInterval` é obrigatório
+  - `selectedDaysOfWeek` é opcional: se `null`/vazio, bloqueia todos os dias no intervalo; se preenchido, bloqueia apenas os dias da semana selecionados
+    desde que estejam dentro do intervalo de datas, ou seja, todos os dias selecionados devem ocorrer entre `startDate` e `endDate`.
+  
+  **Casos de Uso:**
+  - **Bloqueio pontual:** `startDate` = `endDate`, `selectedDaysOfWeek` = `null` (ex: manutenção de um dia)
+  - **Bloqueio consecutivo:** `startDate` != `endDate`, `selectedDaysOfWeek` = `null` (ex: férias, reforma)
+  - **Bloqueio recorrente semanal:** `startDate` != `endDate`, `selectedDaysOfWeek` = `["TUESDAY", "THURSDAY"]` (ex: aulas regulares)
+required:
+  - courtIds
+  - startDate
+  - endDate
+  - isFullDay
+properties:
+  courtIds:
+    type: array
+    description: |
+      Lista de identificadores únicos das quadras a serem bloqueadas.
+      Todas as quadras devem existir e estar ativas no sistema.
+    minItems: 1
+    maxItems: 20
+    items:
+      type: string
+      format: uuid
+    example:
+      - "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+      - "b2c3d4e5-f6a7-8901-bcde-f12345678901"
+  startDate:
+    type: string
+    format: date
+    description: |
+      Data de início do período de bloqueio no formato ISO 8601 (yyyy-MM-dd).
+      Deve ser a data atual ou uma data futura.
+    example: "2026-01-15"
+  endDate:
+    type: string
+    format: date
+    description: |
+      Data de término do período de bloqueio no formato ISO 8601 (yyyy-MM-dd).
+      Deve ser maior ou igual a `startDate`.
+    example: "2026-01-31"
+  timeInterval:
+    allOf:
+      - $ref: "../timeInterval/TimeIntervalDto.yml"
+    nullable: true
+    description: |
+      Intervalo de horário do bloqueio.
+      Obrigatório quando `isFullDay` = `false`.
+      Quando `isFullDay` = `true`, será ignorado e calculado automaticamente com base nos horários de funcionamento.
+  isFullDay:
+    type: boolean
+    description: |
+      Indica se o bloqueio é para o dia inteiro.
+      Se `true`, o `timeInterval` será calculado com base nos extremos dos horários de funcionamento.
+      Se `false`, o `timeInterval` informado será utilizado.
+    example: false
+  selectedDaysOfWeek:
+    type: array
+    nullable: true
+    description: |
+      Lista de dias da semana específicos para o bloqueio.
+      Se `null` ou vazio, o bloqueio será aplicado a todos os dias no intervalo de datas.
+      Se preenchido, o bloqueio será aplicado apenas nos dias da semana selecionados dentro do intervalo.
+      
+      **Importante:** Todos os dias selecionados devem estar presentes no intervalo entre `startDate` e `endDate`.
+    items:
+      type: string
+      enum:
+        - SUNDAY
+        - MONDAY
+        - TUESDAY
+        - WEDNESDAY
+        - THURSDAY
+        - FRIDAY
+        - SATURDAY
+    example:
+      - "TUESDAY"
+      - "THURSDAY"
+

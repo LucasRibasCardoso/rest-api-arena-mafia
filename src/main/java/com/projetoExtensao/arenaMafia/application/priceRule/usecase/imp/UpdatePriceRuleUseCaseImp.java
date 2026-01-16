@@ -1,10 +1,10 @@
 package com.projetoExtensao.arenaMafia.application.priceRule.usecase.imp;
 
-import com.projetoExtensao.arenaMafia.application.priceRule.ports.PriceRuleRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.priceRule.port.PriceRuleRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.priceRule.usecase.UpdatePriceRuleUseCase;
 import com.projetoExtensao.arenaMafia.domain.exception.conflict.PriceRuleAlreadyExistsException;
 import com.projetoExtensao.arenaMafia.domain.model.PriceRule;
-import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.request.UpdatePriceRuleRequestDto;
+import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.priceRule.request.UpdatePriceRuleRequestDto;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

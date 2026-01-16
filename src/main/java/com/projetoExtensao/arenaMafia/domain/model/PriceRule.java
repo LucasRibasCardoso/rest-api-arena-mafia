@@ -8,7 +8,6 @@ import com.projetoExtensao.arenaMafia.domain.exception.conflict.PriceRuleStatusC
 import com.projetoExtensao.arenaMafia.domain.exception.conflict.TimeIntervalOverlapException;
 import com.projetoExtensao.arenaMafia.domain.model.enums.DayOfWeek;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
-
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalTime;
@@ -18,14 +17,39 @@ import java.util.UUID;
 public class PriceRule {
 
   private final UUID id;
-  private String name;
   private final Set<DayOfWeek> daysOfWeek;
   private final TimeInterval timeInterval;
-  private BigDecimal price;
   private final int priority;
   private final boolean isDefault;
-  private boolean isActive;
   private final Instant createdAt;
+  private String name;
+  private BigDecimal price;
+  private boolean isActive;
+
+  private PriceRule(
+      UUID id,
+      String name,
+      Set<DayOfWeek> daysOfWeek,
+      TimeInterval timeInterval,
+      BigDecimal price,
+      int priority,
+      boolean isDefault,
+      boolean isActive,
+      Instant createdAt) {
+
+    validateName(name);
+    validatePrice(price);
+    validatePriority(priority, isDefault);
+    this.id = id;
+    this.name = name;
+    this.daysOfWeek = daysOfWeek;
+    this.timeInterval = timeInterval;
+    this.price = price;
+    this.priority = priority;
+    this.isDefault = isDefault;
+    this.isActive = isActive;
+    this.createdAt = createdAt;
+  }
 
   /**
    * Cria uma nova instância de PriceRule com um ID gerado e ativo por padrão.
@@ -98,31 +122,6 @@ public class PriceRule {
       Instant createdAt) {
     return new PriceRule(
         id, name, daysOfWeek, timeInterval, price, priority, isDefault, isActive, createdAt);
-  }
-
-  private PriceRule(
-      UUID id,
-      String name,
-      Set<DayOfWeek> daysOfWeek,
-      TimeInterval timeInterval,
-      BigDecimal price,
-      int priority,
-      boolean isDefault,
-      boolean isActive,
-      Instant createdAt) {
-
-    validateName(name);
-    validatePrice(price);
-    validatePriority(priority, isDefault);
-    this.id = id;
-    this.name = name;
-    this.daysOfWeek = daysOfWeek;
-    this.timeInterval = timeInterval;
-    this.price = price;
-    this.priority = priority;
-    this.isDefault = isDefault;
-    this.isActive = isActive;
-    this.createdAt = createdAt;
   }
 
   // --- Validações ---

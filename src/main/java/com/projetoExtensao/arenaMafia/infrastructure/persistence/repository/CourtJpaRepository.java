@@ -1,7 +1,6 @@
 package com.projetoExtensao.arenaMafia.infrastructure.persistence.repository;
 
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.CourtEntity;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;

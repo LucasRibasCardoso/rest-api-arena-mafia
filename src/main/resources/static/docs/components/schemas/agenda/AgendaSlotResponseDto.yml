@@ -79,4 +79,10 @@ properties:
     example:
       - "550e8400-e29b-41d4-a716-446655440002"
       - "550e8400-e29b-41d4-a716-446655440005"
-
+  description:
+    type: string
+    description: |
+      Descrição opcional do slot da agenda.
+      
+      Utilizado para fornecer informações adicionais sobre horário bloqueado.
+    example: "Manutenção da Quadra 1"

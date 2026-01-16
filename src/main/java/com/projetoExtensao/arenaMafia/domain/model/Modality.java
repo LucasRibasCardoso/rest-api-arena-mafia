@@ -3,7 +3,6 @@ package com.projetoExtensao.arenaMafia.domain.model;
 import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidModalityNameFormatException;
 import com.projetoExtensao.arenaMafia.domain.exception.conflict.ModalityStatusConflictException;
-
 import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
@@ -11,9 +10,17 @@ import java.util.UUID;
 public class Modality {
 
   private final UUID id;
+  private final Instant createdAt;
   private String name;
   private boolean isActive;
-  private final Instant createdAt;
+
+  private Modality(UUID id, String name, boolean isActive, Instant createdAt) {
+    validateName(name);
+    this.id = id;
+    this.name = name;
+    this.isActive = isActive;
+    this.createdAt = createdAt;
+  }
 
   /**
    * Factory Method para criar uma nova modalidade.
@@ -40,14 +47,6 @@ public class Modality {
    */
   public static Modality reconstitute(UUID id, String name, boolean isActive, Instant createdAt) {
     return new Modality(id, name, isActive, createdAt);
-  }
-
-  private Modality(UUID id, String name, boolean isActive, Instant createdAt) {
-    validateName(name);
-    this.id = id;
-    this.name = name;
-    this.isActive = isActive;
-    this.createdAt = createdAt;
   }
 
   // Validações

@@ -5,7 +5,6 @@ import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidTimeInt
 import com.projetoExtensao.arenaMafia.domain.exception.conflict.OperatingHoursStatusConflictException;
 import com.projetoExtensao.arenaMafia.domain.model.enums.DayOfWeek;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
-
 import java.time.Instant;
 import java.util.Objects;
 import java.util.Set;
@@ -16,8 +15,22 @@ public class OperatingHours {
   private final UUID id;
   private final Set<DayOfWeek> daysOfWeek;
   private final TimeInterval timeInterval;
-  private boolean isActive;
   private final Instant createdAt;
+  private boolean isActive;
+
+  private OperatingHours(
+      UUID id,
+      Set<DayOfWeek> daysOfWeek,
+      TimeInterval timeInterval,
+      boolean isActive,
+      Instant createdAt) {
+    validateTimeInterval(timeInterval);
+    this.id = id;
+    this.daysOfWeek = daysOfWeek;
+    this.timeInterval = timeInterval;
+    this.isActive = isActive;
+    this.createdAt = createdAt;
+  }
 
   /**
    * Cria uma nova instância de OperatingHours com um ID gerado, ativo por padrão.
@@ -55,20 +68,6 @@ public class OperatingHours {
       boolean isActive,
       Instant createdAt) {
     return new OperatingHours(id, daysOfWeek, timeInterval, isActive, createdAt);
-  }
-
-  private OperatingHours(
-      UUID id,
-      Set<DayOfWeek> daysOfWeek,
-      TimeInterval timeInterval,
-      boolean isActive,
-      Instant createdAt) {
-    validateTimeInterval(timeInterval);
-    this.id = id;
-    this.daysOfWeek = daysOfWeek;
-    this.timeInterval = timeInterval;
-    this.isActive = isActive;
-    this.createdAt = createdAt;
   }
 
   // --- Validações ---

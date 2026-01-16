@@ -1,0 +1,21 @@
+type: object
+description: |
+  Representa a requisição para confirmar a desativação de uma quadra.
+  Deve conter a chave do preview e uma descrição do motivo da desativação.
+properties:
+  previewKey:
+    type: string
+    description: |
+      Chave única do preview gerado anteriormente.
+    example: "court-disable-preview:960289b9-d32d-4f00-8df7-02f4c04a017c:5a2f25cb-6a58-4920-994d-b9336317eb90"
+  description:
+    type: string
+    minLength: 3
+    maxLength: 500
+    description: |
+      Descrição do motivo da desativação da quadra.
+    example: "Quadra será desativada para manutenção estrutural."
+required:
+  - previewKey
+  - description
+

@@ -1,0 +1,184 @@
+post:
+  operationId: confirmDisableCourt
+  tags: [ "Administração - Gerenciamento de Quadras" ]
+  summary: Confirmar desativação de uma quadra
+  description: |
+    Permite confirmar a desativação de uma quadra específica com base na pré-visualização gerada anteriormente.
+
+    **Funcionalidade:**
+    - Cancela todas as reservas confirmadas que foram identificadas na pré-visualização.
+    - Remove todos os bloqueios de horários existentes relacionados à quadra.
+    - Marca a quadra como desativada no sistema.
+
+    **Fluxo de Uso:**
+    1. O administrador envia uma solicitação para confirmar a desativação de uma quadra, incluindo a `previewKey` obtida na pré-visualização.
+    2. O sistema valida a `previewKey` e executa as ações necessárias para desativar a quadra.
+    3. O sistema retorna um resumo das ações realizadas, incluindo o número de reservas canceladas e bloqueios removidos.
+
+    **Validações:**
+    - Verifica se a quadra existe e está ativa.
+    - O `previewKey` deve existir e não estar expirado (válido por 5 minutos)
+    - O preview deve pertencer ao administrador que está confirmando
+    - Os dados não podem ter sido alterados desde a geração do preview (reservas ou bloqueios adicionados/removidos).
+    
+    **Segurança:**
+    - Apenas o administrador que gerou o preview pode confirmá-lo
+    - Operação atômica: tudo ocorre com sucesso ou tudo falha (transacional)
+  security:
+    - BearerAuth: []
+  requestBody:
+    description: | 
+      Dados necessários para confirmar a desativação da quadra.
+      Inclui a `previewKey` obtida na pré-visualização e a descrição do motivo da desativação.
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: "../../../components/schemas/court/CourtDisableConfirmRequestDto.yml"
+  responses:
+    204:
+      description: Desativação confirmada com sucesso.
+    400:
+      description: | 
+        Solicitação inválida. Possíveis razões:
+        - A `previewKey` é inválida ou expirou.
+        - A descrição do motivo da desativação está ausente ou inválida.
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
+          examples:
+            PreviewKeyRequired:
+              summary: PreviewKey não informada
+              value:
+                timestamp: "2026-01-15T14:30:00Z"
+                status: 400
+                errorCode: "VALIDATION_FAILED"
+                developerMessage: "A validação falhou. Verifique os detalhes dos campos para mais informações."
+                path: "/api/admin/courts/confirm-disable"
+                fieldErrors:
+                  - fieldName: "previewKey"
+                    errorCode: "PREVIEW_KEY_REQUIRED"
+                    developerMessage: "A chave do preview é obrigatória."
+            PreviewKeyInvalid:
+              summary: PreviewKey com formato inválido
+              value:
+                timestamp: "2026-01-15T14:30:00Z"
+                status: 400
+                errorCode: "PREVIEW_KEY_INVALID"
+                developerMessage: "A chave do preview é inválida."
+                path: "/api/admin/courts/confirm-disable"
+            DescriptionRequired:
+              summary: Descrição não informada
+              value:
+                timestamp: "2026-01-15T14:30:00Z"
+                status: 400
+                errorCode: "VALIDATION_FAILED"
+                developerMessage: "A validação falhou. Verifique os detalhes dos campos para mais informações."
+                path: "/api/admin/courts/confirm-disable"
+                fieldErrors:
+                  - fieldName: "description"
+                    errorCode: "COURT_DISABLE_DESCRIPTION_REQUIRED"
+                    developerMessage: "A descrição para desativação da quadra é obrigatória"
+            DescriptionTooShortOrTooLong:
+              summary: Descrição muito curta ou muito longa
+              value:
+                timestamp: "2026-01-15T14:30:00Z"
+                status: 400
+                errorCode: "VALIDATION_FAILED"
+                developerMessage: "A validação falhou. Verifique os detalhes dos campos para mais informações."
+                path: "/api/admin/courts/confirm-disable"
+                fieldErrors:
+                  - fieldName: "description"
+                    errorCode: "COURT_DISABLE_DESCRIPTION_INVALID_LENGTH"
+                    developerMessage: "A descrição para desativação da quadra deve ter entre 3 e 500 caracteres."
+    401:
+      $ref: "../../../components/responses/UnauthorizedError.yml"
+    403:
+      description: |
+        Acesso negado.
+
+        Lançado quando:
+        - Usuário não possui permissão de administrador
+        - O preview pertence a outro administrador (proteção contra uso indevido)
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
+          examples:
+            AccessDenied:
+              summary: Acesso negado por falta de permissão
+              value:
+                timestamp: "2026-01-15T14:30:00Z"
+                status: 403
+                errorCode: "ACCESS_DENIED"
+                developerMessage: "Acesso negado. Você não tem permissão para acessar este recurso."
+                path: "/api/admin/courts/confirm-disable"
+            PreviewOwnershipInvalid:
+              summary: Preview pertence a outro administrador
+              value:
+                timestamp: "2026-01-15T14:30:00Z"
+                status: 403
+                errorCode: "PREVIEW_KEY_OWNERSHIP_INVALID"
+                developerMessage: "Esta chave de preview não pertence a você. Não é possível usar um preview gerado por outro usuário."
+                path: "/api/admin/courts/confirm-disable"
+    404:
+      description: |
+        Quadra ou preview não encontrado.
+
+        Lançado quando:
+        - A quadra especificada foi removida antes da confirmação.
+        - A `previewKey` fornecida não foi encontrada (pode ter expirado).
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
+          examples:
+            CourtNotFound:
+              summary: Quadra do preview não existe mais
+              value:
+                timestamp: "2026-01-15T14:30:00Z"
+                status: 404
+                errorCode: "COURT_NOT_FOUND"
+                developerMessage: "Quadra não encontrada."
+                path: "/api/admin/courts/confirm-disable"
+            PreviewNotFound:
+              summary: Preview não encontrado ou expirado
+              value:
+                timestamp: "2026-01-15T14:30:00Z"
+                status: 404
+                errorCode: "PREVIEW_NOT_FOUND"
+                developerMessage: "Preview não encontrado. Pode ter expirado após 5 minutos."
+                path: "/api/admin/courts/confirm-disable"
+    409:
+      description: | 
+        Conflito ao confirmar a desativação.
+        
+        Lançado quando:
+        - Houve alterações nos dados desde a geração do preview (reservas ou bloqueios adicionados/removidos).
+        - A quadra já foi desativada por outro processo.
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
+          examples:
+            PreviewDataStale:
+              summary: Dados do preview estão desatualizados
+              value:
+                timestamp: "2026-01-15T14:30:00Z"
+                status: 409
+                errorCode: "PREVIEW_DATA_STALE"
+                developerMessage: "Os dados associados a este preview foram alterados desde a sua geração. Por favor, gere um novo preview antes de confirmar a desativação."
+                path: "/api/admin/courts/confirm-disable"
+            CourtAlreadyDisabled:
+              summary: Quadra já desativada
+              value:
+                timestamp: "2026-01-15T14:30:00Z"
+                status: 409
+                errorCode: "COURT_ALREADY_DISABLED"
+                developerMessage: "A quadra já foi desativada."
+                path: "/api/admin/courts/confirm-disable"
+    429:
+      $ref: "../../../components/responses/TooManyRequestsError.yml"
+    500:
+      $ref: "../../../components/responses/InternalServerError.yml"

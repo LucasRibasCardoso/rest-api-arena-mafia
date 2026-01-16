@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
-import com.projetoExtensao.arenaMafia.application.auth.dto.AuthResult;
+import com.projetoExtensao.arenaMafia.application.auth.result.AuthResult;
 import com.projetoExtensao.arenaMafia.application.auth.port.gateway.AuthPort;
 import com.projetoExtensao.arenaMafia.application.auth.port.repository.RefreshTokenRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.auth.usecase.authentication.imp.RefreshTokenUseCaseImp;

@@ -1,6 +1,6 @@
 package com.projetoExtensao.arenaMafia.application.operatingHours.usecase.imp;
 
-import com.projetoExtensao.arenaMafia.application.operatingHours.ports.OperatingHoursRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.operatingHours.port.repository.OperatingHoursRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.operatingHours.usecase.EnableOperatingHoursUseCase;
 import java.util.UUID;
 import org.springframework.stereotype.Service;

@@ -9,16 +9,15 @@ import com.projetoExtensao.arenaMafia.domain.model.OperatingHours;
 import com.projetoExtensao.arenaMafia.domain.model.PriceRule;
 import com.projetoExtensao.arenaMafia.domain.model.enums.DayOfWeek;
 import com.projetoExtensao.arenaMafia.domain.model.enums.OffsetMinutes;
-import com.projetoExtensao.arenaMafia.domain.valueobjects.AvailableSlot;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.ScheduleEntry;
+import com.projetoExtensao.arenaMafia.domain.valueobjects.AvailableSlot;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
-import org.springframework.stereotype.Service;
-
 import java.math.BigDecimal;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import org.springframework.stereotype.Service;
 
 @Service
 public class AvailableSlotGenerationService {

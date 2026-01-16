@@ -4,7 +4,6 @@ import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidAgendaItemException;
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidTimeIntervalException;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
-
 import java.util.Set;
 import java.util.UUID;
 

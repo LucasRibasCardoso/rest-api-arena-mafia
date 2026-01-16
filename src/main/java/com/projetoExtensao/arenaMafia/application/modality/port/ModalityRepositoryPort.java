@@ -2,12 +2,11 @@ package com.projetoExtensao.arenaMafia.application.modality.port;
 
 import com.projetoExtensao.arenaMafia.domain.model.Modality;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.ModalityEntity;
-import org.springframework.data.jpa.domain.Specification;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import org.springframework.data.jpa.domain.Specification;
 
 public interface ModalityRepositoryPort {
   boolean existsByName(String name);

@@ -1,9 +1,9 @@
 package com.projetoExtensao.arenaMafia.application.agenda.usecase.imp;
 
 import com.projetoExtensao.arenaMafia.application.agenda.usecase.FindAllAgendaItemUseCase;
-import com.projetoExtensao.arenaMafia.application.court.port.CourtRepositoryPort;
-import com.projetoExtensao.arenaMafia.application.operatingHours.ports.OperatingHoursRepositoryPort;
-import com.projetoExtensao.arenaMafia.application.priceRule.ports.PriceRuleRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.court.port.repository.CourtRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.operatingHours.port.repository.OperatingHoursRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.priceRule.port.PriceRuleRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.schedule.port.repository.ScheduleEntryRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.schedule.service.AvailableSlotGenerationService;
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.PastDateException;
@@ -17,20 +17,19 @@ import com.projetoExtensao.arenaMafia.domain.model.agenda.AgendaItem;
 import com.projetoExtensao.arenaMafia.domain.model.agenda.GroupedAvailableSlotAgendaItem;
 import com.projetoExtensao.arenaMafia.domain.model.agenda.ScheduleEntryAgendaItem;
 import com.projetoExtensao.arenaMafia.domain.model.enums.DayOfWeek;
+import com.projetoExtensao.arenaMafia.domain.model.schedule.ScheduleEntry;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.AvailableSlot;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.AvailableSlotWithModalities;
-import com.projetoExtensao.arenaMafia.domain.model.schedule.ScheduleEntry;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.specification.CourtSpecification;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.specification.OperatingHoursSpecification;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.specification.PriceRuleSpecification;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDate;
 import java.util.*;
 import java.util.Comparator;
 import java.util.stream.Collectors;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional(readOnly = true)
@@ -107,9 +106,7 @@ public class FindAllAgendaItemUseCaseImp implements FindAllAgendaItemUseCase {
    * @return lista de agendamentos ativos ordenados por horário de início
    */
   private List<ScheduleEntry> getActiveSchedulesByDate(LocalDate date) {
-    return scheduleEntryRepositoryPort.findAllSchedulesByDate(date).stream()
-        .filter(ScheduleEntry::isActive)
-        .toList();
+    return scheduleEntryRepositoryPort.findAllActiveSchedulesByDate(date);
   }
 
   /**
@@ -345,8 +342,7 @@ public class FindAllAgendaItemUseCaseImp implements FindAllAgendaItemUseCase {
     return schedules.stream().map(ScheduleEntryAgendaItem::new).collect(Collectors.toList());
   }
 
-  /**
-   * Cria um item de slot disponível agrupado com todas as modalidades disponíveis.
+  /* Cria um item de slot disponível agrupado com todas as modalidades disponíveis.
    *
    * <p>Agrupa múltiplos slots disponíveis do mesmo horário (de quadras diferentes) em um único item
    * da agenda, consolidando todas as modalidades suportadas pelas quadras disponíveis.

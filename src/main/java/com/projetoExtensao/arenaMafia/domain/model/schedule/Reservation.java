@@ -5,7 +5,6 @@ import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidReserva
 import com.projetoExtensao.arenaMafia.domain.exception.conflict.ReservationStatusConflictException;
 import com.projetoExtensao.arenaMafia.domain.model.enums.ReservationStatus;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.DateTimeSlot;
-
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
@@ -16,8 +15,37 @@ public class Reservation extends ScheduleEntry {
   private final UUID modalityId;
   private final UUID scheduledByAdminId;
   private final BigDecimal price;
-  private ReservationStatus status;
   private final UUID recurringReservationId;
+  private UUID cancelledByAdminId;
+  private ReservationStatus status;
+
+  private Reservation(
+      UUID id,
+      UUID courtId,
+      UUID modalityId,
+      UUID userId,
+      UUID scheduledByAdminId,
+      UUID cancelledByAdminId,
+      BigDecimal price,
+      DateTimeSlot dateTimeSlot,
+      ReservationStatus status,
+      UUID recurringReservationId,
+      Instant createdAt) {
+
+    super(id, courtId, dateTimeSlot, createdAt);
+
+    validateModalityId(modalityId);
+    validateUserId(userId);
+    validatePrice(price);
+
+    this.userId = userId;
+    this.modalityId = modalityId;
+    this.scheduledByAdminId = scheduledByAdminId;
+    this.cancelledByAdminId = cancelledByAdminId;
+    this.price = price;
+    this.status = status;
+    this.recurringReservationId = recurringReservationId;
+  }
 
   /**
    * Factory method para criar uma reserva feita pelo próprio usuário. Uso: quando o usuário
@@ -43,6 +71,7 @@ public class Reservation extends ScheduleEntry {
         modalityId,
         userId,
         null, // scheduledByAdminId é null quando o próprio usuário faz a reserva
+        null, // cancelledByAdminId é null na criação
         price,
         dateTimeSlot,
         status,
@@ -80,6 +109,7 @@ public class Reservation extends ScheduleEntry {
         modalityId,
         userId,
         scheduledByAdminId,
+        null, // cancelledByAdminId é null na criação
         price,
         dateTimeSlot,
         status,
@@ -119,6 +149,7 @@ public class Reservation extends ScheduleEntry {
         modalityId,
         userId,
         scheduledByAdminId,
+        null, // cancelledByAdminId é null na criação
         price,
         dateTimeSlot,
         status,
@@ -135,6 +166,7 @@ public class Reservation extends ScheduleEntry {
    * @param modalityId id da modalidade
    * @param userId id do usuário
    * @param scheduledByAdminId id do admin que agendou
+   * @param cancelledByAdminId id do admin que cancelou
    * @param price preço da reserva
    * @param dateTimeSlot slot de data e hora
    * @param status status da reserva
@@ -148,6 +180,7 @@ public class Reservation extends ScheduleEntry {
       UUID modalityId,
       UUID userId,
       UUID scheduledByAdminId,
+      UUID cancelledByAdminId,
       BigDecimal price,
       DateTimeSlot dateTimeSlot,
       ReservationStatus status,
@@ -159,37 +192,12 @@ public class Reservation extends ScheduleEntry {
         modalityId,
         userId,
         scheduledByAdminId,
+        cancelledByAdminId,
         price,
         dateTimeSlot,
         status,
         recurringReservationId,
         createdAt);
-  }
-
-  private Reservation(
-      UUID id,
-      UUID courtId,
-      UUID modalityId,
-      UUID userId,
-      UUID scheduledByAdminId,
-      BigDecimal price,
-      DateTimeSlot dateTimeSlot,
-      ReservationStatus status,
-      UUID recurringReservationId,
-      Instant createdAt) {
-
-    super(id, courtId, dateTimeSlot, createdAt);
-
-    validateModalityId(modalityId);
-    validateUserId(userId);
-    validatePrice(price);
-
-    this.userId = userId;
-    this.modalityId = modalityId;
-    this.scheduledByAdminId = scheduledByAdminId;
-    this.price = price;
-    this.status = status;
-    this.recurringReservationId = recurringReservationId;
   }
 
   // --- Validações ---
@@ -212,6 +220,23 @@ public class Reservation extends ScheduleEntry {
   }
 
   // --- Comportamentos de Negócio ---
+
+  public void cancelByAdmin(UUID adminUserId) {
+    if (adminUserId == null) {
+      throw new InvalidReservationException(ErrorCode.RESERVATION_ADMIN_USER_ID_REQUIRED);
+    }
+
+    if (this.status == ReservationStatus.CANCELLED) {
+      throw new ReservationStatusConflictException(ErrorCode.RESERVATION_ALREADY_CANCELLED);
+    }
+
+    if (this.status == ReservationStatus.COMPLETED) {
+      throw new ReservationStatusConflictException(ErrorCode.RESERVATION_ALREADY_COMPLETED);
+    }
+
+    this.cancelledByAdminId = adminUserId;
+    this.status = ReservationStatus.CANCELLED;
+  }
 
   public void cancel() {
     if (this.status == ReservationStatus.CANCELLED) {
@@ -247,6 +272,25 @@ public class Reservation extends ScheduleEntry {
     return this.status.equals(ReservationStatus.CONFIRMED);
   }
 
+  /**
+   * Verifica se a reserva está em andamento.
+   *
+   * <p>Uma reserva é considerada em andamento quando:
+   *
+   * <ul>
+   *   <li>O status é CONFIRMED
+   *   <li>O momento atual está dentro do intervalo de data/hora da reserva
+   * </ul>
+   *
+   * @return true se a reserva estiver em andamento, false caso contrário
+   */
+  public boolean isInProgress() {
+    if (!isActive()) {
+      return false;
+    }
+    return getDateTimeSlot().isInProgress();
+  }
+
   // --- Getters ---
   public UUID getUserId() {
     return userId;
@@ -258,6 +302,10 @@ public class Reservation extends ScheduleEntry {
 
   public UUID getScheduledByAdminId() {
     return scheduledByAdminId;
+  }
+
+  public UUID getCancelledByAdminId() {
+    return cancelledByAdminId;
   }
 
   public BigDecimal getPrice() {

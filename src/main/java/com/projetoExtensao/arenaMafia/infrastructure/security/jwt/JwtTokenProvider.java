@@ -22,6 +22,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class JwtTokenProvider {
 
+  private final CustomUserDetailsService customUserDetailsService;
+
   @Value("${spring.security.jwt.secret-key}")
   private String secretKey;
 
@@ -32,8 +34,6 @@ public class JwtTokenProvider {
   private String issuerUrl;
 
   private Algorithm algorithm;
-
-  private final CustomUserDetailsService customUserDetailsService;
 
   public JwtTokenProvider(CustomUserDetailsService customUserDetailsService) {
     this.customUserDetailsService = customUserDetailsService;

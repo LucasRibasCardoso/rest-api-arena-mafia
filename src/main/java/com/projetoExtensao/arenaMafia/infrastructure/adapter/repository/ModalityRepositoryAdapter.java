@@ -10,10 +10,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 @Repository
 public class ModalityRepositoryAdapter implements ModalityRepositoryPort {
@@ -45,7 +43,6 @@ public class ModalityRepositoryAdapter implements ModalityRepositoryPort {
   }
 
   @Override
-  @Transactional(readOnly = true)
   public Optional<Modality> findById(UUID id) {
     return modalityJpaRepository.findById(id).map(modalityMapper::toDomain);
   }
@@ -59,13 +56,11 @@ public class ModalityRepositoryAdapter implements ModalityRepositoryPort {
   }
 
   @Override
-  @Transactional(readOnly = true)
   public Optional<Modality> findByName(String name) {
     return modalityJpaRepository.findByName(name).map(modalityMapper::toDomain);
   }
 
   @Override
-  @Transactional(readOnly = true)
   public List<Modality> findAll(Specification<ModalityEntity> specification) {
     return modalityJpaRepository.findAll(specification).stream()
         .map(modalityMapper::toDomain)

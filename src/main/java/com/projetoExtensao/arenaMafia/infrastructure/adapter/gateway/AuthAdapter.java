@@ -1,8 +1,8 @@
 package com.projetoExtensao.arenaMafia.infrastructure.adapter.gateway;
 
-import com.projetoExtensao.arenaMafia.application.auth.dto.AuthResult;
 import com.projetoExtensao.arenaMafia.application.auth.port.gateway.AuthPort;
 import com.projetoExtensao.arenaMafia.application.auth.port.repository.RefreshTokenRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.auth.result.AuthResult;
 import com.projetoExtensao.arenaMafia.domain.exception.unauthorized.InvalidCredentialsException;
 import com.projetoExtensao.arenaMafia.domain.exception.unauthorized.UnauthorizedException;
 import com.projetoExtensao.arenaMafia.domain.model.RefreshToken;
@@ -20,12 +20,12 @@ import org.springframework.stereotype.Component;
 @Component
 public class AuthAdapter implements AuthPort {
 
-  @Value("${spring.security.jwt.refresh-token-expiration-days}")
-  private Long refreshTokenExpirationDays;
-
   private final JwtTokenProvider jwtTokenProvider;
   private final AuthenticationManager authenticationManager;
   private final RefreshTokenRepositoryPort refreshTokenRepositoryPort;
+
+  @Value("${spring.security.jwt.refresh-token-expiration-days}")
+  private Long refreshTokenExpirationDays;
 
   public AuthAdapter(
       JwtTokenProvider jwtTokenProvider,
@@ -42,7 +42,7 @@ public class AuthAdapter implements AuthPort {
       var usernamePassword = new UsernamePasswordAuthenticationToken(username, password);
       Authentication authentication = authenticationManager.authenticate(usernamePassword);
       UserDetailsAdapter userDetails = (UserDetailsAdapter) authentication.getPrincipal();
-      return userDetails.getUser();
+      return userDetails.user();
     } catch (AuthenticationException e) {
       if (e.getCause() instanceof UnauthorizedException unauthorizedException) {
         throw unauthorizedException;

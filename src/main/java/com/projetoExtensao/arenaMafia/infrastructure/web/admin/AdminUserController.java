@@ -5,10 +5,10 @@ import com.projetoExtensao.arenaMafia.domain.model.User;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.mapper.AdminUserMapper;
 import com.projetoExtensao.arenaMafia.infrastructure.security.rateLimit.CustomRateLimiter;
 import com.projetoExtensao.arenaMafia.infrastructure.security.userDetails.UserDetailsAdapter;
-import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.request.AdminUserSearchRequestDto;
-import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.request.UpdateUserRoleRequestDto;
-import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.request.UpdateUserStatusRequestDto;
-import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.response.AdminUserResponseDto;
+import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.user.request.AdminUserSearchRequestDto;
+import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.user.request.UpdateUserRoleRequestDto;
+import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.user.request.UpdateUserStatusRequestDto;
+import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.user.response.AdminUserResponseDto;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
@@ -56,7 +56,7 @@ public class AdminUserController {
       @PathVariable UUID userId,
       @RequestBody @Valid UpdateUserStatusRequestDto request) {
 
-    UUID adminId = authenticatedAdmin.getUser().getId();
+    UUID adminId = authenticatedAdmin.user().getId();
     adminUpdateUserStatusUseCase.execute(adminId, userId, request.status());
     return ResponseEntity.noContent().build();
   }
@@ -68,7 +68,7 @@ public class AdminUserController {
       @PathVariable UUID userId,
       @RequestBody @Valid UpdateUserRoleRequestDto request) {
 
-    UUID adminId = authenticatedAdmin.getUser().getId();
+    UUID adminId = authenticatedAdmin.user().getId();
     adminUpdateUserRoleUseCase.execute(adminId, userId, request.role());
     return ResponseEntity.noContent().build();
   }

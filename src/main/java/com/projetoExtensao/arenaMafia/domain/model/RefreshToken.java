@@ -13,6 +13,15 @@ public class RefreshToken {
   private final User user;
   private final Instant createdAt;
 
+  private RefreshToken(
+      Long id, RefreshTokenVO token, Instant expiryDate, User user, Instant createdAt) {
+    this.id = id;
+    this.token = token;
+    this.expiryDate = expiryDate;
+    this.user = user;
+    this.createdAt = createdAt;
+  }
+
   /**
    * Factory Method para criar uma instância de RefreshToken.
    *
@@ -40,15 +49,6 @@ public class RefreshToken {
   public static RefreshToken reconstitute(
       Long id, RefreshTokenVO token, Instant expiryDate, User user, Instant createdAt) {
     return new RefreshToken(id, token, expiryDate, user, createdAt);
-  }
-
-  private RefreshToken(
-      Long id, RefreshTokenVO token, Instant expiryDate, User user, Instant createdAt) {
-    this.id = id;
-    this.token = token;
-    this.expiryDate = expiryDate;
-    this.user = user;
-    this.createdAt = createdAt;
   }
 
   public void verifyIfNotExpired() {

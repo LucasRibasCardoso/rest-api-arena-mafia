@@ -1,6 +1,6 @@
 package com.projetoExtensao.arenaMafia.infrastructure.config.dataConfig;
 
-import com.projetoExtensao.arenaMafia.application.priceRule.ports.PriceRuleRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.priceRule.port.PriceRuleRepositoryPort;
 import com.projetoExtensao.arenaMafia.domain.model.PriceRule;
 import java.math.BigDecimal;
 import org.slf4j.Logger;

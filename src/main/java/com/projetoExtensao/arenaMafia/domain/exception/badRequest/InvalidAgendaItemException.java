@@ -8,4 +8,3 @@ public class InvalidAgendaItemException extends BadRequestException {
     super(errorCode);
   }
 }
-

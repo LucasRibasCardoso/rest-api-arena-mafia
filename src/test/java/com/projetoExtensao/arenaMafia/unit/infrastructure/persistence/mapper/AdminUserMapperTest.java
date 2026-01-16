@@ -6,7 +6,7 @@ import com.projetoExtensao.arenaMafia.domain.model.User;
 import com.projetoExtensao.arenaMafia.domain.model.enums.AccountStatus;
 import com.projetoExtensao.arenaMafia.domain.model.enums.RoleEnum;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.mapper.AdminUserMapper;
-import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.response.AdminUserResponseDto;
+import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.user.response.AdminUserResponseDto;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;

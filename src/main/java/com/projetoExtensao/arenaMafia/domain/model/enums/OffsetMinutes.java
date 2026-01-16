@@ -14,11 +14,6 @@ public enum OffsetMinutes {
     this.value = value;
   }
 
-  @JsonValue
-  public int getValue() {
-    return value;
-  }
-
   @JsonCreator
   public static OffsetMinutes fromValue(int value) {
     for (OffsetMinutes offset : OffsetMinutes.values()) {
@@ -27,5 +22,10 @@ public enum OffsetMinutes {
       }
     }
     throw new InvalidOffsetMinutesException();
+  }
+
+  @JsonValue
+  public int getValue() {
+    return value;
   }
 }

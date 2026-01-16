@@ -7,7 +7,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-import com.projetoExtensao.arenaMafia.application.auth.dto.AuthResult;
+import com.projetoExtensao.arenaMafia.application.auth.result.AuthResult;
 import com.projetoExtensao.arenaMafia.application.auth.port.repository.RefreshTokenRepositoryPort;
 import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 import com.projetoExtensao.arenaMafia.domain.exception.unauthorized.AccountStatusAuthenticationException;
@@ -59,7 +59,7 @@ public class AuthPortAdapterTest {
 
     // Assert
     assertThat(actualUser).isNotNull();
-    assertThat(actualUser).isEqualTo(userDetails.getUser());
+    assertThat(actualUser).isEqualTo(userDetails.user());
 
     verify(authenticationManager, times(1))
         .authenticate(any(UsernamePasswordAuthenticationToken.class));

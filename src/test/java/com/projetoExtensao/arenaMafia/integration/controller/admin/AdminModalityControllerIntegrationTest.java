@@ -7,7 +7,7 @@ import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 import com.projetoExtensao.arenaMafia.domain.model.Modality;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.ModalityEntity;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.repository.ModalityJpaRepository;
-import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.request.CreateModalityRequestDto;
+import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.modality.request.CreateModalityRequestDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.exception.dto.ErrorResponseDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.exception.dto.FieldErrorResponseDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.modality.dto.response.ModalityResponseDto;
