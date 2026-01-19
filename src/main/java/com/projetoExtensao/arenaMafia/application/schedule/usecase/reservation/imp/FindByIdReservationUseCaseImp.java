@@ -1,6 +1,8 @@
 package com.projetoExtensao.arenaMafia.application.schedule.usecase.reservation.imp;
 
+import com.projetoExtensao.arenaMafia.application.schedule.detail.ReservationDetail;
 import com.projetoExtensao.arenaMafia.application.schedule.port.repository.ReservationRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.schedule.service.ScheduleEntryEnrichmentService;
 import com.projetoExtensao.arenaMafia.application.schedule.usecase.reservation.FindByIdReservationUseCase;
 import com.projetoExtensao.arenaMafia.domain.exception.forbidden.ReservationAccessDeniedException;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.Reservation;
@@ -13,16 +15,20 @@ import org.springframework.transaction.annotation.Transactional;
 public class FindByIdReservationUseCaseImp implements FindByIdReservationUseCase {
 
   private final ReservationRepositoryPort reservationRepositoryPort;
+  private final ScheduleEntryEnrichmentService scheduleEntryEnrichmentService;
 
-  public FindByIdReservationUseCaseImp(ReservationRepositoryPort reservationRepositoryPort) {
+  public FindByIdReservationUseCaseImp(
+      ReservationRepositoryPort reservationRepositoryPort,
+      ScheduleEntryEnrichmentService scheduleEntryEnrichmentService) {
     this.reservationRepositoryPort = reservationRepositoryPort;
+    this.scheduleEntryEnrichmentService = scheduleEntryEnrichmentService;
   }
 
   @Override
-  public Reservation execute(UUID userId, UUID reservationId) {
+  public ReservationDetail execute(UUID userId, UUID reservationId) {
     Reservation reservation = reservationRepositoryPort.findByIdOrElseThrow(reservationId);
     validateReservationOwnership(reservation, userId);
-    return reservation;
+    return scheduleEntryEnrichmentService.enrichReservation(reservation);
   }
 
   /**

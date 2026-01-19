@@ -30,17 +30,17 @@ properties:
     type: array
     description: Lista de bloqueios de horário conflitantes (detalhes enriquecidos).
     items:
-      $ref: "../schedule/BlockedTimeDetailResponseDto.yml"
+      $ref: "../blockedTime/BlockedTimeDetailResponseDto.yml"
   affectedReservations:
     type: array
     description: Lista de reservas conflitantes (detalhes enriquecidos).
     items:
-      $ref: "../schedule/ReservationDetailResponseDto.yml"
+      $ref: "../reservation/ReservationDetailResponseDto.yml"
   inProgressReservations:
     type: array
     description: Lista de reservas que estão em andamento no momento do preview. Essas reservas não serão canceladas automaticamente na confirmação.
     items:
-      $ref: "../schedule/ReservationDetailResponseDto.yml"
+      $ref: "../reservation/ReservationDetailResponseDto.yml"
 required:
   - operatingHoursId
   - usersAffectedCount

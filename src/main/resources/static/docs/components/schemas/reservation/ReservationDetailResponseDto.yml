@@ -22,7 +22,11 @@ properties:
   username:
     type: string
     description: Nome do usuário que fez a reserva.
-    example: "João da Silva"
+    example: "João_Silva"
+  FullName:
+    type: string
+    description: Nome completo do usuário que fez a reserva.
+    example: "João Carlos da Silva"
   userPhone:
     type: string
     description: Telefone de contato do usuário no formato E.164.

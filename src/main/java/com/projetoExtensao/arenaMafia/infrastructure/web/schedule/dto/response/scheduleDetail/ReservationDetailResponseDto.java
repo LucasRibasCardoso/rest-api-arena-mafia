@@ -11,6 +11,7 @@ public record ReservationDetailResponseDto(
     UUID userId,
     UUID courtId,
     String username,
+    String fullName,
     String userPhone,
     String courtName,
     LocalDate date,

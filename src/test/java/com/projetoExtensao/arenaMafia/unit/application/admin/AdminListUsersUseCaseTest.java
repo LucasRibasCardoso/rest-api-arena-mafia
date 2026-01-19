@@ -3,7 +3,6 @@ package com.projetoExtensao.arenaMafia.unit.application.admin;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -17,6 +16,7 @@ import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.user.request.
 import com.projetoExtensao.arenaMafia.unit.config.TestDataProvider;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,6 +29,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 
 @ExtendWith(MockitoExtension.class)
@@ -37,32 +38,66 @@ public class AdminListUsersUseCaseTest {
 
   @Mock private AdminUserRepositoryPort adminUserRepository;
   @InjectMocks private AdminListUsersUseCaseImp adminListUsersUseCase;
+
   @Captor private ArgumentCaptor<Specification<UserEntity>> specificationCaptor;
+  @Captor private ArgumentCaptor<Pageable> pageableCaptor; // Novo Captor
 
   @Test
-  @DisplayName("Deve listar usuários com base nos critérios fornecidos")
-  void testListUsersWithCriteria() {
+  @DisplayName("Deve listar usuários aplicando ordenação padrão por data de criação")
+  void testListUsersWithCriteria_andApplyDefaultSort() {
     // Arrange
     var criteria = new AdminUserSearchRequestDto("john", null, null, null, null);
-    Pageable pageable = PageRequest.of(0, 10);
+
+    Pageable originalPageable = PageRequest.of(0, 10);
 
     User user = TestDataProvider.UserBuilder.defaultUser().withFullName("John Doe").build();
-    Page<User> expectedPage = new PageImpl<>(List.of(user), pageable, 1);
+    Page<User> expectedPage = new PageImpl<>(List.of(user), originalPageable, 1);
 
-    when(adminUserRepository.search(any(Specification.class), eq(pageable)))
+    when(adminUserRepository.search(any(Specification.class), any(Pageable.class)))
         .thenReturn(expectedPage);
 
     // Act
-    Page<User> resultPage = adminListUsersUseCase.execute(criteria, pageable);
+    Page<User> resultPage = adminListUsersUseCase.execute(criteria, originalPageable);
 
     // Assert
     assertThat(resultPage).isNotNull();
-    assertThat(resultPage.getTotalElements()).isEqualTo(1);
     assertThat(resultPage.getContent()).hasSize(1);
     assertThat(resultPage.getContent().getFirst().getFullName()).isEqualTo("John Doe");
 
-    verify(adminUserRepository).search(specificationCaptor.capture(), eq(pageable));
-    assertThat(specificationCaptor.getValue()).isNotNull();
+    verify(adminUserRepository).search(specificationCaptor.capture(), pageableCaptor.capture());
+
+    Pageable capturedPageable = pageableCaptor.getValue();
+    assertThat(capturedPageable.getPageNumber()).isEqualTo(0);
+    assertThat(capturedPageable.getPageSize()).isEqualTo(10);
+    assertThat(capturedPageable.getSort().getOrderFor("createdAt")).isNotNull();
+    assertThat(Objects.requireNonNull(capturedPageable.getSort().getOrderFor("createdAt")).getDirection())
+        .isEqualTo(Sort.Direction.DESC);
+  }
+
+  @Test
+  @DisplayName("Deve respeitar a ordenação fornecida pelo cliente se já existir")
+  void execute_shouldKeepProvidedSort_whenPageableIsAlreadySorted() {
+    // Arrange
+    var criteria = new AdminUserSearchRequestDto(null, null, null, null, null);
+
+    // Pageable COM ordenação (por Nome ASC)
+    Pageable sortedPageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "fullName"));
+
+    when(adminUserRepository.search(any(Specification.class), any(Pageable.class)))
+        .thenReturn(Page.empty());
+
+    // Act
+    adminListUsersUseCase.execute(criteria, sortedPageable);
+
+    // Assert
+    verify(adminUserRepository).search(any(Specification.class), pageableCaptor.capture());
+
+    Pageable capturedPageable = pageableCaptor.getValue();
+    // Garante que NÃO mudou para createdAt
+    assertThat(capturedPageable.getSort().getOrderFor("fullName")).isNotNull();
+    assertThat(Objects.requireNonNull(capturedPageable.getSort().getOrderFor("fullName")).getDirection())
+        .isEqualTo(Sort.Direction.ASC);
+    assertThat(capturedPageable.getSort().getOrderFor("createdAt")).isNull();
   }
 
   @Test
@@ -73,7 +108,8 @@ public class AdminListUsersUseCaseTest {
     Pageable pageable = PageRequest.of(0, 10);
     Page<User> emptyPage = Page.empty(pageable);
 
-    when(adminUserRepository.search(any(Specification.class), eq(pageable))).thenReturn(emptyPage);
+    when(adminUserRepository.search(any(Specification.class), any(Pageable.class)))
+        .thenReturn(emptyPage);
 
     // Act
     Page<User> resultPage = adminListUsersUseCase.execute(criteria, pageable);
@@ -81,7 +117,7 @@ public class AdminListUsersUseCaseTest {
     // Assert
     assertThat(resultPage).isNotNull();
     assertThat(resultPage.isEmpty()).isTrue();
-    verify(adminUserRepository).search(any(Specification.class), eq(pageable));
+    verify(adminUserRepository).search(any(Specification.class), any(Pageable.class));
   }
 
   @Test
@@ -109,17 +145,22 @@ public class AdminListUsersUseCaseTest {
   void execute_shouldUseUnrestrictedSpecification_whenNoCriteriaAreProvided() {
     // Arrange
     var criteria = new AdminUserSearchRequestDto(null, null, null, null, null);
-    Pageable pageable = PageRequest.of(0, 10);
+    Pageable pageable = PageRequest.of(0, 10); // Unsorted
 
-    when(adminUserRepository.search(any(Specification.class), eq(pageable)))
+    when(adminUserRepository.search(any(Specification.class), any(Pageable.class)))
         .thenReturn(Page.empty(pageable));
 
     // Act
     adminListUsersUseCase.execute(criteria, pageable);
 
     // Assert
-    verify(adminUserRepository).search(specificationCaptor.capture(), eq(pageable));
+    verify(adminUserRepository).search(specificationCaptor.capture(), pageableCaptor.capture());
+
+    // Valida Specification
     Specification<UserEntity> capturedSpec = specificationCaptor.getValue();
     assertThat(capturedSpec).isNotNull();
+
+    // Valida Default Sort (efeito colateral esperado)
+    assertThat(pageableCaptor.getValue().getSort().isSorted()).isTrue();
   }
 }

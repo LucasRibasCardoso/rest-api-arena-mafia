@@ -100,7 +100,7 @@ public class AdminCourtController {
 
   @GetMapping("/{courtId}")
   @CustomRateLimiter(limiterName = "globalLimiter")
-  public ResponseEntity<AdminCourtResponseDto> getById(@PathVariable UUID courtId) {
+  public ResponseEntity<AdminCourtResponseDto> getCourtDetails(@PathVariable UUID courtId) {
     CourtWithModalities result = findCourtByIdUseCase.execute(courtId);
     AdminCourtResponseDto response = mapToResponse(result);
     return ResponseEntity.ok(response);

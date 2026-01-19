@@ -1,8 +1,10 @@
 package com.projetoExtensao.arenaMafia.infrastructure.web.admin;
 
+import com.projetoExtensao.arenaMafia.application.schedule.detail.BlockedTimeDetail;
 import com.projetoExtensao.arenaMafia.application.schedule.preview.BlockedTimeConflictsPreview;
 import com.projetoExtensao.arenaMafia.application.schedule.result.ConfirmBlockedTimeResult;
 import com.projetoExtensao.arenaMafia.application.schedule.usecase.blockedtime.ConfirmBlockedTimeUseCase;
+import com.projetoExtensao.arenaMafia.application.schedule.usecase.blockedtime.FindAllBlockedTimeUseCase;
 import com.projetoExtensao.arenaMafia.application.schedule.usecase.blockedtime.PreviewBlockedTimeConflictsUseCase;
 import com.projetoExtensao.arenaMafia.infrastructure.security.rateLimit.CustomRateLimiter;
 import com.projetoExtensao.arenaMafia.infrastructure.security.userDetails.UserDetailsAdapter;
@@ -16,6 +18,8 @@ import com.projetoExtensao.arenaMafia.infrastructure.web.schedule.mapper.Schedul
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -26,22 +30,25 @@ import org.springframework.web.bind.annotation.*;
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminBlockedTimesController {
 
-  private final PreviewBlockedTimeConflictsUseCase previewBlockedTimeConflictsUseCase;
-  private final ConfirmBlockedTimeUseCase confirmBlockedTimeUseCase;
   private final ScheduleEntryResponseMapper scheduleEntryMapper;
+  private final ConfirmBlockedTimeUseCase confirmBlockedTimeUseCase;
+  private final PreviewBlockedTimeConflictsUseCase previewBlockedTimeConflictsUseCase;
+  private final FindAllBlockedTimeUseCase findAllBlockedTimeUseCase;
 
   public AdminBlockedTimesController(
-      PreviewBlockedTimeConflictsUseCase previewBlockedTimeConflictsUseCase,
+      ScheduleEntryResponseMapper scheduleEntryMapper,
       ConfirmBlockedTimeUseCase confirmBlockedTimeUseCase,
-      ScheduleEntryResponseMapper scheduleEntryMapper) {
-    this.previewBlockedTimeConflictsUseCase = previewBlockedTimeConflictsUseCase;
-    this.confirmBlockedTimeUseCase = confirmBlockedTimeUseCase;
+      PreviewBlockedTimeConflictsUseCase previewBlockedTimeConflictsUseCase,
+      FindAllBlockedTimeUseCase findAllBlockedTimeUseCase) {
     this.scheduleEntryMapper = scheduleEntryMapper;
+    this.confirmBlockedTimeUseCase = confirmBlockedTimeUseCase;
+    this.previewBlockedTimeConflictsUseCase = previewBlockedTimeConflictsUseCase;
+    this.findAllBlockedTimeUseCase = findAllBlockedTimeUseCase;
   }
 
   @PostMapping("/preview-conflicts")
   @CustomRateLimiter(limiterName = "globalLimiter")
-  public ResponseEntity<BlockedTimeConflictsPreviewResponseDto> previewConflicts(
+  public ResponseEntity<BlockedTimeConflictsPreviewResponseDto> previewConflictsToCreateBlockedTime(
       @AuthenticationPrincipal UserDetailsAdapter authenticatedAdmin,
       @RequestBody @Valid BlockedTimeConflictsPreviewRequestDto requestDto) {
 
@@ -64,6 +71,17 @@ public class AdminBlockedTimesController {
     BlockedTimeConfirmResponseDto responseDto = buildConfirmResponseDto(result);
 
     return ResponseEntity.ok(responseDto);
+  }
+
+  @GetMapping
+  @CustomRateLimiter(limiterName = "globalLimiter")
+  public ResponseEntity<Page<BlockedTimeDetailResponseDto>> getBlockedTimes(
+          @RequestParam(required = false) UUID courtId,
+          Pageable pageable
+  ) {
+    Page<BlockedTimeDetail> blockedTimesPage = findAllBlockedTimeUseCase.execute(courtId, pageable);
+    Page<BlockedTimeDetailResponseDto> responsePage = blockedTimesPage.map(scheduleEntryMapper::toDetailDto);
+    return ResponseEntity.ok(responsePage);
   }
 
   /**
@@ -108,12 +126,9 @@ public class AdminBlockedTimesController {
         result.usersAffected());
   }
 
-  // TODO: Implementar endpoint DELETE para deletar um ou todos horários bloqueados
-
   // TODO: Implementar endpoint GET para listar todos os horários bloqueados
-
-  // TODO: Implementar endpoint GET para obter detalhes de um horário bloqueado específico
 
   // TODO: Implementar endpoint PUT para atualizar horários bloqueados existentes
 
+  // TODO: Implementar endpoint DELETE para deletar um ou todos horários bloqueados
 }

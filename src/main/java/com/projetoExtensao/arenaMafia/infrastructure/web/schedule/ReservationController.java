@@ -1,5 +1,6 @@
 package com.projetoExtensao.arenaMafia.infrastructure.web.schedule;
 
+import com.projetoExtensao.arenaMafia.application.schedule.detail.ReservationDetail;
 import com.projetoExtensao.arenaMafia.application.schedule.usecase.reservation.CancelReservationUseCase;
 import com.projetoExtensao.arenaMafia.application.schedule.usecase.reservation.CreateReservationUseCase;
 import com.projetoExtensao.arenaMafia.application.schedule.usecase.reservation.FindAllReservationUseCase;
@@ -8,6 +9,7 @@ import com.projetoExtensao.arenaMafia.domain.model.schedule.Reservation;
 import com.projetoExtensao.arenaMafia.infrastructure.security.rateLimit.CustomRateLimiter;
 import com.projetoExtensao.arenaMafia.infrastructure.security.userDetails.UserDetailsAdapter;
 import com.projetoExtensao.arenaMafia.infrastructure.web.schedule.dto.request.CreateReservationRequestDto;
+import com.projetoExtensao.arenaMafia.infrastructure.web.schedule.dto.response.scheduleDetail.ReservationDetailResponseDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.schedule.dto.response.scheduleNormal.ReservationResponseDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.schedule.mapper.ReservationResponseMapper;
 import jakarta.validation.Valid;
@@ -76,12 +78,13 @@ public class ReservationController {
 
   @GetMapping("/{id}")
   @CustomRateLimiter(limiterName = "globalLimiter")
-  public ResponseEntity<ReservationResponseDto> getById(
-      @AuthenticationPrincipal UserDetailsAdapter authenticatedUser, @PathVariable UUID id) {
+  public ResponseEntity<ReservationDetailResponseDto> getReservationDetails(
+      @AuthenticationPrincipal UserDetailsAdapter authenticatedUser,
+      @PathVariable UUID id) {
 
     UUID userId = extractUserId(authenticatedUser);
-    Reservation reservation = findByIdReservationUseCase.execute(userId, id);
-    ReservationResponseDto response = reservationMapper.toDto(reservation);
+    ReservationDetail reservation = findByIdReservationUseCase.execute(userId, id);
+    ReservationDetailResponseDto response = reservationMapper.toDetailDto(reservation);
     return ResponseEntity.ok(response);
   }
 

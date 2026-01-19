@@ -945,6 +945,7 @@ public class AdminCourtControllerIntegrationTest extends WebIntegrationTestConfi
                           .when()
                           .post("/{courtId}/preview-disable", court.getId())
                           .then()
+                          .log().all()
                           .statusCode(200)
                           .extract()
                           .as(CourtDisablePreviewResponseDto.class);
@@ -1193,6 +1194,7 @@ public class AdminCourtControllerIntegrationTest extends WebIntegrationTestConfi
                   .body(request)
                   .post("/confirm-disable")
                   .then()
+                  .log().all()
                   .statusCode(204);
 
           // Assert

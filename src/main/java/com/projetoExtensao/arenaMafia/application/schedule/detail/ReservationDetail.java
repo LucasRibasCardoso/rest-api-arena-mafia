@@ -12,6 +12,7 @@ public record ReservationDetail(
     UUID userId,
     UUID courtId,
     String username,
+    String fullName,
     String userPhone,
     String courtName,
     LocalDate date,

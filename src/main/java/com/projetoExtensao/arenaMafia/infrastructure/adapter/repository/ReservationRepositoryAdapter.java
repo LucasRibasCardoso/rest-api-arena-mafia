@@ -4,8 +4,9 @@ import com.projetoExtensao.arenaMafia.application.schedule.port.repository.Reser
 import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 import com.projetoExtensao.arenaMafia.domain.exception.notFound.ScheduleNotFoundException;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.Reservation;
-import com.projetoExtensao.arenaMafia.infrastructure.persistence.mapper.ScheduleEntryMapper;
-import com.projetoExtensao.arenaMafia.infrastructure.persistence.repository.ScheduleEntryJpaRepository;
+import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.ReservationEntity;
+import com.projetoExtensao.arenaMafia.infrastructure.persistence.mapper.ReservationMapper;
+import com.projetoExtensao.arenaMafia.infrastructure.persistence.repository.ReservationJpaRepository;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -19,36 +20,31 @@ import org.springframework.stereotype.Repository;
 @Repository
 public class ReservationRepositoryAdapter implements ReservationRepositoryPort {
 
-  private final ScheduleEntryJpaRepository scheduleEntryJpaRepository;
-  private final ScheduleEntryMapper scheduleEntryMapper;
+  private final ReservationJpaRepository reservationJpaRepository;
+  private final ReservationMapper reservationMapper;
 
   public ReservationRepositoryAdapter(
-      ScheduleEntryJpaRepository scheduleEntryJpaRepository,
-      ScheduleEntryMapper scheduleEntryMapper) {
-    this.scheduleEntryJpaRepository = scheduleEntryJpaRepository;
-    this.scheduleEntryMapper = scheduleEntryMapper;
+      ReservationJpaRepository reservationJpaRepository, ReservationMapper reservationMapper) {
+    this.reservationJpaRepository = reservationJpaRepository;
+    this.reservationMapper = reservationMapper;
   }
 
   @Override
   public Reservation save(Reservation reservation) {
-    var entity = scheduleEntryMapper.toEntity(reservation);
-    var savedEntity = scheduleEntryJpaRepository.save(entity);
-    return (Reservation) scheduleEntryMapper.toDomain(savedEntity);
+    ReservationEntity entity = reservationMapper.toEntity(reservation);
+    ReservationEntity savedEntity = reservationJpaRepository.save(entity);
+    return reservationMapper.toDomain(savedEntity);
   }
 
   @Override
   public Optional<Reservation> findById(UUID id) {
-    return scheduleEntryJpaRepository
-        .findById(id)
-        .map(scheduleEntryMapper::toDomain)
-        .filter(scheduleEntry -> scheduleEntry instanceof Reservation)
-        .map(scheduleEntry -> (Reservation) scheduleEntry);
+    return reservationJpaRepository.findById(id).map(reservationMapper::toDomain);
   }
 
   @Override
   public List<Reservation> findAllByIds(List<UUID> ids) {
-    return scheduleEntryJpaRepository.findAllById(ids).stream()
-        .map(entity -> (Reservation) scheduleEntryMapper.toDomain(entity))
+    return reservationJpaRepository.findAllById(ids).stream()
+        .map(reservationMapper::toDomain)
         .toList();
   }
 
@@ -60,16 +56,16 @@ public class ReservationRepositoryAdapter implements ReservationRepositoryPort {
 
   @Override
   public Page<Reservation> findReservationsByUserId(UUID userId, Pageable pageable) {
-    return scheduleEntryJpaRepository
+    return reservationJpaRepository
         .findReservationsByUserId(userId, pageable)
-        .map(entity -> (Reservation) scheduleEntryMapper.toDomain(entity));
+        .map(reservationMapper::toDomain);
   }
 
   @Override
   public Reservation findReservationByIdAndUserIdOrElseThrow(UUID reservationId, UUID userId) {
-    return scheduleEntryJpaRepository
+    return reservationJpaRepository
         .findReservationByIdAndUser(reservationId, userId)
-        .map(entity -> (Reservation) scheduleEntryMapper.toDomain(entity))
+        .map(reservationMapper::toDomain)
         .orElseThrow(() -> new ScheduleNotFoundException(ErrorCode.SCHEDULE_ENTRY_NOT_FOUND));
   }
 
@@ -78,8 +74,8 @@ public class ReservationRepositoryAdapter implements ReservationRepositoryPort {
     LocalDate date = dateTime.toLocalDate();
     LocalTime time = dateTime.toLocalTime();
 
-    return scheduleEntryJpaRepository.findConfirmedReservationsEndedAfter(date, time).stream()
-        .map(entity -> (Reservation) scheduleEntryMapper.toDomain(entity))
+    return reservationJpaRepository.findConfirmedReservationsEndedAfter(date, time).stream()
+        .map(reservationMapper::toDomain)
         .filter(Reservation::isActive)
         .toList();
   }
@@ -87,10 +83,10 @@ public class ReservationRepositoryAdapter implements ReservationRepositoryPort {
   @Override
   public List<Reservation> findAllConfirmedReservationsWithEndTimeBeforeOrEqual(
       LocalDateTime dateTime) {
-    return scheduleEntryJpaRepository
+    return reservationJpaRepository
         .findConfirmedReservationsEndedBeforeOrEqual(dateTime.toLocalDate(), dateTime.toLocalTime())
         .stream()
-        .map(entity -> (Reservation) scheduleEntryMapper.toDomain(entity))
+        .map(reservationMapper::toDomain)
         .filter(Reservation::isActive)
         .toList();
   }

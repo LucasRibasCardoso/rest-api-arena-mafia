@@ -165,15 +165,15 @@ components:
       $ref: "./components/schemas/court/CourtDisableConfirmRequestDto.yml"
 
     AvailableSlotResponseDto:
-      $ref: "./components/schemas/schedule/AvailableSlotResponseDto.yml"
+      $ref: "./components/schemas/reservation/AvailableSlotResponseDto.yml"
     CreateReservationRequestDto:
-      $ref: "./components/schemas/schedule/CreateReservationRequestDto.yml"
+      $ref: "./components/schemas/reservation/CreateReservationRequestDto.yml"
     ScheduleEntryResponseDto:
-      $ref: "./components/schemas/schedule/ScheduleEntryResponseDto.yml"
+      $ref: "./components/schemas/reservation/ScheduleEntryResponseDto.yml"
     ReservationScheduleResponseDto:
-      $ref: "./components/schemas/schedule/ReservationScheduleResponseDto.yml"
+      $ref: "./components/schemas/reservation/ReservationScheduleResponseDto.yml"
     PageOfReservationResponseDto:
-      $ref: "./components/schemas/schedule/PageOfReservationResponseDto.yml"
+      $ref: "./components/schemas/reservation/PageOfReservationResponseDto.yml"
 
     AgendaSlotResponseDto:
       $ref: "./components/schemas/agenda/AgendaSlotResponseDto.yml"
@@ -187,9 +187,9 @@ components:
     BlockedTimeConfirmResponseDto:
       $ref: "./components/schemas/blockedTime/BlockedTimeConfirmResponseDto.yml"
     BlockedTimeDetailResponseDto:
-      $ref: "./components/schemas/schedule/BlockedTimeDetailResponseDto.yml"
+      $ref: "./components/schemas/blockedTime/BlockedTimeDetailResponseDto.yml"
     ReservationDetailResponseDto:
-      $ref: "./components/schemas/schedule/ReservationDetailResponseDto.yml"
+      $ref: "./components/schemas/reservation/ReservationDetailResponseDto.yml"
 
   responses:
     InternalServerError:
@@ -314,6 +314,8 @@ paths:
   /api/admin/operating-hours/confirm-disable:
     $ref: "./paths/admin/operatingHours/ConfirmDisableOperatingHours.yml"
 
+  /api/admin/blocked-times:
+    $ref: "./paths/admin/schedule/blockedTime/GetBlockedTimes.yml"
   /api/admin/blocked-times/preview-conflicts:
     $ref: "./paths/admin/schedule/blockedTime/PreviewBlockedTimeConflicts.yml"
   /api/admin/blocked-times/confirm:

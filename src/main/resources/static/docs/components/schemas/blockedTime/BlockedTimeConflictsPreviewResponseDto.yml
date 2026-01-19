@@ -50,7 +50,7 @@ properties:
       Lista de bloqueios de horário existentes que serão sobrescritos pelo novo bloqueio.
       Estes bloqueios serão removidos quando o administrador confirmar a criação.
     items:
-      $ref: "../schedule/BlockedTimeDetailResponseDto.yml"
+      $ref: "./BlockedTimeDetailResponseDto.yml"
   conflictingReservations:
     type: array
     description: |
@@ -58,7 +58,7 @@ properties:
       Os usuários dessas reservas receberão notificação de cancelamento.
       **Não inclui** reservas em andamento.
     items:
-      $ref: "../schedule/ReservationDetailResponseDto.yml"
+      $ref: "../reservation/ReservationDetailResponseDto.yml"
   inProgressReservations:
     type: array
     description: |
@@ -66,5 +66,5 @@ properties:
       Estas reservas **NÃO serão canceladas** para evitar interrupção de uso em progresso.
       São informadas apenas para conhecimento do administrador.
     items:
-      $ref: "../schedule/ReservationDetailResponseDto.yml"
+      $ref: "../reservation/ReservationDetailResponseDto.yml"
 

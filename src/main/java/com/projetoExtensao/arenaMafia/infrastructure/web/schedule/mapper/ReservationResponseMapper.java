@@ -54,6 +54,7 @@ public class ReservationResponseMapper
         detail.userId(),
         detail.courtId(),
         detail.username(),
+        detail.fullName(),
         detail.userPhone(),
         detail.courtName(),
         detail.date(),

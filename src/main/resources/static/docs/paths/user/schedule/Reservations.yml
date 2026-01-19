@@ -24,14 +24,14 @@ post:
     content:
       application/json:
         schema:
-          $ref: "../../../components/schemas/schedule/CreateReservationRequestDto.yml"
+          $ref: "../../../components/schemas/reservation/CreateReservationRequestDto.yml"
   responses:
     201:
       description: Reserva criada com sucesso.
       content:
         application/json:
           schema:
-            $ref: "../../../components/schemas/schedule/ReservationScheduleResponseDto.yml"
+            $ref: "../../../components/schemas/reservation/ReservationScheduleResponseDto.yml"
     400:
       description: Requisição inválida ou dados de validação incorretos.
       content:
@@ -153,7 +153,7 @@ get:
       content:
         application/json:
           schema:
-            $ref: "../../../components/schemas/schedule/PageOfReservationResponseDto.yml"
+            $ref: "../../../components/schemas/reservation/PageOfReservationResponseDto.yml"
     400:
       description: Erro lançado quando os parâmetros de request forem inválidos.
       content:

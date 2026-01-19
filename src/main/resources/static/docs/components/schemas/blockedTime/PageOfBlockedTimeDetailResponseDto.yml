@@ -1,0 +1,71 @@
+type: object
+properties:
+  content:
+    description: Lista de horários bloqueados na página atual.
+    type: array
+    items:
+      $ref: './BlockedTimeDetailResponseDto.yml'
+  pageable:
+    description: Objeto com informações sobre a paginação.
+    type: object
+    properties:
+      sort:
+        type: object
+        example:
+          sorted: false
+          unsorted: true
+          empty: true
+      offset:
+        type: integer
+        example: 0
+      pageNumber:
+        type: integer
+        example: 0
+      pageSize:
+        type: integer
+        example: 20
+      paged:
+        type: boolean
+        example: true
+      unpaged:
+        type: boolean
+        example: false
+  last:
+    type: boolean
+    description: "Indica se esta é a última página."
+    example: true
+  totalPages:
+    type: integer
+    description: "O número total de páginas."
+    example: 1
+  totalElements:
+    type: integer
+    description: "O número total de horários bloqueados em todas as páginas."
+    example: 5
+  size:
+    type: integer
+    description: "O tamanho da página (número de elementos)."
+    example: 20
+  number:
+    type: integer
+    description: "O número da página atual (baseado em zero)."
+    example: 0
+  sort:
+    description: "Objeto com informações sobre a ordenação aplicada."
+    type: object
+    example:
+      sorted: false
+      unsorted: true
+      empty: true
+  first:
+    type: boolean
+    description: "Indica se esta é a primeira página."
+    example: true
+  numberOfElements:
+    type: integer
+    description: "O número de itens na página atual."
+    example: 5
+  empty:
+    type: boolean
+    description: "Indica se a página atual está vazia."
+    example: false

@@ -11,7 +11,9 @@ import java.time.Instant;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +31,14 @@ public class AdminListUsersUseCaseImp implements AdminListUsersUseCase {
 
   @Override
   public Page<User> execute(AdminUserSearchRequestDto criteria, Pageable pageable) {
+    if (pageable.getSort().isUnsorted()) {
+      pageable = PageRequest.of(
+              pageable.getPageNumber(),
+              pageable.getPageSize(),
+              Sort.by(Sort.Direction.DESC, "createdAt")
+      );
+    }
+
     validateSearchCriteria(criteria);
     Specification<UserEntity> spec = buildSpecification(criteria);
     return adminUserRepository.search(spec, pageable);

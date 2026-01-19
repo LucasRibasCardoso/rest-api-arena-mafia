@@ -110,7 +110,7 @@ public class AdminPriceRuleController {
 
   @GetMapping("/{ruleId}")
   @CustomRateLimiter(limiterName = "globalLimiter")
-  public ResponseEntity<PriceRuleResponseDto> getPriceRuleById(@PathVariable UUID ruleId) {
+  public ResponseEntity<PriceRuleResponseDto> getPriceRuleDetails(@PathVariable UUID ruleId) {
     PriceRule priceRule = findPriceRuleByIdUseCase.execute(ruleId);
     PriceRuleResponseDto response = priceRuleMapper.toDto(priceRule);
     return ResponseEntity.ok(response);

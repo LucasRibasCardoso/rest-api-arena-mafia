@@ -2,6 +2,7 @@ package com.projetoExtensao.arenaMafia.integration.controller.admin;
 
 import com.projetoExtensao.arenaMafia.application.court.port.repository.CourtRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.operatingHours.port.repository.OperatingHoursRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.schedule.detail.BlockedTimeDetail;
 import com.projetoExtensao.arenaMafia.application.schedule.port.gateway.BlockedTimePreviewCachePort;
 import com.projetoExtensao.arenaMafia.application.schedule.port.repository.BlockedTimeRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.schedule.port.repository.ReservationRepositoryPort;
@@ -20,6 +21,7 @@ import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.blockedtime.r
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.blockedtime.response.BlockedTimeConfirmResponseDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.blockedtime.response.BlockedTimeConflictsPreviewResponseDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.exception.dto.ErrorResponseDto;
+import com.projetoExtensao.arenaMafia.infrastructure.web.schedule.dto.response.scheduleDetail.BlockedTimeDetailResponseDto;
 import com.projetoExtensao.arenaMafia.integration.config.WebIntegrationTestConfig;
 import com.projetoExtensao.arenaMafia.integration.config.util.BlockedTime.InvalidListOfCourtIdsProvider;
 import com.projetoExtensao.arenaMafia.integration.config.util.timeInterval.InvalidTimeIntervalProvider;
@@ -30,6 +32,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
 
@@ -2390,6 +2393,162 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
           assertBusinessError(response, 409, CONFIRM_PATH, ErrorCode.PREVIEW_DATA_STALE);
         }
       }
+    }
+  }
+
+  @Nested
+  @DisplayName("Testes para o endpoint GET /api/admin/blocked-times")
+  class GetAllBlockedTimeTests {
+
+    @Test
+    @DisplayName("Deve retornar blocked times filtrados por courtId com paginação")
+    void shouldReturnBlockedTimesFilteredByCourtId() {
+      // Arrange
+      Modality modality = mockPersistModality("Futebol");
+      UUID courtId = mockPersistCourt("Quadra 1", modality).getId();
+      UUID otherCourtId = mockPersistCourt("Quadra 2", modality).getId();
+      LocalDate date = LocalDate.now().plusDays(1);
+
+      // Persiste 2 bloqueios para a Quadra 1
+      var blockedTime1 =
+          mockPersistBlockedTimeSpecific(
+              courtId,
+              date,
+              new TimeInterval(LocalTime.of(10, 0), LocalTime.of(11, 0)),
+              "Bloqueio 1",
+              adminId);
+      var blockedTime2 =
+          mockPersistBlockedTimeSpecific(
+              courtId,
+              date.plusDays(1),
+              new TimeInterval(LocalTime.of(14, 0), LocalTime.of(15, 0)),
+              "Bloqueio 2",
+              adminId);
+
+      // Persiste 1 bloqueio para a Quadra 2 (não deve retornar)
+      mockPersistBlockedTimeSpecific(
+          otherCourtId,
+          date,
+          new TimeInterval(LocalTime.of(10, 0), LocalTime.of(11, 0)),
+          "Bloqueio Outra Quadra",
+          adminId);
+
+      // Act
+      var response =
+          given()
+              .spec(specification)
+              .header("Authorization", accessToken)
+              .queryParam("courtId", courtId)
+              .queryParam("page", 0)
+              .queryParam("size", 10)
+              .when()
+              .get()
+              .then()
+              .statusCode(200)
+              .extract()
+              .response();
+
+      // Assert
+      // Validando metadados da paginação
+      assertThat(response.jsonPath().getInt("totalElements")).isEqualTo(2);
+      assertThat(response.jsonPath().getInt("totalPages")).isEqualTo(1);
+
+      // Validando o conteúdo
+      List<String> returnedIds = response.jsonPath().getList("content.blockedTimeId", String.class);
+
+      assertThat(returnedIds)
+              .hasSize(2)
+              .containsExactlyInAnyOrder(
+                      blockedTime1.getId().toString(),
+                      blockedTime2.getId().toString()
+              );
+    }
+
+    @Test
+    @DisplayName("Deve respeitar os parâmetros de paginação (page e size)")
+    void shouldRespectPaginationParameters() {
+      // Arrange
+      Modality modality = mockPersistModality("Tenis");
+      UUID courtId = mockPersistCourt("Quadra Central", modality).getId();
+      LocalDate date = LocalDate.now().plusDays(1);
+
+      // Cria 5 bloqueios
+      for (int i = 0; i < 5; i++) {
+        mockPersistBlockedTimeSpecific(courtId, date.plusDays(i),
+                new TimeInterval(LocalTime.of(10, 0), LocalTime.of(11, 0)), "Manutenção: " + 1, adminId);
+      }
+
+      // Act - Requisita a página 0 com tamanho 2
+      var responsePage0 = given()
+              .spec(specification)
+              .header("Authorization", accessToken)
+              .queryParam("courtId", courtId)
+              .queryParam("page", 0)
+              .queryParam("size", 2)
+              .when()
+              .get()
+              .then()
+              .statusCode(200)
+              .extract().response();
+
+      // Act - Requisita a página 1 com tamanho 2
+      var responsePage1 = given()
+              .spec(specification)
+              .header("Authorization", accessToken)
+              .queryParam("courtId", courtId)
+              .queryParam("page", 1)
+              .queryParam("size", 2)
+              .when()
+              .get()
+              .then()
+              .statusCode(200)
+              .extract().response();
+
+      // Assert
+      // Página 0
+      assertThat(responsePage0.jsonPath().getInt("numberOfElements")).isEqualTo(2);
+      assertThat(responsePage0.jsonPath().getInt("totalElements")).isEqualTo(5);
+
+      // Página 1
+      assertThat(responsePage1.jsonPath().getInt("numberOfElements")).isEqualTo(2);
+
+      // Garante que os IDs da página 0 não estão na página 1
+      List<UUID> idsPage0 = responsePage0.jsonPath().getList("content.blockedTimeId", UUID.class);
+      List<UUID> idsPage1 = responsePage1.jsonPath().getList("content.blockedTimeId", UUID.class);
+
+      assertThat(idsPage0).doesNotContainAnyElementsOf(idsPage1);
+    }
+
+    @Test
+    @DisplayName("Deve retornar todos os blocked times quando courtId não for informado")
+    void shouldReturnAllBlockedTimesWhenNoCourtIdProvided() {
+      // Arrange
+      Modality modality = mockPersistModality("Volei");
+      UUID court1 = mockPersistCourt("Quadra 1", modality).getId();
+      UUID court2 = mockPersistCourt("Quadra 2", modality).getId();
+
+      mockPersistBlockedTimeSpecific(court1, LocalDate.now().plusDays(1),
+              new TimeInterval(LocalTime.of(10, 0), LocalTime.of(11, 0)), "Manutenção", adminId);
+
+      mockPersistBlockedTimeSpecific(court2, LocalDate.now().plusDays(1),
+              new TimeInterval(LocalTime.of(10, 0), LocalTime.of(11, 0)), "Manutenção", adminId);
+
+      // Act
+      var response = given()
+              .spec(specification)
+              .header("Authorization", accessToken)
+              .when()
+              .get()
+              .then()
+              .statusCode(200)
+              .extract().response();
+
+      // Assert
+      // Deve conter pelo menos esses 2 (pode haver sujeira de outros testes se o banco não for limpo)
+      assertThat(response.jsonPath().getInt("totalElements")).isGreaterThanOrEqualTo(2);
+
+      List<String> descriptions = response.jsonPath().getList("content.description");
+      assertThat(descriptions).contains("Manutenção", "Manutenção");
     }
   }
 

@@ -16,7 +16,7 @@ get:
       content:
         application/json:
           schema:
-            $ref: "../../../components/schemas/schedule/ReservationScheduleResponseDto.yml"
+            $ref: "../../../components/schemas/reservation/ReservationDetailResponseDto.yml"
     400:
       description: Requisição inválida - ID mal formatado.
       content:
