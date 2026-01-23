@@ -1,0 +1,7 @@
+name: blockedTimeId
+in: path
+description: ID do bloqueio de horário a ser atualizado
+required: true
+schema:
+  type: string
+  format: uuid

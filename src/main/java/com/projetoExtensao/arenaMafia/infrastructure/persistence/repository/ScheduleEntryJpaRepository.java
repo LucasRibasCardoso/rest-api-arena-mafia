@@ -1,5 +1,6 @@
 package com.projetoExtensao.arenaMafia.infrastructure.persistence.repository;
 
+import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.ReservationEntity;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.ScheduleEntryEntity;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -147,4 +148,30 @@ public interface ScheduleEntryJpaRepository
               """)
   List<ScheduleEntryEntity> findSchedulesByCourtAndDate(
       @Param("courtId") UUID courtId, @Param("date") LocalDate date);
+
+  @Query(
+      """
+                SELECT s FROM ScheduleEntryEntity s
+                WHERE (TYPE(s) = BlockedTimeEntity
+                  OR
+                  (TYPE(s) = ReservationEntity AND TREAT(s AS ReservationEntity).status = 'CONFIRMED'))
+                AND (s.dateTimeSlot.date < :date
+                     OR (s.dateTimeSlot.date = :date AND s.dateTimeSlot.timeInterval.endTime <= :time))
+                ORDER BY s.dateTimeSlot.date ASC, s.dateTimeSlot.timeInterval.endTime ASC
+                """)
+  List<ReservationEntity> findAllActiveSchedulesEndedBeforeOrEqual(
+      @Param("date") LocalDate date, @Param("time") LocalTime time);
+
+  @Query(
+      """
+              SELECT s FROM ScheduleEntryEntity s
+              WHERE (TYPE(s) = BlockedTimeEntity
+                  OR
+                  (TYPE(s) = ReservationEntity AND TREAT(s AS ReservationEntity).status = 'CONFIRMED'))
+              AND (s.dateTimeSlot.date > :date
+                   OR (s.dateTimeSlot.date = :date AND s.dateTimeSlot.timeInterval.endTime > :time))
+              ORDER BY s.dateTimeSlot.date ASC, s.dateTimeSlot.timeInterval.endTime ASC
+              """)
+  List<ReservationEntity> findAllActiveSchedulesEndedAfter(
+      @Param("date") LocalDate date, @Param("time") LocalTime time);
 }

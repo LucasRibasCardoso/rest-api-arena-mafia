@@ -21,8 +21,4 @@ public interface ReservationRepositoryPort {
   Page<Reservation> findReservationsByUserId(UUID userId, Pageable pageable);
 
   Reservation findReservationByIdAndUserIdOrElseThrow(UUID reservationId, UUID userId);
-
-  List<Reservation> findAllConfirmedReservationsWithEndTimeAfter(LocalDateTime dateTime);
-
-  List<Reservation> findAllConfirmedReservationsWithEndTimeBeforeOrEqual(LocalDateTime dateTime);
 }

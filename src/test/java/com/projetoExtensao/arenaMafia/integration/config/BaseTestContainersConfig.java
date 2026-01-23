@@ -650,5 +650,11 @@ public abstract class BaseTestContainersConfig {
     return blockedTimeRepository.save(blockedTime);
   }
 
-
+  public BlockedTime mockPersistBlockedTimeRecurring(
+          UUID courtId, LocalDate date, TimeInterval timeInterval, String reason, UUID adminId, UUID recurringId
+  ) {
+    DateTimeSlot dateTimeSlot = new DateTimeSlot(date, timeInterval);
+    BlockedTime blockedTime = BlockedTime.createRecurring(courtId, dateTimeSlot, reason, adminId, true, recurringId);
+    return blockedTimeRepository.save(blockedTime);
+  }
 }

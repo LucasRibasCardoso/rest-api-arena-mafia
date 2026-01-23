@@ -69,22 +69,4 @@ public interface ReservationJpaRepository
   List<ReservationEntity> findConfirmedReservationsEndedAfter(
       @Param("date") LocalDate date, @Param("time") LocalTime time);
 
-  /**
-   * Buscar todas as reservas confirmadas cujo horário de término é anterior ou igual ao momento
-   * especificado. Utilizado para completar reservas expiradas quando a aplicação é reiniciada.
-   *
-   * @param date data de referência
-   * @param time hora de referência
-   * @return lista de reservas confirmadas ordenadas por data e horário de término
-   */
-  @Query(
-      """
-            SELECT r FROM ReservationEntity r
-            WHERE r.status = 'CONFIRMED'
-            AND (r.dateTimeSlot.date < :date
-                 OR (r.dateTimeSlot.date = :date AND r.dateTimeSlot.timeInterval.endTime <= :time))
-            ORDER BY r.dateTimeSlot.date ASC, r.dateTimeSlot.timeInterval.endTime ASC
-            """)
-  List<ReservationEntity> findConfirmedReservationsEndedBeforeOrEqual(
-      @Param("date") LocalDate date, @Param("time") LocalTime time);
 }

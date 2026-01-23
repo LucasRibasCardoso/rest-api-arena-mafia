@@ -54,6 +54,13 @@ public class BlockedTimeRepositoryAdapter implements BlockedTimeRepositoryPort {
   }
 
   @Override
+  public List<BlockedTime> findAllByRecurringBlockedTimeId(UUID recurringBlockedTimeId) {
+    return blockedTimeJpaRepository.findAllByRecurringBlockedTimeId(recurringBlockedTimeId).stream()
+        .map(blockedTimeMapper::toDomain)
+        .toList();
+  }
+
+  @Override
   public void deleteAllByIds(List<UUID> ids) {
     if (ids == null || ids.isEmpty()) {
       return;
@@ -64,5 +71,15 @@ public class BlockedTimeRepositoryAdapter implements BlockedTimeRepositoryPort {
   @Override
   public Page<BlockedTime> search(Specification<BlockedTimeEntity> spec, Pageable pageable) {
     return blockedTimeJpaRepository.findAll(spec, pageable).map(blockedTimeMapper::toDomain);
+  }
+
+  @Override
+  public void deleteAllByRecurringBlockedTimeId(UUID recurringBlockedTimeId) {
+    blockedTimeJpaRepository.deleteAllByRecurringBlockedTimeId(recurringBlockedTimeId);
+  }
+
+  @Override
+  public void deleteById(UUID id) {
+    blockedTimeJpaRepository.deleteById(id);
   }
 }

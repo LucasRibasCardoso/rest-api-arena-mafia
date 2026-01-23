@@ -4,6 +4,7 @@ import com.projetoExtensao.arenaMafia.domain.model.enums.DayOfWeek;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.ScheduleEntry;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -29,4 +30,8 @@ public interface ScheduleEntryRepositoryPort {
 
   List<ScheduleEntry> findAllActiveSchedulesFromTodayByDaysOfWeekAndTimeInterval(
       Set<DayOfWeek> daysOfWeek, TimeInterval timeInterval);
+
+  List<ScheduleEntry> findAllActiveSchedulesEndedBeforeOrEqual(LocalDateTime dateTime);
+
+  List<ScheduleEntry> findAllConfirmedReservationsWithEndTimeAfter(LocalDateTime dateTime);
 }

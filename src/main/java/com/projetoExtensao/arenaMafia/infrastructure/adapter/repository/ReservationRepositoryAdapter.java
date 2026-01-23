@@ -68,26 +68,4 @@ public class ReservationRepositoryAdapter implements ReservationRepositoryPort {
         .map(reservationMapper::toDomain)
         .orElseThrow(() -> new ScheduleNotFoundException(ErrorCode.SCHEDULE_ENTRY_NOT_FOUND));
   }
-
-  @Override
-  public List<Reservation> findAllConfirmedReservationsWithEndTimeAfter(LocalDateTime dateTime) {
-    LocalDate date = dateTime.toLocalDate();
-    LocalTime time = dateTime.toLocalTime();
-
-    return reservationJpaRepository.findConfirmedReservationsEndedAfter(date, time).stream()
-        .map(reservationMapper::toDomain)
-        .filter(Reservation::isActive)
-        .toList();
-  }
-
-  @Override
-  public List<Reservation> findAllConfirmedReservationsWithEndTimeBeforeOrEqual(
-      LocalDateTime dateTime) {
-    return reservationJpaRepository
-        .findConfirmedReservationsEndedBeforeOrEqual(dateTime.toLocalDate(), dateTime.toLocalTime())
-        .stream()
-        .map(reservationMapper::toDomain)
-        .filter(Reservation::isActive)
-        .toList();
-  }
 }

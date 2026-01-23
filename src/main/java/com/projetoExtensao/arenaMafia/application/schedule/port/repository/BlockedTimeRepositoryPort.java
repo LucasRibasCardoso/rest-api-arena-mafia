@@ -1,6 +1,5 @@
 package com.projetoExtensao.arenaMafia.application.schedule.port.repository;
 
-import com.projetoExtensao.arenaMafia.application.schedule.detail.BlockedTimeDetail;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.BlockedTime;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.BlockedTimeEntity;
 import org.springframework.data.domain.Page;
@@ -19,9 +18,15 @@ public interface BlockedTimeRepositoryPort {
 
   Optional<BlockedTime> findById(UUID id);
 
-  Page<BlockedTime> search(Specification<BlockedTimeEntity> spec, Pageable pageable);
-
   BlockedTime findByIdOrElseThrow(UUID id);
 
+  Page<BlockedTime> search(Specification<BlockedTimeEntity> spec, Pageable pageable);
+
+  List<BlockedTime> findAllByRecurringBlockedTimeId(UUID recurringBlockedTimeId);
+
   void deleteAllByIds(List<UUID> ids);
+
+  void deleteAllByRecurringBlockedTimeId(UUID recurringBlockedTimeId);
+
+  void deleteById(UUID id);
 }

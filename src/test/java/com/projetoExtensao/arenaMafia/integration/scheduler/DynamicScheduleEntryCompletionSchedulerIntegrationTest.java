@@ -1,7 +1,7 @@
 package com.projetoExtensao.arenaMafia.integration.scheduler;
 
 import com.projetoExtensao.arenaMafia.application.schedule.port.repository.ScheduleEntryRepositoryPort;
-import com.projetoExtensao.arenaMafia.application.schedule.scheduler.DynamicReservationCompletionScheduler;
+import com.projetoExtensao.arenaMafia.application.schedule.scheduler.DynamicScheduleEntryCompletionScheduler;
 import com.projetoExtensao.arenaMafia.domain.model.Court;
 import com.projetoExtensao.arenaMafia.domain.model.Modality;
 import com.projetoExtensao.arenaMafia.domain.model.User;
@@ -29,9 +29,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @DisplayName("Testes de Integração para DynamicReservationCompletionScheduler")
-class DynamicReservationCompletionSchedulerIntegrationTest extends BaseTestContainersConfig {
+class DynamicScheduleEntryCompletionSchedulerIntegrationTest extends BaseTestContainersConfig {
 
-  @Autowired private DynamicReservationCompletionScheduler scheduler;
+  @Autowired private DynamicScheduleEntryCompletionScheduler scheduler;
   @Autowired private ScheduleEntryRepositoryPort scheduleEntryRepositoryPort;
 
   private User defaultUser;
@@ -69,7 +69,7 @@ class DynamicReservationCompletionSchedulerIntegrationTest extends BaseTestConta
 
       // Act - Agenda a conclusão para 1 segundo no futuro (simula término imediato)
       LocalDateTime scheduledEndTime = LocalDateTime.now().plusSeconds(1);
-      scheduler.scheduleCompletion(savedReservation.getId(), scheduledEndTime);
+      scheduler.scheduleReservationCompletion(savedReservation.getId(), scheduledEndTime);
 
       // Assert - Aguarda até 5 segundos para a tarefa ser executada
       Awaitility.await()
@@ -109,7 +109,7 @@ class DynamicReservationCompletionSchedulerIntegrationTest extends BaseTestConta
 
       // Act - Agenda a conclusão para 1 segundo no futuro
       LocalDateTime scheduledEndTime = LocalDateTime.now().plusSeconds(1);
-      scheduler.scheduleCompletion(savedReservation.getId(), scheduledEndTime);
+      scheduler.scheduleReservationCompletion(savedReservation.getId(), scheduledEndTime);
 
       // Assert - Aguarda e verifica que o status permanece CANCELLED
       Awaitility.await()
@@ -140,8 +140,8 @@ class DynamicReservationCompletionSchedulerIntegrationTest extends BaseTestConta
       Reservation reservation2 = createAndSaveReservation(tomorrow, timeInterval2);
 
       // Act - Agenda as duas conclusões para momentos próximos
-      scheduler.scheduleCompletion(reservation1.getId(), LocalDateTime.now().plusSeconds(1));
-      scheduler.scheduleCompletion(reservation2.getId(), LocalDateTime.now().plusSeconds(2));
+      scheduler.scheduleReservationCompletion(reservation1.getId(), LocalDateTime.now().plusSeconds(1));
+      scheduler.scheduleReservationCompletion(reservation2.getId(), LocalDateTime.now().plusSeconds(2));
 
       // Assert - Aguarda ambas serem concluídas
       Awaitility.await()

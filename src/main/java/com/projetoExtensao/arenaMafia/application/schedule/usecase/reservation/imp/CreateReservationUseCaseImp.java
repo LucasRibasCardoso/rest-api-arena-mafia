@@ -6,7 +6,7 @@ import com.projetoExtensao.arenaMafia.application.notification.event.OnScheduleC
 import com.projetoExtensao.arenaMafia.application.priceRule.port.PriceRuleRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.priceRule.service.PriceCalculatorService;
 import com.projetoExtensao.arenaMafia.application.schedule.port.repository.ReservationRepositoryPort;
-import com.projetoExtensao.arenaMafia.application.schedule.scheduler.DynamicReservationCompletionScheduler;
+import com.projetoExtensao.arenaMafia.application.schedule.scheduler.DynamicScheduleEntryCompletionScheduler;
 import com.projetoExtensao.arenaMafia.application.schedule.service.ScheduleAvailabilityService;
 import com.projetoExtensao.arenaMafia.application.schedule.usecase.reservation.CreateReservationUseCase;
 import com.projetoExtensao.arenaMafia.application.user.port.repository.UserRepositoryPort;
@@ -36,7 +36,7 @@ public class CreateReservationUseCaseImp implements CreateReservationUseCase {
 
   private final PriceCalculatorService priceCalculatorService;
   private final ScheduleAvailabilityService scheduleAvailabilityService;
-  private final DynamicReservationCompletionScheduler completionScheduler;
+  private final DynamicScheduleEntryCompletionScheduler completionScheduler;
   private final UserRepositoryPort userRepositoryPort;
   private final CourtRepositoryPort courtRepositoryPort;
   private final ApplicationEventPublisher eventPublisher;
@@ -47,7 +47,7 @@ public class CreateReservationUseCaseImp implements CreateReservationUseCase {
   public CreateReservationUseCaseImp(
       PriceCalculatorService priceCalculatorService,
       ScheduleAvailabilityService scheduleAvailabilityService,
-      DynamicReservationCompletionScheduler completionScheduler,
+      DynamicScheduleEntryCompletionScheduler completionScheduler,
       UserRepositoryPort userRepositoryPort,
       CourtRepositoryPort courtRepositoryPort,
       ModalityRepositoryPort modalityRepositoryPort,
@@ -143,7 +143,7 @@ public class CreateReservationUseCaseImp implements CreateReservationUseCase {
             reservation.getDateTimeSlot().date(),
             reservation.getDateTimeSlot().timeInterval().endTime());
 
-    completionScheduler.scheduleCompletion(reservation.getId(), endDateTime);
+    completionScheduler.scheduleReservationCompletion(reservation.getId(), endDateTime);
   }
 
   /**

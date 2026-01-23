@@ -9,6 +9,7 @@ import com.projetoExtensao.arenaMafia.application.schedule.port.repository.Reser
 import com.projetoExtensao.arenaMafia.application.schedule.port.repository.ScheduleEntryRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.schedule.preview.BlockedTimeConflictsPreview;
 import com.projetoExtensao.arenaMafia.application.schedule.result.ConfirmBlockedTimeResult;
+import com.projetoExtensao.arenaMafia.application.schedule.scheduler.DynamicScheduleEntryCompletionScheduler;
 import com.projetoExtensao.arenaMafia.application.schedule.service.BlockedTimeDateCalculationService;
 import com.projetoExtensao.arenaMafia.application.schedule.service.ReservationBatchCancellationService;
 import com.projetoExtensao.arenaMafia.application.schedule.usecase.blockedtime.ConfirmBlockedTimeUseCase;
@@ -22,6 +23,7 @@ import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.blockedtime.request.BlockedTimeConfirmRequestDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.blockedtime.request.BlockedTimeConflictsPreviewRequestDto;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -42,6 +44,7 @@ public class ConfirmBlockedTimeUseCaseImp implements ConfirmBlockedTimeUseCase {
   private final CourtRepositoryPort courtRepository;
   private final ReservationBatchCancellationService reservationBatchCancellationService;
   private final BlockedTimeDateCalculationService dateCalculationService;
+  private final DynamicScheduleEntryCompletionScheduler completionScheduler;
 
   public ConfirmBlockedTimeUseCaseImp(
       BlockedTimePreviewCachePort previewCachePort,
@@ -50,7 +53,8 @@ public class ConfirmBlockedTimeUseCaseImp implements ConfirmBlockedTimeUseCase {
       ScheduleEntryRepositoryPort scheduleEntryRepository,
       CourtRepositoryPort courtRepository,
       ReservationBatchCancellationService reservationBatchCancellationService,
-      BlockedTimeDateCalculationService dateCalculationService) {
+      BlockedTimeDateCalculationService dateCalculationService,
+      DynamicScheduleEntryCompletionScheduler completionScheduler) {
     this.previewCachePort = previewCachePort;
     this.blockedTimeRepository = blockedTimeRepository;
     this.reservationRepository = reservationRepository;
@@ -58,6 +62,7 @@ public class ConfirmBlockedTimeUseCaseImp implements ConfirmBlockedTimeUseCase {
     this.courtRepository = courtRepository;
     this.reservationBatchCancellationService = reservationBatchCancellationService;
     this.dateCalculationService = dateCalculationService;
+    this.completionScheduler = completionScheduler;
   }
 
   @Override
@@ -89,19 +94,40 @@ public class ConfirmBlockedTimeUseCaseImp implements ConfirmBlockedTimeUseCase {
     int blockedTimesCancelled = removeConflictingBlockedTimes(preview.conflictingBlockedTimes());
 
     // Cria e salva os novos BlockedTimes
-    List<UUID> blockedTimesCreated =
+    List<BlockedTime> blockedTimesCreated =
         createAndSaveBlockedTime(
             preview.request(), effectiveDaysOfWeek, searchInterval, adminId, request.description());
 
     // Limpa o preview do cache após a confirmação
     previewCachePort.delete(request.previewKey());
 
+    // Agenda a deleção automática dos bloqueios criados
+    scheduleBlockedTimeDeletion(blockedTimesCreated);
+
+    // Extrair IDs dos BlockedTimes criados
+    List<UUID> blockedTimesCreateIds = blockedTimesCreated.stream().map(BlockedTime::getId).toList();
+
     return new ConfirmBlockedTimeResult(
-        blockedTimesCreated,
+        blockedTimesCreateIds,
         blockedTimesCreated.size(),
         reservationsCancelled,
         blockedTimesCancelled,
         preview.usersAffected());
+  }
+
+  /**
+   * Agenda a deleção dos blockedTimes ao seu termino
+   * @param blockedTimes Lista de BlockedTimes a serem agendados para deleção
+   */
+  private void scheduleBlockedTimeDeletion(List<BlockedTime> blockedTimes) {
+    for (BlockedTime blockedTime : blockedTimes) {
+      LocalDateTime endDateTime =
+          LocalDateTime.of(
+              blockedTime.getDateTimeSlot().date(),
+              blockedTime.getDateTimeSlot().timeInterval().endTime());
+
+      completionScheduler.scheduleBlockedTimeDeletion(blockedTime.getId(), endDateTime);
+    }
   }
 
   /**
@@ -198,14 +224,15 @@ public class ConfirmBlockedTimeUseCaseImp implements ConfirmBlockedTimeUseCase {
    * @param effectiveDaysOfWeek Dias da semana efetivos para os bloqueios
    * @param timeInterval Intervalo de tempo a ser usado para os bloqueios
    * @param adminId Id do administrador responsável pela criação dos bloqueios
-   * @return Lista de IDs dos BlockedTimes criados
+   * @return Lista de BlockedTimes criados
    */
-  private List<UUID> createAndSaveBlockedTime(
+  private List<BlockedTime> createAndSaveBlockedTime(
       BlockedTimeConflictsPreviewRequestDto previewRequest,
       Set<DayOfWeek> effectiveDaysOfWeek,
       TimeInterval timeInterval,
       UUID adminId,
       String description) {
+
     List<LocalDate> applicableDates =
         dateCalculationService.calculateApplicableDates(
             previewRequest.startDate(), previewRequest.endDate(), effectiveDaysOfWeek);
@@ -231,8 +258,7 @@ public class ConfirmBlockedTimeUseCaseImp implements ConfirmBlockedTimeUseCase {
       }
     }
 
-    List<BlockedTime> savedBlockedTimes = blockedTimeRepository.saveAll(blockedTimesToCreate);
-    return savedBlockedTimes.stream().map(BlockedTime::getId).toList();
+    return blockedTimeRepository.saveAll(blockedTimesToCreate);
   }
 
   /**
