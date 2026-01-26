@@ -1,4 +1,4 @@
-package com.projetoExtensao.arenaMafia.domain.model.agenda;
+package com.projetoExtensao.arenaMafia.domain.model.agenda.user;
 
 import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
 

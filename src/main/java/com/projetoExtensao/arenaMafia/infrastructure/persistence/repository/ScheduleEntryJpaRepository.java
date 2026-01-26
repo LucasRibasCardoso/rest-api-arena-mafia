@@ -1,5 +1,6 @@
 package com.projetoExtensao.arenaMafia.infrastructure.persistence.repository;
 
+import com.projetoExtensao.arenaMafia.infrastructure.config.bean.SchedulingConfig;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.ReservationEntity;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.ScheduleEntryEntity;
 import java.time.LocalDate;
@@ -159,8 +160,7 @@ public interface ScheduleEntryJpaRepository
                      OR (s.dateTimeSlot.date = :date AND s.dateTimeSlot.timeInterval.endTime <= :time))
                 ORDER BY s.dateTimeSlot.date ASC, s.dateTimeSlot.timeInterval.endTime ASC
                 """)
-  List<ReservationEntity> findAllActiveSchedulesEndedBeforeOrEqual(
-      @Param("date") LocalDate date, @Param("time") LocalTime time);
+  List<ScheduleEntryEntity> findAllActiveSchedulesEndedBeforeOrEqual(@Param("date") LocalDate date, @Param("time") LocalTime time);
 
   @Query(
       """
@@ -172,6 +172,5 @@ public interface ScheduleEntryJpaRepository
                    OR (s.dateTimeSlot.date = :date AND s.dateTimeSlot.timeInterval.endTime > :time))
               ORDER BY s.dateTimeSlot.date ASC, s.dateTimeSlot.timeInterval.endTime ASC
               """)
-  List<ReservationEntity> findAllActiveSchedulesEndedAfter(
-      @Param("date") LocalDate date, @Param("time") LocalTime time);
+  List<ScheduleEntryEntity> findAllActiveSchedulesEndedAfter(@Param("date") LocalDate date, @Param("time") LocalTime time);
 }

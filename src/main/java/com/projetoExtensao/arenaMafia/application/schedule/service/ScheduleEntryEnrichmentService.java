@@ -4,7 +4,7 @@ import com.projetoExtensao.arenaMafia.application.court.port.repository.CourtRep
 import com.projetoExtensao.arenaMafia.application.modality.port.ModalityRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.schedule.detail.BlockedTimeDetail;
 import com.projetoExtensao.arenaMafia.application.schedule.detail.ReservationDetail;
-import com.projetoExtensao.arenaMafia.application.schedule.detail.ScheduleDetail;
+import com.projetoExtensao.arenaMafia.application.schedule.detail.ScheduleEntryDetail;
 import com.projetoExtensao.arenaMafia.application.schedule.result.ScheduleEntriesEnrichedResult;
 import com.projetoExtensao.arenaMafia.application.user.port.repository.UserRepositoryPort;
 import com.projetoExtensao.arenaMafia.domain.model.Court;
@@ -60,7 +60,7 @@ public class ScheduleEntryEnrichmentService {
     Map<UUID, Modality> modalityMap = loadModalities(reservations);
 
     // Enriquecer cada entrada usando polimorfismo
-    List<ScheduleDetail> scheduleDetails =
+    List<ScheduleEntryDetail> scheduleDetails =
         scheduleEntries.stream()
             .map(entry -> enrichSingleEntry(entry, userMap, courtMap, modalityMap))
             .toList();
@@ -114,7 +114,7 @@ public class ScheduleEntryEnrichmentService {
    * @param modalityMap mapa de modalidades
    * @return detalhes da entrada enriquecida
    */
-  private ScheduleDetail enrichSingleEntry(
+  private ScheduleEntryDetail enrichSingleEntry(
       ScheduleEntry entry,
       Map<UUID, User> userMap,
       Map<UUID, Court> courtMap,

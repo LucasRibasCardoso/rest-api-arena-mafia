@@ -1,10 +1,10 @@
 package com.projetoExtensao.arenaMafia.infrastructure.web.agenda.mapper;
 
-import com.projetoExtensao.arenaMafia.domain.model.agenda.AgendaItem;
-import com.projetoExtensao.arenaMafia.domain.model.agenda.AvailableSlotAgendaItem;
-import com.projetoExtensao.arenaMafia.domain.model.agenda.GroupedAvailableSlotAgendaItem;
-import com.projetoExtensao.arenaMafia.domain.model.agenda.GroupedBlockedTimeAgendaItem;
-import com.projetoExtensao.arenaMafia.domain.model.agenda.ScheduleEntryAgendaItem;
+import com.projetoExtensao.arenaMafia.domain.model.agenda.user.AgendaItem;
+import com.projetoExtensao.arenaMafia.domain.model.agenda.user.AvailableSlotAgendaItem;
+import com.projetoExtensao.arenaMafia.domain.model.agenda.user.GroupedAvailableSlotAgendaItem;
+import com.projetoExtensao.arenaMafia.domain.model.agenda.user.GroupedBlockedTimeAgendaItem;
+import com.projetoExtensao.arenaMafia.domain.model.agenda.user.ScheduleEntryAgendaItem;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.BlockedTime;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.Reservation;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.ScheduleEntry;
@@ -28,13 +28,12 @@ public class AgendaMapper {
       case ScheduleEntryAgendaItem scheduleEntry -> mapScheduleEntry(scheduleEntry.scheduleEntry());
       case AvailableSlotAgendaItem availableSlot -> mapAvailableSlot(availableSlot);
       case GroupedAvailableSlotAgendaItem groupedSlot -> mapGroupedAvailableSlot(groupedSlot);
-      case GroupedBlockedTimeAgendaItem groupedBlockedTime ->
-          mapGroupedBlockedTime(groupedBlockedTime);
+      case GroupedBlockedTimeAgendaItem groupedBlockedTime -> mapGroupedBlockedTime(groupedBlockedTime);
     };
   }
 
   /**
-   * Mapeia um ScheduleEntry (Reservation ou BlockedTime) para DTO.
+   * Mapeia um {@link ScheduleEntry} (Reservation ou BlockedTime) para DTO.
    *
    * @param scheduleEntry entrada da agenda (Reservation ou BlockedTime)
    * @return DTO com tipo correto (RESERVED ou BLOCKED_TIME)
@@ -109,8 +108,7 @@ public class AgendaMapper {
    * @param groupedSlot slots agrupados por modalidade
    * @return DTO com tipo AVAILABLE e IDs das modalidades disponíveis
    */
-  private AgendaSlotResponseDto mapGroupedAvailableSlot(
-      GroupedAvailableSlotAgendaItem groupedSlot) {
+  private AgendaSlotResponseDto mapGroupedAvailableSlot(GroupedAvailableSlotAgendaItem groupedSlot) {
     TimeIntervalDto timeInterval = toTimeIntervalDto(groupedSlot.timeInterval());
 
     return new AgendaSlotResponseDto(
@@ -132,8 +130,7 @@ public class AgendaMapper {
    * @param groupedBlockedTime bloqueios agrupados
    * @return DTO com tipo BLOCKED_TIME, sem courtId (agrupado) e com descrição
    */
-  private AgendaSlotResponseDto mapGroupedBlockedTime(
-      GroupedBlockedTimeAgendaItem groupedBlockedTime) {
+  private AgendaSlotResponseDto mapGroupedBlockedTime(GroupedBlockedTimeAgendaItem groupedBlockedTime) {
     TimeIntervalDto timeInterval = toTimeIntervalDto(groupedBlockedTime.timeInterval());
 
     return new AgendaSlotResponseDto(

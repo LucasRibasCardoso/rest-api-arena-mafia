@@ -1,4 +1,4 @@
-package com.projetoExtensao.arenaMafia.domain.model.agenda;
+package com.projetoExtensao.arenaMafia.domain.model.agenda.user;
 
 import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidAgendaItemException;
@@ -7,8 +7,7 @@ import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
 import java.util.Set;
 import java.util.UUID;
 
-public record GroupedAvailableSlotAgendaItem(
-    TimeInterval timeInterval, Set<UUID> availableModalityIds) implements AgendaItem {
+public record GroupedAvailableSlotAgendaItem(TimeInterval timeInterval, Set<UUID> availableModalityIds) implements AgendaItem {
 
   public GroupedAvailableSlotAgendaItem {
     if (timeInterval == null) {

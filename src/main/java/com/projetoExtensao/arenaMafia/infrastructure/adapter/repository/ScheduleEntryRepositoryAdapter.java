@@ -164,7 +164,7 @@ public class ScheduleEntryRepositoryAdapter implements ScheduleEntryRepositoryPo
   }
 
   @Override
-  public List<ScheduleEntry> findAllConfirmedReservationsWithEndTimeAfter(LocalDateTime dateTime) {
+  public List<ScheduleEntry> findAllActiveSchedulesWithEndTimeAfter(LocalDateTime dateTime) {
     LocalDate date = dateTime.toLocalDate();
     LocalTime time = dateTime.toLocalTime();
 

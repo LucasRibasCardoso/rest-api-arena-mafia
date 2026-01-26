@@ -1,6 +1,6 @@
 package com.projetoExtensao.arenaMafia.infrastructure.web.agenda;
 
-import com.projetoExtensao.arenaMafia.application.agenda.usecase.FindAllAgendaItemUseCase;
+import com.projetoExtensao.arenaMafia.application.agenda.usecase.FindPublicAgendaUseCase;
 import com.projetoExtensao.arenaMafia.infrastructure.security.rateLimit.CustomRateLimiter;
 import com.projetoExtensao.arenaMafia.infrastructure.web.agenda.dto.response.AgendaSlotResponseDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.agenda.mapper.AgendaMapper;
@@ -17,21 +17,19 @@ import org.springframework.web.bind.annotation.RestController;
 public class AgendaController {
 
   private final AgendaMapper agendaMapper;
-  private final FindAllAgendaItemUseCase findAllAgendaItemUseCase;
+  private final FindPublicAgendaUseCase findPublicAgendaUseCase;
 
-  public AgendaController(
-      AgendaMapper agendaMapper, FindAllAgendaItemUseCase findAllAgendaItemUseCase) {
+
+  public AgendaController(AgendaMapper agendaMapper, FindPublicAgendaUseCase findPublicAgendaUseCase) {
     this.agendaMapper = agendaMapper;
-    this.findAllAgendaItemUseCase = findAllAgendaItemUseCase;
+    this.findPublicAgendaUseCase = findPublicAgendaUseCase;
   }
 
   @GetMapping
   @CustomRateLimiter(limiterName = "globalLimiter")
-  public ResponseEntity<List<AgendaSlotResponseDto>> getAgenda(
-      @RequestParam("date") LocalDate date) {
+  public ResponseEntity<List<AgendaSlotResponseDto>> getAgenda(@RequestParam("date") LocalDate date) {
 
-    List<AgendaSlotResponseDto> agenda =
-        findAllAgendaItemUseCase.execute(date).stream().map(agendaMapper::toPublicDto).toList();
+    List<AgendaSlotResponseDto> agenda = findPublicAgendaUseCase.execute(date).stream().map(agendaMapper::toPublicDto).toList();
 
     return ResponseEntity.ok(agenda);
   }

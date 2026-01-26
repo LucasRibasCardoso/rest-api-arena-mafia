@@ -425,7 +425,7 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
             UUID courtId = mockPersistCourt("Quadra 1", modality).getId();
             LocalDate date = LocalDate.now();
 
-            LocalTime currentTime = LocalTime.now();
+            LocalTime currentTime = LocalTime.of(9, 0);
             LocalTime startTime = normalizeToValidMinutes(currentTime.minusMinutes(30));
             LocalTime endTime = normalizeToValidMinutes(currentTime.plusMinutes(30));
             TimeInterval timeInterval = new TimeInterval(startTime, endTime);
@@ -434,9 +434,7 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
                 modality.getId(), courtId, date, timeInterval, DEFAULT_RESERVATION_PRICE, adminId);
             mockPersistBlockedTimeSpecific(courtId, date, timeInterval, "Manutenção", adminId);
 
-            var requestDto =
-                new BlockedTimeConflictsPreviewRequestDto(
-                    List.of(courtId), date, date, timeInterval, false, null);
+            var requestDto = new BlockedTimeConflictsPreviewRequestDto(List.of(courtId), date, date, timeInterval, false, null);
 
             // Act
             var response =
@@ -447,6 +445,7 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
                     .when()
                     .post("/preview-conflicts")
                     .then()
+                        .log().all()
                     .statusCode(200)
                     .extract()
                     .as(BlockedTimeConflictsPreviewResponseDto.class);

@@ -103,7 +103,7 @@ public class DynamicScheduleEntryCompletionScheduler {
     }
 
     List<Reservation> confirmedReservations =
-        scheduleEntryRepositoryPort.findAllConfirmedReservationsWithEndTimeAfter(now).stream()
+        scheduleEntryRepositoryPort.findAllActiveSchedulesWithEndTimeAfter(now).stream()
             .filter(scheduleEntry -> scheduleEntry instanceof Reservation)
             .map(scheduleEntry -> (Reservation) scheduleEntry)
             .toList();
@@ -154,7 +154,7 @@ public class DynamicScheduleEntryCompletionScheduler {
     }
 
     List<BlockedTime> confirmedBlockedTimes =
-        scheduleEntryRepositoryPort.findAllConfirmedReservationsWithEndTimeAfter(now).stream()
+        scheduleEntryRepositoryPort.findAllActiveSchedulesWithEndTimeAfter(now).stream()
             .filter(scheduleEntry -> scheduleEntry instanceof BlockedTime)
             .map(scheduleEntry -> (BlockedTime) scheduleEntry)
             .toList();

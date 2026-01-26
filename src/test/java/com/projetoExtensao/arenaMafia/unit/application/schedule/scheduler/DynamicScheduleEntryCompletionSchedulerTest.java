@@ -15,7 +15,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.cglib.core.Block;
 import org.springframework.scheduling.TaskScheduler;
 
 import java.math.BigDecimal;
@@ -25,7 +24,6 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ScheduledFuture;
@@ -161,7 +159,7 @@ class DynamicScheduleEntryCompletionSchedulerTest {
       // Arrange
       List<Reservation> confirmedReservations = createConfirmedReservations(3);
 
-      when(scheduleEntryRepositoryPort.findAllConfirmedReservationsWithEndTimeAfter(
+      when(scheduleEntryRepositoryPort.findAllActiveSchedulesWithEndTimeAfter(
               any(LocalDateTime.class)))
               .thenReturn((List<ScheduleEntry>) (List<?>) confirmedReservations);
 
@@ -171,7 +169,7 @@ class DynamicScheduleEntryCompletionSchedulerTest {
       scheduler.rescheduleExistingReservations();
 
       // Assert
-      verify(scheduleEntryRepositoryPort).findAllConfirmedReservationsWithEndTimeAfter(any(LocalDateTime.class));
+      verify(scheduleEntryRepositoryPort).findAllActiveSchedulesWithEndTimeAfter(any(LocalDateTime.class));
       verify(taskScheduler, times(3)).schedule(any(Runnable.class), any(Instant.class));
     }
 
@@ -179,7 +177,7 @@ class DynamicScheduleEntryCompletionSchedulerTest {
     @DisplayName("Não deve agendar nenhuma tarefa quando não há reservas confirmadas")
     void shouldNotScheduleAnyTaskWhenNoConfirmedReservations() {
       // Arrange
-      when(scheduleEntryRepositoryPort.findAllConfirmedReservationsWithEndTimeAfter(
+      when(scheduleEntryRepositoryPort.findAllActiveSchedulesWithEndTimeAfter(
               any(LocalDateTime.class)))
               .thenReturn(Collections.emptyList());
 
@@ -188,7 +186,7 @@ class DynamicScheduleEntryCompletionSchedulerTest {
 
       // Assert
       verify(scheduleEntryRepositoryPort)
-              .findAllConfirmedReservationsWithEndTimeAfter(any(LocalDateTime.class));
+              .findAllActiveSchedulesWithEndTimeAfter(any(LocalDateTime.class));
       verify(taskScheduler, never()).schedule(any(Runnable.class), any(Instant.class));
     }
 
@@ -203,7 +201,7 @@ class DynamicScheduleEntryCompletionSchedulerTest {
       Reservation reservation1 = createReservation(tomorrow, timeInterval1);
       Reservation reservation2 = createReservation(tomorrow, timeInterval2);
 
-      when(scheduleEntryRepositoryPort.findAllConfirmedReservationsWithEndTimeAfter(
+      when(scheduleEntryRepositoryPort.findAllActiveSchedulesWithEndTimeAfter(
               any(LocalDateTime.class)))
               .thenReturn(List.of(reservation1, reservation2));
 
@@ -324,7 +322,7 @@ class DynamicScheduleEntryCompletionSchedulerTest {
 
       when(scheduleEntryRepositoryPort.findAllActiveSchedulesEndedBeforeOrEqual(any(LocalDateTime.class)))
               .thenReturn(activeBlockedTimes.stream().map(bt -> (com.projetoExtensao.arenaMafia.domain.model.schedule.ScheduleEntry) bt).toList());
-      when(scheduleEntryRepositoryPort.findAllConfirmedReservationsWithEndTimeAfter(any(LocalDateTime.class)))
+      when(scheduleEntryRepositoryPort.findAllActiveSchedulesWithEndTimeAfter(any(LocalDateTime.class)))
               .thenReturn(Collections.emptyList()); // Para este teste, focar nos expired
 
       // Act
@@ -343,7 +341,7 @@ class DynamicScheduleEntryCompletionSchedulerTest {
 
       when(scheduleEntryRepositoryPort.findAllActiveSchedulesEndedBeforeOrEqual(any(LocalDateTime.class)))
               .thenReturn(Collections.emptyList());
-      when(scheduleEntryRepositoryPort.findAllConfirmedReservationsWithEndTimeAfter(any(LocalDateTime.class)))
+      when(scheduleEntryRepositoryPort.findAllActiveSchedulesWithEndTimeAfter(any(LocalDateTime.class)))
               .thenReturn(confirmedBlockedTimes.stream().map(bt -> (com.projetoExtensao.arenaMafia.domain.model.schedule.ScheduleEntry) bt).toList());
 
       mockSchedulerToReturnFuture();
@@ -352,7 +350,7 @@ class DynamicScheduleEntryCompletionSchedulerTest {
       scheduler.rescheduleExistingBlockedTimes();
 
       // Assert
-      verify(scheduleEntryRepositoryPort).findAllConfirmedReservationsWithEndTimeAfter(any(LocalDateTime.class));
+      verify(scheduleEntryRepositoryPort).findAllActiveSchedulesWithEndTimeAfter(any(LocalDateTime.class));
       verify(taskScheduler, times(3)).schedule(any(Runnable.class), any(Instant.class));
     }
 
@@ -362,7 +360,7 @@ class DynamicScheduleEntryCompletionSchedulerTest {
       // Arrange
       when(scheduleEntryRepositoryPort.findAllActiveSchedulesEndedBeforeOrEqual(any(LocalDateTime.class)))
               .thenReturn(Collections.emptyList());
-      when(scheduleEntryRepositoryPort.findAllConfirmedReservationsWithEndTimeAfter(any(LocalDateTime.class)))
+      when(scheduleEntryRepositoryPort.findAllActiveSchedulesWithEndTimeAfter(any(LocalDateTime.class)))
               .thenReturn(Collections.emptyList());
 
       // Act
@@ -370,7 +368,7 @@ class DynamicScheduleEntryCompletionSchedulerTest {
 
       // Assert
       verify(scheduleEntryRepositoryPort).findAllActiveSchedulesEndedBeforeOrEqual(any(LocalDateTime.class));
-      verify(scheduleEntryRepositoryPort).findAllConfirmedReservationsWithEndTimeAfter(any(LocalDateTime.class));
+      verify(scheduleEntryRepositoryPort).findAllActiveSchedulesWithEndTimeAfter(any(LocalDateTime.class));
       verify(taskScheduler, never()).schedule(any(Runnable.class), any(Instant.class));
     }
 
@@ -387,7 +385,7 @@ class DynamicScheduleEntryCompletionSchedulerTest {
 
       when(scheduleEntryRepositoryPort.findAllActiveSchedulesEndedBeforeOrEqual(any(LocalDateTime.class)))
               .thenReturn(Collections.emptyList());
-      when(scheduleEntryRepositoryPort.findAllConfirmedReservationsWithEndTimeAfter(any(LocalDateTime.class)))
+      when(scheduleEntryRepositoryPort.findAllActiveSchedulesWithEndTimeAfter(any(LocalDateTime.class)))
               .thenReturn(List.of(blockedTime1, blockedTime2));
 
       mockSchedulerToReturnFuture();

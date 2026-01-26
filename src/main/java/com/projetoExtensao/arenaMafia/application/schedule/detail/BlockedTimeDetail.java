@@ -13,4 +13,10 @@ public record BlockedTimeDetail(
     String description,
     boolean isFullDay,
     UUID recurringBlockedTimeId)
-    implements ScheduleDetail {}
+    implements ScheduleEntryDetail {
+
+  @Override
+  public UUID id() {
+    return blockedTimeId;
+  }
+}

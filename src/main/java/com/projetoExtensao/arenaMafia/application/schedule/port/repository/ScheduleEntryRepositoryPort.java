@@ -29,9 +29,10 @@ public interface ScheduleEntryRepositoryPort {
       Set<DayOfWeek> selectedDaysOfWeek);
 
   List<ScheduleEntry> findAllActiveSchedulesFromTodayByDaysOfWeekAndTimeInterval(
-      Set<DayOfWeek> daysOfWeek, TimeInterval timeInterval);
+      Set<DayOfWeek> daysOfWeek,
+      TimeInterval timeInterval);
 
   List<ScheduleEntry> findAllActiveSchedulesEndedBeforeOrEqual(LocalDateTime dateTime);
 
-  List<ScheduleEntry> findAllConfirmedReservationsWithEndTimeAfter(LocalDateTime dateTime);
+  List<ScheduleEntry> findAllActiveSchedulesWithEndTimeAfter(LocalDateTime dateTime);
 }

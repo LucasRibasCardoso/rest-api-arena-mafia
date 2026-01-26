@@ -1,6 +1,6 @@
 package com.projetoExtensao.arenaMafia.application.agenda.usecase.imp;
 
-import com.projetoExtensao.arenaMafia.application.agenda.usecase.FindAllAgendaItemUseCase;
+import com.projetoExtensao.arenaMafia.application.agenda.usecase.FindPublicAgendaUseCase;
 import com.projetoExtensao.arenaMafia.application.court.port.repository.CourtRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.operatingHours.port.repository.OperatingHoursRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.priceRule.port.PriceRuleRepositoryPort;
@@ -13,12 +13,11 @@ import com.projetoExtensao.arenaMafia.domain.exception.notFound.PriceRuleNotFoun
 import com.projetoExtensao.arenaMafia.domain.model.Court;
 import com.projetoExtensao.arenaMafia.domain.model.OperatingHours;
 import com.projetoExtensao.arenaMafia.domain.model.PriceRule;
-import com.projetoExtensao.arenaMafia.domain.model.agenda.AgendaItem;
-import com.projetoExtensao.arenaMafia.domain.model.agenda.GroupedAvailableSlotAgendaItem;
-import com.projetoExtensao.arenaMafia.domain.model.agenda.ScheduleEntryAgendaItem;
+import com.projetoExtensao.arenaMafia.domain.model.agenda.user.AgendaItem;
+import com.projetoExtensao.arenaMafia.domain.model.agenda.user.GroupedAvailableSlotAgendaItem;
+import com.projetoExtensao.arenaMafia.domain.model.agenda.user.ScheduleEntryAgendaItem;
 import com.projetoExtensao.arenaMafia.domain.model.enums.DayOfWeek;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.ScheduleEntry;
-import com.projetoExtensao.arenaMafia.domain.valueobjects.AvailableSlot;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.AvailableSlotWithModalities;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.specification.CourtSpecification;
@@ -33,7 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional(readOnly = true)
-public class FindAllAgendaItemUseCaseImp implements FindAllAgendaItemUseCase {
+public class FindPublicAgendaUseCaseImp implements FindPublicAgendaUseCase {
 
   private final CourtRepositoryPort courtRepositoryPort;
   private final OperatingHoursRepositoryPort operatingHoursRepositoryPort;
@@ -41,7 +40,7 @@ public class FindAllAgendaItemUseCaseImp implements FindAllAgendaItemUseCase {
   private final ScheduleEntryRepositoryPort scheduleEntryRepositoryPort;
   private final AvailableSlotGenerationService availableSlotGenerationService;
 
-  public FindAllAgendaItemUseCaseImp(
+  public FindPublicAgendaUseCaseImp(
       CourtRepositoryPort courtRepositoryPort,
       OperatingHoursRepositoryPort operatingHoursRepositoryPort,
       PriceRuleRepositoryPort priceRuleRepositoryPort,
@@ -54,67 +53,35 @@ public class FindAllAgendaItemUseCaseImp implements FindAllAgendaItemUseCase {
     this.availableSlotGenerationService = availableSlotGenerationService;
   }
 
-  /**
-   * Busca todos os itens da agenda para uma data específica.
-   *
-   * <p>Processa a agenda completa do dia incluindo agendamentos confirmados e slots disponíveis,
-   * agrupados por intervalo de tempo e ordenados cronologicamente.
-   *
-   * @param date data para buscar a agenda (não pode ser no passado)
-   * @return lista de itens da agenda ordenados por horário de início
-   * @throws PastDateException se a data for anterior à data atual
-   * @throws CourtNotFoundException se não houver quadras ativas no sistema
-   * @throws PriceRuleNotFoundException se não houver regras de preço ativas
-   * @throws OperatingHoursNotFoundException se não houver horários de funcionamento ativos ou
-   *     aplicáveis ao dia da semana
-   */
   @Override
   public List<AgendaItem> execute(LocalDate date) {
     validateDate(date);
-
-    List<ScheduleEntry> activeSchedules = getActiveSchedulesByDate(date);
-    List<Court> allActiveCourts = getActiveCourts();
-    List<PriceRule> priceRules = getActivePriceRules();
-    List<OperatingHours> applicableOperatingHours = getApplicableOperatingHours(date);
     DayOfWeek dayOfWeek = DayOfWeek.convertToDayOfWeek(date);
 
-    List<AvailableSlotWithModalities> availableSlots =
-        generateAvailableSlotsForAllCourts(
-            allActiveCourts, activeSchedules, applicableOperatingHours, priceRules, dayOfWeek);
+    List<ScheduleEntry> schedules = getActiveSchedulesByDate(date);
+    List<Court> courts = getActiveCourts();
+    List<PriceRule> priceRules = getActivePriceRules();
+    List<OperatingHours> operatingHours = getApplicableOperatingHours(dayOfWeek);
 
-    return groupSlotsByTimeInterval(activeSchedules, availableSlots);
+    List<AvailableSlotWithModalities> availableSlots =
+            availableSlotGenerationService.generateAvailableSlotsDetailsForCourts(
+                courts,
+                schedules,
+                operatingHours,
+                priceRules,
+                dayOfWeek
+        );
+
+    return buildAgendaListAndSort(schedules, availableSlots);
   }
 
-  /**
-   * Valida se a data fornecida é válida para consulta da agenda.
-   *
-   * @param date data a ser validada
-   * @throws PastDateException se a data for anterior à data atual
-   */
+
   private void validateDate(LocalDate date) {
     if (date.isBefore(LocalDate.now())) {
       throw new PastDateException();
     }
   }
 
-  /**
-   * Busca todos os agendamentos ativos (confirmados) para uma data específica.
-   *
-   * <p>Filtra apenas agendamentos com status ativo, excluindo reservas canceladas ou completadas.
-   *
-   * @param date data para buscar os agendamentos
-   * @return lista de agendamentos ativos ordenados por horário de início
-   */
-  private List<ScheduleEntry> getActiveSchedulesByDate(LocalDate date) {
-    return scheduleEntryRepositoryPort.findAllActiveSchedulesByDate(date);
-  }
-
-  /**
-   * Busca todas as quadras ativas do sistema.
-   *
-   * @return lista de quadras ativas
-   * @throws CourtNotFoundException se não houver nenhuma quadra ativa cadastrada
-   */
   private List<Court> getActiveCourts() {
     List<Court> courts = courtRepositoryPort.findAll(CourtSpecification.byActiveStatus(true));
     if (courts.isEmpty()) {
@@ -123,91 +90,26 @@ public class FindAllAgendaItemUseCaseImp implements FindAllAgendaItemUseCase {
     return courts;
   }
 
-  /**
-   * Busca todas as regras de preço ativas do sistema.
-   *
-   * @return lista de regras de preço ativas
-   * @throws PriceRuleNotFoundException se não houver nenhuma regra de preço ativa cadastrada
-   */
   private List<PriceRule> getActivePriceRules() {
-    List<PriceRule> priceRules =
-        priceRuleRepositoryPort.findAll(PriceRuleSpecification.byActiveStatus(true));
+    List<PriceRule> priceRules = priceRuleRepositoryPort.findAll(PriceRuleSpecification.byActiveStatus(true));
     if (priceRules.isEmpty()) {
       throw new PriceRuleNotFoundException();
     }
     return priceRules;
   }
 
-  /**
-   * Busca os horários de funcionamento aplicáveis para uma data específica.
-   *
-   * <p>Filtra horários ativos e aplicáveis ao dia da semana correspondente à data fornecida.
-   *
-   * @param date data para buscar os horários de funcionamento
-   * @return lista de horários de funcionamento aplicáveis ao dia da semana
-   * @throws OperatingHoursNotFoundException se não houver horários de funcionamento ativos ou se
-   *     não houver horários aplicáveis ao dia da semana especificado
-   */
-  private List<OperatingHours> getApplicableOperatingHours(LocalDate date) {
+  private List<ScheduleEntry> getActiveSchedulesByDate(LocalDate date) {
+    return scheduleEntryRepositoryPort.findAllActiveSchedulesByDate(date);
+  }
+
+  private List<OperatingHours> getApplicableOperatingHours(DayOfWeek dayOfWeek) {
     var filterActive = OperatingHoursSpecification.byActiveStatus(true);
     List<OperatingHours> operatingHours = operatingHoursRepositoryPort.findAll(filterActive);
     if (operatingHours.isEmpty()) {
       throw new OperatingHoursNotFoundException();
     }
 
-    DayOfWeek dayOfWeek = DayOfWeek.convertToDayOfWeek(date);
     return availableSlotGenerationService.filterApplicableOperatingHours(operatingHours, dayOfWeek);
-  }
-
-  /**
-   * Gera slots disponíveis para todas as quadras ativas do sistema.
-   *
-   * <p>Para cada quadra, gera os slots de 1 hora disponíveis considerando:
-   *
-   * <ul>
-   *   <li>Horários de funcionamento aplicáveis ao dia
-   *   <li>Agendamentos já confirmados (para excluir horários ocupados)
-   *   <li>Regras de preço para calcular o valor de cada slot
-   *   <li>Modalidades suportadas pela quadra
-   * </ul>
-   *
-   * @param courts lista de quadras ativas
-   * @param activeSchedules agendamentos confirmados do dia
-   * @param applicableOperatingHours horários de funcionamento aplicáveis
-   * @param priceRules regras de preço ativas
-   * @param dayOfWeek dia da semana
-   * @return lista de slots disponíveis com suas respectivas modalidades suportadas
-   */
-  private List<AvailableSlotWithModalities> generateAvailableSlotsForAllCourts(
-      List<Court> courts,
-      List<ScheduleEntry> activeSchedules,
-      List<OperatingHours> applicableOperatingHours,
-      List<PriceRule> priceRules,
-      DayOfWeek dayOfWeek) {
-
-    return courts.stream()
-        .flatMap(
-            court -> {
-              // Filtrar schedules da quadra
-              List<ScheduleEntry> courtSchedules =
-                  activeSchedules.stream()
-                      .filter(schedule -> schedule.getCourtId().equals(court.getId()))
-                      .toList();
-
-              List<AvailableSlot> courtSlots =
-                  availableSlotGenerationService.generateAvailableSlotsForCourt(
-                      court, applicableOperatingHours, courtSchedules, priceRules, dayOfWeek);
-
-              return courtSlots.stream()
-                  .map(
-                      slot ->
-                          new AvailableSlotWithModalities(
-                              slot.courtId(),
-                              slot.timeInterval(),
-                              slot.price(),
-                              court.getModalityIds()));
-            })
-        .toList();
   }
 
   /**
@@ -235,47 +137,33 @@ public class FindAllAgendaItemUseCaseImp implements FindAllAgendaItemUseCase {
    * @param availableSlots slots disponíveis com modalidades suportadas
    * @return lista de itens da agenda ordenados cronologicamente por horário de início
    */
-  private List<AgendaItem> groupSlotsByTimeInterval(
-      List<ScheduleEntry> scheduleEntries, List<AvailableSlotWithModalities> availableSlots) {
+  private List<AgendaItem> buildAgendaListAndSort(
+          List<ScheduleEntry> scheduleEntries,
+          List<AvailableSlotWithModalities> availableSlots) {
 
-    Map<TimeInterval, List<AvailableSlotWithModalities>> slotsByTime =
-        groupAvailableSlotsByTimeInterval(availableSlots);
-
-    Map<TimeInterval, List<ScheduleEntry>> schedulesByTime =
-        groupScheduleEntriesByTimeInterval(scheduleEntries);
+    Map<TimeInterval, List<AvailableSlotWithModalities>> slotsByTime = groupAvailableSlotsByTimeInterval(availableSlots);
+    Map<TimeInterval, List<ScheduleEntry>> schedulesByTime = groupScheduleEntriesByTimeInterval(scheduleEntries);
 
     Set<TimeInterval> allTimeIntervals = getAllUniqueTimeIntervals(slotsByTime, schedulesByTime);
 
     return allTimeIntervals.stream()
-        .flatMap(
-            timeInterval ->
-                createAgendaItemsForTimeInterval(
-                    timeInterval,
-                    schedulesByTime.getOrDefault(timeInterval, List.of()),
-                    slotsByTime.getOrDefault(timeInterval, List.of()))
-                    .stream())
-        .sorted(Comparator.comparing(item -> item.getTimeInterval().startTime()))
-        .toList();
+            .flatMap(
+                    timeInterval ->
+                            createAgendaItemsForTimeInterval(
+                                    timeInterval,
+                                    schedulesByTime.getOrDefault(timeInterval, List.of()),
+                                    slotsByTime.getOrDefault(timeInterval, List.of()))
+                                    .stream())
+            .sorted(Comparator.comparing(item -> item.getTimeInterval().startTime()))
+            .toList();
   }
 
-  /**
-   * Agrupa slots disponíveis pelo intervalo de tempo.
-   *
-   * @param availableSlots lista de slots disponíveis
-   * @return mapa com intervalos de tempo como chave e lista de slots como valor
-   */
   private Map<TimeInterval, List<AvailableSlotWithModalities>> groupAvailableSlotsByTimeInterval(
-      List<AvailableSlotWithModalities> availableSlots) {
+          List<AvailableSlotWithModalities> availableSlots) {
     return availableSlots.stream()
         .collect(Collectors.groupingBy(AvailableSlotWithModalities::timeInterval));
   }
 
-  /**
-   * Agrupa agendamentos pelo intervalo de tempo.
-   *
-   * @param scheduleEntries lista de agendamentos confirmados
-   * @return mapa com intervalos de tempo como chave e lista de agendamentos como valor
-   */
   private Map<TimeInterval, List<ScheduleEntry>> groupScheduleEntriesByTimeInterval(
       List<ScheduleEntry> scheduleEntries) {
     return scheduleEntries.stream()
@@ -293,7 +181,8 @@ public class FindAllAgendaItemUseCaseImp implements FindAllAgendaItemUseCase {
    * @return conjunto com todos os intervalos de tempo únicos
    */
   private Set<TimeInterval> getAllUniqueTimeIntervals(
-      Map<TimeInterval, ?> slotsByTime, Map<TimeInterval, ?> schedulesByTime) {
+          Map<TimeInterval, ?> slotsByTime,
+          Map<TimeInterval, ?> schedulesByTime) {
     Set<TimeInterval> allTimeIntervals = new HashSet<>(slotsByTime.keySet());
     allTimeIntervals.addAll(schedulesByTime.keySet());
     return allTimeIntervals;
@@ -342,7 +231,8 @@ public class FindAllAgendaItemUseCaseImp implements FindAllAgendaItemUseCase {
     return schedules.stream().map(ScheduleEntryAgendaItem::new).collect(Collectors.toList());
   }
 
-  /* Cria um item de slot disponível agrupado com todas as modalidades disponíveis.
+  /**
+   * Cria um item de slot disponível agrupado com todas as modalidades disponíveis.
    *
    * <p>Agrupa múltiplos slots disponíveis do mesmo horário (de quadras diferentes) em um único item
    * da agenda, consolidando todas as modalidades suportadas pelas quadras disponíveis.
@@ -353,11 +243,9 @@ public class FindAllAgendaItemUseCaseImp implements FindAllAgendaItemUseCase {
    *
    * @param timeInterval intervalo de tempo
    * @param availableSlots lista de slots disponíveis neste horário (pode estar vazia)
-   * @return Optional contendo o item agrupado com todas as modalidades, ou Optional.empty() se não
-   *     houver slots disponíveis
+   * @return Optional contendo o item agrupado com todas as modalidades, ou Optional.empty() se não houver slots disponíveis
    */
-  private Optional<AgendaItem> createGroupedAvailableSlotItem(
-      TimeInterval timeInterval, List<AvailableSlotWithModalities> availableSlots) {
+  private Optional<AgendaItem> createGroupedAvailableSlotItem(TimeInterval timeInterval, List<AvailableSlotWithModalities> availableSlots) {
 
     if (availableSlots.isEmpty()) {
       return Optional.empty();

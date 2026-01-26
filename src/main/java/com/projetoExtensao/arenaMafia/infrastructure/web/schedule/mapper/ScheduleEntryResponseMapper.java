@@ -1,6 +1,6 @@
 package com.projetoExtensao.arenaMafia.infrastructure.web.schedule.mapper;
 
-import com.projetoExtensao.arenaMafia.application.schedule.detail.ScheduleDetail;
+import com.projetoExtensao.arenaMafia.application.schedule.detail.ScheduleEntryDetail;
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.UnsupportedScheduleEntryTypeException;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.ScheduleEntry;
 import com.projetoExtensao.arenaMafia.infrastructure.web.schedule.dto.response.scheduleDetail.ScheduleDetailResponseDto;
@@ -31,11 +31,11 @@ public class ScheduleEntryResponseMapper {
   }
 
   @SuppressWarnings("unchecked")
-  public <R extends ScheduleDetailResponseDto> R toDetailDto(ScheduleDetail detail) {
+  public <R extends ScheduleDetailResponseDto> R toDetailDto(ScheduleEntryDetail detail) {
     return (R) getDetailStrategy(detail).toDetailDto(detail);
   }
 
-  public <D extends ScheduleDetail, R extends ScheduleDetailResponseDto> List<R> toDetailDtoList(
+  public <D extends ScheduleEntryDetail, R extends ScheduleDetailResponseDto> List<R> toDetailDtoList(
       List<D> details) {
     return details.stream().map(this::<R>toDetailDto).toList();
   }
@@ -54,7 +54,7 @@ public class ScheduleEntryResponseMapper {
   }
 
   @SuppressWarnings("unchecked")
-  private <D extends ScheduleDetail> ScheduleEntryMapperStrategy<?, D> getDetailStrategy(D detail) {
+  private <D extends ScheduleEntryDetail> ScheduleEntryMapperStrategy<?, D> getDetailStrategy(D detail) {
     ScheduleEntryMapperStrategy<?, D> strategy =
         (ScheduleEntryMapperStrategy<?, D>) detailStrategies.get(detail.getClass());
 
