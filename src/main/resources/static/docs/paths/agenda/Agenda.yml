@@ -9,9 +9,8 @@ get:
     **Este endpoint é público e não requer autenticação.**
     
     A agenda inclui:
-    - **Slots disponíveis (AVAILABLE)**: Horários livres agrupados com as modalidades que podem ser praticadas
-    - **Reservas confirmadas (RESERVED)**: Horários já reservados (sem expor dados pessoais dos usuários)
-    - **Bloqueios de horário (BLOCKED_TIME)**: Horários bloqueados pela administração com descrição do motivo
+    - **Slots disponíveis (AVAILABLE_SLOT)**: Horários livres agrupados com as modalidades que podem ser praticadas e preço
+    - **Entradas agendadas (SCHEDULE_ENTRY)**: Horários já reservados ou bloqueados com tipo e descrição
     
     **Funcionamento:**
     1. Sistema busca todos os agendamentos confirmados da data
@@ -20,15 +19,15 @@ get:
     4. Retorna lista ordenada cronologicamente
     
     **Regras de agrupamento:**
-    - Se um horário tem múltiplas quadras disponíveis, retorna 1 item AVAILABLE com todas as modalidades
+    - Se um horário tem múltiplas quadras disponíveis, retorna 1 item AVAILABLE_SLOT com todas as modalidades
     - Se um horário tem uma ou mais quadras ocupadas/bloqueadas, retorna 1 item por quadra ocupada/bloqueada
-    - BlockedTimes são retornados individualmente (1 por quadra bloqueada) com `courtId` e `description`
-    - Um mesmo horário pode ter itens AVAILABLE, RESERVED e BLOCKED_TIME simultaneamente
+    - Entradas agendadas são retornadas individualmente com `entryType` e `description`
+    - Um mesmo horário pode ter itens AVAILABLE_SLOT e SCHEDULE_ENTRY simultaneamente
     
     **Exemplo de resposta para 10:00-11:00 com 3 quadras:**
-    - Quadra A ocupada (Futebol) → 1 item RESERVED
-    - Quadra B bloqueada (Manutenção) → 1 item BLOCKED_TIME com descrição
-    - Quadra C disponível (Vôlei, Basquete) → 1 item AVAILABLE com modalityIds
+    - Quadra A ocupada (Futebol) → 1 item SCHEDULE_ENTRY com entryType RESERVATION
+    - Quadra B bloqueada (Manutenção) → 1 item SCHEDULE_ENTRY com entryType BLOCKED_TIME
+    - Quadra C disponível (Vôlei, Basquete) → 1 item AVAILABLE_SLOT com modalityIds e price
     
     **Casos de uso:**
     - Usuários consultam horários disponíveis antes de fazer reserva
@@ -49,7 +48,7 @@ get:
           schema:
             type: array
             items:
-              $ref: "../../components/schemas/agenda/AgendaSlotResponseDto.yml"
+              $ref: "../../components/schemas/agenda/PublicAgendaItemResponseDto.yml"
           examples:
             CompletedAgenda:
               summary: Agenda com horários disponíveis, reservados e bloqueados
@@ -57,54 +56,58 @@ get:
                 Exemplo mostrando diferentes tipos de slots na mesma agenda.
                 
                 ⚠️ **Nota:** Campos nulos não aparecem no JSON
-                - Slots AVAILABLE: não incluem `courtId` nem `description`
-                - Slots RESERVED: não incluem `availableModalityIds` nem `description`
-                - Slots BLOCKED_TIME: incluem `courtId` e `description`, não incluem `availableModalityIds`
+                - Slots AVAILABLE_SLOT: incluem `timeInterval`, `availableModalityIds` e `price`
+                - Slots SCHEDULE_ENTRY: incluem `timeInterval`, `entryType` e `description`
               value:
-                - timeInterval:
+                - type: "AVAILABLE_SLOT"
+                  timeInterval:
                     startTime: "08:00"
                     endTime: "09:00"
-                  slotType: "AVAILABLE"
                   availableModalityIds:
                     - "550e8400-e29b-41d4-a716-446655440002"
                     - "550e8400-e29b-41d4-a716-446655440005"
-                - timeInterval:
+                  price: 50.00
+                - type: "SCHEDULE_ENTRY"
+                  timeInterval:
                     startTime: "09:00"
                     endTime: "10:00"
-                  slotType: "RESERVED"
-                  courtId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
-                - timeInterval:
+                  entryType: "RESERVATION"
+                  description: null
+                - type: "AVAILABLE_SLOT"
+                  timeInterval:
                     startTime: "10:00"
                     endTime: "11:00"
-                  slotType: "AVAILABLE"
                   availableModalityIds:
                     - "550e8400-e29b-41d4-a716-446655440002"
-                - courtId: "b2c3d4e5-f6a7-8901-bcde-f12345678901"
+                  price: 45.00
+                - type: "SCHEDULE_ENTRY"
                   timeInterval:
                     startTime: "18:00"
                     endTime: "19:00"
-                  slotType: "BLOCKED_TIME"
+                  entryType: "BLOCKED_TIME"
                   description: "Reservado para evento especial"
 
             AvailableOnly:
               summary: Agenda sem reservas (todos os horários disponíveis)
               description: |
-                Exemplo de um dia sem nenhuma reserva. Todos os slots são AVAILABLE.
+                Exemplo de um dia sem nenhuma reserva. Todos os slots são AVAILABLE_SLOT.
               value:
-                - timeInterval:
+                - type: "AVAILABLE_SLOT"
+                  timeInterval:
                     startTime: "08:00"
                     endTime: "09:00"
-                  slotType: "AVAILABLE"
                   availableModalityIds:
                     - "550e8400-e29b-41d4-a716-446655440002"
                     - "550e8400-e29b-41d4-a716-446655440005"
-                - timeInterval:
+                  price: 50.00
+                - type: "AVAILABLE_SLOT"
+                  timeInterval:
                     startTime: "09:00"
                     endTime: "10:00"
-                  slotType: "AVAILABLE"
                   availableModalityIds:
                     - "550e8400-e29b-41d4-a716-446655440002"
                     - "550e8400-e29b-41d4-a716-446655440005"
+                  price: 50.00
 
             BlockedTimeExample:
               summary: Agenda com bloqueios administrativos
@@ -116,25 +119,25 @@ get:
                 - Quadra B bloqueada às 12:00 para evento especial
                 - Outras quadras permanecem disponíveis no mesmo horário
               value:
-                - timeInterval:
+                - type: "SCHEDULE_ENTRY"
+                  timeInterval:
                     startTime: "12:00"
                     endTime: "13:00"
-                  slotType: "BLOCKED_TIME"
-                  courtId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                  entryType: "BLOCKED_TIME"
                   description: "Manutenção preventiva do sistema de iluminação"
-                - timeInterval:
+                - type: "SCHEDULE_ENTRY"
+                  timeInterval:
                     startTime: "12:00"
                     endTime: "13:00"
-                  slotType: "BLOCKED_TIME"
-                  courtId: "b2c3d4e5-f6a7-8901-bcde-f12345678901"
+                  entryType: "BLOCKED_TIME"
                   description: "Reservado para evento especial"
-                - timeInterval:
+                - type: "AVAILABLE_SLOT"
+                  timeInterval:
                     startTime: "12:00"
                     endTime: "13:00"
-                  slotType: "AVAILABLE"
                   availableModalityIds:
                     - "550e8400-e29b-41d4-a716-446655440002"
-
+                  price: 45.00
     400:
       description: |
         Requisição inválida.
@@ -164,7 +167,6 @@ get:
                 errorCode: "INVALID_REQUEST_PARAMETER"
                 developerMessage: "Um parâmetro da requisição é inválido ou está malformado."
                 path: "/api/public/agenda"
-
     404:
       description: |
         Recurso não encontrado.
@@ -204,10 +206,7 @@ get:
                 errorCode: "PRICE_RULE_NOT_FOUND"
                 developerMessage: "Nenhuma regra de preço foi encontrada."
                 path: "/api/public/agenda"
-
     429:
       $ref: "../../components/responses/TooManyRequestsError.yml"
-
     500:
       $ref: "../../components/responses/InternalServerError.yml"
-

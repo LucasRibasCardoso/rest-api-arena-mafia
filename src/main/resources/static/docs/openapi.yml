@@ -64,6 +64,9 @@ tags:
   - name: "Administração - Gerenciamento de Bloqueios de Horários"
     description: Endpoints relacionados ao gerenciamento de horários bloqueados, acessíveis apenas por administradores.
 
+  - name: "Administração - Gerenciamento de Agendamentos"
+    description: Endpoints relacionados ao gerenciamento da agenda, acessíveis apenas por administradores.
+
   - name: "Endpoints Públicos"
     description: Endpoints públicos para consultas. Dados utilizados por clientes sem necessidade de autenticação.
 
@@ -175,8 +178,19 @@ components:
     PageOfReservationResponseDto:
       $ref: "./components/schemas/reservation/PageOfReservationResponseDto.yml"
 
-    AgendaSlotResponseDto:
-      $ref: "./components/schemas/agenda/AgendaSlotResponseDto.yml"
+    PublicAgendaItemResponseDto:
+      $ref: "./components/schemas/agenda/PublicAgendaItemResponseDto.yml"
+    PublicAvailableItemResponseDto:
+      $ref: "./components/schemas/agenda/PublicAvailableItemResponseDto.yml"
+    PublicScheduleEntryResponseDto:
+      $ref: "./components/schemas/agenda/PublicScheduleEntryResponseDto.yml"
+
+    AdminAgendaItemResponseDto:
+      $ref: "./components/schemas/agenda/AdminAgendaItemResponseDto.yml"
+    AdminAvailableItemResponseDto:
+      $ref: "./components/schemas/agenda/AdminAvailableItemResponseDto.yml"
+    AdminScheduleDetailResponseDto:
+      $ref: "./components/schemas/agenda/AdminScheduleDetailResponseDto.yml"
 
     BlockedTimeConflictsPreviewRequestDto:
       $ref: "./components/schemas/blockedTime/BlockedTimeConflictsPreviewRequestDto.yml"
@@ -326,6 +340,9 @@ paths:
     $ref: "./paths/admin/schedule/blockedTime/ConfirmBlockedTime.yml"
   /api/admin/blocked-times/{blockedTimeId}:
     $ref: "./paths/admin/schedule/blockedTime/BlockedTimeById.yml"
+
+  /api/admin/agenda:
+    $ref: "./paths/admin/agenda/AdminAgenda.yml"
 
   /api/public/modalities:
     $ref: "./paths/modality/GetAllModalities.yml"

@@ -4,8 +4,8 @@ import com.projetoExtensao.arenaMafia.domain.model.agenda.admin.AdminAgendaItem;
 import com.projetoExtensao.arenaMafia.domain.model.agenda.admin.AdminAvailableSlotAgendaItem;
 import com.projetoExtensao.arenaMafia.domain.model.agenda.admin.AdminScheduleEntryAgendaItem;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
-import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.agenda.response.AdminAgendaSlotResponseDto;
-import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.agenda.response.AdminAvailableSlotResponseDto;
+import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.agenda.response.AdminAgendaItemResponseDto;
+import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.agenda.response.AdminAvailableItemResponseDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.agenda.response.AdminScheduleDetailResponseDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.operatingHours.dto.response.TimeIntervalDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.schedule.mapper.ScheduleEntryResponseMapper;
@@ -20,17 +20,16 @@ public class AdminAgendaMapper {
     this.scheduleEntryMapper = scheduleEntryMapper;
   }
 
-  public AdminAgendaSlotResponseDto toDto(AdminAgendaItem item) {
+  public AdminAgendaItemResponseDto toDto(AdminAgendaItem item) {
     return switch (item) {
       case AdminAvailableSlotAgendaItem availableSlotAgendaItem -> mapAdminAvailableSlot(availableSlotAgendaItem);
       case AdminScheduleEntryAgendaItem scheduleEntryAgendaItem -> mapScheduleDetailSlot(scheduleEntryAgendaItem);
     };
   }
 
-  private AdminAvailableSlotResponseDto mapAdminAvailableSlot(AdminAvailableSlotAgendaItem availableSlot) {
-    TimeInterval timeInterval = availableSlot.timeInterval();
-    TimeIntervalDto timeIntervalDto = new TimeIntervalDto(timeInterval.startTime(), timeInterval.endTime());
-    return new AdminAvailableSlotResponseDto(
+  private AdminAvailableItemResponseDto mapAdminAvailableSlot(AdminAvailableSlotAgendaItem availableSlot) {
+    TimeIntervalDto timeIntervalDto = toTimeIntervalDto(availableSlot.timeInterval());
+    return new AdminAvailableItemResponseDto(
         availableSlot.courtId(),
         availableSlot.courtName(),
         timeIntervalDto,
@@ -40,5 +39,9 @@ public class AdminAgendaMapper {
 
   private AdminScheduleDetailResponseDto mapScheduleDetailSlot(AdminScheduleEntryAgendaItem scheduleEntry) {
     return new AdminScheduleDetailResponseDto(scheduleEntryMapper.toDetailDto(scheduleEntry.detail()));
+  }
+
+  private TimeIntervalDto toTimeIntervalDto(TimeInterval timeInterval) {
+    return new TimeIntervalDto(timeInterval.startTime(), timeInterval.endTime());
   }
 }

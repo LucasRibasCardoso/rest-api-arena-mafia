@@ -425,7 +425,7 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
             UUID courtId = mockPersistCourt("Quadra 1", modality).getId();
             LocalDate date = LocalDate.now();
 
-            LocalTime currentTime = LocalTime.of(9, 0);
+            LocalTime currentTime = LocalTime.now();
             LocalTime startTime = normalizeToValidMinutes(currentTime.minusMinutes(30));
             LocalTime endTime = normalizeToValidMinutes(currentTime.plusMinutes(30));
             TimeInterval timeInterval = new TimeInterval(startTime, endTime);

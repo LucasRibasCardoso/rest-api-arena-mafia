@@ -6,11 +6,12 @@ import com.projetoExtensao.arenaMafia.infrastructure.web.operatingHours.dto.resp
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
 @JsonSubTypes({
-  @JsonSubTypes.Type(value = AdminAvailableSlotResponseDto.class, name = "AVAILABLE_SLOT"),
+  @JsonSubTypes.Type(value = AdminAvailableItemResponseDto.class, name = "AVAILABLE_SLOT"),
   @JsonSubTypes.Type(value = AdminScheduleDetailResponseDto.class, name = "SCHEDULE_DETAIL")
 })
-public sealed interface AdminAgendaSlotResponseDto
-    permits AdminAvailableSlotResponseDto, AdminScheduleDetailResponseDto {
+public sealed interface AdminAgendaItemResponseDto
+    permits AdminAvailableItemResponseDto, AdminScheduleDetailResponseDto {
 
   TimeIntervalDto timeInterval();
+
 }

@@ -2,151 +2,70 @@ package com.projetoExtensao.arenaMafia.infrastructure.web.agenda.mapper;
 
 import com.projetoExtensao.arenaMafia.domain.model.agenda.user.AgendaItem;
 import com.projetoExtensao.arenaMafia.domain.model.agenda.user.AvailableSlotAgendaItem;
-import com.projetoExtensao.arenaMafia.domain.model.agenda.user.GroupedAvailableSlotAgendaItem;
 import com.projetoExtensao.arenaMafia.domain.model.agenda.user.GroupedBlockedTimeAgendaItem;
 import com.projetoExtensao.arenaMafia.domain.model.agenda.user.ScheduleEntryAgendaItem;
+import com.projetoExtensao.arenaMafia.domain.model.enums.ScheduleEntryType;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.BlockedTime;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.Reservation;
-import com.projetoExtensao.arenaMafia.domain.model.schedule.ScheduleEntry;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
-import com.projetoExtensao.arenaMafia.infrastructure.web.agenda.dto.response.AgendaSlotResponseDto;
-import com.projetoExtensao.arenaMafia.infrastructure.web.agenda.dto.response.enums.AgendaSlotType;
+import com.projetoExtensao.arenaMafia.infrastructure.web.agenda.dto.response.PublicAgendaItemResponseDto;
+import com.projetoExtensao.arenaMafia.infrastructure.web.agenda.dto.response.PublicAvailableItemResponseDto;
+import com.projetoExtensao.arenaMafia.infrastructure.web.agenda.dto.response.PublicScheduleEntryResponseDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.operatingHours.dto.response.TimeIntervalDto;
 import org.springframework.stereotype.Component;
 
 @Component
 public class AgendaMapper {
 
-  /**
-   * Converte um AgendaItem para DTO de agenda pública (sem dados sensíveis).
-   *
-   * @param agendaItem item da agenda (ScheduleEntry ou AvailableSlot)
-   * @return DTO com informações públicas apenas
-   */
-  public AgendaSlotResponseDto toPublicDto(AgendaItem agendaItem) {
+  public PublicAgendaItemResponseDto toDto(AgendaItem agendaItem) {
     return switch (agendaItem) {
-      case ScheduleEntryAgendaItem scheduleEntry -> mapScheduleEntry(scheduleEntry.scheduleEntry());
+      case ScheduleEntryAgendaItem scheduleEntry -> mapScheduleEntry(scheduleEntry);
       case AvailableSlotAgendaItem availableSlot -> mapAvailableSlot(availableSlot);
-      case GroupedAvailableSlotAgendaItem groupedSlot -> mapGroupedAvailableSlot(groupedSlot);
       case GroupedBlockedTimeAgendaItem groupedBlockedTime -> mapGroupedBlockedTime(groupedBlockedTime);
     };
   }
 
-  /**
-   * Mapeia um {@link ScheduleEntry} (Reservation ou BlockedTime) para DTO.
-   *
-   * @param scheduleEntry entrada da agenda (Reservation ou BlockedTime)
-   * @return DTO com tipo correto (RESERVED ou BLOCKED_TIME)
-   */
-  private AgendaSlotResponseDto mapScheduleEntry(ScheduleEntry scheduleEntry) {
-    return switch (scheduleEntry) {
+  private PublicScheduleEntryResponseDto mapScheduleEntry(ScheduleEntryAgendaItem scheduleEntryAgendaItem) {
+    return switch (scheduleEntryAgendaItem.scheduleEntry()) {
       case Reservation reservation -> mapReservation(reservation);
       case BlockedTime blockedTime -> mapBlockedTime(blockedTime);
-      default ->
-          throw new IllegalStateException(
-              "Tipo de ScheduleEntry não suportado: " + scheduleEntry.getClass().getName());
+      default -> throw new IllegalStateException("Tipo de ScheduleEntry não suportado.");
     };
   }
 
-  /**
-   * Mapeia uma Reservation para DTO público (sem dados sensíveis).
-   *
-   * @param reservation reserva a ser mapeada
-   * @return DTO com tipo RESERVED
-   */
-  private AgendaSlotResponseDto mapReservation(Reservation reservation) {
+  private PublicScheduleEntryResponseDto mapReservation(Reservation reservation) {
     TimeIntervalDto timeInterval = toTimeIntervalDto(reservation.getDateTimeSlot().timeInterval());
-
-    return new AgendaSlotResponseDto(
-        reservation.getCourtId(),
-        timeInterval,
-        AgendaSlotType.RESERVED,
-        null, // availableModalityIds
-        null // description
-        );
+    return new PublicScheduleEntryResponseDto(timeInterval, ScheduleEntryType.RESERVATION, null);
   }
 
-  /**
-   * Mapeia um BlockedTime para DTO público.
-   *
-   * @param blockedTime horário bloqueado a ser mapeado
-   * @return DTO com tipo BLOCKED_TIME e descrição
-   */
-  private AgendaSlotResponseDto mapBlockedTime(BlockedTime blockedTime) {
+  private PublicScheduleEntryResponseDto mapBlockedTime(BlockedTime blockedTime) {
     TimeIntervalDto timeInterval = toTimeIntervalDto(blockedTime.getDateTimeSlot().timeInterval());
 
-    return new AgendaSlotResponseDto(
-        blockedTime.getCourtId(),
-        timeInterval,
-        AgendaSlotType.BLOCKED_TIME,
-        null, // availableModalityIds
-        blockedTime.getDescription());
+    return new PublicScheduleEntryResponseDto(
+            timeInterval,
+            ScheduleEntryType.BLOCKED_TIME,
+            blockedTime.getDescription()
+    );
   }
 
-  /**
-   * Mapeia um AvailableSlotAgendaItem (horário disponível individual) para DTO.
-   *
-   * @param availableSlotAgendaItem slot disponível individual
-   * @return DTO com tipo AVAILABLE
-   */
-  private AgendaSlotResponseDto mapAvailableSlot(AvailableSlotAgendaItem availableSlotAgendaItem) {
-    TimeIntervalDto timeInterval =
-        toTimeIntervalDto(availableSlotAgendaItem.availableSlot().timeInterval());
+  private PublicAvailableItemResponseDto mapAvailableSlot(AvailableSlotAgendaItem availableSlotAgendaItem) {
+    TimeIntervalDto timeInterval = toTimeIntervalDto(availableSlotAgendaItem.timeInterval());
 
-    return new AgendaSlotResponseDto(
-        availableSlotAgendaItem.availableSlot().courtId(),
+    return new PublicAvailableItemResponseDto(
         timeInterval,
-        AgendaSlotType.AVAILABLE,
-        null, // availableModalityIds
-        null // description
-        );
+        availableSlotAgendaItem.modalityIds(),
+        availableSlotAgendaItem.price());
   }
 
-  /**
-   * Mapeia um GroupedAvailableSlotAgendaItem (horários agrupados por modalidade) para DTO.
-   *
-   * @param groupedSlot slots agrupados por modalidade
-   * @return DTO com tipo AVAILABLE e IDs das modalidades disponíveis
-   */
-  private AgendaSlotResponseDto mapGroupedAvailableSlot(GroupedAvailableSlotAgendaItem groupedSlot) {
-    TimeIntervalDto timeInterval = toTimeIntervalDto(groupedSlot.timeInterval());
-
-    return new AgendaSlotResponseDto(
-        null, // courtId (agrupado, sem quadra específica)
-        timeInterval,
-        AgendaSlotType.AVAILABLE,
-        groupedSlot.availableModalityIds(),
-        null // description
-        );
-  }
-
-  /**
-   * Mapeia um GroupedBlockedTimeAgendaItem (bloqueios agrupados pelo mesmo horário e descrição)
-   * para DTO.
-   *
-   * <p>Quando múltiplas quadras são bloqueadas no mesmo horário com a mesma descrição, este metodo
-   * agrupa os bloqueios em um único item sem especificar a quadra.
-   *
-   * @param groupedBlockedTime bloqueios agrupados
-   * @return DTO com tipo BLOCKED_TIME, sem courtId (agrupado) e com descrição
-   */
-  private AgendaSlotResponseDto mapGroupedBlockedTime(GroupedBlockedTimeAgendaItem groupedBlockedTime) {
+  private PublicScheduleEntryResponseDto mapGroupedBlockedTime(GroupedBlockedTimeAgendaItem groupedBlockedTime) {
     TimeIntervalDto timeInterval = toTimeIntervalDto(groupedBlockedTime.timeInterval());
-
-    return new AgendaSlotResponseDto(
-        null, // courtId (agrupado, múltiplas quadras bloqueadas)
-        timeInterval,
-        AgendaSlotType.BLOCKED_TIME,
-        null, // availableModalityIds
-        groupedBlockedTime.description());
+    return new PublicScheduleEntryResponseDto(
+            timeInterval,
+            ScheduleEntryType.BLOCKED_TIME,
+            groupedBlockedTime.description()
+    );
   }
 
-  /**
-   * Converte um TimeInterval (VO de domínio) para TimeIntervalDto (DTO de infraestrutura).
-   *
-   * @param timeInterval value object de intervalo de tempo
-   * @return DTO com horário de início e fim
-   */
   private TimeIntervalDto toTimeIntervalDto(TimeInterval timeInterval) {
     return new TimeIntervalDto(timeInterval.startTime(), timeInterval.endTime());
   }

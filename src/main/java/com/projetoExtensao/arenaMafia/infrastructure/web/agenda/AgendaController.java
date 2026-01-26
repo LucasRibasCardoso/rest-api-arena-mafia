@@ -1,8 +1,9 @@
 package com.projetoExtensao.arenaMafia.infrastructure.web.agenda;
 
 import com.projetoExtensao.arenaMafia.application.agenda.usecase.FindPublicAgendaUseCase;
+import com.projetoExtensao.arenaMafia.domain.model.agenda.user.AgendaItem;
 import com.projetoExtensao.arenaMafia.infrastructure.security.rateLimit.CustomRateLimiter;
-import com.projetoExtensao.arenaMafia.infrastructure.web.agenda.dto.response.AgendaSlotResponseDto;
+import com.projetoExtensao.arenaMafia.infrastructure.web.agenda.dto.response.PublicAgendaItemResponseDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.agenda.mapper.AgendaMapper;
 import java.time.LocalDate;
 import java.util.List;
@@ -27,10 +28,11 @@ public class AgendaController {
 
   @GetMapping
   @CustomRateLimiter(limiterName = "globalLimiter")
-  public ResponseEntity<List<AgendaSlotResponseDto>> getAgenda(@RequestParam("date") LocalDate date) {
+  public ResponseEntity<List<PublicAgendaItemResponseDto>> getAgenda(@RequestParam("date") LocalDate date) {
 
-    List<AgendaSlotResponseDto> agenda = findPublicAgendaUseCase.execute(date).stream().map(agendaMapper::toPublicDto).toList();
+    List<AgendaItem> agendaItems = findPublicAgendaUseCase.execute(date);
+    List<PublicAgendaItemResponseDto> agendaResponse = agendaItems.stream().map(agendaMapper::toDto).toList();
 
-    return ResponseEntity.ok(agenda);
+    return ResponseEntity.ok(agendaResponse);
   }
 }

@@ -7,9 +7,11 @@ import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 import com.projetoExtensao.arenaMafia.domain.model.Court;
 import com.projetoExtensao.arenaMafia.domain.model.Modality;
 import com.projetoExtensao.arenaMafia.domain.model.User;
+import com.projetoExtensao.arenaMafia.domain.model.enums.ScheduleEntryType;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
-import com.projetoExtensao.arenaMafia.infrastructure.web.agenda.dto.response.AgendaSlotResponseDto;
-import com.projetoExtensao.arenaMafia.infrastructure.web.agenda.dto.response.enums.AgendaSlotType;
+import com.projetoExtensao.arenaMafia.infrastructure.web.agenda.dto.response.PublicAgendaItemResponseDto;
+import com.projetoExtensao.arenaMafia.infrastructure.web.agenda.dto.response.PublicAvailableItemResponseDto;
+import com.projetoExtensao.arenaMafia.infrastructure.web.agenda.dto.response.PublicScheduleEntryResponseDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.exception.dto.ErrorResponseDto;
 import com.projetoExtensao.arenaMafia.integration.config.WebIntegrationTestConfig;
 import io.restassured.builder.RequestSpecBuilder;
@@ -18,7 +20,6 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
-import java.util.Objects;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -70,7 +71,7 @@ public class AgendaControllerIntegrationTest extends WebIntegrationTestConfig {
             BigDecimal.valueOf(50.00),
             user.getId());
 
-        List<AgendaSlotResponseDto> response =
+        List<PublicAgendaItemResponseDto> response =
             given()
                 .spec(specification)
                 .queryParam("date", date.toString())
@@ -81,30 +82,33 @@ public class AgendaControllerIntegrationTest extends WebIntegrationTestConfig {
                 .extract()
                 .body()
                 .jsonPath()
-                .getList(".", AgendaSlotResponseDto.class);
+                .getList(".", PublicAgendaItemResponseDto.class);
 
         assertThat(response).isNotEmpty();
-        assertThat(response).anyMatch(slot -> slot.slotType().equals(AgendaSlotType.RESERVED));
-        assertThat(response).anyMatch(slot -> slot.slotType().equals(AgendaSlotType.AVAILABLE));
 
-        // Validar slots RESERVED (têm courtId, não têm availableModalityIds)
-        assertThat(
-                response.stream()
-                    .filter(slot -> slot.slotType().equals(AgendaSlotType.RESERVED))
-                    .allMatch(
-                        slot -> slot.courtId() != null && slot.availableModalityIds() == null))
-            .isTrue();
+        // Validar slots RESERVED (PublicScheduleEntryResponseDto)
+        List<PublicScheduleEntryResponseDto> reservedSlots =
+            response.stream()
+                .filter(item -> item instanceof PublicScheduleEntryResponseDto)
+                .map(item -> (PublicScheduleEntryResponseDto) item)
+                .toList();
 
-        // Validar slots AVAILABLE (não têm courtId, têm availableModalityIds)
-        assertThat(
-                response.stream()
-                    .filter(slot -> slot.slotType().equals(AgendaSlotType.AVAILABLE))
-                    .allMatch(
-                        slot ->
-                            slot.courtId() == null
-                                && slot.availableModalityIds() != null
-                                && !slot.availableModalityIds().isEmpty()))
-            .isTrue();
+        assertThat(reservedSlots).isNotEmpty();
+        assertThat(reservedSlots)
+            .allMatch(slot -> slot.entryType() == ScheduleEntryType.RESERVATION);
+
+        // Validar slots AVAILABLE (PublicAvailableItemResponseDto)
+        List<PublicAvailableItemResponseDto> availableSlots =
+            response.stream()
+                .filter(item -> item instanceof PublicAvailableItemResponseDto)
+                .map(item -> (PublicAvailableItemResponseDto) item)
+                .toList();
+
+        assertThat(availableSlots).isNotEmpty();
+        assertThat(availableSlots)
+            .allMatch(
+                slot ->
+                    slot.availableModalityIds() != null && !slot.availableModalityIds().isEmpty());
 
         // Todos os slots devem ter timeInterval
         assertThat(response).allMatch(slot -> slot.timeInterval() != null);
@@ -120,7 +124,7 @@ public class AgendaControllerIntegrationTest extends WebIntegrationTestConfig {
 
         LocalDate date = LocalDate.now().plusDays(2);
 
-        List<AgendaSlotResponseDto> response =
+        List<PublicAgendaItemResponseDto> response =
             given()
                 .spec(specification)
                 .queryParam("date", date.toString())
@@ -131,7 +135,7 @@ public class AgendaControllerIntegrationTest extends WebIntegrationTestConfig {
                 .extract()
                 .body()
                 .jsonPath()
-                .getList(".", AgendaSlotResponseDto.class);
+                .getList(".", PublicAgendaItemResponseDto.class);
 
         assertThat(response).isNotEmpty();
 
@@ -152,30 +156,32 @@ public class AgendaControllerIntegrationTest extends WebIntegrationTestConfig {
 
         LocalDate date = LocalDate.now().plusDays(4);
 
-        List<AgendaSlotResponseDto> response =
+        List<PublicAgendaItemResponseDto> response =
             given()
                 .spec(specification)
                 .queryParam("date", date.toString())
                 .when()
                 .get()
                 .then()
-                    .log().all()
+                .log()
+                .all()
                 .statusCode(200)
                 .extract()
                 .body()
                 .jsonPath()
-                .getList(".", AgendaSlotResponseDto.class);
+                .getList(".", PublicAgendaItemResponseDto.class);
 
         assertThat(response).isNotEmpty();
-        assertThat(response).allMatch(slot -> slot.slotType().equals(AgendaSlotType.AVAILABLE));
+        assertThat(response).allMatch(item -> item instanceof PublicAvailableItemResponseDto);
 
         // Todos os slots AVAILABLE devem ter availableModalityIds não vazio
-        assertThat(response)
+        List<PublicAvailableItemResponseDto> availableSlots =
+            response.stream().map(item -> (PublicAvailableItemResponseDto) item).toList();
+
+        assertThat(availableSlots)
             .allMatch(
                 slot ->
-                    slot.availableModalityIds() != null
-                        && !slot.availableModalityIds().isEmpty()
-                        && slot.courtId() == null);
+                    slot.availableModalityIds() != null && !slot.availableModalityIds().isEmpty());
       }
 
       @Test
@@ -188,7 +194,7 @@ public class AgendaControllerIntegrationTest extends WebIntegrationTestConfig {
 
         LocalDate today = LocalDate.now();
 
-        List<AgendaSlotResponseDto> response =
+        List<PublicAgendaItemResponseDto> response =
             given()
                 .spec(specification)
                 .queryParam("date", today.toString())
@@ -199,7 +205,7 @@ public class AgendaControllerIntegrationTest extends WebIntegrationTestConfig {
                 .extract()
                 .body()
                 .jsonPath()
-                .getList(".", AgendaSlotResponseDto.class);
+                .getList(".", PublicAgendaItemResponseDto.class);
 
         assertThat(response).isNotEmpty();
       }
@@ -224,7 +230,7 @@ public class AgendaControllerIntegrationTest extends WebIntegrationTestConfig {
             BigDecimal.valueOf(50.00),
             user.getId());
 
-        List<AgendaSlotResponseDto> response =
+        List<PublicAgendaItemResponseDto> response =
             given()
                 .spec(specification)
                 .queryParam("date", date.toString())
@@ -235,23 +241,15 @@ public class AgendaControllerIntegrationTest extends WebIntegrationTestConfig {
                 .extract()
                 .body()
                 .jsonPath()
-                .getList(".", AgendaSlotResponseDto.class);
+                .getList(".", PublicAgendaItemResponseDto.class);
 
         assertThat(response).isNotEmpty();
 
         // Validar que existem slots RESERVED e AVAILABLE
-        assertThat(response).anyMatch(slot -> slot.slotType().equals(AgendaSlotType.RESERVED));
-        assertThat(response).anyMatch(slot -> slot.slotType().equals(AgendaSlotType.AVAILABLE));
-
-        // Contar apenas courtIds dos slots RESERVED (não nulos)
-        assertThat(
-                response.stream()
-                    .filter(slot -> slot.slotType().equals(AgendaSlotType.RESERVED))
-                    .map(AgendaSlotResponseDto::courtId)
-                    .filter(Objects::nonNull)
-                    .distinct()
-                    .count())
-            .isGreaterThanOrEqualTo(1);
+        assertThat(response)
+            .anyMatch(item -> item instanceof PublicScheduleEntryResponseDto); // RESERVED
+        assertThat(response)
+            .anyMatch(item -> item instanceof PublicAvailableItemResponseDto); // AVAILABLE
       }
 
       @Test
@@ -268,7 +266,7 @@ public class AgendaControllerIntegrationTest extends WebIntegrationTestConfig {
 
         LocalDate date = LocalDate.now().plusDays(5);
 
-        List<AgendaSlotResponseDto> response =
+        List<PublicAgendaItemResponseDto> response =
             given()
                 .spec(specification)
                 .queryParam("date", date.toString())
@@ -279,14 +277,15 @@ public class AgendaControllerIntegrationTest extends WebIntegrationTestConfig {
                 .extract()
                 .body()
                 .jsonPath()
-                .getList(".", AgendaSlotResponseDto.class);
+                .getList(".", PublicAgendaItemResponseDto.class);
 
         assertThat(response).isNotEmpty();
 
         // Todos os slots AVAILABLE devem ter availableModalityIds
-        List<AgendaSlotResponseDto> availableSlots =
+        List<PublicAvailableItemResponseDto> availableSlots =
             response.stream()
-                .filter(slot -> slot.slotType().equals(AgendaSlotType.AVAILABLE))
+                .filter(item -> item instanceof PublicAvailableItemResponseDto)
+                .map(item -> (PublicAvailableItemResponseDto) item)
                 .toList();
 
         assertThat(availableSlots).isNotEmpty();
@@ -305,6 +304,11 @@ public class AgendaControllerIntegrationTest extends WebIntegrationTestConfig {
       @Test
       @DisplayName("Slots AVAILABLE agrupados não devem ter courtId")
       void shouldNotHaveCourtIdInGroupedAvailableSlots() {
+        // Nota: Na nova estrutura PublicAvailableItemResponseDto, o campo courtId foi removido
+        // pois a agenda pública é agrupada. Este teste verifica implicitamente a estrutura do DTO.
+        // Se o DTO não tem courtId, o teste de compilação já garante isso.
+        // Mas podemos verificar se availableModalityIds está presente.
+
         Modality modality = mockPersistModality("Swimming");
         mockPersistCourt("Court N", modality);
         mockPersistOperatingHoursAllDays();
@@ -312,7 +316,7 @@ public class AgendaControllerIntegrationTest extends WebIntegrationTestConfig {
 
         LocalDate date = LocalDate.now().plusDays(6);
 
-        List<AgendaSlotResponseDto> response =
+        List<PublicAgendaItemResponseDto> response =
             given()
                 .spec(specification)
                 .queryParam("date", date.toString())
@@ -323,17 +327,15 @@ public class AgendaControllerIntegrationTest extends WebIntegrationTestConfig {
                 .extract()
                 .body()
                 .jsonPath()
-                .getList(".", AgendaSlotResponseDto.class);
+                .getList(".", PublicAgendaItemResponseDto.class);
 
-        List<AgendaSlotResponseDto> availableSlots =
+        List<PublicAvailableItemResponseDto> availableSlots =
             response.stream()
-                .filter(slot -> slot.slotType().equals(AgendaSlotType.AVAILABLE))
+                .filter(item -> item instanceof PublicAvailableItemResponseDto)
+                .map(item -> (PublicAvailableItemResponseDto) item)
                 .toList();
 
-        // Slots AVAILABLE agrupados não devem ter courtId
-        assertThat(availableSlots).allMatch(slot -> slot.courtId() == null);
-
-        // Mas devem ter availableModalityIds
+        // Devem ter availableModalityIds
         assertThat(availableSlots)
             .allMatch(
                 slot ->
@@ -341,8 +343,8 @@ public class AgendaControllerIntegrationTest extends WebIntegrationTestConfig {
       }
 
       @Test
-      @DisplayName("Slots RESERVED devem ter courtId mas não availableModalityIds")
-      void shouldHaveCourtIdButNotAvailableModalityIdsInReservedSlots() {
+      @DisplayName("Slots RESERVED devem ter entryType correto")
+      void shouldHaveCorrectEntryTypeInReservedSlots() {
         Modality modality = mockPersistModality("Boxing");
         Court court = mockPersistCourt("Court O", modality);
         mockPersistOperatingHoursAllDays();
@@ -359,7 +361,7 @@ public class AgendaControllerIntegrationTest extends WebIntegrationTestConfig {
             BigDecimal.valueOf(50.00),
             user.getId());
 
-        List<AgendaSlotResponseDto> response =
+        List<PublicAgendaItemResponseDto> response =
             given()
                 .spec(specification)
                 .queryParam("date", date.toString())
@@ -370,20 +372,19 @@ public class AgendaControllerIntegrationTest extends WebIntegrationTestConfig {
                 .extract()
                 .body()
                 .jsonPath()
-                .getList(".", AgendaSlotResponseDto.class);
+                .getList(".", PublicAgendaItemResponseDto.class);
 
-        List<AgendaSlotResponseDto> reservedSlots =
+        List<PublicScheduleEntryResponseDto> reservedSlots =
             response.stream()
-                .filter(slot -> slot.slotType().equals(AgendaSlotType.RESERVED))
+                .filter(item -> item instanceof PublicScheduleEntryResponseDto)
+                .map(item -> (PublicScheduleEntryResponseDto) item)
                 .toList();
 
         assertThat(reservedSlots).isNotEmpty();
 
-        // Slots RESERVED devem ter courtId
-        assertThat(reservedSlots).allMatch(slot -> slot.courtId() != null);
-
-        // Mas não devem ter availableModalityIds
-        assertThat(reservedSlots).allMatch(slot -> slot.availableModalityIds() == null);
+        // Slots RESERVED devem ter entryType RESERVATION
+        assertThat(reservedSlots)
+            .allMatch(slot -> slot.entryType() == ScheduleEntryType.RESERVATION);
       }
 
       @Test
@@ -400,7 +401,7 @@ public class AgendaControllerIntegrationTest extends WebIntegrationTestConfig {
 
         LocalDate date = LocalDate.now().plusDays(8);
 
-        List<AgendaSlotResponseDto> response =
+        List<PublicAgendaItemResponseDto> response =
             given()
                 .spec(specification)
                 .queryParam("date", date.toString())
@@ -411,13 +412,14 @@ public class AgendaControllerIntegrationTest extends WebIntegrationTestConfig {
                 .extract()
                 .body()
                 .jsonPath()
-                .getList(".", AgendaSlotResponseDto.class);
+                .getList(".", PublicAgendaItemResponseDto.class);
 
         assertThat(response).isNotEmpty();
 
-        List<AgendaSlotResponseDto> availableSlots =
+        List<PublicAvailableItemResponseDto> availableSlots =
             response.stream()
-                .filter(slot -> slot.slotType().equals(AgendaSlotType.AVAILABLE))
+                .filter(item -> item instanceof PublicAvailableItemResponseDto)
+                .map(item -> (PublicAvailableItemResponseDto) item)
                 .toList();
 
         assertThat(availableSlots).isNotEmpty();
@@ -437,12 +439,7 @@ public class AgendaControllerIntegrationTest extends WebIntegrationTestConfig {
       @Test
       @DisplayName("Retorna erro quando data não é informada")
       void shouldReturn400WhenDateIsNotProvided() {
-        given()
-            .spec(specification)
-            .when()
-            .get()
-            .then()
-            .statusCode(400);
+        given().spec(specification).when().get().then().statusCode(400);
       }
 
       @Test
@@ -547,4 +544,3 @@ public class AgendaControllerIntegrationTest extends WebIntegrationTestConfig {
     }
   }
 }
-

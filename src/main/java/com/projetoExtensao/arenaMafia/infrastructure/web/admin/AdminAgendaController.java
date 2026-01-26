@@ -2,7 +2,7 @@ package com.projetoExtensao.arenaMafia.infrastructure.web.admin;
 
 import com.projetoExtensao.arenaMafia.application.agenda.usecase.FindAdminAgendaUseCase;
 import com.projetoExtensao.arenaMafia.infrastructure.security.rateLimit.CustomRateLimiter;
-import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.agenda.response.AdminAgendaSlotResponseDto;
+import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.agenda.response.AdminAgendaItemResponseDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.mapper.AdminAgendaMapper;
 import java.time.LocalDate;
 import java.util.List;
@@ -32,12 +32,12 @@ public class AdminAgendaController {
 
   @GetMapping
   @CustomRateLimiter(limiterName = "globalLimiter")
-  public ResponseEntity<List<AdminAgendaSlotResponseDto>> getAgenda(
+  public ResponseEntity<List<AdminAgendaItemResponseDto>> getAgenda(
           @RequestParam("date") LocalDate date,
           @RequestParam(value = "courtId", required = false) UUID courtId
   ) {
 
-    List<AdminAgendaSlotResponseDto> response = findAdminAgendaUseCase.execute(date, Optional.ofNullable(courtId))
+    List<AdminAgendaItemResponseDto> response = findAdminAgendaUseCase.execute(date, Optional.ofNullable(courtId))
             .stream()
             .map(adminAgendaMapper::toDto)
             .toList();

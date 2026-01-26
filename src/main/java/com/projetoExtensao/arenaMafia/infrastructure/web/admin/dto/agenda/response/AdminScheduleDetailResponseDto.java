@@ -4,7 +4,7 @@ import com.projetoExtensao.arenaMafia.infrastructure.web.operatingHours.dto.resp
 import com.projetoExtensao.arenaMafia.infrastructure.web.schedule.dto.response.scheduleDetail.ScheduleDetailResponseDto;
 
 public record AdminScheduleDetailResponseDto(
-    ScheduleDetailResponseDto detail) implements AdminAgendaSlotResponseDto {
+    ScheduleDetailResponseDto detail) implements AdminAgendaItemResponseDto {
 
   @Override
   public TimeIntervalDto timeInterval() {

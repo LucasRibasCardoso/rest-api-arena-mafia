@@ -14,7 +14,7 @@ import com.projetoExtensao.arenaMafia.domain.model.Court;
 import com.projetoExtensao.arenaMafia.domain.model.OperatingHours;
 import com.projetoExtensao.arenaMafia.domain.model.PriceRule;
 import com.projetoExtensao.arenaMafia.domain.model.agenda.user.AgendaItem;
-import com.projetoExtensao.arenaMafia.domain.model.agenda.user.GroupedAvailableSlotAgendaItem;
+import com.projetoExtensao.arenaMafia.domain.model.agenda.user.AvailableSlotAgendaItem;
 import com.projetoExtensao.arenaMafia.domain.model.agenda.user.ScheduleEntryAgendaItem;
 import com.projetoExtensao.arenaMafia.domain.model.enums.DayOfWeek;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.ScheduleEntry;
@@ -23,6 +23,8 @@ import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.specification.CourtSpecification;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.specification.OperatingHoursSpecification;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.specification.PriceRuleSpecification;
+
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.Comparator;
@@ -256,6 +258,8 @@ public class FindPublicAgendaUseCaseImp implements FindPublicAgendaUseCase {
             .flatMap(slot -> slot.modalityIds().stream())
             .collect(Collectors.toSet());
 
-    return Optional.of(new GroupedAvailableSlotAgendaItem(timeInterval, allModalityIds));
+    BigDecimal price = availableSlots.getFirst().price();
+
+    return Optional.of(new AvailableSlotAgendaItem(timeInterval, allModalityIds, price));
   }
 }
