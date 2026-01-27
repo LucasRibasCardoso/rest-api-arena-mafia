@@ -2954,6 +2954,10 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
                 .statusCode(400)
                 .extract()
                 .as(ErrorResponseDto.class);
+
+        // Assert
+        String path = "/api/admin/blocked-times/" + nonExistentId;
+        assertValidationError(response, path, "description", ErrorCode.BLOCKED_TIME_DESCRIPTION_INVALID_LENGTH);
       }
     }
 

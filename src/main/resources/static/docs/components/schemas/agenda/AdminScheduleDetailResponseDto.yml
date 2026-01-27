@@ -1,0 +1,15 @@
+type: object
+description: Representa os detalhes de um agendamento (reserva ou bloqueio) na agenda administrativa.
+required:
+  - type
+  - detail
+properties:
+  type:
+    type: string
+    enum: [SCHEDULE_DETAIL]
+    example: "SCHEDULE_DETAIL"
+  detail:
+    description: Detalhes específicos do agendamento, que pode ser uma reserva ou um bloqueio.
+    oneOf:
+      - $ref: "../reservation/ReservationDetailResponseDto.yml"
+      - $ref: "../blockedTime/BlockedTimeDetailResponseDto.yml"
