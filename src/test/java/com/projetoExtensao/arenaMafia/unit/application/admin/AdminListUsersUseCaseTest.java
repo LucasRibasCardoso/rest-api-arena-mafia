@@ -6,8 +6,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.projetoExtensao.arenaMafia.application.admin.port.repository.AdminUserRepositoryPort;
-import com.projetoExtensao.arenaMafia.application.admin.usecase.users.imp.AdminListUsersUseCaseImp;
+import com.projetoExtensao.arenaMafia.application.user.port.repository.AdminUserRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.user.usecase.admin.imp.AdminListUsersUseCaseImp;
 import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidDateRangeException;
 import com.projetoExtensao.arenaMafia.domain.model.User;

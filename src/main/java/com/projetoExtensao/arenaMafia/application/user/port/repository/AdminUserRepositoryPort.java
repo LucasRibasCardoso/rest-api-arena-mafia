@@ -1,4 +1,4 @@
-package com.projetoExtensao.arenaMafia.application.admin.port.repository;
+package com.projetoExtensao.arenaMafia.application.user.port.repository;
 
 import com.projetoExtensao.arenaMafia.domain.model.User;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.UserEntity;

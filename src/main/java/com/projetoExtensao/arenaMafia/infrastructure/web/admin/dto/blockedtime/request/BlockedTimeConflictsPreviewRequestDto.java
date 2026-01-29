@@ -33,8 +33,7 @@ import java.util.UUID;
  * <ul>
  *   <li>Bloqueio pontual: startDate = endDate, selectedDaysOfWeek = null
  *   <li>Bloqueio consecutivo: startDate != endDate, selectedDaysOfWeek = null (ex: férias, reforma)
- *   <li>Bloqueio recorrente semanal: startDate != endDate, selectedDaysOfWeek = [TUESDAY, THURSDAY]
- *       (ex: aulas regulares)
+ *   <li>Bloqueio recorrente semanal: startDate != endDate, selectedDaysOfWeek = [TUESDAY, THURSDAY] (ex: aulas regulares)
  * </ul>
  */
 @ValidDateRange

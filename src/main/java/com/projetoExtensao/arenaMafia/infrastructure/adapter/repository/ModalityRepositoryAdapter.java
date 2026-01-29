@@ -56,6 +56,11 @@ public class ModalityRepositoryAdapter implements ModalityRepositoryPort {
   }
 
   @Override
+  public Modality findActiveByIdOrElseThrow(UUID id) {
+    return findById(id).filter(Modality::isActive).orElseThrow(ModalityNotFoundException::new);
+  }
+
+  @Override
   public Optional<Modality> findByName(String name) {
     return modalityJpaRepository.findByName(name).map(modalityMapper::toDomain);
   }

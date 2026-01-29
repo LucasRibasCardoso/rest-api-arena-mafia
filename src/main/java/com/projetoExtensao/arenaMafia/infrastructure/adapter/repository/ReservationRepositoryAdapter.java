@@ -13,6 +13,8 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
@@ -37,15 +39,14 @@ public class ReservationRepositoryAdapter implements ReservationRepositoryPort {
   }
 
   @Override
-  public Optional<Reservation> findById(UUID id) {
-    return reservationJpaRepository.findById(id).map(reservationMapper::toDomain);
+  public List<Reservation> saveAll(List<Reservation> reservations) {
+    List<ReservationEntity> reservationEntities = reservations.stream().map(reservationMapper::toEntity).toList();
+    return reservationJpaRepository.saveAll(reservationEntities).stream().map(reservationMapper::toDomain).toList();
   }
 
   @Override
-  public List<Reservation> findAllByIds(List<UUID> ids) {
-    return reservationJpaRepository.findAllById(ids).stream()
-        .map(reservationMapper::toDomain)
-        .toList();
+  public Optional<Reservation> findById(UUID id) {
+    return reservationJpaRepository.findById(id).map(reservationMapper::toDomain);
   }
 
   @Override
@@ -67,5 +68,23 @@ public class ReservationRepositoryAdapter implements ReservationRepositoryPort {
         .findReservationByIdAndUser(reservationId, userId)
         .map(reservationMapper::toDomain)
         .orElseThrow(() -> new ScheduleNotFoundException(ErrorCode.SCHEDULE_ENTRY_NOT_FOUND));
+  }
+
+  @Override
+  public List<Reservation> findAllFutureRecurringReservations(UUID recurringReservationId) {
+    return reservationJpaRepository
+        .findFutureRecurringReservations(recurringReservationId)
+        .stream()
+        .map(reservationMapper::toDomain)
+        .toList();
+  }
+
+  @Override
+  public List<Reservation> findAllFutureReservationsByIds(List<UUID> ids) {
+    return reservationJpaRepository
+        .findAllFutureReservationsByIds(ids)
+        .stream()
+        .map(reservationMapper::toDomain)
+        .toList();
   }
 }

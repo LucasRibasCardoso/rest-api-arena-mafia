@@ -1,7 +1,7 @@
-package com.projetoExtensao.arenaMafia.application.admin.usecase.users.imp;
+package com.projetoExtensao.arenaMafia.application.user.usecase.admin.imp;
 
-import com.projetoExtensao.arenaMafia.application.admin.port.repository.AdminUserRepositoryPort;
-import com.projetoExtensao.arenaMafia.application.admin.usecase.users.AdminListUsersUseCase;
+import com.projetoExtensao.arenaMafia.application.user.port.repository.AdminUserRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.user.usecase.admin.AdminListUsersUseCase;
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidDateRangeException;
 import com.projetoExtensao.arenaMafia.domain.model.User;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.UserEntity;

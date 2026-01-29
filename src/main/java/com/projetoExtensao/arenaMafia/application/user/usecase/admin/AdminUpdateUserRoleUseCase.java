@@ -1,4 +1,4 @@
-package com.projetoExtensao.arenaMafia.application.admin.usecase.users;
+package com.projetoExtensao.arenaMafia.application.user.usecase.admin;
 
 import com.projetoExtensao.arenaMafia.domain.model.enums.RoleEnum;
 import java.util.UUID;

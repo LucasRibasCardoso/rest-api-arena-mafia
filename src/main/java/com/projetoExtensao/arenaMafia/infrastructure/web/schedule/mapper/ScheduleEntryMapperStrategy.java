@@ -16,7 +16,7 @@ import com.projetoExtensao.arenaMafia.infrastructure.web.schedule.dto.response.s
 public interface ScheduleEntryMapperStrategy<T extends ScheduleEntry, D extends ScheduleEntryDetail> {
 
   /**
-   * Converte uma entidade de domínio ScheduleEntry para seu DTO de resposta correspondente.
+   * Converte uma entidade de domínio {@link ScheduleEntryDetail} para seu DTO de resposta correspondente.
    *
    * @param scheduleEntry a entidade de domínio a ser convertida
    * @return o DTO de resposta correspondente
@@ -24,7 +24,7 @@ public interface ScheduleEntryMapperStrategy<T extends ScheduleEntry, D extends 
   ScheduleEntryResponseDto toDto(T scheduleEntry);
 
   /**
-   * Converte um ScheduleDetail da camada de application para seu DTO de resposta correspondente.
+   * Converte um {@link ScheduleEntryDetail} da camada de application para seu DTO de resposta correspondente.
    *
    * @param detail o detalhe enriquecido a ser convertido
    * @return o DTO de resposta correspondente

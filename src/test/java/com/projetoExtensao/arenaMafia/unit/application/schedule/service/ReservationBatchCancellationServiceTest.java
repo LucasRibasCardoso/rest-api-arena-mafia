@@ -64,7 +64,7 @@ class ReservationBatchCancellationServiceTest {
       @DisplayName("Deve retornar 0 quando lista de reservas for null")
       void shouldReturnZeroWhenReservationsIsNull() {
         // Act
-        int result = service.cancelReservationsInBatch(null, "Motivo");
+        int result = service.cancelReservationsInBatch(null, "Motivo", UUID.randomUUID());
 
         // Assert
         assertThat(result).isZero();
@@ -75,7 +75,7 @@ class ReservationBatchCancellationServiceTest {
       @DisplayName("Deve retornar 0 quando lista de reservas for vazia")
       void shouldReturnZeroWhenReservationsIsEmpty() {
         // Act
-        int result = service.cancelReservationsInBatch(Collections.emptyList(), "Motivo");
+        int result = service.cancelReservationsInBatch(Collections.emptyList(), "Motivo", UUID.randomUUID());
 
         // Assert
         assertThat(result).isZero();
@@ -93,7 +93,7 @@ class ReservationBatchCancellationServiceTest {
         when(reservationRepository.save(any())).thenReturn(reservation);
 
         // Act
-        int result = service.cancelReservationsInBatch(List.of(reservation), "Bloqueio de horário");
+        int result = service.cancelReservationsInBatch(List.of(reservation), "Bloqueio de horário", UUID.randomUUID());
 
         // Assert
         assertThat(result).isEqualTo(1);
@@ -120,7 +120,7 @@ class ReservationBatchCancellationServiceTest {
         when(reservationRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         // Act
-        int result = service.cancelReservationsInBatch(reservations, "Manutenção");
+        int result = service.cancelReservationsInBatch(reservations, "Manutenção", UUID.randomUUID());
 
         // Assert
         assertThat(result).isEqualTo(3);
@@ -146,7 +146,7 @@ class ReservationBatchCancellationServiceTest {
             ArgumentCaptor.forClass(OnReservationCancelledByAdminEvent.class);
 
         // Act
-        service.cancelReservationsInBatch(List.of(reservation), reason);
+        service.cancelReservationsInBatch(List.of(reservation), reason, UUID.randomUUID());
 
         // Assert
         verify(eventPublisher).publishEvent(eventCaptor.capture());
@@ -167,7 +167,7 @@ class ReservationBatchCancellationServiceTest {
         when(reservationRepository.save(any())).thenReturn(reservation);
 
         // Act
-        int result = service.cancelReservationsInBatch(List.of(reservation), "Motivo");
+        int result = service.cancelReservationsInBatch(List.of(reservation), "Motivo", UUID.randomUUID());
 
         // Assert
         assertThat(result).isEqualTo(1);
@@ -196,7 +196,7 @@ class ReservationBatchCancellationServiceTest {
         when(reservationRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         // Act & Assert
-        assertThatThrownBy(() -> service.cancelReservationsInBatch(reservations, "Motivo"))
+        assertThatThrownBy(() -> service.cancelReservationsInBatch(reservations, "Motivo", UUID.randomUUID()))
             .isInstanceOf(BatchCancellationFailedException.class);
 
         // Verifica que NENHUM evento foi publicado (evita notificação sem commit)
@@ -214,7 +214,7 @@ class ReservationBatchCancellationServiceTest {
         when(reservationRepository.save(any())).thenThrow(new RuntimeException("Database error"));
 
         // Act & Assert
-        assertThatThrownBy(() -> service.cancelReservationsInBatch(List.of(reservation), "Motivo"))
+        assertThatThrownBy(() -> service.cancelReservationsInBatch(List.of(reservation), "Motivo", UUID.randomUUID()))
             .isInstanceOf(BatchCancellationFailedException.class);
 
         // Verifica que NENHUM evento foi publicado
@@ -233,7 +233,7 @@ class ReservationBatchCancellationServiceTest {
         when(userRepository.findAllByIds(any())).thenReturn(Collections.emptyList());
 
         // Act & Assert
-        assertThatThrownBy(() -> service.cancelReservationsInBatch(reservations, "Motivo"))
+        assertThatThrownBy(() -> service.cancelReservationsInBatch(reservations, "Motivo", UUID.randomUUID()))
             .isInstanceOf(BatchCancellationFailedException.class);
 
         // Verifica que NENHUM evento foi publicado
@@ -260,7 +260,7 @@ class ReservationBatchCancellationServiceTest {
         when(reservationRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         // Act & Assert
-        assertThatThrownBy(() -> service.cancelReservationsInBatch(reservations, "Motivo"))
+        assertThatThrownBy(() -> service.cancelReservationsInBatch(reservations, "Motivo", UUID.randomUUID()))
             .isInstanceOf(BatchCancellationFailedException.class);
 
         // Verifica que apenas a primeira reserva foi processada (fail-fast)

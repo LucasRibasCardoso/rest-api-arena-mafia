@@ -6,7 +6,7 @@ import com.projetoExtensao.arenaMafia.domain.valueobjects.DateTimeSlot;
 import java.time.Instant;
 import java.util.UUID;
 
-public class BlockedTime extends ScheduleEntry {
+public class    BlockedTime extends ScheduleEntry {
 
   private String description;
   private final UUID blockedByAdminId;
@@ -180,6 +180,7 @@ public class BlockedTime extends ScheduleEntry {
     this.description = newDescription;
   }
 
+  @Override
   public boolean isRecurring() {
     return recurringBlockedTimeId != null;
   }

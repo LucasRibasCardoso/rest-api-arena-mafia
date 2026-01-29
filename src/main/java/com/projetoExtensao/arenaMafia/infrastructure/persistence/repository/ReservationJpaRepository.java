@@ -1,8 +1,6 @@
 package com.projetoExtensao.arenaMafia.infrastructure.persistence.repository;
 
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.ReservationEntity;
-import java.time.LocalDate;
-import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -50,23 +48,32 @@ public interface ReservationJpaRepository
       @Param("reservationId") UUID reservationId, @Param("userId") UUID userId);
 
   /**
-   * Buscar todas as reservas confirmadas cujo horário de término é posterior ao momento
-   * especificado. Utilizado para reagendar conclusão automática de reservas quando a aplicação é
-   * reiniciada.
-   *
-   * @param date data de referência
-   * @param time hora de referência
-   * @return lista de reservas confirmadas ordenadas por data e horário de término
+   * Busca todas as reservas recorrentes futuras
+   * @param recurringReservationId ID da reserva recorrente
+   * @return lista de reservas recorrentes futuras
    */
   @Query(
       """
           SELECT r FROM ReservationEntity r
-          WHERE r.status = 'CONFIRMED'
-          AND (r.dateTimeSlot.date > :date
-               OR (r.dateTimeSlot.date = :date AND r.dateTimeSlot.timeInterval.endTime > :time))
-          ORDER BY r.dateTimeSlot.date ASC, r.dateTimeSlot.timeInterval.endTime ASC
+          WHERE r.recurringReservationId = :recurringReservationId
+          AND r.dateTimeSlot.date >= CURRENT_DATE
+          AND r.status = 'CONFIRMED'
+          ORDER BY r.dateTimeSlot.date ASC, r.dateTimeSlot.timeInterval.startTime ASC
           """)
-  List<ReservationEntity> findConfirmedReservationsEndedAfter(
-      @Param("date") LocalDate date, @Param("time") LocalTime time);
+  List<ReservationEntity> findFutureRecurringReservations(@Param("recurringReservationId") UUID recurringReservationId);
 
+  /**
+   * Busca todas as reservas futuras com base em uma lista de IDs
+   * @param ids Lista de IDs das reservas
+   * @return lista de reservas futuras
+   */
+  @Query(
+      """
+          SELECT r FROM ReservationEntity r
+          WHERE r.id IN :ids
+          AND r.dateTimeSlot.date >= CURRENT_DATE
+          AND r.status = 'CONFIRMED'
+          ORDER BY r.dateTimeSlot.date ASC, r.dateTimeSlot.timeInterval.startTime ASC
+          """)
+  List<ReservationEntity> findAllFutureReservationsByIds(@Param("ids") List<UUID> ids);
 }

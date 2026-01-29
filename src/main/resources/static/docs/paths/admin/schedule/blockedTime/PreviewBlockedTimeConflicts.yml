@@ -289,7 +289,7 @@ post:
               value:
                 timestamp: "2026-01-15T14:30:00Z"
                 status: 400
-                errorCode: "BLOCKED_TIME_SELECTED_DAYS_OUTSIDE_DATE_RANGE"
+                errorCode: "SCHEDULE_ENTRY_SELECTED_DAYS_OUTSIDE_DATE_RANGE"
                 developerMessage: "Um ou mais dias da semana selecionados estão fora do intervalo de datas informado."
                 path: "/api/admin/blocked-times/preview-conflicts"
 
@@ -310,7 +310,7 @@ post:
               value:
                 timestamp: "2026-01-15T14:30:00Z"
                 status: 400
-                errorCode: "BLOCKED_TIME_OUTSIDE_OPERATING_HOURS"
+                errorCode: "SCHEDULE_ENTRY_TIME_INTERVAL_OUTSIDE_OPERATING_HOURS"
                 developerMessage: "O intervalo de tempo informado está fora do horário de funcionamento de um ou mais dias selecionados. Verifique se o horário é válido para todos os dias."
                 path: "/api/admin/blocked-times/preview-conflicts"
             TimeIntervalRequiredWhenNotFullDay:
@@ -331,8 +331,8 @@ post:
               value:
                 timestamp: "2026-01-15T14:30:00Z"
                 status: 400
-                errorCode: "BLOCKED_TIME_TOO_MANY_OCCURRENCES"
-                developerMessage: "O bloqueio recorrente geraria muitas ocorrências. O limite máximo é de 1000 bloqueios (quadras × datas aplicáveis)."
+                errorCode: "SCHEDULE_ENTRY_TOO_MANY_OCCURRENCES"
+                developerMessage: "O limite máximo de 1000 agendamentos recorrentes foi atingido, reduza o intervalo de datas."
                 path: "/api/admin/blocked-times/preview-conflicts"
     401:
       $ref: "../../../../components/responses/UnauthorizedError.yml"

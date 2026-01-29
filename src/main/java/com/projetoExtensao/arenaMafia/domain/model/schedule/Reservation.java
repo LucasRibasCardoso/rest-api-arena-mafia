@@ -220,6 +220,10 @@ public class Reservation extends ScheduleEntry {
   }
 
   // --- Comportamentos de Negócio ---
+  @Override
+  public boolean isRecurring() {
+    return this.recurringReservationId != null;
+  }
 
   public void cancelByAdmin(UUID adminUserId) {
     if (adminUserId == null) {

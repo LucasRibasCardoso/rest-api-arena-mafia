@@ -37,11 +37,12 @@ public class ReservationBatchCancellationService {
    *
    * @param reservations Lista de reservas a serem canceladas
    * @param reason Motivo do cancelamento
+   * @param adminId ID do administrador responsável pelo cancelamento dos bloqueios
    * @return Quantidade de reservas canceladas com sucesso
    * @throws BatchCancellationFailedException se qualquer reserva falhar ao ser cancelada
    */
   @Transactional
-  public int cancelReservationsInBatch(List<Reservation> reservations, String reason) {
+  public int cancelReservationsInBatch(List<Reservation> reservations, String reason, UUID adminId) {
     if (reservations == null || reservations.isEmpty()) {
       return 0;
     }
@@ -51,7 +52,7 @@ public class ReservationBatchCancellationService {
 
     try {
       for (Reservation reservation : reservations) {
-        reservation.cancel();
+        reservation.cancelByAdmin(adminId);
         reservationRepository.save(reservation);
         createCancellationEvent(reservation, usersMap, reason).ifPresent(pendingEvents::add);
       }

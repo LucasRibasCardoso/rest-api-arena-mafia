@@ -1,6 +1,8 @@
 package com.projetoExtensao.arenaMafia.infrastructure.web.admin;
 
-import com.projetoExtensao.arenaMafia.application.admin.usecase.users.*;
+import com.projetoExtensao.arenaMafia.application.user.usecase.admin.AdminListUsersUseCase;
+import com.projetoExtensao.arenaMafia.application.user.usecase.admin.AdminUpdateUserRoleUseCase;
+import com.projetoExtensao.arenaMafia.application.user.usecase.admin.AdminUpdateUserStatusUseCase;
 import com.projetoExtensao.arenaMafia.domain.model.User;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.mapper.AdminUserMapper;
 import com.projetoExtensao.arenaMafia.infrastructure.security.rateLimit.CustomRateLimiter;

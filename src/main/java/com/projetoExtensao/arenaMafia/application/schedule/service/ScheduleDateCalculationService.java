@@ -2,7 +2,7 @@ package com.projetoExtensao.arenaMafia.application.schedule.service;
 
 import com.projetoExtensao.arenaMafia.application.operatingHours.port.repository.OperatingHoursRepositoryPort;
 import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
-import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidBlockDateException;
+import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidScheduleDateCalculationException;
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidBlockedTimeException;
 import com.projetoExtensao.arenaMafia.domain.exception.notFound.OperatingHoursNotFoundException;
 import com.projetoExtensao.arenaMafia.domain.model.OperatingHours;
@@ -17,7 +17,7 @@ import java.util.stream.Stream;
 import org.springframework.stereotype.Service;
 
 /**
- * Service responsável por cálculos relacionados a datas e horários de BlockedTime.
+ * Service responsável por cálculos relacionados a datas e horários de Schedules.
  *
  * <p>Centraliza a lógica de:
  *
@@ -29,13 +29,13 @@ import org.springframework.stereotype.Service;
  * </ul>
  */
 @Service
-public class BlockedTimeDateCalculationService {
+public class ScheduleDateCalculationService {
 
-  private static final int MAX_BLOCKED_TIME_OCCURRENCES = 1000;
+  private static final int MAX_RECURRING_SCHEDULES = 1000;
 
   private final OperatingHoursRepositoryPort operatingHoursRepository;
 
-  public BlockedTimeDateCalculationService(OperatingHoursRepositoryPort operatingHoursRepository) {
+  public ScheduleDateCalculationService(OperatingHoursRepositoryPort operatingHoursRepository) {
     this.operatingHoursRepository = operatingHoursRepository;
   }
 
@@ -51,8 +51,7 @@ public class BlockedTimeDateCalculationService {
    * @param selectedDaysOfWeek Dias da semana selecionados (null ou vazio = todos os dias)
    * @return Lista de LocalDate representando as datas aplicáveis
    */
-  public List<LocalDate> calculateApplicableDates(
-      LocalDate startDate, LocalDate endDate, Set<DayOfWeek> selectedDaysOfWeek) {
+  public List<LocalDate> calculateApplicableDates(LocalDate startDate, LocalDate endDate, Set<DayOfWeek> selectedDaysOfWeek) {
 
     Stream<LocalDate> dateStream = startDate.datesUntil(endDate.plusDays(1));
 
@@ -79,13 +78,12 @@ public class BlockedTimeDateCalculationService {
    * @param endDate Data final do intervalo
    * @param courtsCount Número de quadras selecionadas
    * @return Conjunto de dias da semana efetivos
-   * @throws InvalidBlockDateException se algum dia selecionado estiver fora do range de datas ou se
+   * @throws InvalidScheduleDateCalculationException se algum dia selecionado estiver fora do range de datas ou se
    *     exceder limite de ocorrências
    * @throws OperatingHoursNotFoundException se algum dia não possuir horários de funcionamento
    *     definidos
    */
-  public Set<DayOfWeek> resolveEffectiveDaysOfWeekWithOccurrencesValidation(
-      Set<DayOfWeek> selectedDaysOfWeek, LocalDate startDate, LocalDate endDate, int courtsCount) {
+  public Set<DayOfWeek> resolveEffectiveDaysOfWeekWithOccurrencesValidation(Set<DayOfWeek> selectedDaysOfWeek, LocalDate startDate, LocalDate endDate, int courtsCount) {
 
     Set<DayOfWeek> effectiveDaysOfWeek;
 
@@ -143,7 +141,7 @@ public class BlockedTimeDateCalculationService {
    * @param effectiveDaysOfWeek Dias da semana efetivos
    * @return TimeInterval calculado
    * @throws InvalidBlockedTimeException se o intervalo não for fornecido quando isFullDay é false
-   * @throws InvalidBlockDateException se o intervalo fornecido estiver fora do horário de
+   * @throws InvalidScheduleDateCalculationException se o intervalo fornecido estiver fora do horário de
    *     funcionamento de algum dos dias selecionados
    */
   public TimeInterval calculateSearchInterval(
@@ -202,8 +200,7 @@ public class BlockedTimeDateCalculationService {
    * @param selectedDaysOfWeek Dias da semana selecionados pelo usuário
    * @param startDate Data inicial do intervalo
    * @param endDate Data final do intervalo
-   * @throws InvalidBlockDateException se algum dia selecionado não estiver presente no range de
-   *     datas
+   * @throws InvalidScheduleDateCalculationException se algum dia selecionado não estiver presente no range de datas
    */
   private void validateSelectedDaysWithinDateRange(
       Set<DayOfWeek> selectedDaysOfWeek, LocalDate startDate, LocalDate endDate) {
@@ -216,7 +213,7 @@ public class BlockedTimeDateCalculationService {
             .collect(Collectors.toSet());
 
     if (!invalidDays.isEmpty()) {
-      throw new InvalidBlockDateException(ErrorCode.BLOCKED_TIME_SELECTED_DAYS_OUTSIDE_DATE_RANGE);
+      throw new InvalidScheduleDateCalculationException(ErrorCode.SCHEDULE_ENTRY_SELECTED_DAYS_OUTSIDE_DATE_RANGE);
     }
   }
 
@@ -233,7 +230,7 @@ public class BlockedTimeDateCalculationService {
    * @param interval Intervalo a ser validado
    * @param operatingHoursList Lista de horários de funcionamento
    * @param effectiveDaysOfWeek Dias da semana que devem ser validados
-   * @throws InvalidBlockDateException se o intervalo não estiver dentro do horáriode funcionamento
+   * @throws InvalidScheduleDateCalculationException se o intervalo não estiver dentro do horáriode funcionamento
    *     de algum dia
    */
   private void validateIntervalWithinOperatingHours(
@@ -252,7 +249,7 @@ public class BlockedTimeDateCalculationService {
               .anyMatch(ohInterval -> ohInterval.containsInterval(interval));
 
       if (!isValidForDay) {
-        throw new InvalidBlockDateException(ErrorCode.BLOCKED_TIME_OUTSIDE_OPERATING_HOURS);
+        throw new InvalidScheduleDateCalculationException(ErrorCode.SCHEDULE_ENTRY_TIME_INTERVAL_OUTSIDE_OPERATING_HOURS);
       }
     }
   }
@@ -262,13 +259,13 @@ public class BlockedTimeDateCalculationService {
    *
    * @param courtsCount Número de quadras selecionadas
    * @param datesCount Número de datas aplicáveis
-   * @throws InvalidBlockDateException se o total de ocorrências exceder {@value
-   *     #MAX_BLOCKED_TIME_OCCURRENCES}
+   * @throws InvalidScheduleDateCalculationException se o total de ocorrências exceder {@value
+   *     #MAX_RECURRING_SCHEDULES}
    */
   private void validateOccurrencesLimit(int courtsCount, int datesCount) {
     int totalOccurrences = courtsCount * datesCount;
-    if (totalOccurrences > MAX_BLOCKED_TIME_OCCURRENCES) {
-      throw new InvalidBlockDateException(ErrorCode.BLOCKED_TIME_TOO_MANY_OCCURRENCES);
+    if (totalOccurrences > MAX_RECURRING_SCHEDULES) {
+      throw new InvalidScheduleDateCalculationException(ErrorCode.SCHEDULE_ENTRY_TOO_MANY_OCCURRENCES);
     }
   }
 

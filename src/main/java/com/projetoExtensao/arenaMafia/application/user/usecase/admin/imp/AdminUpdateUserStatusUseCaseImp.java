@@ -1,6 +1,6 @@
-package com.projetoExtensao.arenaMafia.application.admin.usecase.users.imp;
+package com.projetoExtensao.arenaMafia.application.user.usecase.admin.imp;
 
-import com.projetoExtensao.arenaMafia.application.admin.usecase.users.AdminUpdateUserStatusUseCase;
+import com.projetoExtensao.arenaMafia.application.user.usecase.admin.AdminUpdateUserStatusUseCase;
 import com.projetoExtensao.arenaMafia.application.user.port.repository.UserRepositoryPort;
 import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 import com.projetoExtensao.arenaMafia.domain.exception.forbidden.AdminCannotUpdateOwnStatusException;

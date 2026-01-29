@@ -1482,7 +1482,7 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
 
           // Assert
           assertBusinessError(
-              response, 400, PREVIEW_CONFLICTS_PATH, ErrorCode.BLOCKED_TIME_TOO_MANY_OCCURRENCES);
+              response, 400, PREVIEW_CONFLICTS_PATH, ErrorCode.SCHEDULE_ENTRY_TOO_MANY_OCCURRENCES);
         }
 
         @Test
@@ -1522,7 +1522,7 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
               response,
               400,
               PREVIEW_CONFLICTS_PATH,
-              ErrorCode.BLOCKED_TIME_OUTSIDE_OPERATING_HOURS);
+              ErrorCode.SCHEDULE_ENTRY_TIME_INTERVAL_OUTSIDE_OPERATING_HOURS);
         }
 
         @Test
@@ -1569,7 +1569,7 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
               response,
               400,
               PREVIEW_CONFLICTS_PATH,
-              ErrorCode.BLOCKED_TIME_SELECTED_DAYS_OUTSIDE_DATE_RANGE);
+              ErrorCode.SCHEDULE_ENTRY_SELECTED_DAYS_OUTSIDE_DATE_RANGE);
         }
 
         @Test
@@ -1614,7 +1614,7 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
               response,
               400,
               PREVIEW_CONFLICTS_PATH,
-              ErrorCode.BLOCKED_TIME_SELECTED_DAYS_OUTSIDE_DATE_RANGE);
+              ErrorCode.SCHEDULE_ENTRY_SELECTED_DAYS_OUTSIDE_DATE_RANGE);
         }
 
         @Test
