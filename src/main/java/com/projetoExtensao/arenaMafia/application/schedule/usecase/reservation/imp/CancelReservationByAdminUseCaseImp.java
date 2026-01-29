@@ -56,7 +56,7 @@ public class CancelReservationByAdminUseCaseImp implements CancelReservationByAd
    */
   private void processCancelRecurringReservation(UUID adminId, UUID recurringReservationId) {
     List<Reservation> reservations = reservationRepository.findAllFutureRecurringReservations(recurringReservationId);
-    reservationBatchCancellationService.cancelReservationsInBatch(reservations, REASON_OF_CANCELLATION, adminId);
+    reservationBatchCancellationService.cancelReservationsInBatchByAdmin(reservations, REASON_OF_CANCELLATION, adminId);
   }
 
   /**
@@ -70,10 +70,10 @@ public class CancelReservationByAdminUseCaseImp implements CancelReservationByAd
     reservationRepository.save(reservation);
 
     var notificationEvent = new OnReservationCancelledByAdminEvent(
-            reservation,
             costumer.getUsername(),
             costumer.getPhone(),
-            REASON_OF_CANCELLATION);
+            REASON_OF_CANCELLATION,
+            reservation);
 
     eventPublisher.publishEvent(notificationEvent);
   }

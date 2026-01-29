@@ -1,22 +1,28 @@
 package com.projetoExtensao.arenaMafia.application.notification.listener;
 
-import com.projetoExtensao.arenaMafia.application.notification.event.OnReservationCancelledByAdminEvent;
-import com.projetoExtensao.arenaMafia.application.notification.event.OnReservationCancelledByUserEvent;
-import com.projetoExtensao.arenaMafia.application.notification.event.OnScheduleCreatedEvent;
-import com.projetoExtensao.arenaMafia.application.notification.event.OnVerificationRequiredEvent;
+import com.projetoExtensao.arenaMafia.application.notification.event.*;
 import com.projetoExtensao.arenaMafia.application.notification.gateway.OtpPort;
 import com.projetoExtensao.arenaMafia.application.notification.gateway.SmsPort;
+import com.projetoExtensao.arenaMafia.application.priceRule.port.PriceRuleRepositoryPort;
 import com.projetoExtensao.arenaMafia.domain.model.User;
+import com.projetoExtensao.arenaMafia.domain.model.enums.DayOfWeek;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.Reservation;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.ScheduleEntry;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.OtpCode;
+import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Component
 public class NotificationEventListener {
@@ -25,27 +31,26 @@ public class NotificationEventListener {
 
   private final SmsPort smsPort;
   private final OtpPort otpPort;
+  private final PriceRuleRepositoryPort priceRuleRepositoryPort;
 
-  public NotificationEventListener(SmsPort smsPort, OtpPort otpPort) {
+  public NotificationEventListener(
+      SmsPort smsPort,
+      OtpPort otpPort,
+      PriceRuleRepositoryPort priceRuleRepositoryPort) {
     this.smsPort = smsPort;
     this.otpPort = otpPort;
+    this.priceRuleRepositoryPort = priceRuleRepositoryPort;
   }
 
-  /**
-   * Listener que processa eventos de verificação de usuário. Gera código OTP e envia notificação
-   * SMS ao usuário.
-   *
-   * @param event evento contendo dados do usuário
-   */
   @Async
-  @EventListener
-  public void onUserRegistration(OnVerificationRequiredEvent event) {
+  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+  public void onUserRegistration(OnVerificationRequiredEvent eventData) {
     try {
-      User user = event.getUser();
-      String recipientPhone = event.getRecipientPhone();
+      User user = eventData.user();
+      String recipientPhone = eventData.getRecipientPhone();
 
       OtpCode otpCode = otpPort.generateOtpCode(user.getId());
-      String message = buildVerificationMessage(otpCode);
+      String message = buildOtpVerificationMessage(otpCode);
 
       smsPort.send(recipientPhone, message);
 
@@ -56,15 +61,9 @@ public class NotificationEventListener {
     }
   }
 
-  /**
-   * Listener que processa eventos de criação de agendamento. Envia notificação SMS ao usuário
-   * confirmando a reserva.
-   *
-   * @param eventData evento contendo dados do agendamento
-   */
   @Async
-  @EventListener
-  public void onScheduleCreated(OnScheduleCreatedEvent eventData) {
+  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+  public void onScheduleCreated(OnReservationCreatedEvent eventData) {
     try {
       ScheduleEntry scheduleEntry = eventData.scheduleEntry();
 
@@ -89,14 +88,8 @@ public class NotificationEventListener {
     }
   }
 
-  /**
-   * Listener que processa eventos de cancelamento de reserva. Envia notificação SMS ao usuário
-   * confirmando o cancelamento.
-   *
-   * @param eventData evento contendo dados do cancelamento
-   */
   @Async
-  @EventListener
+  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
   public void onReservationCancelledByUser(OnReservationCancelledByUserEvent eventData) {
     try {
       Reservation reservation = eventData.reservation();
@@ -114,16 +107,6 @@ public class NotificationEventListener {
     }
   }
 
-  /**
-   * Listener que processa eventos de cancelamento de reserva por administrador. Envia notificação
-   * SMS ao usuário informando sobre o cancelamento feito pelo admin.
-   *
-   * <p>Usa {@link TransactionalEventListener} com fase AFTER_COMMIT para garantir que a notificação
-   * só seja enviada após o commit bem-sucedido da transação. Isso evita enviar notificações para
-   * cancelamentos que falharam e sofreram rollback.
-   *
-   * @param eventData evento contendo dados do cancelamento pelo admin
-   */
   @Async
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
   public void onReservationCancelledByAdmin(OnReservationCancelledByAdminEvent eventData) {
@@ -146,13 +129,65 @@ public class NotificationEventListener {
     }
   }
 
-  /**
-   * Constrói a mensagem de verificação com código OTP.
-   *
-   * @param otpCode código de verificação gerado
-   * @return mensagem formatada para envio
-   */
-  private String buildVerificationMessage(OtpCode otpCode) {
+  @Async
+  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+  public void onRecurringReservationCreateByAdmin(OnRecurringReservationCreatedByAdminEvent eventData) {
+    try {
+      String message = buildRecurringReservationCreateByAdminMessage(eventData);
+      smsPort.send(eventData.userPhone(), message);
+
+      logger.info(
+          "SMS de criação de reservas recorrentes por admin enviado para o usuário: {} - Recurring ID: {}",
+          eventData.username(),
+          eventData.reservations().getFirst().getRecurringReservationId());
+
+    } catch (Exception e) {
+      logger.error(
+          "Falha ao processar evento de criação de reservas recorrentes por admin: {}", e.getMessage(), e);
+    }
+  }
+
+  @Async
+  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+  public void onRecurringReservationCancelledByAdmin(OnRecurringReservationCancelledByAdminEvent eventData) {
+    try {
+      String message = buildRecurringReservationCancellationByAdminMessage(eventData);
+      smsPort.send(eventData.userPhone(), message);
+
+      logger.info(
+          "SMS de cancelamento de reservas recorrentes por admin enviado para o usuário: {} - Recurring ID: {}",
+          eventData.username(),
+          eventData.reservations().getFirst().getRecurringReservationId());
+    } catch (Exception e) {
+      logger.error(
+          "Falha ao processar evento de cancelamento de reservas recorrentes por admin: {}",
+          e.getMessage(),
+          e);
+    }
+  }
+
+  @Async
+  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+  public void onReservationsCancelledByAdmin(OnReservationsCancelledByAdminEvent eventData) {
+    try {
+      String message = buildReservationsCancelledByAdminMessage(eventData);
+      smsPort.send(eventData.userPhone(), message);
+
+      logger.info(
+          "SMS de cancelamento em lote de reservas por admin enviado para o usuário: {} - Quantidade: {}",
+          eventData.username(),
+          eventData.reservations().size());
+    } catch (Exception e) {
+      logger.error(
+          "Falha ao processar evento de cancelamento em lote de reservas por admin: {}",
+          e.getMessage(),
+          e);
+    }
+  }
+
+  //  ================================ Mensagens de notificação ================================
+
+  private String buildOtpVerificationMessage(OtpCode otpCode) {
     return """
         Arena Máfia - Código de Verificação
 
@@ -163,13 +198,6 @@ public class NotificationEventListener {
         .formatted(otpCode);
   }
 
-  /**
-   * Constrói a mensagem de confirmação de reserva.
-   *
-   * @param username nome do usuário
-   * @param reservation reserva criada
-   * @return mensagem formatada para envio
-   */
   private String buildReservationConfirmationMessage(String username, Reservation reservation) {
     String date = reservation.getDateTimeSlot().date().toString();
     String startTime = reservation.getDateTimeSlot().timeInterval().startTime().toString();
@@ -188,13 +216,6 @@ public class NotificationEventListener {
         .formatted(username, date, startTime, endTime, price, reservation.getId());
   }
 
-  /**
-   * Constrói a mensagem de cancelamento de reserva.
-   *
-   * @param username nome do usuário
-   * @param reservation reserva cancelada
-   * @return mensagem formatada para envio
-   */
   private String buildReservationCancellationMessage(String username, Reservation reservation) {
     String date = reservation.getDateTimeSlot().date().toString();
     String startTime = reservation.getDateTimeSlot().timeInterval().startTime().toString();
@@ -210,16 +231,7 @@ public class NotificationEventListener {
         .formatted(username, date, startTime, endTime, reservation.getId());
   }
 
-  /**
-   * Constrói a mensagem de cancelamento de reserva feito por um administrador.
-   *
-   * @param username nome do usuário
-   * @param reservation reserva cancelada
-   * @param adminReason motivo do cancelamento fornecido pelo admin
-   * @return mensagem formatada para envio
-   */
-  private String buildReservationCancellationByAdminMessage(
-      String username, Reservation reservation, String adminReason) {
+  private String buildReservationCancellationByAdminMessage(String username, Reservation reservation, String adminReason) {
     String date = reservation.getDateTimeSlot().date().toString();
     String startTime = reservation.getDateTimeSlot().timeInterval().startTime().toString();
     String endTime = reservation.getDateTimeSlot().timeInterval().endTime().toString();
@@ -236,5 +248,152 @@ public class NotificationEventListener {
 
         Para mais informações, entre em contato com nossa central."""
         .formatted(username, date, startTime, endTime, adminReason, reservation.getId());
+  }
+
+  private String buildRecurringReservationCreateByAdminMessage(OnRecurringReservationCreatedByAdminEvent eventData) {
+    List<Reservation> reservations = eventData.reservations();
+
+    LocalDate startDate = extractStartDate(reservations);
+    LocalDate endDate = extractEndDate(reservations);
+    TimeInterval timeInterval = extractTimeInterval(reservations);
+    UUID recurringId = extractRecurringId(reservations);
+    String daysOfWeek = buildDaysOfWeek(eventData.daysOfWeek());
+    BigDecimal minPrice = extractMinPrice(reservations);
+    BigDecimal maxPrice = extractMaxPrice(reservations);
+
+    // Formatar preço (usar minPrice se todos iguais, senão range)
+    String priceText = minPrice.equals(maxPrice) ? minPrice.toString() : minPrice + " - " + maxPrice;
+
+    return """
+           Arena Máfia - Reservas Confirmadas!
+
+           Olá %s, suas reservas recorrentes foram confirmadas!
+
+           Data de início: %s
+           Data de término: %s
+           Dias da semana: %s
+           Horário: %s - %s
+           Preço: R$ %s
+
+           Código das reservas: %s
+           """
+        .formatted(
+            eventData.username(),
+            startDate,
+            endDate,
+            daysOfWeek,
+            timeInterval.startTime(),
+            timeInterval.endTime(),
+            priceText,
+            recurringId);
+  }
+
+  private String buildRecurringReservationCancellationByAdminMessage(OnRecurringReservationCancelledByAdminEvent eventData) {
+    List<Reservation> reservations = eventData.reservations();
+
+    LocalDate startDate = extractStartDate(reservations);
+    LocalDate endDate = extractEndDate(reservations);
+    TimeInterval timeInterval = extractTimeInterval(reservations);
+    UUID recurringId = extractRecurringId(reservations);
+    String daysOfWeek = buildDaysOfWeek(eventData.daysOfWeek());
+
+    return """
+           Arena Máfia - Reservas Canceladas!
+
+           Olá %s, suas reservas recorrentes foram canceladas pela administração.
+
+           Período: %s a %s
+           Dias: %s
+           Horário: %s - %s
+
+           Motivo: %s
+
+           Código: %s
+           """
+        .formatted(
+            eventData.username(),
+            startDate,
+            endDate,
+            daysOfWeek,
+            timeInterval.startTime(),
+            timeInterval.endTime(),
+            eventData.adminReason(),
+            recurringId);
+  }
+
+  private String buildReservationsCancelledByAdminMessage(OnReservationsCancelledByAdminEvent eventData) {
+    List<Reservation> reservations = eventData.reservations();
+
+    StringBuilder reservationsList = new StringBuilder();
+    for (Reservation reservation : reservations) {
+      String date = reservation.getDateTimeSlot().date().toString();
+      String startTime = reservation.getDateTimeSlot().timeInterval().startTime().toString();
+      String endTime = reservation.getDateTimeSlot().timeInterval().endTime().toString();
+      reservationsList.append(String.format("- %s, %s-%s\n", date, startTime, endTime));
+    }
+
+    return """
+           Arena Máfia - Reservas Canceladas!
+
+           Olá %s, suas reservas foram canceladas pela administração.
+
+           Reservas canceladas:
+           %s
+           Motivo: %s
+
+           Para mais informações, entre em contato com nossa central.
+           """
+        .formatted(
+            eventData.username(),
+            reservationsList.toString().trim(),
+            eventData.adminReason());
+  }
+
+  //  ================================ Métodos auxiliares ================================
+
+  private LocalDate extractStartDate(List<Reservation> reservations) {
+    return reservations.stream()
+        .map(r -> r.getDateTimeSlot().date())
+        .min(LocalDate::compareTo)
+        .orElse(null);
+  }
+
+  private LocalDate extractEndDate(List<Reservation> reservations) {
+    return reservations.stream()
+        .map(r -> r.getDateTimeSlot().date())
+        .max(LocalDate::compareTo)
+        .orElse(null);
+  }
+
+  private TimeInterval extractTimeInterval(List<Reservation> reservations) {
+    return reservations.getFirst().getDateTimeSlot().timeInterval();
+  }
+
+  private UUID extractRecurringId(List<Reservation> reservations) {
+    return reservations.getFirst().getRecurringReservationId();
+  }
+
+  private String buildDaysOfWeek(Set<DayOfWeek> daysOfWeek) {
+    return daysOfWeek.stream()
+        .map(DayOfWeek::getPortugueseName)
+        .collect(Collectors.joining(", "));
+  }
+
+  private BigDecimal extractMinPrice(List<Reservation> reservations) {
+    return reservations.stream()
+        .map(Reservation::getPrice)
+        .min(BigDecimal::compareTo)
+        .orElse(getDefaultPrice());
+  }
+
+  private BigDecimal extractMaxPrice(List<Reservation> reservations) {
+    return reservations.stream()
+        .map(Reservation::getPrice)
+        .max(BigDecimal::compareTo)
+        .orElse(getDefaultPrice());
+  }
+
+  private BigDecimal getDefaultPrice() {
+    return priceRuleRepositoryPort.findDefaultRuleOrElseThrow().getPrice();
   }
 }

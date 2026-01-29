@@ -11,7 +11,7 @@ public interface ReservationRepositoryPort {
 
   Reservation save(Reservation reservation);
 
-  List<Reservation> saveAll(List<Reservation> reservations);
+  void saveAll(List<Reservation> reservations);
 
   Optional<Reservation> findById(UUID id);
 

@@ -39,9 +39,9 @@ public class ReservationRepositoryAdapter implements ReservationRepositoryPort {
   }
 
   @Override
-  public List<Reservation> saveAll(List<Reservation> reservations) {
+  public void saveAll(List<Reservation> reservations) {
     List<ReservationEntity> reservationEntities = reservations.stream().map(reservationMapper::toEntity).toList();
-    return reservationJpaRepository.saveAll(reservationEntities).stream().map(reservationMapper::toDomain).toList();
+    reservationJpaRepository.saveAll(reservationEntities);
   }
 
   @Override

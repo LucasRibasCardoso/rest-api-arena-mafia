@@ -2,7 +2,7 @@ package com.projetoExtensao.arenaMafia.application.schedule.usecase.reservation.
 
 import com.projetoExtensao.arenaMafia.application.court.port.repository.CourtRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.modality.port.ModalityRepositoryPort;
-import com.projetoExtensao.arenaMafia.application.notification.event.OnScheduleCreatedEvent;
+import com.projetoExtensao.arenaMafia.application.notification.event.OnReservationCreatedEvent;
 import com.projetoExtensao.arenaMafia.application.priceRule.port.PriceRuleRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.priceRule.service.PriceCalculatorService;
 import com.projetoExtensao.arenaMafia.application.schedule.port.repository.ReservationRepositoryPort;
@@ -125,7 +125,7 @@ public class CreateReservationUseCaseImp implements CreateReservationUseCase {
    * @param reservation Reserva criada
    */
   private void publishConfirmationEvent(User user, Reservation reservation) {
-    eventPublisher.publishEvent(new OnScheduleCreatedEvent(user.getUsername(), user.getPhone(), reservation));
+    eventPublisher.publishEvent(new OnReservationCreatedEvent(user.getUsername(), user.getPhone(), reservation));
   }
 
   /**

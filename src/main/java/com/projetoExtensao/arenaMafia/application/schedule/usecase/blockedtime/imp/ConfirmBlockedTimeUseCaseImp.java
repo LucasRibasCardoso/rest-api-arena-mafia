@@ -193,7 +193,7 @@ public class ConfirmBlockedTimeUseCaseImp implements ConfirmBlockedTimeUseCase {
     List<Reservation> reservationsToCancel = reservationRepository.findAllFutureReservationsByIds(reservationIdsToCancel);
 
     String cancellationReason = String.format("Bloqueio de horário criado: %s", description);
-    return reservationBatchCancellationService.cancelReservationsInBatch(reservationsToCancel, cancellationReason, adminId);
+    return reservationBatchCancellationService.cancelReservationsInBatchByAdmin(reservationsToCancel, cancellationReason, adminId);
   }
 
   /**

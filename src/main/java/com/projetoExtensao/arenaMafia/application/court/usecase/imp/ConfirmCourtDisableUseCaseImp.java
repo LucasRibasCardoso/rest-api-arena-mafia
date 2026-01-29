@@ -115,7 +115,7 @@ public class ConfirmCourtDisableUseCaseImp implements ConfirmCourtDisableUseCase
     List<Reservation> reservationsToCancel = reservationRepositoryPort.findAllFutureReservationsByIds(reservationIdsToCancel);
 
     String cancellationReason = String.format("Quadra desativada: %s", description);
-    reservationBatchCancellationService.cancelReservationsInBatch(reservationsToCancel, cancellationReason, adminId);
+    reservationBatchCancellationService.cancelReservationsInBatchByAdmin(reservationsToCancel, cancellationReason, adminId);
   }
 
   /**

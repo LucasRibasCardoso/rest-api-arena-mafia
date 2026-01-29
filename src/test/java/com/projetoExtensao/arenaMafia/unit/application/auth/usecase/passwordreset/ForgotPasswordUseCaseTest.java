@@ -64,7 +64,7 @@ public class ForgotPasswordUseCaseTest {
 
     verify(eventPublisher).publishEvent(eventCaptor.capture());
 
-    User publishedUser = eventCaptor.getValue().getUser();
+    User publishedUser = eventCaptor.getValue().user();
     assertThat(publishedUser).isEqualTo(user);
   }
 

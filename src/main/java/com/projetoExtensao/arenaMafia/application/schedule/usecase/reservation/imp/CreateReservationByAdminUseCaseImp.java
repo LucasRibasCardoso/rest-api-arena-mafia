@@ -2,7 +2,8 @@ package com.projetoExtensao.arenaMafia.application.schedule.usecase.reservation.
 
 import com.projetoExtensao.arenaMafia.application.court.port.repository.CourtRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.modality.port.ModalityRepositoryPort;
-import com.projetoExtensao.arenaMafia.application.notification.event.OnScheduleCreatedEvent;
+import com.projetoExtensao.arenaMafia.application.notification.event.OnRecurringReservationCreatedByAdminEvent;
+import com.projetoExtensao.arenaMafia.application.notification.event.OnReservationCreatedEvent;
 import com.projetoExtensao.arenaMafia.application.priceRule.port.PriceRuleRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.priceRule.service.PriceCalculatorService;
 import com.projetoExtensao.arenaMafia.application.schedule.detail.ReservationDetail;
@@ -184,15 +185,13 @@ public class CreateReservationByAdminUseCaseImp implements CreateReservationByAd
                       price,
                       dateTimeSlot,
                       recurringReservationId);
+
       reservations.add(reservation);
+      scheduleAutomaticCompletion(reservation);
     }
 
     reservationRepositoryPort.saveAll(reservations);
-
-    for (Reservation reservation : reservations) {
-      publishConfirmationEvent(costumer, reservation);
-      scheduleAutomaticCompletion(reservation);
-    }
+    publishConfirmationRecurringEvent(costumer, reservations, effectiveDaysOfWeek);
 
     ScheduleEntriesEnrichedResult enrichedResult = enrichmentService.enrichScheduleEntries(reservations);
     return enrichedResult.enrichedReservations();
@@ -305,12 +304,23 @@ public class CreateReservationByAdminUseCaseImp implements CreateReservationByAd
   }
 
   /**
-   * Publica o evento de notificação informado o usuário sobre a reserva cadastrada
+   * Publica o evento de notificação informando o usuário sobre as reservas cadastradas
    * @param costumer Cliente usuário
-   * @param reservation reserva cadastrada
+   * @param reservations reservas cadastrada
+   * @param dayOfWeeks dias da semana
+   */
+  private void publishConfirmationRecurringEvent(User costumer, List<Reservation> reservations, Set<DayOfWeek> dayOfWeeks) {
+    eventPublisher.publishEvent(
+        new OnRecurringReservationCreatedByAdminEvent(costumer.getUsername(), costumer.getPhone(), dayOfWeeks, reservations));
+  }
+
+  /**
+   * Publica o evento de notificação informando o usuário sobre a reserva cadastrada
+   * @param costumer Usuário cliente
+   * @param reservation Reserva cadastrada
    */
   private void publishConfirmationEvent(User costumer, Reservation reservation) {
-    eventPublisher.publishEvent(new OnScheduleCreatedEvent(costumer.getUsername(), costumer.getPhone(), reservation));
+    eventPublisher.publishEvent(new OnReservationCreatedEvent(costumer.getUsername(), costumer.getPhone(), reservation));
   }
 
   /**
