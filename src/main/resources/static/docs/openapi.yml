@@ -21,6 +21,9 @@ info:
     | `INVALID_SORT_PARAMETER` | O parâmetro de ordenação fornecido é inválido. | Erro lançado quando o parâmetro de ordenação (sort) não é válido. |
     | `INVALID_FIELD_VALUE` | O valor fornecido para um campo é inválido. | Erro lançado quando o valor de um campo específico não é válido. |
     | `TOO_MANY_REQUESTS` | Limite de requisições excedido. Por favor, tente novamente mais tarde. | Erro lançado quando o limite de requisições (rate limit) foi excedido. |
+    | `RESOURCE_NOT_FOUND` | Recurso não encontrado. | Erro lançado quando a url digitada não corresponde a nenhum recurso existente. |
+
+
 
 tags:
   - name: "Autenticação - Core"

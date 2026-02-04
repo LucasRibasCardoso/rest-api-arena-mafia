@@ -29,6 +29,7 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -147,9 +148,20 @@ public class GlobalExceptionHandler {
   public ResponseEntity<ErrorResponseDto> handleGenericException(
       Exception e, HttpServletRequest request) {
 
-    logger.error("Ocorreu um erro inesperado: ", e);
+    logger.error("ERRO CRÍTICO NÃO TRATADO: ", e);
     return buildGeneralErrorResponse(
         HttpStatus.INTERNAL_SERVER_ERROR, ErrorCode.UNEXPECTED_ERROR, request);
+  }
+
+  @ExceptionHandler(NoResourceFoundException.class)
+  public ResponseEntity<ErrorResponseDto> handleNoResourceFoundException(
+          NoResourceFoundException e, HttpServletRequest request) {
+
+    logger.warn("Tentativa de acesso a recurso inexistente: {} {}", request.getMethod(), request.getRequestURI());
+
+    // Retorna 404 corretamente
+    return buildGeneralErrorResponse(
+            HttpStatus.NOT_FOUND, ErrorCode.RESOURCE_NOT_FOUND, request);
   }
 
   /**

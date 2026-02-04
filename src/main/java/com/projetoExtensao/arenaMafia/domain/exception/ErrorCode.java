@@ -25,6 +25,7 @@ public enum ErrorCode {
   INVALID_SORT_PARAMETER("O parâmetro de ordenação fornecido é inválido."),
   INVALID_FIELD_VALUE("O valor fornecido para um campo é inválido."),
   TOO_MANY_REQUESTS("Limite de requisições excedido. Por favor, tente novamente mais tarde."),
+  RESOURCE_NOT_FOUND("Recurso não encontrado."),
 
   // ==================== ERROS DE AUTENTICAÇÃO E AUTORIZAÇÃO ====================
   INVALID_CREDENTIALS("Credenciais inválidas. Por favor, verifique seu usuário e senha."),

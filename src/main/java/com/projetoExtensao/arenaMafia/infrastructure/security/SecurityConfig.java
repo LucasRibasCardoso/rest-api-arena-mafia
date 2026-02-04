@@ -1,11 +1,12 @@
 package com.projetoExtensao.arenaMafia.infrastructure.security;
 
+import com.projetoExtensao.arenaMafia.domain.model.enums.RoleEnum;
 import com.projetoExtensao.arenaMafia.infrastructure.security.jwt.JwtTokenFilter;
 import com.projetoExtensao.arenaMafia.infrastructure.web.exception.customHandlers.CustomAccessDeniedHandler;
 import com.projetoExtensao.arenaMafia.infrastructure.web.exception.customHandlers.CustomUnauthorizedHandler;
-import org.springframework.boot.actuate.autoconfigure.security.servlet.EndpointRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -39,7 +40,28 @@ public class SecurityConfig {
 
   @Bean
   public RoleHierarchy roleHierarchy() {
-    return RoleHierarchyImpl.fromHierarchy("ROLE_MODERATOR > ROLE_ADMIN > ROLE_USER");
+    return RoleHierarchyImpl.fromHierarchy(
+        RoleEnum.ROLE_MODERATOR.getValue()
+            + " > "
+            + RoleEnum.ROLE_ADMIN.getValue()
+            + " > "
+            + RoleEnum.ROLE_USER.getValue());
+  }
+
+  @Bean
+  @Order(0)
+  public SecurityFilterChain devSecurityFilterChain(HttpSecurity http) throws Exception {
+    http.securityMatcher(
+            "/h2-console/**",
+            "/docs/**",
+            "/v3/api-docs/**",
+            "/swagger-ui/**",
+            "/swagger-ui.html",
+            "/webjars/**",
+            "/openapi.yml")
+        .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
+        .csrf(CsrfConfigurer::disable);
+    return http.build();
   }
 
   @Bean
@@ -67,34 +89,22 @@ public class SecurityConfig {
         .authorizeHttpRequests(
             auth ->
                 auth
-                    // Endpoints privados
+                    // Endpoints protegidos
                     .requestMatchers("/api/auth/logout", "/api/users/**", "/api/schedules/**")
                     .authenticated()
+
+                    // Endpoints de administração
+                    .requestMatchers("/api/admin/**")
+                    .hasRole(RoleEnum.ROLE_ADMIN.name().substring(5))
 
                     // Endpoints públicos
                     .requestMatchers("/api/auth/**", "/api/public/**")
                     .permitAll()
 
-                    // Endpoints públicos para desenvolvimento
-                    .requestMatchers(
-                        "/h2-console/**",
-                        "/docs/**",
-                        "/v3/api-docs/**",
-                        "/swagger-ui/**",
-                        "/swagger-ui.html",
-                        "/webjars/**",
-                        "/openapi.yml")
-                    .permitAll()
+                        .requestMatchers("/actuator/**").hasRole(RoleEnum.ROLE_MODERATOR.name().substring(5))
 
-                    // Endpoints de administração de usuários restritos a administradores
-                    .requestMatchers("/api/admin/**")
-                    .hasRole("ADMIN")
 
-                    // Restringe o acesso a endpoints de monitoramento
-                    .requestMatchers(EndpointRequest.toAnyEndpoint())
-                    .hasRole("DEVELOPER")
-
-                    // Exige autenticação para todas as outras requisições
+                    // Qualquer outra requisição requer autenticação
                     .anyRequest()
                     .authenticated())
 
@@ -110,8 +120,7 @@ public class SecurityConfig {
   }
 
   @Bean
-  public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration)
-      throws Exception {
+  public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
     return configuration.getAuthenticationManager();
   }
 }

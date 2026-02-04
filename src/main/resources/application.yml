@@ -1,49 +1,52 @@
 spring:
   application:
-    name: Backend Arena Mafia
-
+    name: ${SPRING_APPLICATION_NAME:backend-arena-mafia}
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:dev}
-
   cache:
     type: redis
-
   data:
-
     web:
       pageable:
         default-page-size: 20
         max-page-size: 100
-
     redis:
       timeout: 2000ms
-
-
       lettuce:
         pool:
           max-active: 8
           max-idle: 8
           min-idle: 2
           max-wait: -1ms
-
   security:
     jwt:
-      secret-key: ${JWT_SECRET_KEY}
+      secret-key: ${JWT_SECRET_KEY:551VM4LcN284uYnv3MjDckhe9IQ6ta7/0jNwrvNqRz0=}
       access-token-expiration-ms: ${JWT_ACCESS_TOKEN_EXPIRATION_MS:3600000} # 1 hora
       refresh-token-expiration-days: ${JWT_REFRESH_TOKEN_EXPIRATION_DAYS:7} # 7 dias
       issuer: "arena-mafia-api"
-
   jpa:
     hibernate:
       ddl-auto: validate
-
   flyway:
     enable: true
 
-# Configuração dos Logs
+management:
+  server:
+    port: 9091
+    address: 0.0.0.0
+    endpoint:
+      health:
+        show-details: never
+  endpoints:
+    web:
+      exposure:
+        include: health, info
+
 logging:
+  pattern:
+    level: "%5p [${spring.application.name:},traceId=%X{traceId:-},spanId=%X{spanId:-}]"
   level:
-    root: info
+    root: INFO
 
 resilience4j:
   ratelimiter:
