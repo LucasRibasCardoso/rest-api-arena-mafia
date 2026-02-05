@@ -1,31 +1,7 @@
 # Arena Mafia - Sistema de Agendamento de Quadras Esportivas
 
-> Uma aplicação moderna de agendamento de quadras esportivas desenvolvida como projeto de extensão universitária no IFSC. Construída com arquitetura hexagonal, Spring Boot 3.5 e observabilidade em tempo real com OpenTelemetry.
-
----
-
-### 🚀 Comece Aqui
-
-- **Novo no projeto?** → Leia o README completo abaixo
-- **Quer entender a arquitetura?** → Veja seção [Arquitetura](#arquitetura)
-- **Como configurar?** → Veja seção [Instalação e Setup](#instalação-e-setup)
-- **Dúvidas?** → Veja seção [Suporte](#-suporte)
-
----
-
-- [Visão Geral](#visão-geral)
-- [Arquitetura](#arquitetura)
-- [Tecnologias](#tecnologias)
-- [Pré-requisitos](#pré-requisitos)
-- [Instalação e Setup](#instalação-e-setup)
-- [Executando a Aplicação](#executando-a-aplicação)
-- [Estrutura do Projeto](#estrutura-do-projeto)
-- [Desenvolvimento](#desenvolvimento)
-- [Observabilidade](#observabilidade)
-- [Contribuindo](#contribuindo)
-- [Licença](#licença)
-
----
+> Uma aplicação moderna de agendamento de quadras esportivas desenvolvida como projeto de extensão universitária no IFSC. 
+> Construída com arquitetura hexagonal, Spring Boot 3.5 e observabilidade em tempo real com OpenTelemetry.
 
 ## 🎯 Visão Geral
 
@@ -140,107 +116,6 @@ HTTP Request
 
 ---
 
-## 📦 Pré-requisitos
-
-### Sistema
-- **macOS 12+** ou **Linux** (Windows via WSL2)
-- **Docker** (v20.10+) e **Docker Compose** (v2.0+)
-- **Git**
-- **Java 21** (JDK) - Opcional (se executar localmente)
-- **Maven 3.8+** - Opcional (projeto inclui Maven Wrapper)
-
-### Verificar Instalações
-
-```bash
-# Docker
-docker --version
-docker compose version
-
-# Git
-git --version
-
-# Java (opcional para execução local)
-java -version
-```
-
----
-
-## 🚀 Instalação e Setup
-
-### 1. Clone o Repositório
-
-```bash
-git clone https://github.com/seu-usuario/app-arena-mafia.git
-cd app-arena-mafia
-```
-
-### 2. Configure o Arquivo .env
-
-```bash
-# Copie o exemplo (se existir)
-cp .env.example .env
-
-# Edite com suas configurações
-# Variáveis padrão:
-# - POSTGRES_USER=postgres
-# - POSTGRES_PASSWORD=postgres
-# - POSTGRES_DB=arena_mafia
-# - REDIS_PASSWORD=redis_password
-# - JWT_SECRET=seu_secret_jwt
-```
-
-### 3. Build da Imagem Docker
-
-```bash
-# Build completo
-docker compose build
-
-# Ou com cache limpo
-docker compose build --no-cache
-```
-
----
-
-## 🔥 Executando a Aplicação
-
-### Opção 1: Ambiente de Desenvolvimento (Dev)
-
-Sobe apenas a infraestrutura (PostgreSQL, Redis, Observabilidade). A aplicação é executada via IDE.
-
-```bash
-./scripts/docker-restart.sh dev
-```
-
-**Servidor rodará em:** `http://localhost:8080`
-
-### Opção 2: Desenvolvimento Full (Dev-Full)
-
-Sobe tudo incluindo a aplicação, mas sem balanceador de carga.
-
-```bash
-./scripts/docker-restart.sh dev-full
-```
-
-**Endpoints:**
-- API: `http://localhost:8080`
-- Swagger UI: `http://localhost:8080/swagger-ui.html`
-- Grafana: `http://localhost:3000`
-
-### Opção 3: Produção (Prod)
-
-Sobe toda a stack completa com Nginx como proxy reverso.
-
-```bash
-./scripts/docker-restart.sh prod
-```
-
-**Endpoints:**
-- API: `http://localhost/api`
-- Swagger UI: `http://localhost/swagger-ui.html`
-- Grafana: `http://localhost/grafana` (user: `admin` / password: `admin`)
-
----
-
 ## 📁 Estrutura do Projeto
 
 ```
@@ -271,9 +146,6 @@ Sobe toda a stack completa com Nginx como proxy reverso.
 │
 ├── gateway/
 │   └── nginx.conf                       # Nginx reverse proxy
-│
-├── scripts/
-│   └── docker-restart.sh                # Script para inicializar containers
 │
 ├── docker-compose.yml                   # Compose principal (prod)
 ├── docker-compose.override.yml          # Overrides para dev
