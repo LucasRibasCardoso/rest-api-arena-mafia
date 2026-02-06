@@ -10,7 +10,7 @@ import java.lang.annotation.*;
 @Documented
 public @interface ValidConditionalSelectedDaysOfWeek {
 
-  String message() default "BLOCKED_TIME_SELECTED_DAYS_NOT_ALLOWED_FOR_SINGLE_DATE";
+  String message() default "SELECTED_DAYS_NOT_ALLOWED_FOR_SINGLE_DATE";
 
   Class<?>[] groups() default {};
 

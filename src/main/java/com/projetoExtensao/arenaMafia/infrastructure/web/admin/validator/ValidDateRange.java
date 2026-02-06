@@ -10,7 +10,7 @@ import java.lang.annotation.*;
 @Documented
 public @interface ValidDateRange {
 
-  String message() default "BLOCKED_TIME_INVALID_DATE_RANGE";
+  String message() default "End date must be after start date";
 
   Class<?>[] groups() default {};
 

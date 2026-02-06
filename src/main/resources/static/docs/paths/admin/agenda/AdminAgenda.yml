@@ -1,7 +1,6 @@
 get:
   operationId: getAdminAgenda
-  tags:
-    - "Administração - Gerenciamento de Agendamentos"
+  tags: ["Administração - Gerenciamento de Agendamentos"]
   summary: Buscar agenda administrativa do dia
   description: |
     Retorna a agenda completa do estabelecimento para uma data específica, vista pela administração.
@@ -29,8 +28,21 @@ get:
     - Gerenciamento de reservas e bloqueios
     - Suporte ao cliente com informações completas
 
+  security:
+    - BearerAuth: [ ]
+
   parameters:
     - $ref: "../../../components/parameters/Date.yml"
+    - name: courtId
+      in: query
+      description: |
+        Identificador único da quadra para filtrar a agenda.
+        Se não fornecido, retorna a agenda de todas as quadras ativas.
+      required: false
+      schema:
+        type: string
+        format: uuid
+      example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
 
   responses:
     200:
@@ -136,17 +148,18 @@ get:
       description: |
         Recurso não encontrado.
 
-        Lançado quando: 
+        Lançado quando:
+        - A quadra especificada em `courtId` não existe ou está desativada
         - Não há quadras ativas cadastradas no sistema
-        - Não há horários de funcionamento ativos
-        - Não há regras de preço ativas
+        - Não há horários de funcionamento ativos para a data solicitada
+        - Não há regras de preço ativas no sistema
       content:
         application/json:
           schema:
             $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
           examples:
-            NoActiveCourts:
-              summary: Nenhuma quadra ativa encontrada
+            CourtNotFound:
+              summary: Quadra especificada não encontrada
               value:
                 timestamp: "2026-01-26T20:00:00Z"
                 status: 404

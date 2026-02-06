@@ -249,7 +249,7 @@ public enum ErrorCode {
   BLOCKED_TIME_START_DATE_IN_PAST("A data inicial do bloqueio não pode estar no passado."),
   BLOCKED_TIME_START_DATE_AFTER_END_DATE("A data inicial não pode ser posterior à data final."),
   BLOCKED_TIME_END_DATE_IN_PAST("A data final do bloqueio não pode estar no passado."),
-  BLOCKED_TIME_SELECTED_DAYS_NOT_ALLOWED_FOR_SINGLE_DATE("Para bloqueios de um único dia (startDate = endDate), não é necessário informar dias da semana específicos."),
+  SELECTED_DAYS_NOT_ALLOWED_FOR_SINGLE_DATE("Para agendamentos de um único dia (startDate = endDate), não é necessário informar dias da semana específicos."),
 
   // BlockedTime - Validação de Input
   BLOCKED_TIME_COURT_IDS_REQUIRED("É obrigatório informar ao menos uma quadra para o bloqueio."),

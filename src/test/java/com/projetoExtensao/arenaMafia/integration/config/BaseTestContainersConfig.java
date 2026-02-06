@@ -17,6 +17,7 @@ import com.projetoExtensao.arenaMafia.domain.model.*;
 import com.projetoExtensao.arenaMafia.domain.model.enums.AccountStatus;
 import com.projetoExtensao.arenaMafia.domain.model.enums.DayOfWeek;
 import com.projetoExtensao.arenaMafia.domain.model.enums.OffsetMinutes;
+import com.projetoExtensao.arenaMafia.domain.model.enums.ReservationStatus;
 import com.projetoExtensao.arenaMafia.domain.model.enums.RoleEnum;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.BlockedTime;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.Reservation;
@@ -638,6 +639,47 @@ public abstract class BaseTestContainersConfig {
     DateTimeSlot dateTimeSlot = new DateTimeSlot(date, timeInterval);
     Reservation reservation =
         Reservation.createByUser(modalityId, courtId, userId, price, dateTimeSlot);
+    return (Reservation) scheduleEntryRepository.save(reservation);
+  }
+
+  public Reservation mockPersistReservationByUserWithStatus(
+      UUID modalityId,
+      UUID courtId,
+      LocalDate date,
+      TimeInterval timeInterval,
+      BigDecimal price,
+      UUID userId,
+      ReservationStatus status) {
+
+    DateTimeSlot dateTimeSlot = new DateTimeSlot(date, timeInterval);
+    Reservation reservation = Reservation.reconstitute(
+        UUID.randomUUID(),
+        courtId,
+        modalityId,
+        userId,
+        null,
+        null,
+        price,
+        dateTimeSlot,
+        status,
+        null,
+        Instant.now());
+    return (Reservation) scheduleEntryRepository.save(reservation);
+  }
+
+  public Reservation mockPersistRecurringReservation(
+      UUID modalityId,
+      UUID courtId,
+      LocalDate date,
+      TimeInterval timeInterval,
+      BigDecimal price,
+      UUID userId,
+      UUID adminId,
+      UUID recurringReservationId) {
+
+    DateTimeSlot dateTimeSlot = new DateTimeSlot(date, timeInterval);
+    Reservation reservation =
+        Reservation.createRecurring(modalityId, courtId, userId, adminId, price, dateTimeSlot, recurringReservationId);
     return (Reservation) scheduleEntryRepository.save(reservation);
   }
 

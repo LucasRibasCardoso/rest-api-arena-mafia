@@ -211,6 +211,14 @@ components:
       $ref: "./components/schemas/blockedTime/ListOfBlockedTimeDetailResponseDto.yml"
     ReservationDetailResponseDto:
       $ref: "./components/schemas/reservation/ReservationDetailResponseDto.yml"
+    AdminReservationSearchRequestDto:
+      $ref: "./components/schemas/reservation/request/AdminReservationSearchRequestDto.yml"
+    PageOfReservationDetailResponseDto:
+      $ref: "./components/schemas/reservation/PageOfReservationDetailResponseDto.yml"
+    AdminReservationCreateRequestDto:
+      $ref: "./components/schemas/reservation/request/AdminReservationCreateRequestDto.yml"
+    ListOfReservationDetailResponseDto:
+      $ref: "./components/schemas/reservation/response/ListOfReservationDetailResponseDto.yml"
 
   responses:
     InternalServerError:
@@ -346,6 +354,11 @@ paths:
 
   /api/admin/agenda:
     $ref: "./paths/admin/agenda/AdminAgenda.yml"
+
+  /api/admin/reservations:
+    $ref: "./paths/admin/reservations/AdminReservations.yml"
+  /api/admin/reservations/{reservationId}/cancel:
+    $ref: "./paths/admin/reservations/CancelReservation.yml"
 
   /api/public/modalities:
     $ref: "./paths/modality/GetAllModalities.yml"

@@ -6,7 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.projetoExtensao.arenaMafia.application.user.port.repository.AdminUserRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.user.port.repository.UserRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.user.usecase.admin.imp.AdminListUsersUseCaseImp;
 import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidDateRangeException;
@@ -36,7 +36,7 @@ import org.springframework.data.jpa.domain.Specification;
 @DisplayName("Testes unitários para AdminListUsersUseCase")
 public class AdminListUsersUseCaseTest {
 
-  @Mock private AdminUserRepositoryPort adminUserRepository;
+  @Mock private UserRepositoryPort userRepositoryPort;
   @InjectMocks private AdminListUsersUseCaseImp adminListUsersUseCase;
 
   @Captor private ArgumentCaptor<Specification<UserEntity>> specificationCaptor;
@@ -53,7 +53,7 @@ public class AdminListUsersUseCaseTest {
     User user = TestDataProvider.UserBuilder.defaultUser().withFullName("John Doe").build();
     Page<User> expectedPage = new PageImpl<>(List.of(user), originalPageable, 1);
 
-    when(adminUserRepository.search(any(Specification.class), any(Pageable.class)))
+    when(userRepositoryPort.search(any(Specification.class), any(Pageable.class)))
         .thenReturn(expectedPage);
 
     // Act
@@ -64,7 +64,7 @@ public class AdminListUsersUseCaseTest {
     assertThat(resultPage.getContent()).hasSize(1);
     assertThat(resultPage.getContent().getFirst().getFullName()).isEqualTo("John Doe");
 
-    verify(adminUserRepository).search(specificationCaptor.capture(), pageableCaptor.capture());
+    verify(userRepositoryPort).search(specificationCaptor.capture(), pageableCaptor.capture());
 
     Pageable capturedPageable = pageableCaptor.getValue();
     assertThat(capturedPageable.getPageNumber()).isEqualTo(0);
@@ -83,14 +83,14 @@ public class AdminListUsersUseCaseTest {
     // Pageable COM ordenação (por Nome ASC)
     Pageable sortedPageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "fullName"));
 
-    when(adminUserRepository.search(any(Specification.class), any(Pageable.class)))
+    when(userRepositoryPort.search(any(Specification.class), any(Pageable.class)))
         .thenReturn(Page.empty());
 
     // Act
     adminListUsersUseCase.execute(criteria, sortedPageable);
 
     // Assert
-    verify(adminUserRepository).search(any(Specification.class), pageableCaptor.capture());
+    verify(userRepositoryPort).search(any(Specification.class), pageableCaptor.capture());
 
     Pageable capturedPageable = pageableCaptor.getValue();
     // Garante que NÃO mudou para createdAt
@@ -108,7 +108,7 @@ public class AdminListUsersUseCaseTest {
     Pageable pageable = PageRequest.of(0, 10);
     Page<User> emptyPage = Page.empty(pageable);
 
-    when(adminUserRepository.search(any(Specification.class), any(Pageable.class)))
+    when(userRepositoryPort.search(any(Specification.class), any(Pageable.class)))
         .thenReturn(emptyPage);
 
     // Act
@@ -117,7 +117,7 @@ public class AdminListUsersUseCaseTest {
     // Assert
     assertThat(resultPage).isNotNull();
     assertThat(resultPage.isEmpty()).isTrue();
-    verify(adminUserRepository).search(any(Specification.class), any(Pageable.class));
+    verify(userRepositoryPort).search(any(Specification.class), any(Pageable.class));
   }
 
   @Test
@@ -147,14 +147,14 @@ public class AdminListUsersUseCaseTest {
     var criteria = new AdminUserSearchRequestDto(null, null, null, null, null);
     Pageable pageable = PageRequest.of(0, 10); // Unsorted
 
-    when(adminUserRepository.search(any(Specification.class), any(Pageable.class)))
+    when(userRepositoryPort.search(any(Specification.class), any(Pageable.class)))
         .thenReturn(Page.empty(pageable));
 
     // Act
     adminListUsersUseCase.execute(criteria, pageable);
 
     // Assert
-    verify(adminUserRepository).search(specificationCaptor.capture(), pageableCaptor.capture());
+    verify(userRepositoryPort).search(specificationCaptor.capture(), pageableCaptor.capture());
 
     // Valida Specification
     Specification<UserEntity> capturedSpec = specificationCaptor.getValue();

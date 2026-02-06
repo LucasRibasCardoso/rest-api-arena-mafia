@@ -41,7 +41,7 @@ public class ConditionalSelectedDaysOfWeekValidator
           context.disableDefaultConstraintViolation();
           context
               .buildConstraintViolationWithTemplate(
-                  "BLOCKED_TIME_SELECTED_DAYS_NOT_ALLOWED_FOR_SINGLE_DATE")
+                  "SELECTED_DAYS_NOT_ALLOWED_FOR_SINGLE_DATE")
               .addPropertyNode("selectedDaysOfWeek")
               .addConstraintViolation();
           return false;

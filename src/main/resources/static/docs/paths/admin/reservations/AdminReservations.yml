@@ -1,0 +1,667 @@
+get:
+  operationId: searchAdminReservations
+  tags: ["Administração - Gerenciamento de Agendamentos"]
+  summary: Buscar reservas com filtros e paginação
+  description: |
+    Retorna uma lista paginada de reservas com suporte a filtros avançados e busca textual.
+
+    **Este endpoint é protegido e requer autenticação de administrador.**
+
+    **Filtros disponíveis:**
+    - **searchTerm**: Busca textual em nome do usuário, username ou telefone (até 100 caracteres)
+    - **userId**: Filtro por ID do usuário que fez a reserva
+    - **startDate/endDate**: Intervalo de datas para filtrar por data de criação da reserva
+    - **status**: Filtro por status (CONFIRMED, CANCELLED, COMPLETED)
+
+    **Paginação:**
+    - Padrão: 20 itens por página, primeira página (0)
+    - Suportados parâmetros: `page`, `size`, `sort`
+    - Ordenação padrão: por data de criação (DESC)
+
+    **Cenários de uso:**
+    - Administradores buscam reservas de um cliente específico
+    - Filtrar reservas por período
+    - Listar reservas canceladas ou completadas
+    - Pesquisa geral de reservas por informações do cliente
+
+  security:
+    - BearerAuth: [ ]
+
+  parameters:
+    - name: searchTerm
+      in: query
+      description: |
+        Termo de busca para filtrar reservas por nome, username ou telefone do usuário.
+        Máximo de 100 caracteres.
+      required: false
+      schema:
+        type: string
+        maxLength: 100
+      example: "João Silva"
+
+    - name: userId
+      in: query
+      description: |
+        Identificador único do usuário para filtrar suas reservas.
+      required: false
+      schema:
+        type: string
+        format: uuid
+      example: "123e4567-e89b-12d3-a456-426614174000"
+
+    - name: startDate
+      in: query
+      description: |
+        Data inicial do intervalo de datas (ISO 8601).
+        Deve ser anterior ou igual ao `endDate`.
+      required: false
+      schema:
+        type: string
+        format: date
+      example: "2026-01-01"
+
+    - name: endDate
+      in: query
+      description: |
+        Data final do intervalo de datas (ISO 8601).
+        Deve ser posterior ou igual ao `startDate`.
+      required: false
+      schema:
+        type: string
+        format: date
+      example: "2026-01-31"
+
+    - name: status
+      in: query
+      description: |
+        Status da reserva para filtrar.
+        Valores: CONFIRMED, CANCELLED, COMPLETED
+      required: false
+      schema:
+        type: string
+        enum:
+          - CONFIRMED
+          - CANCELLED
+          - COMPLETED
+      example: "CONFIRMED"
+
+    - name: page
+      in: query
+      description: |
+        Número da página a ser retornada (inicia em 0).
+      required: false
+      schema:
+        type: integer
+        default: 0
+        minimum: 0
+      example: 0
+
+    - name: size
+      in: query
+      description: |
+        Quantidade de itens por página.
+      required: false
+      schema:
+        type: integer
+        default: 20
+        minimum: 1
+      example: 20
+
+    - name: sort
+      in: query
+      description: |
+        Critério de ordenação no formato 'propriedade,direção'.
+        Exemplos: 'date,desc' (padrão), 'date,asc'
+      required: false
+      schema:
+        type: string
+      example: "date,desc"
+
+  responses:
+    200:
+      description: |
+        Reservas retornadas com sucesso.
+
+        Retorna lista paginada de detalhes de reservas, ordenada por data de criação (descendente por padrão).
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/reservation/PageOfReservationDetailResponseDto.yml"
+          examples:
+            SuccessExample:
+              summary: Lista paginada de reservas
+              description: |
+                Exemplo mostrando a resposta com 2 reservas por página, primeira página.
+              value:
+                content:
+                  - reservationId: "3e7a9b2c-5d8f-4c3e-9a1b-7f6e4d2c1a0b"
+                    userId: "123e4567-e89b-12d3-a456-426614174000"
+                    courtId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                    username: "joao_silva"
+                    FullName: "João da Silva"
+                    userPhone: "+5511999001111"
+                    courtName: "Quadra A"
+                    date: "2026-02-10"
+                    timeInterval:
+                      startTime: "10:00"
+                      endTime: "11:00"
+                    modalityName: "Beach Tennis"
+                    price: 85.00
+                    status: "CONFIRMED"
+                    recurringReservationId: null
+                  - reservationId: "4f8b0c3d-6e9a-5d4f-0b2c-8g7f5e3d2b1c"
+                    userId: "234f5678-f89c-23e4-b567-537725285001"
+                    courtId: "b2c3d4e5-f6a7-8901-bcde-f12345678901"
+                    username: "maria_santos"
+                    FullName: "Maria Santos"
+                    userPhone: "+5511999002222"
+                    courtName: "Quadra B"
+                    date: "2026-02-11"
+                    timeInterval:
+                      startTime: "15:00"
+                      endTime: "16:00"
+                    modalityName: "Vôlei de Praia"
+                    price: 90.00
+                    status: "CONFIRMED"
+                    recurringReservationId: null
+                page:
+                  size: 2
+                  number: 0
+                  totalElements: 25
+                  totalPages: 13
+
+            FilteredBySearchTerm:
+              summary: Busca por termo (username)
+              description: |
+                Exemplo mostrando o resultado de uma busca por username.
+              value:
+                content:
+                  - reservationId: "3e7a9b2c-5d8f-4c3e-9a1b-7f6e4d2c1a0b"
+                    userId: "123e4567-e89b-12d3-a456-426614174000"
+                    courtId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                    username: "joao_silva"
+                    FullName: "João da Silva"
+                    userPhone: "+5511999001111"
+                    courtName: "Quadra A"
+                    date: "2026-02-10"
+                    timeInterval:
+                      startTime: "10:00"
+                      endTime: "11:00"
+                    modalityName: "Beach Tennis"
+                    price: 85.00
+                    status: "CONFIRMED"
+                    recurringReservationId: null
+                page:
+                  size: 20
+                  number: 0
+                  totalElements: 1
+                  totalPages: 1
+
+            FilteredByStatus:
+              summary: Filtro por status (CANCELLED)
+              description: |
+                Exemplo mostrando o resultado de um filtro por status cancelado.
+              value:
+                content:
+                  - reservationId: "5h9c1d4e-7f0b-6e5g-1c3d-9h8g6f4e3c2d"
+                    userId: "345g6789-g90d-34f5-c678-648836396112"
+                    courtId: "c3d4e5f6-g7b8-9012-cdef-g23456789012"
+                    username: "pedro_costa"
+                    FullName: "Pedro Costa"
+                    userPhone: "+5511999003333"
+                    courtName: "Quadra C"
+                    date: "2026-01-20"
+                    timeInterval:
+                      startTime: "14:00"
+                      endTime: "15:00"
+                    modalityName: "Futvôlei"
+                    price: 75.00
+                    status: "CANCELLED"
+                    recurringReservationId: null
+                page:
+                  size: 20
+                  number: 0
+                  totalElements: 5
+                  totalPages: 1
+
+    400:
+      description: |
+        Requisição inválida.
+
+        Lançado quando:
+        - Parâmetro `searchTerm` excede 100 caracteres
+        - Parâmetro `status` possui valor inválido
+        - `startDate` é posterior a `endDate`
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
+          examples:
+            SearchTermTooLong:
+              summary: Termo de busca muito longo
+              value:
+                timestamp: "2026-02-06T14:30:00Z"
+                status: 400
+                errorCode: "VALIDATION_FAILED"
+                developerMessage: "A validação falhou. Verifique os detalhes dos campos para mais informações."
+                path: "/api/admin/reservations"
+                fieldErrors:
+                  - fieldName: "searchTerm"
+                    errorCode: "TERM_TOO_LONG"
+                    developerMessage: "O termo de busca é muito longo. O máximo permitido é 100 caracteres."
+
+            InvalidStatus:
+              summary: Status inválido
+              value:
+                timestamp: "2026-02-06T14:30:00Z"
+                status: 400
+                errorCode: "VALIDATION_FAILED"
+                developerMessage: "A validação falhou. Verifique os detalhes dos campos para mais informações."
+                path: "/api/admin/reservations"
+                fieldErrors:
+                  - fieldName: "status"
+                    errorCode: "INVALID_REQUEST_PARAMETER"
+                    developerMessage: "Um parâmetro da requisição é inválido ou está malformado."
+
+            StartDateAfterEndDate:
+              summary: Data inicial posterior à data final
+              value:
+                timestamp: "2026-02-06T14:30:00Z"
+                status: 400
+                errorCode: "VALIDATION_FAILED"
+                developerMessage: "A validação falhou. Verifique os detalhes dos campos para mais informações."
+                path: "/api/admin/reservations"
+                fieldErrors:
+                  - fieldName: "dateRange"
+                    errorCode: "START_DATE_AFTER_END_DATE"
+                    developerMessage: "A data de início não pode ser posterior à data de término."
+
+    401:
+      $ref: "../../../components/responses/UnauthorizedError.yml"
+    403:
+      $ref: "../../../components/responses/ForbiddenError.yml"
+    429:
+      $ref: "../../../components/responses/TooManyRequestsError.yml"
+    500:
+      $ref: "../../../components/responses/InternalServerError.yml"
+
+post:
+  operationId: createAdminReservation
+  tags: ["Administração - Gerenciamento de Agendamentos"]
+  summary: Criar reserva (individual ou recorrente)
+  description: |
+    Cria uma ou mais reservas para um usuário.
+
+    **Este endpoint é protegido e requer autenticação de administrador.**
+
+    **Modos de operação:**
+    1. **Reserva Individual:**
+       - `startDate` = `endDate`
+       - `selectedDaysOfWeek` = null/vazio
+       - Resultado: 1 reserva criada
+
+    2. **Reserva Recorrente:**
+       - `startDate` < `endDate`
+       - `selectedDaysOfWeek` = dias da semana selecionados
+       - Resultado: múltiplas reservas (uma por ocorrência dentro do intervalo)
+
+    **Validações:**
+    - Usuário com o telefone fornecido deve existir
+    - Modalidade deve existir
+    - Quadra deve existir e suportar a modalidade
+    - Datas não podem estar no passado
+    - `startDate` deve ser ≤ `endDate`
+    - Horário deve estar dentro dos horários de funcionamento
+    - Horário não pode estar ocupado
+
+    **Resposta:**
+    - Status 200: Lista de reservas criadas
+    - Todas as reservas retornam com status CONFIRMED
+    - Reservas recorrentes incluem `recurringReservationId`
+
+  security:
+    - BearerAuth: [ ]
+
+  requestBody:
+    description: Dados da reserva a ser criada
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: "../../../components/schemas/reservation/request/AdminReservationCreateRequestDto.yml"
+        examples:
+          SingleReservation:
+            summary: Reserva individual
+            description: Exemplo de reserva para um único dia
+            value:
+              userPhone: "+5511999001111"
+              courtId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+              modalityId: "550e8400-e29b-41d4-a716-446655440000"
+              startDate: "2026-02-10"
+              endDate: "2026-02-10"
+              timeInterval:
+                startTime: "10:00"
+                endTime: "11:00"
+              selectedDaysOfWeek: null
+
+          RecurringReservation:
+            summary: Reserva recorrente
+            description: Exemplo de reserva recorrente (segundas e quartas-feiras)
+            value:
+              userPhone: "+5511999001111"
+              courtId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+              modalityId: "550e8400-e29b-41d4-a716-446655440000"
+              startDate: "2026-02-09"
+              endDate: "2026-03-09"
+              timeInterval:
+                startTime: "10:00"
+                endTime: "11:00"
+              selectedDaysOfWeek:
+                - MONDAY
+                - WEDNESDAY
+
+  responses:
+    200:
+      description: |
+        Reserva(s) criada(s) com sucesso.
+
+        Retorna uma lista contendo:
+        - 1 elemento para reservas individuais
+        - N elementos para reservas recorrentes (uma por ocorrência)
+
+        Todas as reservas têm status CONFIRMED.
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/reservation/response/ListOfReservationDetailResponseDto.yml"
+          examples:
+            SingleReservationSuccess:
+              summary: Reserva individual criada
+              description: Resposta ao criar uma reserva para um único dia
+              value:
+                - reservationId: "3e7a9b2c-5d8f-4c3e-9a1b-7f6e4d2c1a0b"
+                  userId: "123e4567-e89b-12d3-a456-426614174000"
+                  courtId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                  username: "joao_silva"
+                  FullName: "João da Silva"
+                  userPhone: "+5511999001111"
+                  courtName: "Quadra A"
+                  date: "2026-02-10"
+                  timeInterval:
+                    startTime: "10:00"
+                    endTime: "11:00"
+                  modalityName: "Beach Tennis"
+                  price: 85.00
+                  status: "CONFIRMED"
+                  recurringReservationId: null
+
+            RecurringReservationSuccess:
+              summary: Reservas recorrentes criadas
+              description: Resposta ao criar reservas para múltiplos dias (segundas e quartas)
+              value:
+                - reservationId: "4f8b0c3d-6e9a-5d4f-0b2c-8g7f5e3d2b1c"
+                  userId: "123e4567-e89b-12d3-a456-426614174000"
+                  courtId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                  username: "joao_silva"
+                  FullName: "João da Silva"
+                  userPhone: "+5511999001111"
+                  courtName: "Quadra A"
+                  date: "2026-02-09"
+                  timeInterval:
+                    startTime: "10:00"
+                    endTime: "11:00"
+                  modalityName: "Beach Tennis"
+                  price: 85.00
+                  status: "CONFIRMED"
+                  recurringReservationId: "550e8400-e29b-41d4-a716-446655440099"
+                - reservationId: "5g9c1d4e-7f0b-6e5g-1c3d-9h8g6f4e3c2d"
+                  userId: "123e4567-e89b-12d3-a456-426614174000"
+                  courtId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                  username: "joao_silva"
+                  FullName: "João da Silva"
+                  userPhone: "+5511999001111"
+                  courtName: "Quadra A"
+                  date: "2026-02-11"
+                  timeInterval:
+                    startTime: "10:00"
+                    endTime: "11:00"
+                  modalityName: "Beach Tennis"
+                  price: 85.00
+                  status: "CONFIRMED"
+                  recurringReservationId: "550e8400-e29b-41d4-a716-446655440099"
+    400:
+      description: |
+        Requisição inválida.
+
+        Lançado quando:
+        - Campo obrigatório não fornecido (userPhone, courtId, modalityId, startDate, endDate, timeInterval)
+        - Formato de telefone inválido
+        - Formato de data inválido
+        - TimeInterval inválido (startTime >= endTime, minutos inválidos, etc.)
+        - Datas no passado
+        - startDate posterior a endDate
+        - selectedDaysOfWeek inválido para o tipo de reserva
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
+          examples:
+            PhoneRequired:
+              summary: Telefone obrigatório
+              value:
+                timestamp: "2026-02-06T14:30:00Z"
+                status: 400
+                errorCode: "VALIDATION_FAILED"
+                developerMessage: "A validação falhou. Verifique os detalhes dos campos para mais informações."
+                path: "/api/admin/reservations"
+                fieldErrors:
+                  - fieldName: "userPhone"
+                    errorCode: "PHONE_REQUIRED"
+                    developerMessage: "O número de telefone é obrigatório."
+
+            PhoneInvalidFormat:
+              summary: Formato de telefone inválido
+              value:
+                timestamp: "2026-02-06T14:30:00Z"
+                status: 400
+                errorCode: "VALIDATION_FAILED"
+                developerMessage: "A validação falhou. Verifique os detalhes dos campos para mais informações."
+                path: "/api/admin/reservations"
+                fieldErrors:
+                  - fieldName: "userPhone"
+                    errorCode: "PHONE_INVALID_FORMAT"
+                    developerMessage: "O número de telefone não está em um formato válido. Use o padrão internacional E.164 (ex: +5511987654321)."
+
+            PhoneInvalid:
+              summary: Número de telefone inválido
+              value:
+                timestamp: "2026-02-06T14:30:0Z"
+                status: 400
+                errorCode: "PHONE_INVALID"
+                developerMessage: "O número de telefone é inválido. Verifique o código do país e o número."
+                path: "/api/admin/reservations"
+
+            CourtIdRequired:
+              summary: courtId obrigatório
+              value:
+                timestamp: "2026-02-06T14:30:00Z"
+                status: 400
+                errorCode: "VALIDATION_FAILED"
+                developerMessage: "A validação falhou. Verifique os detalhes dos campos para mais informações."
+                path: "/api/admin/reservations"
+                fieldErrors:
+                  - fieldName: "courtId"
+                    errorCode: "RESERVATION_COURT_ID_REQUIRED"
+                    developerMessage: "A quadra da reserva é obrigatória."
+
+            ModalityIdRequired:
+              summary: modalityId obrigatório
+              value:
+                timestamp: "2026-02-06T14:30:00Z"
+                status: 400
+                errorCode: "VALIDATION_FAILED"
+                developerMessage: "A validação falhou. Verifique os detalhes dos campos para mais informações."
+                path: "/api/admin/reservations"
+                fieldErrors:
+                  - fieldName: "modalityId"
+                    errorCode: "RESERVATION_MODALITY_ID_REQUIRED"
+                    developerMessage: "É obrigatório informar a modalidade da reserva."
+
+            StartDateRequired:
+              summary: startDate obrigatório
+              value:
+                timestamp: "2026-02-06T14:30:00Z"
+                status: 400
+                errorCode: "VALIDATION_FAILED"
+                developerMessage: "A validação falhou. Verifique os detalhes dos campos para mais informações."
+                path: "/api/admin/reservations"
+                fieldErrors:
+                  - fieldName: "startDate"
+                    errorCode: "RESERVATION_START_DATE_REQUIRED"
+                    developerMessage: "É obrigatório informar a data inicial da reserva."
+
+            EndDateRequired:
+              summary: endDate obrigatório
+              value:
+                timestamp: "2026-02-06T14:30:00Z"
+                status: 400
+                errorCode: "VALIDATION_FAILED"
+                developerMessage: "A validação falhou. Verifique os detalhes dos campos para mais informações."
+                path: "/api/admin/reservations"
+                fieldErrors:
+                  - fieldName: "endDate"
+                    errorCode: "RESERVATION_END_DATE_REQUIRED"
+                    developerMessage: "É obrigatório informar a data final da reserva."
+
+            TimeIntervalRequired:
+              summary: timeInterval obrigatório
+              value:
+                timestamp: "2026-02-06T14:30:00Z"
+                status: 400
+                errorCode: "VALIDATION_FAILED"
+                developerMessage: "A validação falhou. Verifique os detalhes dos campos para mais informações."
+                path: "/api/admin/reservations"
+                fieldErrors:
+                  - fieldName: "timeInterval"
+                    errorCode: "RESERVATION_TIME_INTERVAL_REQUIRED"
+                    developerMessage: "É obrigatório informar o horário da reserva."
+
+            TimeIntervalInvalid:
+              summary: TimeInterval com start time >= end time
+              value:
+                timestamp: "2026-02-06T14:30:00Z"
+                status: 400
+                errorCode: "VALIDATION_FAILED"
+                developerMessage: "A validação falhou. Verifique os detalhes dos campos para mais informações."
+                path: "/api/admin/reservations"
+                fieldErrors:
+                  - fieldName: "timeInterval"
+                    errorCode: "TIME_INTERVAL_OPEN_AFTER_CLOSE"
+                    developerMessage: "O horário de abertura deve ser anterior ao horário de fechamento."
+
+            DateInThePast:
+              summary: Data está no passado
+              value:
+                timestamp: "2026-02-06T14:30:00Z"
+                status: 400
+                errorCode: "VALIDATION_FAILED"
+                developerMessage: "A validação falhou. Verifique os detalhes dos campos para mais informações."
+                path: "/api/admin/reservations"
+                fieldErrors:
+                  - fieldName: "startDate"
+                    errorCode: "BLOCKED_TIME_START_DATE_IN_PAST"
+                    developerMessage: "A data inicial do bloqueio não pode estar no passado."
+
+            StartDateAfterEndDate:
+              summary: startDate após endDate
+              value:
+                timestamp: "2026-02-06T14:30:00Z"
+                status: 400
+                errorCode: "VALIDATION_FAILED"
+                developerMessage: "A validação falhou. Verifique os detalhes dos campos para mais informações."
+                path: "/api/admin/reservations"
+                fieldErrors:
+                  - fieldName: "startDate"
+                    errorCode: "BLOCKED_TIME_START_DATE_AFTER_END_DATE"
+                    developerMessage: "A data inicial não pode ser posterior à data final."
+
+            SelectedDaysNotAllowedForSingleDate:
+              summary: selectedDaysOfWeek preenchido para data única
+              description: Erro lançado quando startDate = endDate mas selectedDaysOfWeek não é null/vazio
+              value:
+                timestamp: "2026-02-06T14:30:00Z"
+                status: 400
+                errorCode: "VALIDATION_FAILED"
+                developerMessage: "A validação falhou. Verifique os detalhes dos campos para mais informações."
+                path: "/api/admin/reservations"
+                fieldErrors:
+                  - fieldName: "selectedDaysOfWeek"
+                    errorCode: "SELECTED_DAYS_NOT_ALLOWED_FOR_SINGLE_DATE"
+                    developerMessage: "Para agendamentos de um único dia (startDate = endDate), não é necessário informar dias da semana específicos."
+
+    401:
+      $ref: "../../../components/responses/UnauthorizedError.yml"
+    403:
+      $ref: "../../../components/responses/ForbiddenError.yml"
+    404:
+      description: |
+        Recurso não encontrado.
+
+        Lançado quando:
+        - Usuário com o telefone fornecido não existe
+        - Modalidade não existe
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
+          examples:
+            UserNotFound:
+              summary: Usuário não encontrado
+              value:
+                timestamp: "2026-02-06T14:30:00Z"
+                status: 404
+                errorCode: "USER_NOT_FOUND"
+                developerMessage: "Usuário não encontrado."
+                path: "/api/admin/reservations"
+
+            ModalityNotFound:
+              summary: Modalidade não encontrada
+              value:
+                timestamp: "2026-02-06T14:30:00Z"
+                status: 404
+                errorCode: "MODALITY_NOT_FOUND"
+                developerMessage: "Modalidade não encontrada."
+                path: "/api/admin/reservations"
+    409:
+      description: |
+        Conflito ao criar a reserva.
+
+        Lançado quando:
+        - Horário já está ocupado
+        - Quadra não suporta a modalidade
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
+          examples:
+            TimeSlotOccupied:
+              summary: Horário já está ocupado
+              value:
+                timestamp: "2026-02-06T14:30:00Z"
+                status: 409
+                errorCode: "SCHEDULE_ENTRY_NOT_AVAILABLE"
+                developerMessage: "O horário selecionado não está mais disponível. Por favor, escolha outro horário."
+                path: "/api/admin/reservations"
+
+            CourtDoesNotSupportModality:
+              summary: Quadra não suporta modalidade
+              value:
+                timestamp: "2026-02-06T14:30:00Z"
+                status: 409
+                errorCode: "COURT_NOT_SUPPORTS_MODALITY"
+                developerMessage: "A quadra selecionada não suporta a modalidade solicitada."
+                path: "/api/admin/reservations"
+    429:
+      $ref: "../../../components/responses/TooManyRequestsError.yml"
+    500:
+      $ref: "../../../components/responses/InternalServerError.yml"

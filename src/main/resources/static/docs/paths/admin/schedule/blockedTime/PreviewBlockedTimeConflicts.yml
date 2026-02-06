@@ -282,8 +282,8 @@ post:
                 path: "/api/admin/blocked-times/preview-conflicts"
                 fieldErrors:
                   - fieldName: "selectedDaysOfWeek"
-                    errorCode: "BLOCKED_TIME_SELECTED_DAYS_NOT_ALLOWED_FOR_SINGLE_DATE"
-                    developerMessage: "Para bloqueios de um único dia (startDate = endDate), não é necessário informar dias da semana específicos."
+                    errorCode: "SELECTED_DAYS_NOT_ALLOWED_FOR_SINGLE_DATE"
+                    developerMessage: "Para agendamentos de um único dia (startDate = endDate), não é necessário informar dias da semana específicos."
             SelectedDaysOfWeekOutsideDateRange:
               summary: Dias da semana selecionados fora do intervalo de datas
               value:

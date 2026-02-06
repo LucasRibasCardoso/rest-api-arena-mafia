@@ -21,6 +21,10 @@ public class ReservationEntity extends ScheduleEntryEntity {
   @Column(name = "user_id", nullable = false)
   private UUID userId;
 
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "user_id", insertable = false, updatable = false)
+  private UserEntity user;
+
   @Column(name = "modality_id", nullable = false)
   private UUID modalityId;
 

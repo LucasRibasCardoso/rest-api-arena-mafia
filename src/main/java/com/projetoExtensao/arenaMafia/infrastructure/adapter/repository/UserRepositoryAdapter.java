@@ -12,6 +12,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -88,5 +92,10 @@ public class UserRepositoryAdapter implements UserRepositoryPort {
   public void deleteAll(List<User> users) {
     List<UserEntity> entitiesToDelete = users.stream().map(userMapper::toEntity).toList();
     userJpaRepository.deleteAllInBatch(entitiesToDelete);
+  }
+
+  @Override
+  public Page<User> search(Specification<UserEntity> spec, Pageable pageable) {
+    return userJpaRepository.findAll(spec, pageable).map(userMapper::toDomain);
   }
 }

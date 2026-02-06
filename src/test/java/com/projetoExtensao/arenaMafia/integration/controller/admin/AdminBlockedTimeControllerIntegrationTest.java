@@ -28,7 +28,7 @@ import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.blockedtime.r
 import com.projetoExtensao.arenaMafia.infrastructure.web.exception.dto.ErrorResponseDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.schedule.dto.response.scheduleDetail.BlockedTimeDetailResponseDto;
 import com.projetoExtensao.arenaMafia.integration.config.WebIntegrationTestConfig;
-import com.projetoExtensao.arenaMafia.integration.config.util.BlockedTime.InvalidListOfCourtIdsProvider;
+import com.projetoExtensao.arenaMafia.integration.config.util.blockedTime.InvalidListOfCourtIdsProvider;
 import com.projetoExtensao.arenaMafia.integration.config.util.timeInterval.InvalidTimeIntervalProvider;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.common.mapper.TypeRef;
@@ -1654,7 +1654,7 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
               response,
               PREVIEW_CONFLICTS_PATH,
               "selectedDaysOfWeek",
-              ErrorCode.BLOCKED_TIME_SELECTED_DAYS_NOT_ALLOWED_FOR_SINGLE_DATE);
+              ErrorCode.SELECTED_DAYS_NOT_ALLOWED_FOR_SINGLE_DATE);
         }
 
         @Test

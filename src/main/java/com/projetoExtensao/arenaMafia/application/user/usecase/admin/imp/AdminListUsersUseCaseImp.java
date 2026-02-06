@@ -1,6 +1,6 @@
 package com.projetoExtensao.arenaMafia.application.user.usecase.admin.imp;
 
-import com.projetoExtensao.arenaMafia.application.user.port.repository.AdminUserRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.user.port.repository.UserRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.user.usecase.admin.AdminListUsersUseCase;
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidDateRangeException;
 import com.projetoExtensao.arenaMafia.domain.model.User;
@@ -23,10 +23,10 @@ import org.springframework.transaction.annotation.Transactional;
 public class AdminListUsersUseCaseImp implements AdminListUsersUseCase {
 
   public static final String ZONE_ID = "America/Sao_Paulo";
-  private final AdminUserRepositoryPort adminUserRepository;
+  private final UserRepositoryPort userRepositoryPort;
 
-  public AdminListUsersUseCaseImp(AdminUserRepositoryPort adminUserRepository) {
-    this.adminUserRepository = adminUserRepository;
+  public AdminListUsersUseCaseImp(UserRepositoryPort userRepositoryPort) {
+    this.userRepositoryPort = userRepositoryPort;
   }
 
   @Override
@@ -41,7 +41,7 @@ public class AdminListUsersUseCaseImp implements AdminListUsersUseCase {
 
     validateSearchCriteria(criteria);
     Specification<UserEntity> spec = buildSpecification(criteria);
-    return adminUserRepository.search(spec, pageable);
+    return userRepositoryPort.search(spec, pageable);
   }
 
   private Specification<UserEntity> buildSpecification(AdminUserSearchRequestDto criteria) {

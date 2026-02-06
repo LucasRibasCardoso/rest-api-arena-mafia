@@ -102,7 +102,8 @@ public class CreateReservationByAdminUseCaseImp implements CreateReservationByAd
 
     if (isSingleReservation(requestDto)) {
       return List.of(createSingleReservation(admin, costumer, requestDto, priceRules));
-    } else {
+    }
+    else {
       return createRecurringReservation(admin, costumer, requestDto, priceRules);
     }
   }
@@ -257,6 +258,7 @@ public class CreateReservationByAdminUseCaseImp implements CreateReservationByAd
   private List<PriceRule> fetchAllPriceRules() {
     return priceRuleRepositoryPort.findAll(PriceRuleSpecification.byActiveStatus(true));
   }
+
   /**
    * Verifica se a request é para criação de uma reserva individual
    *

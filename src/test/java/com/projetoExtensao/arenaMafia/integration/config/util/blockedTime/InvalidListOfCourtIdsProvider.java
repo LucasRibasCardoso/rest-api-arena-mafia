@@ -1,4 +1,4 @@
-package com.projetoExtensao.arenaMafia.integration.config.util.BlockedTime;
+package com.projetoExtensao.arenaMafia.integration.config.util.blockedTime;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

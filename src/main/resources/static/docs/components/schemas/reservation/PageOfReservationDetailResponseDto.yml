@@ -1,0 +1,32 @@
+type: object
+description: |
+  Resposta paginada contendo uma lista de detalhes de reservas.
+  
+  Inclui informações de paginação e os detalhes completos de cada reserva,
+  com dados do usuário, quadra, horário e status.
+properties:
+  content:
+    type: array
+    description: Lista de detalhes de reservas da página atual.
+    items:
+      $ref: "../../schemas/reservation/ReservationDetailResponseDto.yml"
+  page:
+    type: object
+    description: Informações sobre a paginação.
+    properties:
+      size:
+        type: integer
+        description: Quantidade de itens por página.
+        example: 20
+      number:
+        type: integer
+        description: Número da página atual (inicia em 0).
+        example: 0
+      totalElements:
+        type: integer
+        description: Total de elementos encontrados.
+        example: 150
+      totalPages:
+        type: integer
+        description: Total de páginas disponíveis.
+        example: 8

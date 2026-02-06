@@ -34,8 +34,7 @@ public class AdminAgendaController {
   @CustomRateLimiter(limiterName = "globalLimiter")
   public ResponseEntity<List<AdminAgendaItemResponseDto>> getAgenda(
           @RequestParam("date") LocalDate date,
-          @RequestParam(value = "courtId", required = false) UUID courtId
-  ) {
+          @RequestParam(value = "courtId", required = false) UUID courtId) {
 
     List<AdminAgendaItemResponseDto> response = findAdminAgendaUseCase.execute(date, Optional.ofNullable(courtId))
             .stream()

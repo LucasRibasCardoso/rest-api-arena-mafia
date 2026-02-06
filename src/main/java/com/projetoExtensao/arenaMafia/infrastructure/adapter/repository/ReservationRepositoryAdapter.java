@@ -12,6 +12,7 @@ import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -35,7 +36,8 @@ public class ReservationRepositoryAdapter implements ReservationRepositoryPort {
 
   @Override
   public void saveAll(List<Reservation> reservations) {
-    List<ReservationEntity> reservationEntities = reservations.stream().map(reservationMapper::toEntity).toList();
+    List<ReservationEntity> reservationEntities =
+        reservations.stream().map(reservationMapper::toEntity).toList();
     reservationJpaRepository.saveAll(reservationEntities);
   }
 
@@ -67,19 +69,20 @@ public class ReservationRepositoryAdapter implements ReservationRepositoryPort {
 
   @Override
   public List<Reservation> findAllFutureRecurringReservations(UUID recurringReservationId) {
-    return reservationJpaRepository
-        .findFutureRecurringReservations(recurringReservationId)
-        .stream()
+    return reservationJpaRepository.findFutureRecurringReservations(recurringReservationId).stream()
         .map(reservationMapper::toDomain)
         .toList();
   }
 
   @Override
   public List<Reservation> findAllFutureReservationsByIds(List<UUID> ids) {
-    return reservationJpaRepository
-        .findAllFutureReservationsByIds(ids)
-        .stream()
+    return reservationJpaRepository.findAllFutureReservationsByIds(ids).stream()
         .map(reservationMapper::toDomain)
         .toList();
+  }
+
+  @Override
+  public Page<Reservation> search(Specification<ReservationEntity> spec, Pageable pageable) {
+    return reservationJpaRepository.findAll(spec, pageable).map(reservationMapper::toDomain);
   }
 }
