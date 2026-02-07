@@ -17,6 +17,8 @@ public interface ModalityRepositoryPort {
 
   Modality findByIdOrElseThrow(UUID id);
 
+  Modality findActiveByIdOrElseThrow(UUID id);
+
   Optional<Modality> findByName(String name);
 
   List<Modality> findAll(Specification<ModalityEntity> specification);

@@ -31,7 +31,7 @@ get:
           schema:
             type: array
             items:
-              $ref: "../../../components/schemas/schedule/AvailableSlotResponseDto.yml"
+              $ref: "../../../components/schemas/reservation/AvailableSlotResponseDto.yml"
           examples:
             WithAvailableSlots:
               summary: Lista com horários disponíveis

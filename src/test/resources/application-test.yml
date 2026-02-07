@@ -1,4 +1,6 @@
 spring:
+  application:
+    name: backend-arena-mafia-test
 
   jpa:
     hibernate:
@@ -14,6 +16,12 @@ spring:
       expirationMs: 3600000 # 1 hour
       refresh-token-expiration-days: 7 # 7 days
       issuer: "arena-mafia-api"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info
 
 resilience4j:
   ratelimiter:

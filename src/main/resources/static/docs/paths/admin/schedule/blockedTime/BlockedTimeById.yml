@@ -1,0 +1,189 @@
+delete:
+  operationId: deleteBlockedTime
+  tags: [ "Administração - Gerenciamento de Bloqueios de Horários" ]
+  summary: Deletar blockedTimes
+  description: |
+    Deletar um ou vários Bloqueios de Horário. Para deletar todos os bloqueios recorrentes é necessário enviar o parâmetro
+    `deleteAllRecurring` como true na URL. Nesse caso, o backend vai deletar todos os Bloqueios de Horários com o mesmo
+    ID recorrente.
+  security:
+    - BearerAuth: [ ]
+  parameters:
+    - $ref: "../../../../components/parameters/BlockedTimeId.yml"
+    - name: deleteAllRecurring
+      in: query
+      description: |
+        Indica se deve deletar todos os bloqueios recorrentes associados.
+        Se true, deleta todos os bloqueios com o mesmo `recurringBlockedTimeId`.
+        Se false (padrão), deleta apenas o bloqueio específico.
+      required: false
+      schema:
+        type: boolean
+        default: false
+  responses:
+    204:
+      description: Bloqueio(s) deletado(s) com sucesso. Sem conteúdo no corpo da resposta.
+    401:
+      $ref: "../../../../components/responses/UnauthorizedError.yml"
+    403:
+      $ref: "../../../../components/responses/ForbiddenError.yml"
+    404:
+      description: Bloqueio de horário não encontrado
+      content:
+        application/json:
+          schema:
+            $ref: "../../../../components/schemas/error/ErrorResponseDto.yml"
+          examples:
+            not_found:
+              summary: Bloqueio não encontrado
+              value:
+                timestamp: "2026-01-21T14:30:00Z"
+                status: 404
+                errorCode: "BLOCKED_TIME_NOT_FOUND"
+                developerMessage: "O bloqueio de horário solicitado não foi encontrado."
+                path: "/api/admin/blocked-times/f1a2b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5c"
+    429:
+      $ref: "../../../../components/responses/TooManyRequestsError.yml"
+    500:
+      $ref: "../../../../components/responses/InternalServerError.yml"
+patch:
+  operationId: updateBlockedTime
+  tags: [ "Administração - Gerenciamento de Bloqueios de Horários" ]
+  summary: Atualizar bloqueio de horário
+  description: |
+    Atualiza a descrição de um bloqueio de horário específico ou de todos os bloqueios recorrentes associados.
+
+    **Comportamento:**
+    - Se `updateAllRecurring = false`: Atualiza apenas o bloqueio com o ID informado
+    - Se `updateAllRecurring = true`: Atualiza todos os bloqueios recorrentes com o mesmo `recurringBlockedTimeId`
+
+    **Validações:**
+    - O bloqueio deve existir
+    - A descrição deve ter entre 3 e 500 caracteres
+    - O parâmetro `updateAllRecurring` é obrigatório
+
+    **Retorno:**
+    Retorna a lista de todos os bloqueios afetados pela atualização (um ou múltiplos, dependendo do flag).
+  security:
+    - BearerAuth: [ ]
+  parameters:
+    - $ref: "../../../../components/parameters/BlockedTimeId.yml"
+  requestBody:
+    description: Dados para atualização do bloqueio
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: "../../../../components/schemas/blockedTime/BlockedTimeUpdateRequestDto.yml"
+        examples:
+          update_single:
+            summary: Atualizar apenas um bloqueio específico
+            value:
+              description: "Manutenção preventiva na quadra A"
+              updateAllRecurring: false
+          update_recurring:
+            summary: Atualizar todos os bloqueios recorrentes
+            value:
+              description: "Manutenção semanal - todas as ocorrências"
+              updateAllRecurring: true
+  responses:
+    200:
+      description: Bloqueio(s) atualizado(s) com sucesso
+      content:
+        application/json:
+          schema:
+            $ref: "../../../../components/schemas/blockedTime/ListOfBlockedTimeDetailResponseDto.yml"
+          examples:
+            SingleUpdate:
+              summary: Atualização de um bloqueio único
+              value:
+                - blockedTimeId: "f1a2b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5c"
+                  courtId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                  courtName: "Quadra A"
+                  date: "2026-01-15"
+                  timeInterval:
+                    startTime: "08:00"
+                    endTime: "10:00"
+                  description: "Manutenção preventiva na quadra A"
+                  isFullDay: false
+                  recurringBlockedTimeId: null
+            recurring_update:
+              summary: Atualização de múltiplos bloqueios recorrentes
+              value:
+                - blockedTimeId: "f1a2b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5c"
+                  courtId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                  courtName: "Quadra A"
+                  date: "2026-01-15"
+                  timeInterval:
+                    startTime: "08:00"
+                    endTime: "10:00"
+                  description: "Manutenção semanal - todas as ocorrências"
+                  isFullDay: false
+                  recurringBlockedTimeId: "r1e2c3u4-r5r6-7i8n-9g0-1b2l3o4c5k6e7d"
+                - blockedTimeId: "g2b3c4d5-e6f7-8a9b-0c1d-2e3f4g5h6i7j"
+                  courtId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                  courtName: "Quadra A"
+                  date: "2026-01-22"
+                  timeInterval:
+                    startTime: "08:00"
+                    endTime: "10:00"
+                  description: "Manutenção semanal - todas as ocorrências"
+                  isFullDay: false
+                  recurringBlockedTimeId: "r1e2c3u4-r5r6-7i8n-9g0-1b2l3o4c5k6e7d"
+    400:
+      description: Requisição inválida ou dados de validação incorretos
+      content:
+        application/json:
+          schema:
+            $ref: "../../../../components/schemas/error/ErrorResponseDto.yml"
+          examples:
+            RequiredField:
+              summary: Campo obrigatório não informado
+              value:
+                timestamp: "2026-01-21T14:30:00Z"
+                status: 400
+                errorCode: "VALIDATION_FAILED"
+                developerMessage: "A validação falhou. Verifique os detalhes dos campos para mais informações."
+                path: "/api/admin/blocked-times/f1a2b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5c"
+                fieldErrors:
+                  - fieldName: "description"
+                    errorCode: "BLOCKED_TIME_DESCRIPTION_REQUIRED"
+                    developerMessage: "A descrição do bloqueio é obrigatória."
+                  - fieldName: ""
+                    errorCode: "BLOCKED_TIME_UPDATE_RECURRING_FLAG_REQUIRED"
+                    developerMessage: "O parâmetro `updateAllRecurring` é obrigatório."
+            DescriptionInvalidLength:
+              summary: Descrição com tamanho inválido
+              value:
+                timestamp: "2026-01-21T14:30:00Z"
+                status: 400
+                errorCode: "VALIDATION_FAILED"
+                developerMessage: "A validação falhou. Verifique os detalhes dos campos para mais informações."
+                path: "/api/admin/blocked-times/f1a2b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5c"
+                fieldErrors:
+                  - fieldName: "description"
+                    errorCode: "BLOCKED_TIME_DESCRIPTION_INVALID_LENGTH"
+                    developerMessage: "A descrição do bloqueio deve ter entre 3 e 500 caracteres."
+    401:
+      $ref: "../../../../components/responses/UnauthorizedError.yml"
+    403:
+      $ref: "../../../../components/responses/ForbiddenError.yml"
+    404:
+      description: Bloqueio de horário não encontrado
+      content:
+        application/json:
+          schema:
+            $ref: "../../../../components/schemas/error/ErrorResponseDto.yml"
+          examples:
+            BlockedTimeNotFound:
+              summary: Bloqueio não encontrado
+              value:
+                timestamp: "2026-01-21T14:30:00Z"
+                status: 404
+                errorCode: "BLOCKED_TIME_NOT_FOUND"
+                developerMessage: "Bloqueio de horário não encontrado."
+                path: "/api/admin/blocked-times/f1a2b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5c"
+    429:
+      $ref: "../../../../components/responses/TooManyRequestsError.yml"
+    500:
+      $ref: "../../../../components/responses/InternalServerError.yml"

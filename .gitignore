@@ -32,9 +32,13 @@ build/
 .vscode/
 
 .env
+.htpasswd
+secrets/.actuator_password
+docker-compose.override.yml
 
 ### macOS ###
 .DS_Store
 **/*\ 2.*
 **/* 2.*
+
 

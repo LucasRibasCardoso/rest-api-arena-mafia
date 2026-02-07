@@ -25,6 +25,7 @@ public enum ErrorCode {
   INVALID_SORT_PARAMETER("O parâmetro de ordenação fornecido é inválido."),
   INVALID_FIELD_VALUE("O valor fornecido para um campo é inválido."),
   TOO_MANY_REQUESTS("Limite de requisições excedido. Por favor, tente novamente mais tarde."),
+  RESOURCE_NOT_FOUND("Recurso não encontrado."),
 
   // ==================== ERROS DE AUTENTICAÇÃO E AUTORIZAÇÃO ====================
   INVALID_CREDENTIALS("Credenciais inválidas. Por favor, verifique seu usuário e senha."),
@@ -208,8 +209,11 @@ public enum ErrorCode {
   SCHEDULE_ENTRY_DATE_TIME_SLOT_REQUIRED("O slot de data/hora é obrigatório."),
   SCHEDULE_ENTRY_CREATED_AT_REQUIRED("A data de criação é obrigatória."),
   SCHEDULE_ENTRY_NOT_FOUND("Agendamento não encontrado."),
-  SCHEDULE_ENTRY_NOT_AVAILABLE(
-      "O horário selecionado não está mais disponível. Por favor, escolha outro horário."),
+  SCHEDULE_ENTRY_NOT_AVAILABLE("O horário selecionado não está mais disponível. Por favor, escolha outro horário."),
+  SCHEDULE_ENTRY_TOO_MANY_OCCURRENCES("O limite máximo de 1000 agendamentos recorrentes foi atingido, reduza o intervalo de datas."),
+  SCHEDULE_ENTRY_TIME_INTERVAL_OUTSIDE_OPERATING_HOURS("O intervalo de tempo informado está fora do horário de funcionamento de um ou mais dias selecionados. Verifique se o horário é válido para todos os dias."),
+  SCHEDULE_ENTRY_SELECTED_DAYS_OUTSIDE_DATE_RANGE("Um ou mais dias da semana selecionados estão fora do intervalo de datas informado."),
+
 
   // =================== ERROS DE CONSULTA DE HORÁRIOS DISPONÍVEIS ====================
   PAST_DATE_NOT_ALLOWED("Não é possível consultar horários disponíveis para datas passadas."),
@@ -218,6 +222,8 @@ public enum ErrorCode {
   RESERVATION_PRICE_INVALID("O preço da reserva deve ser um valor positivo."),
   RESERVATION_MODALITY_ID_REQUIRED("É obrigatório informar a modalidade da reserva."),
   RESERVATION_DATE_REQUIRED("É obrigatório informar a data da reserva."),
+  RESERVATION_START_DATE_REQUIRED("É obrigatório informar a data inicial da reserva."),
+  RESERVATION_END_DATE_REQUIRED("É obrigatório informar a data final da reserva."),
   RESERVATION_TIME_INTERVAL_REQUIRED("É obrigatório informar o horário da reserva."),
   RESERVATION_COURT_ID_REQUIRED("A quadra da reserva é obrigatória."),
   RESERVATION_USER_ID_REQUIRED("O usuário da reserva é obrigatório."),
@@ -243,10 +249,7 @@ public enum ErrorCode {
   BLOCKED_TIME_START_DATE_IN_PAST("A data inicial do bloqueio não pode estar no passado."),
   BLOCKED_TIME_START_DATE_AFTER_END_DATE("A data inicial não pode ser posterior à data final."),
   BLOCKED_TIME_END_DATE_IN_PAST("A data final do bloqueio não pode estar no passado."),
-  BLOCKED_TIME_SELECTED_DAYS_OUTSIDE_DATE_RANGE(
-      "Um ou mais dias da semana selecionados estão fora do intervalo de datas informado."),
-  BLOCKED_TIME_SELECTED_DAYS_NOT_ALLOWED_FOR_SINGLE_DATE(
-      "Para bloqueios de um único dia (startDate = endDate), não é necessário informar dias da semana específicos."),
+  SELECTED_DAYS_NOT_ALLOWED_FOR_SINGLE_DATE("Para agendamentos de um único dia (startDate = endDate), não é necessário informar dias da semana específicos."),
 
   // BlockedTime - Validação de Input
   BLOCKED_TIME_COURT_IDS_REQUIRED("É obrigatório informar ao menos uma quadra para o bloqueio."),
@@ -254,40 +257,29 @@ public enum ErrorCode {
   BLOCKED_TIME_START_DATE_REQUIRED("A data inicial do bloqueio é obrigatória."),
   BLOCKED_TIME_END_DATE_REQUIRED("A data final do bloqueio é obrigatória."),
   BLOCKED_TIME_IS_FULL_DAY_REQUIRED("É obrigatório informar se o bloqueio é para o dia todo."),
-  BLOCKED_TIME_TIME_INTERVAL_REQUIRED_WHEN_NOT_FULL_DAY(
-      "O intervalo de tempo é obrigatório quando o bloqueio não é para o dia todo."),
-  BLOCKED_TIME_TIME_INTERVAL_NOT_ALLOWED_WHEN_FULL_DAY(
-      "O intervalo de tempo não deve ser informado quando o bloqueio é para o dia todo. O horário será calculado automaticamente baseado no funcionamento da quadra."),
+  BLOCKED_TIME_TIME_INTERVAL_REQUIRED_WHEN_NOT_FULL_DAY("O intervalo de tempo é obrigatório quando o bloqueio não é para o dia todo."),
+  BLOCKED_TIME_TIME_INTERVAL_NOT_ALLOWED_WHEN_FULL_DAY("O intervalo de tempo não deve ser informado quando o bloqueio é para o dia todo. O horário será calculado automaticamente baseado no funcionamento da quadra."),
 
   // BlockedTime - Description
   BLOCKED_TIME_DESCRIPTION_REQUIRED("A descrição do bloqueio é obrigatória."),
-  BLOCKED_TIME_DESCRIPTION_INVALID_LENGTH(
-      "A descrição do bloqueio deve ter entre 3 e 500 caracteres."),
+  BLOCKED_TIME_UPDATE_RECURRING_FLAG_REQUIRED("O parâmetro `updateAllRecurring` é obrigatório."),
+  BLOCKED_TIME_DESCRIPTION_INVALID_LENGTH("A descrição do bloqueio deve ter entre 3 e 500 caracteres."),
 
   // BlockedTime - Admin
-  BLOCKED_TIME_ADMIN_ID_REQUIRED(
-      "O ID do administrador que está bloqueando o horário é obrigatório."),
+  BLOCKED_TIME_ADMIN_ID_REQUIRED("O ID do administrador que está bloqueando o horário é obrigatório."),
 
   // BlockedTime - Preview e Cache
-  BLOCKED_TIME_DAYS_OF_WEEK_SIZE_INVALID(
-      "É necessário informar entre 1 e 7 dias da semana para bloqueios recorrentes."),
-  BLOCKED_TIME_TOO_MANY_OCCURRENCES(
-      "O bloqueio recorrente geraria muitas ocorrências. O limite máximo é de 1000 bloqueios (quadras × datas aplicáveis)."),
-  BLOCKED_TIME_OUTSIDE_OPERATING_HOURS(
-      "O intervalo de tempo informado está fora do horário de funcionamento de um ou mais dias selecionados. Verifique se o horário é válido para todos os dias."),
+  BLOCKED_TIME_DAYS_OF_WEEK_SIZE_INVALID("É necessário informar entre 1 e 7 dias da semana para bloqueios recorrentes."),
 
   // ==================== ERROS DE CACHE PARA PREVIEW ====================
   PREVIEW_KEY_REQUIRED("A chave do preview é obrigatória."),
   PREVIEW_KEY_INVALID("A chave do preview é inválida."),
   PREVIEW_NOT_FOUND("Preview não encontrado. Pode ter expirado após 5 minutos."),
-  PREVIEW_DATA_STALE(
-      "Os dados associados a este preview foram alterados desde a sua geração. Por favor, gere um novo preview antes de confirmar a desativação."),
-  PREVIEW_KEY_OWNERSHIP_INVALID(
-      "Esta chave de preview não pertence a você. Não é possível usar um preview gerado por outro usuário."),
+  PREVIEW_DATA_STALE("Os dados associados a este preview foram alterados desde a sua geração. Por favor, gere um novo preview antes de confirmar a desativação."),
+  PREVIEW_KEY_OWNERSHIP_INVALID("Esta chave de preview não pertence a você. Não é possível usar um preview gerado por outro usuário."),
 
   // ==================== ERROS DE AGENDA (AGENDA ITEM) ====================
-  AVAILABLE_MODALITY_IDS_REQUIRED(
-      "Erro interno: Não foi possível gerar a agenda. Nenhuma modalidade disponível encontrada para o horário agrupado."),
+  AVAILABLE_MODALITY_IDS_REQUIRED("Erro interno: Não foi possível gerar a agenda. Nenhuma modalidade disponível encontrada para o horário agrupado."),
   ;
 
   // ==================== CONFIGURAÇÃO ====================

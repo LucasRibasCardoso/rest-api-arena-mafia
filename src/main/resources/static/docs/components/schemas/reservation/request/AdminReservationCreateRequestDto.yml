@@ -1,0 +1,111 @@
+type: object
+description: |
+  Request para criação de reservas (individual ou recorrente) pela administração.
+
+  **Modos de operação:**
+  - **Reserva individual:** Quando `startDate` = `endDate` e `selectedDaysOfWeek` é nulo/vazio
+  - **Reserva recorrente:** Quando `startDate` < `endDate` e `selectedDaysOfWeek` contém dias selecionados
+
+required:
+  - userPhone
+  - courtId
+  - modalityId
+  - startDate
+  - endDate
+  - timeInterval
+properties:
+  userPhone:
+    type: string
+    pattern: '^\+[1-9]\d{1,14}$'
+    description: |
+      Telefone do usuário para o qual será criada a reserva.
+      
+      Deve estar em formato internacional E.164 (ex: +5511987654321).
+      O sistema buscará o usuário por este telefone.
+    example: "+5511999001111"
+
+  courtId:
+    type: string
+    format: uuid
+    description: |
+      Identificador único da quadra onde será feita a reserva.
+    example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+
+  modalityId:
+    type: string
+    format: uuid
+    description: |
+      Identificador único da modalidade esportiva da reserva.
+    example: "550e8400-e29b-41d4-a716-446655440000"
+
+  startDate:
+    type: string
+    format: date
+    description: |
+      Data inicial da reserva (ISO 8601).
+      
+      **Validações aplicadas:**
+      - Não pode ser uma data no passado (erro: BLOCKED_TIME_START_DATE_IN_PAST)
+      - Deve ser ≤ endDate (erro: BLOCKED_TIME_START_DATE_AFTER_END_DATE)
+      - Para reserva individual: deve ser igual a `endDate`
+      - Para reserva recorrente: deve ser menor que `endDate`
+      
+      **Comportamento:**
+      - Individual: startDate = endDate, selectedDaysOfWeek = null
+      - Recorrente: startDate < endDate, selectedDaysOfWeek = [dias]
+    example: "2026-02-10"
+
+  endDate:
+    type: string
+    format: date
+    description: |
+      Data final da reserva (ISO 8601).
+      
+      **Validações aplicadas:**
+      - Não pode ser uma data no passado (validada junto com startDate)
+      - Deve ser ≥ startDate
+      
+      **Comportamento:**
+      - Individual: endDate = startDate, selectedDaysOfWeek = null
+      - Recorrente: endDate > startDate, selectedDaysOfWeek = [dias]
+    example: "2026-02-10"
+
+  timeInterval:
+    $ref: "../../timeInterval/TimeIntervalDto.yml"
+    description: |
+      Horário da reserva. Deve estar dentro dos horários de funcionamento.
+
+  selectedDaysOfWeek:
+    type: array
+    items:
+      type: string
+      enum:
+        - MONDAY
+        - TUESDAY
+        - WEDNESDAY
+        - THURSDAY
+        - FRIDAY
+        - SATURDAY
+        - SUNDAY
+    description: |
+      Dias da semana selecionados para reservas recorrentes.
+      
+      **Validação Condicional (@ValidConditionalSelectedDaysOfWeek):**
+      
+      ✓ **VÁLIDO:**
+      - `startDate` = `endDate` E `selectedDaysOfWeek` = null/vazio (reserva individual)
+      - `startDate` < `endDate` E `selectedDaysOfWeek` = [dias] (reserva recorrente)
+      
+      ✗ **INVÁLIDO:**
+      - `startDate` = `endDate` E `selectedDaysOfWeek` = [dias]
+        → Erro: SELECTED_DAYS_NOT_ALLOWED_FOR_SINGLE_DATE
+        → Mensagem: "Para agendamentos de um único dia (startDate = endDate), não é necessário informar dias da semana específicos."
+      
+      **Comportamento:**
+      - Se nulo/vazio: Cria reserva para a data exata (individual)
+      - Se preenchido: Cria reservas para todos os dias selecionados dentro do intervalo startDate a endDate
+      
+      **Exemplo individual:** null (sem especificar dias)
+      **Exemplo recorrente:** ["MONDAY", "WEDNESDAY"] (segundas e quartas-feiras)
+    example: null
+    nullable: true

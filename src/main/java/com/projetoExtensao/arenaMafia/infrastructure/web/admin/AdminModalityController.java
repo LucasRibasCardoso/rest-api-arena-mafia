@@ -74,7 +74,7 @@ public class AdminModalityController {
 
   @GetMapping("/{modalityId}")
   @CustomRateLimiter(limiterName = "globalLimiter")
-  public ResponseEntity<ModalityResponseDto> getById(@PathVariable UUID modalityId) {
+  public ResponseEntity<ModalityResponseDto> getModalityDetails(@PathVariable UUID modalityId) {
     Modality modality = findByIdModalityUseCase.execute(modalityId);
     ModalityResponseDto response = modalityMapper.toDto(modality);
     return ResponseEntity.ok(response);

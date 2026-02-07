@@ -33,7 +33,12 @@ INSERT INTO tb_schedule_entries (id, court_id, date, start_time, end_time, entry
        -- PRÓXIMOS 3 DIAS - Quadra A (BlockedTimes recorrentes - manutenção programada)
        ('d5e6f7a8-b9c0-4d1e-2f3a-4b5c6d7e8f9a', 'a1b2c3d4-e5f6-7890-abcd-ef1234567890', CURRENT_DATE + 2, '08:00:00', '10:00:00', 'BLOCKED_TIME', CURRENT_TIMESTAMP),
        ('e6f7a8b9-c0d1-4e2f-3a4b-5c6d7e8f9a0b', 'a1b2c3d4-e5f6-7890-abcd-ef1234567890', CURRENT_DATE + 3, '08:00:00', '10:00:00', 'BLOCKED_TIME', CURRENT_TIMESTAMP),
-       ('f7a8b9c0-d1e2-4f3a-4b5c-6d7e8f9a0b1c', 'a1b2c3d4-e5f6-7890-abcd-ef1234567890', CURRENT_DATE + 4, '08:00:00', '10:00:00', 'BLOCKED_TIME', CURRENT_TIMESTAMP);
+       ('f7a8b9c0-d1e2-4f3a-4b5c-6d7e8f9a0b1c', 'a1b2c3d4-e5f6-7890-abcd-ef1234567890', CURRENT_DATE + 4, '08:00:00', '10:00:00', 'BLOCKED_TIME', CURRENT_TIMESTAMP),
+
+       -- TESTE RECORRÊNCIA - Quadra A (3 dias seguidos com mesmo recurring_id)
+       ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'a1b2c3d4-e5f6-7890-abcd-ef1234567890', CURRENT_DATE + 5, '14:00:00', '15:00:00', 'BLOCKED_TIME', CURRENT_TIMESTAMP),
+       ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'a1b2c3d4-e5f6-7890-abcd-ef1234567890', CURRENT_DATE + 6, '14:00:00', '15:00:00', 'BLOCKED_TIME', CURRENT_TIMESTAMP),
+       ('cccccccc-cccc-cccc-cccc-cccccccccccc', 'a1b2c3d4-e5f6-7890-abcd-ef1234567890', CURRENT_DATE + 7, '14:00:00', '15:00:00', 'BLOCKED_TIME', CURRENT_TIMESTAMP);
 
 -- Inserir detalhes das reservas
 INSERT INTO tb_reservations (id, user_id, modality_id, scheduled_by_admin_id, price, status, recurring_reservation_id, cancelled_by_admin_id) VALUES
@@ -72,5 +77,9 @@ INSERT INTO tb_blocked_times (id, description, blocked_by_admin_id, is_full_day,
        -- PRÓXIMOS 3 DIAS - Quadra A (Bloqueios individuais - para testar futura funcionalidade de recorrência)
        ('d5e6f7a8-b9c0-4d1e-2f3a-4b5c6d7e8f9a', 'Manutenção programada - Dia 1', '960289b9-d32d-4f00-8df7-02f4c04a017c', FALSE, NULL),
        ('e6f7a8b9-c0d1-4e2f-3a4b-5c6d7e8f9a0b', 'Manutenção programada - Dia 2', '960289b9-d32d-4f00-8df7-02f4c04a017c', FALSE, NULL),
-       ('f7a8b9c0-d1e2-4f3a-4b5c-6d7e8f9a0b1c', 'Manutenção programada - Dia 3', '960289b9-d32d-4f00-8df7-02f4c04a017c', FALSE, NULL);
+       ('f7a8b9c0-d1e2-4f3a-4b5c-6d7e8f9a0b1c', 'Manutenção programada - Dia 3', '960289b9-d32d-4f00-8df7-02f4c04a017c', FALSE, NULL),
 
+       -- TESTE RECORRÊNCIA - Quadra A (3 dias seguidos com mesmo recurring_id)
+       ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Bloqueio Recorrente Teste', '960289b9-d32d-4f00-8df7-02f4c04a017c', FALSE, '11111111-1111-1111-1111-111111111111'),
+       ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'Bloqueio Recorrente Teste', '960289b9-d32d-4f00-8df7-02f4c04a017c', FALSE, '11111111-1111-1111-1111-111111111111'),
+       ('cccccccc-cccc-cccc-cccc-cccccccccccc', 'Bloqueio Recorrente Teste', '960289b9-d32d-4f00-8df7-02f4c04a017c', FALSE, '11111111-1111-1111-1111-111111111111');

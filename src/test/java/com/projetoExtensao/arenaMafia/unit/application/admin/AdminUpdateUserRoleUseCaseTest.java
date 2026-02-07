@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 
-import com.projetoExtensao.arenaMafia.application.admin.usecase.users.imp.AdminUpdateUserRoleUseCaseImp;
+import com.projetoExtensao.arenaMafia.application.user.usecase.admin.imp.AdminUpdateUserRoleUseCaseImp;
 import com.projetoExtensao.arenaMafia.application.user.port.repository.UserRepositoryPort;
 import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 import com.projetoExtensao.arenaMafia.domain.exception.conflict.AccountStatusConflictException;

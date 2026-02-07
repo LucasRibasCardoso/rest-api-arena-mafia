@@ -2,11 +2,11 @@ package com.projetoExtensao.arenaMafia.application.schedule.usecase.reservation.
 
 import com.projetoExtensao.arenaMafia.application.court.port.repository.CourtRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.modality.port.ModalityRepositoryPort;
-import com.projetoExtensao.arenaMafia.application.notification.event.OnScheduleCreatedEvent;
+import com.projetoExtensao.arenaMafia.application.notification.event.OnReservationCreatedEvent;
 import com.projetoExtensao.arenaMafia.application.priceRule.port.PriceRuleRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.priceRule.service.PriceCalculatorService;
 import com.projetoExtensao.arenaMafia.application.schedule.port.repository.ReservationRepositoryPort;
-import com.projetoExtensao.arenaMafia.application.schedule.scheduler.DynamicReservationCompletionScheduler;
+import com.projetoExtensao.arenaMafia.application.schedule.scheduler.DynamicScheduleEntryCompletionScheduler;
 import com.projetoExtensao.arenaMafia.application.schedule.service.ScheduleAvailabilityService;
 import com.projetoExtensao.arenaMafia.application.schedule.usecase.reservation.CreateReservationUseCase;
 import com.projetoExtensao.arenaMafia.application.user.port.repository.UserRepositoryPort;
@@ -36,7 +36,7 @@ public class CreateReservationUseCaseImp implements CreateReservationUseCase {
 
   private final PriceCalculatorService priceCalculatorService;
   private final ScheduleAvailabilityService scheduleAvailabilityService;
-  private final DynamicReservationCompletionScheduler completionScheduler;
+  private final DynamicScheduleEntryCompletionScheduler completionScheduler;
   private final UserRepositoryPort userRepositoryPort;
   private final CourtRepositoryPort courtRepositoryPort;
   private final ApplicationEventPublisher eventPublisher;
@@ -47,7 +47,7 @@ public class CreateReservationUseCaseImp implements CreateReservationUseCase {
   public CreateReservationUseCaseImp(
       PriceCalculatorService priceCalculatorService,
       ScheduleAvailabilityService scheduleAvailabilityService,
-      DynamicReservationCompletionScheduler completionScheduler,
+      DynamicScheduleEntryCompletionScheduler completionScheduler,
       UserRepositoryPort userRepositoryPort,
       CourtRepositoryPort courtRepositoryPort,
       ModalityRepositoryPort modalityRepositoryPort,
@@ -83,8 +83,7 @@ public class CreateReservationUseCaseImp implements CreateReservationUseCase {
 
     // Calcula o preço da reserva
     BigDecimal price = calculatePrice(request);
-    Reservation reservation =
-        saveReservation(request.modalityId(), request.courtId(), userId, price, dateTimeSlot);
+    Reservation reservation = saveReservation(request.modalityId(), request.courtId(), userId, price, dateTimeSlot);
 
     // Envia notificação de confirmação de reserva de forma assíncrona
     publishConfirmationEvent(user, reservation);
@@ -114,11 +113,9 @@ public class CreateReservationUseCaseImp implements CreateReservationUseCase {
    * @param dateTimeSlot Intervalo de data e hora da reserva
    * @return Reserva criada
    */
-  private Reservation saveReservation(
-      UUID modalityId, UUID courtId, UUID userId, BigDecimal price, DateTimeSlot dateTimeSlot) {
+  private Reservation saveReservation(UUID modalityId, UUID courtId, UUID userId, BigDecimal price, DateTimeSlot dateTimeSlot) {
     var reservation = Reservation.createByUser(modalityId, courtId, userId, price, dateTimeSlot);
-    reservationRepositoryPort.save(reservation);
-    return reservation;
+    return reservationRepositoryPort.save(reservation);
   }
 
   /**
@@ -128,8 +125,7 @@ public class CreateReservationUseCaseImp implements CreateReservationUseCase {
    * @param reservation Reserva criada
    */
   private void publishConfirmationEvent(User user, Reservation reservation) {
-    eventPublisher.publishEvent(
-        new OnScheduleCreatedEvent(user.getUsername(), user.getPhone(), reservation));
+    eventPublisher.publishEvent(new OnReservationCreatedEvent(user.getUsername(), user.getPhone(), reservation));
   }
 
   /**
@@ -143,7 +139,7 @@ public class CreateReservationUseCaseImp implements CreateReservationUseCase {
             reservation.getDateTimeSlot().date(),
             reservation.getDateTimeSlot().timeInterval().endTime());
 
-    completionScheduler.scheduleCompletion(reservation.getId(), endDateTime);
+    completionScheduler.scheduleReservationCompletion(reservation.getId(), endDateTime);
   }
 
   /**
@@ -205,10 +201,8 @@ public class CreateReservationUseCaseImp implements CreateReservationUseCase {
    * @return preço calculado
    */
   private BigDecimal calculatePrice(CreateReservationRequestDto request) {
-    List<PriceRule> activePriceRules =
-        priceRuleRepositoryPort.findAll(PriceRuleSpecification.byActiveStatus(true));
+    List<PriceRule> activePriceRules = priceRuleRepositoryPort.findAll(PriceRuleSpecification.byActiveStatus(true));
 
-    return priceCalculatorService.calculatePrice(
-        request.timeInterval(), request.date(), activePriceRules);
+    return priceCalculatorService.calculatePrice(request.timeInterval(), request.date(), activePriceRules);
   }
 }

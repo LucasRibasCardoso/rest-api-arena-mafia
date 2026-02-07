@@ -1,0 +1,188 @@
+get:
+  operationId: getAdminAgenda
+  tags: ["Administração - Gerenciamento de Agendamentos"]
+  summary: Buscar agenda administrativa do dia
+  description: |
+    Retorna a agenda completa do estabelecimento para uma data específica, vista pela administração.
+
+    **Este endpoint é protegido e requer autenticação de administrador.**
+
+    A agenda inclui:
+    - **AVAILABLE_SLOT**: Slots disponíveis por quadra, com informações detalhadas da quadra.
+    - **SCHEDULE_DETAIL**: Detalhes completos de reservas e bloqueios por quadra.
+
+    **Funcionamento:**
+    1. Sistema busca todos os agendamentos confirmados e bloqueios da data
+    2. Gera slots disponíveis para cada quadra ativa individualmente
+    3. Retorna lista ordenada cronologicamente, sem agrupamento de horários
+    4. Cada reserva e bloqueio é mostrado individualmente com todos os detalhes
+
+    **Diferenças da agenda pública:**
+    - Não agrupa slots disponíveis por horário; mostra por quadra
+    - Inclui detalhes completos de reservas (usuário, telefone, etc.)
+    - Inclui detalhes completos de bloqueios (descrição, recorrência, etc.)
+    - Focado na gestão administrativa dos agendamentos
+
+    **Casos de uso:**
+    - Administradores visualizam todos os agendamentos do dia
+    - Gerenciamento de reservas e bloqueios
+    - Suporte ao cliente com informações completas
+
+  security:
+    - BearerAuth: [ ]
+
+  parameters:
+    - $ref: "../../../components/parameters/Date.yml"
+    - name: courtId
+      in: query
+      description: |
+        Identificador único da quadra para filtrar a agenda.
+        Se não fornecido, retorna a agenda de todas as quadras ativas.
+      required: false
+      schema:
+        type: string
+        format: uuid
+      example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+
+  responses:
+    200:
+      description: |
+        Agenda administrativa do dia retornada com sucesso.
+
+        Retorna lista de slots ordenados cronologicamente, incluindo horários disponíveis e agendamentos detalhados.
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: "../../../components/schemas/agenda/AdminAgendaItemResponseDto.yml"
+          examples:
+            AdminAgendaExample:
+              summary: Agenda administrativa com reservas e bloqueios
+              description: |
+                Exemplo mostrando a agenda administrativa com slots disponíveis por quadra e detalhes de agendamentos.
+              value:
+                - type: "AVAILABLE_SLOT"
+                  courtId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                  courtName: "Quadra A"
+                  timeInterval:
+                    startTime: "08:00"
+                    endTime: "09:00"
+                  availableModalityIds:
+                    - "550e8400-e29b-41d4-a716-446655440005"
+                    - "550e8400-e29b-41d4-a716-446655440006"
+                    - "550e8400-e29b-41d4-a716-446655440002"
+                  price: 50.00
+                - type: "AVAILABLE_SLOT"
+                  courtId: "b2c3d4e5-f6a7-8901-bcde-f12345678901"
+                  courtName: "Quadra B"
+                  timeInterval:
+                    startTime: "08:30"
+                    endTime: "09:30"
+                  availableModalityIds:
+                    - "550e8400-e29b-41d4-a716-446655440006"
+                    - "550e8400-e29b-41d4-a716-446655440002"
+                  price: 50.00
+                - type: "SCHEDULE_DETAIL"
+                  detail:
+                    reservationId: "c2d5e8f1-9a4b-4c7e-8d3a-5f6b2e1c9a7d"
+                    userId: "bce2c206-3b8d-4ce8-b05d-b236cc375d5e"
+                    courtId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                    username: "carla_gomes"
+                    fullName: "Carla Gomes"
+                    userPhone: "+5511999000006"
+                    courtName: "Quadra A"
+                    date: "2026-01-26"
+                    timeInterval:
+                      startTime: "15:00"
+                      endTime: "16:00"
+                    modalityName: "Futvôlei"
+                    price: 90.00
+                    status: "CONFIRMED"
+                    recurringReservationId: null
+                - type: "SCHEDULE_DETAIL"
+                  detail:
+                    blockedTimeId: "f1a2b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5c"
+                    courtId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                    courtName: "Quadra A"
+                    date: "2026-01-26"
+                    timeInterval:
+                      startTime: "16:00"
+                      endTime: "17:00"
+                    description: "Manutenção preventiva do sistema de iluminação"
+                    isFullDay: false
+                    recurringBlockedTimeId: null
+    400:
+      description: |
+        Requisição inválida.
+
+        Lançado quando:
+        - Parâmetro `date` não é fornecido
+        - Parâmetro `date` está em formato inválido (esperado: yyyy-MM-dd)
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
+          examples:
+            DateMissing:
+              summary: Parâmetro date não fornecido
+              value:
+                timestamp: "2026-01-26T20:00:00Z"
+                status: 400
+                errorCode: "INVALID_REQUEST_PARAMETER"
+                developerMessage: "Um parâmetro da requisição é inválido ou está malformado."
+                path: "/api/admin/agenda"
+            InvalidDateFormat:
+              summary: Formato de data inválido
+              value:
+                timestamp: "2026-01-26T20:00:00Z"
+                status: 400
+                errorCode: "INVALID_REQUEST_PARAMETER"
+                developerMessage: "Um parâmetro da requisição é inválido ou está malformado."
+                path: "/api/admin/agenda"
+    401:
+      $ref: "../../../components/responses/UnauthorizedError.yml"
+    403:
+      $ref: "../../../components/responses/ForbiddenError.yml"
+    404:
+      description: |
+        Recurso não encontrado.
+
+        Lançado quando:
+        - A quadra especificada em `courtId` não existe ou está desativada
+        - Não há quadras ativas cadastradas no sistema
+        - Não há horários de funcionamento ativos para a data solicitada
+        - Não há regras de preço ativas no sistema
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
+          examples:
+            CourtNotFound:
+              summary: Quadra especificada não encontrada
+              value:
+                timestamp: "2026-01-26T20:00:00Z"
+                status: 404
+                errorCode: "COURT_NOT_FOUND"
+                developerMessage: "Nenhuma quadra foi encontrada."
+                path: "/api/admin/agenda"
+            NoOperatingHours:
+              summary: Nenhum horário de funcionamento ativo
+              value:
+                timestamp: "2026-01-26T20:00:00Z"
+                status: 404
+                errorCode: "OPERATING_HOURS_NOT_FOUND"
+                developerMessage: "Nenhum horário de funcionamento foi encontrado."
+                path: "/api/admin/agenda"
+            NoPriceRules:
+              summary: Nenhuma regra de preço ativa
+              value:
+                timestamp: "2026-01-26T20:00:00Z"
+                status: 404
+                errorCode: "PRICE_RULE_NOT_FOUND"
+                developerMessage: "Nenhuma regra de preço foi encontrada."
+                path: "/api/admin/agenda"
+    429:
+      $ref: "../../../components/responses/TooManyRequestsError.yml"
+    500:
+      $ref: "../../../components/responses/InternalServerError.yml"

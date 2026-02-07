@@ -17,6 +17,7 @@ import com.projetoExtensao.arenaMafia.domain.model.*;
 import com.projetoExtensao.arenaMafia.domain.model.enums.AccountStatus;
 import com.projetoExtensao.arenaMafia.domain.model.enums.DayOfWeek;
 import com.projetoExtensao.arenaMafia.domain.model.enums.OffsetMinutes;
+import com.projetoExtensao.arenaMafia.domain.model.enums.ReservationStatus;
 import com.projetoExtensao.arenaMafia.domain.model.enums.RoleEnum;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.BlockedTime;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.Reservation;
@@ -641,6 +642,47 @@ public abstract class BaseTestContainersConfig {
     return (Reservation) scheduleEntryRepository.save(reservation);
   }
 
+  public Reservation mockPersistReservationByUserWithStatus(
+      UUID modalityId,
+      UUID courtId,
+      LocalDate date,
+      TimeInterval timeInterval,
+      BigDecimal price,
+      UUID userId,
+      ReservationStatus status) {
+
+    DateTimeSlot dateTimeSlot = new DateTimeSlot(date, timeInterval);
+    Reservation reservation = Reservation.reconstitute(
+        UUID.randomUUID(),
+        courtId,
+        modalityId,
+        userId,
+        null,
+        null,
+        price,
+        dateTimeSlot,
+        status,
+        null,
+        Instant.now());
+    return (Reservation) scheduleEntryRepository.save(reservation);
+  }
+
+  public Reservation mockPersistRecurringReservation(
+      UUID modalityId,
+      UUID courtId,
+      LocalDate date,
+      TimeInterval timeInterval,
+      BigDecimal price,
+      UUID userId,
+      UUID adminId,
+      UUID recurringReservationId) {
+
+    DateTimeSlot dateTimeSlot = new DateTimeSlot(date, timeInterval);
+    Reservation reservation =
+        Reservation.createRecurring(modalityId, courtId, userId, adminId, price, dateTimeSlot, recurringReservationId);
+    return (Reservation) scheduleEntryRepository.save(reservation);
+  }
+
   // =================== Blocked Time Helpers ===================
   public BlockedTime mockPersistBlockedTimeSpecific(
       UUID courtId, LocalDate date, TimeInterval timeInterval, String reason, UUID adminId) {
@@ -650,5 +692,11 @@ public abstract class BaseTestContainersConfig {
     return blockedTimeRepository.save(blockedTime);
   }
 
-
+  public BlockedTime mockPersistBlockedTimeRecurring(
+          UUID courtId, LocalDate date, TimeInterval timeInterval, String reason, UUID adminId, UUID recurringId
+  ) {
+    DateTimeSlot dateTimeSlot = new DateTimeSlot(date, timeInterval);
+    BlockedTime blockedTime = BlockedTime.createRecurring(courtId, dateTimeSlot, reason, adminId, true, recurringId);
+    return blockedTimeRepository.save(blockedTime);
+  }
 }

@@ -7,7 +7,7 @@ import com.projetoExtensao.arenaMafia.application.schedule.port.gateway.BlockedT
 import com.projetoExtensao.arenaMafia.application.schedule.port.repository.ScheduleEntryRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.schedule.preview.BlockedTimeConflictsPreview;
 import com.projetoExtensao.arenaMafia.application.schedule.result.ScheduleEntriesEnrichedResult;
-import com.projetoExtensao.arenaMafia.application.schedule.service.BlockedTimeDateCalculationService;
+import com.projetoExtensao.arenaMafia.application.schedule.service.ScheduleDateCalculationService;
 import com.projetoExtensao.arenaMafia.application.schedule.service.ScheduleEntryEnrichmentService;
 import com.projetoExtensao.arenaMafia.application.schedule.usecase.blockedtime.PreviewBlockedTimeConflictsUseCase;
 import com.projetoExtensao.arenaMafia.domain.model.enums.DayOfWeek;
@@ -27,14 +27,14 @@ public class PreviewBlockedTimeConflictsUseCaseImp implements PreviewBlockedTime
   private final ScheduleEntryEnrichmentService scheduleEntryEnrichmentService;
   private final ScheduleEntryRepositoryPort scheduleEntryRepository;
   private final BlockedTimePreviewCachePort blockedTimePreviewCachePort;
-  private final BlockedTimeDateCalculationService dateCalculationService;
+  private final ScheduleDateCalculationService dateCalculationService;
   private final CourtRepositoryPort courtRepository;
 
   public PreviewBlockedTimeConflictsUseCaseImp(
       ScheduleEntryEnrichmentService scheduleEntryEnrichmentService,
       ScheduleEntryRepositoryPort scheduleEntryRepository,
       BlockedTimePreviewCachePort blockedTimePreviewCachePort,
-      BlockedTimeDateCalculationService dateCalculationService,
+      ScheduleDateCalculationService dateCalculationService,
       CourtRepositoryPort courtRepository) {
     this.scheduleEntryRepository = scheduleEntryRepository;
     this.scheduleEntryEnrichmentService = scheduleEntryEnrichmentService;
@@ -44,8 +44,7 @@ public class PreviewBlockedTimeConflictsUseCaseImp implements PreviewBlockedTime
   }
 
   @Override
-  public BlockedTimeConflictsPreview execute(
-      BlockedTimeConflictsPreviewRequestDto request, UUID adminId) {
+  public BlockedTimeConflictsPreview execute(BlockedTimeConflictsPreviewRequestDto request, UUID adminId) {
     // Valida se todas as quadras existem e estão ativas
     courtRepository.validateAllExistAndActive(request.courtIds());
 

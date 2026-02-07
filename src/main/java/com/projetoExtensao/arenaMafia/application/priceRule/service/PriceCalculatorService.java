@@ -24,8 +24,7 @@ public class PriceCalculatorService {
    * @param dayOfWeek dia da semana
    * @return preço calculado
    */
-  public BigDecimal calculateSlotPrice(
-      TimeInterval slot, List<PriceRule> priceRules, DayOfWeek dayOfWeek) {
+  public BigDecimal calculateSlotPrice(TimeInterval slot, List<PriceRule> priceRules, DayOfWeek dayOfWeek) {
 
     return priceRules.stream()
         .filter(rule -> rule.isApplicable(dayOfWeek, slot.startTime()))
@@ -42,8 +41,7 @@ public class PriceCalculatorService {
    * @param priceRules lista de regras de preço ativas
    * @return preço calculado
    */
-  public BigDecimal calculatePrice(
-      TimeInterval timeInterval, LocalDate date, List<PriceRule> priceRules) {
+  public BigDecimal calculatePrice(TimeInterval timeInterval, LocalDate date, List<PriceRule> priceRules) {
 
     DayOfWeek dayOfWeek = DayOfWeek.convertToDayOfWeek(date);
     return calculateSlotPrice(timeInterval, priceRules, dayOfWeek);

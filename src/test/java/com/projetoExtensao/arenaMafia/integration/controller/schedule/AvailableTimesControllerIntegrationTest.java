@@ -279,6 +279,8 @@ public class AvailableTimesControllerIntegrationTest extends WebIntegrationTestC
         // Arrange
         Modality modality = mockPersistModality("Beach Tennis");
         mockPersistCourt("Court A", modality);
+        mockPersistPriceRule();
+
         String date = LocalDate.now().toString();
 
         // Act & Assert

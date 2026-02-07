@@ -1,0 +1,17 @@
+type: object
+description: |
+  Representa um item da agenda pública do estabelecimento.
+
+  Este é um objeto polimórfico que pode ser um dos seguintes tipos com base no discriminador "type":
+  - **AVAILABLE_SLOT**: Um slot de horário disponível para reserva, incluindo modalidades e preço.
+  - **SCHEDULE_ENTRY**: Uma entrada agendada (ex.: reserva ou bloqueio), com tipo de entrada e descrição.
+
+  O campo "type" determina o subtipo e suas propriedades específicas.
+discriminator:
+  propertyName: type
+  mapping:
+    AVAILABLE_SLOT: "#/components/schemas/PublicAvailableItemResponseDto"
+    SCHEDULE_ENTRY: "#/components/schemas/PublicScheduleEntryResponseDto"
+oneOf:
+  - $ref: "./PublicAvailableItemResponseDto.yml"
+  - $ref: "./PublicScheduleEntryResponseDto.yml"

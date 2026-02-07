@@ -32,17 +32,17 @@ properties:
     type: array
     description: Lista de bloqueios de horário que serão cancelados.
     items:
-      $ref: '../schedule/BlockedTimeDetailResponseDto.yml'
+      $ref: '../blockedTime/BlockedTimeDetailResponseDto.yml'
   affectedReservations:
     type: array
     description: Lista de reservas que serão canceladas.
     items:
-      $ref: '../schedule/ReservationDetailResponseDto.yml'
+      $ref: '../reservation/ReservationDetailResponseDto.yml'
   inProgressReservations:
     type: array
     description: Lista de reservas em andamento que não serão canceladas.
     items:
-      $ref: '../schedule/ReservationDetailResponseDto.yml'
+      $ref: '../reservation/ReservationDetailResponseDto.yml'
 required:
   - previewKey
   - courtId

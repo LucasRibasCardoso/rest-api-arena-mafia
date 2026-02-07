@@ -15,11 +15,11 @@ import com.projetoExtensao.arenaMafia.domain.model.Court;
 import com.projetoExtensao.arenaMafia.domain.model.OperatingHours;
 import com.projetoExtensao.arenaMafia.domain.model.PriceRule;
 import com.projetoExtensao.arenaMafia.domain.model.enums.DayOfWeek;
+import com.projetoExtensao.arenaMafia.domain.model.schedule.ScheduleEntry;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.AvailableSlot;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.specification.OperatingHoursSpecification;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.specification.PriceRuleSpecification;
 import java.time.LocalDate;
-import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
@@ -51,27 +51,20 @@ public class FindAllAvailableTimesUseCaseImp implements FindAllAvailableTimesUse
   @Override
   public List<AvailableSlot> execute(UUID modalityId, LocalDate date) {
     validateDate(date);
-
-    List<Court> courts = getActiveCourtsByModality(modalityId);
-    List<OperatingHours> operatingHours = getActiveOperatingHours();
-    List<PriceRule> priceRules = getActivePriceRules();
-
     DayOfWeek dayOfWeek = DayOfWeek.convertToDayOfWeek(date);
-    List<OperatingHours> applicableOperatingHours =
-        availableSlotGenerationService.filterApplicableOperatingHours(operatingHours, dayOfWeek);
 
-    return courts.stream()
-        .map(
-            court -> {
-              var schedules =
-                  scheduleEntryRepositoryPort.findAllActiveSchedulesByCourtAndDate(
-                      court.getId(), date);
-              return availableSlotGenerationService.generateAvailableSlotsForCourt(
-                  court, applicableOperatingHours, schedules, priceRules, dayOfWeek);
-            })
-        .flatMap(List::stream)
-        .sorted(Comparator.comparing(slot -> slot.timeInterval().startTime()))
-        .toList();
+    List<PriceRule> priceRules = getActivePriceRules();
+    List<Court> courts = getActiveCourtsByModality(modalityId);
+    List<ScheduleEntry> schedules = getActiveSchedulesByDate(date);
+    List<OperatingHours> operatingHours = getApplicableOperatingHours(dayOfWeek);
+
+    return availableSlotGenerationService.generateSimpleAvailableSlotsForCourts(
+            courts,
+            schedules,
+            operatingHours,
+            priceRules,
+            dayOfWeek
+    );
   }
 
   /**
@@ -84,6 +77,18 @@ public class FindAllAvailableTimesUseCaseImp implements FindAllAvailableTimesUse
     if (date.isBefore(LocalDate.now())) {
       throw new PastDateException();
     }
+  }
+
+  /**
+   * Busca todos os agendamentos ativos (confirmados) para uma data específica.
+   *
+   * <p>Filtra apenas agendamentos com status ativo, excluindo reservas canceladas ou completadas.
+   *
+   * @param date data para buscar os agendamentos
+   * @return lista de agendamentos ativos ordenados por horário de início
+   */
+  private List<ScheduleEntry> getActiveSchedulesByDate(LocalDate date) {
+    return scheduleEntryRepositoryPort.findAllActiveSchedulesByDate(date);
   }
 
   /**
@@ -102,21 +107,6 @@ public class FindAllAvailableTimesUseCaseImp implements FindAllAvailableTimesUse
   }
 
   /**
-   * Busca horários de funcionamento ativos. Lança exceção se nenhum for encontrado.
-   *
-   * @return lista de horários de funcionamento ativos
-   * @throws OperatingHoursNotFoundException se nenhum horário for encontrado
-   */
-  private List<OperatingHours> getActiveOperatingHours() {
-    var operatingHours =
-        operatingHoursRepositoryPort.findAll(OperatingHoursSpecification.byActiveStatus(true));
-    if (operatingHours.isEmpty()) {
-      throw new OperatingHoursNotFoundException();
-    }
-    return operatingHours;
-  }
-
-  /**
    * Busca regras de preço ativas. Lança exceção se nenhuma for encontrada.
    *
    * @return lista de regras de preço ativas
@@ -128,5 +118,26 @@ public class FindAllAvailableTimesUseCaseImp implements FindAllAvailableTimesUse
       throw new PriceRuleNotFoundException();
     }
     return priceRules;
+  }
+
+  /**
+   * Busca os horários de funcionamento aplicáveis para uma data específica.
+   *
+   * <p>Filtra horários ativos e aplicáveis ao dia da semana correspondente à data fornecida.
+   *
+   * @param dayOfWeek dia da semana para buscar os horários de funcionamento
+   * @return lista de horários de funcionamento aplicáveis ao dia da semana
+   * @throws OperatingHoursNotFoundException se não houver horários de funcionamento ativos ou se
+   *     não houver horários aplicáveis ao dia da semana especificado
+   */
+  private List<OperatingHours> getApplicableOperatingHours(DayOfWeek dayOfWeek) {
+    List<OperatingHours> operatingHours =
+            operatingHoursRepositoryPort.findAll(OperatingHoursSpecification.byActiveStatus(true));
+
+    if (operatingHours.isEmpty()) {
+      throw new OperatingHoursNotFoundException();
+    }
+
+    return availableSlotGenerationService.filterApplicableOperatingHours(operatingHours, dayOfWeek);
   }
 }

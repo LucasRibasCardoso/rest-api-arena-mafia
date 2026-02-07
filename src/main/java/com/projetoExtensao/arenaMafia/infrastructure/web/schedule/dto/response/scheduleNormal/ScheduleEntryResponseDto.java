@@ -19,7 +19,7 @@ import java.util.UUID;
     visible = true)
 @JsonSubTypes({
   @JsonSubTypes.Type(value = ReservationResponseDto.class, name = "RESERVATION"),
-  @JsonSubTypes.Type(value = BlockedTimeResponseDto.class, name = "BLOCKED_TIME")
+  @JsonSubTypes.Type(value = BlockedTimeResponseDto.class, name = "BLOCKED_TIME"),
 })
 public sealed interface ScheduleEntryResponseDto
     permits ReservationResponseDto, BlockedTimeResponseDto {

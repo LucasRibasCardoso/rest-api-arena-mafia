@@ -21,6 +21,9 @@ info:
     | `INVALID_SORT_PARAMETER` | O parâmetro de ordenação fornecido é inválido. | Erro lançado quando o parâmetro de ordenação (sort) não é válido. |
     | `INVALID_FIELD_VALUE` | O valor fornecido para um campo é inválido. | Erro lançado quando o valor de um campo específico não é válido. |
     | `TOO_MANY_REQUESTS` | Limite de requisições excedido. Por favor, tente novamente mais tarde. | Erro lançado quando o limite de requisições (rate limit) foi excedido. |
+    | `RESOURCE_NOT_FOUND` | Recurso não encontrado. | Erro lançado quando a url digitada não corresponde a nenhum recurso existente. |
+
+
 
 tags:
   - name: "Autenticação - Core"
@@ -63,6 +66,9 @@ tags:
 
   - name: "Administração - Gerenciamento de Bloqueios de Horários"
     description: Endpoints relacionados ao gerenciamento de horários bloqueados, acessíveis apenas por administradores.
+
+  - name: "Administração - Gerenciamento de Agendamentos"
+    description: Endpoints relacionados ao gerenciamento da agenda, acessíveis apenas por administradores.
 
   - name: "Endpoints Públicos"
     description: Endpoints públicos para consultas. Dados utilizados por clientes sem necessidade de autenticação.
@@ -165,18 +171,29 @@ components:
       $ref: "./components/schemas/court/CourtDisableConfirmRequestDto.yml"
 
     AvailableSlotResponseDto:
-      $ref: "./components/schemas/schedule/AvailableSlotResponseDto.yml"
+      $ref: "./components/schemas/reservation/AvailableSlotResponseDto.yml"
     CreateReservationRequestDto:
-      $ref: "./components/schemas/schedule/CreateReservationRequestDto.yml"
+      $ref: "./components/schemas/reservation/CreateReservationRequestDto.yml"
     ScheduleEntryResponseDto:
-      $ref: "./components/schemas/schedule/ScheduleEntryResponseDto.yml"
+      $ref: "./components/schemas/reservation/ScheduleEntryResponseDto.yml"
     ReservationScheduleResponseDto:
-      $ref: "./components/schemas/schedule/ReservationScheduleResponseDto.yml"
+      $ref: "./components/schemas/reservation/ReservationScheduleResponseDto.yml"
     PageOfReservationResponseDto:
-      $ref: "./components/schemas/schedule/PageOfReservationResponseDto.yml"
+      $ref: "./components/schemas/reservation/PageOfReservationResponseDto.yml"
 
-    AgendaSlotResponseDto:
-      $ref: "./components/schemas/agenda/AgendaSlotResponseDto.yml"
+    PublicAgendaItemResponseDto:
+      $ref: "./components/schemas/agenda/PublicAgendaItemResponseDto.yml"
+    PublicAvailableItemResponseDto:
+      $ref: "./components/schemas/agenda/PublicAvailableItemResponseDto.yml"
+    PublicScheduleEntryResponseDto:
+      $ref: "./components/schemas/agenda/PublicScheduleEntryResponseDto.yml"
+
+    AdminAgendaItemResponseDto:
+      $ref: "./components/schemas/agenda/AdminAgendaItemResponseDto.yml"
+    AdminAvailableItemResponseDto:
+      $ref: "./components/schemas/agenda/AdminAvailableItemResponseDto.yml"
+    AdminScheduleDetailResponseDto:
+      $ref: "./components/schemas/agenda/AdminScheduleDetailResponseDto.yml"
 
     BlockedTimeConflictsPreviewRequestDto:
       $ref: "./components/schemas/blockedTime/BlockedTimeConflictsPreviewRequestDto.yml"
@@ -187,9 +204,21 @@ components:
     BlockedTimeConfirmResponseDto:
       $ref: "./components/schemas/blockedTime/BlockedTimeConfirmResponseDto.yml"
     BlockedTimeDetailResponseDto:
-      $ref: "./components/schemas/schedule/BlockedTimeDetailResponseDto.yml"
+      $ref: "./components/schemas/blockedTime/BlockedTimeDetailResponseDto.yml"
+    BlockedTimeUpdateRequestDto:
+      $ref: "./components/schemas/blockedTime/BlockedTimeUpdateRequestDto.yml"
+    ListOfBlockedTimeDetailResponseDto:
+      $ref: "./components/schemas/blockedTime/ListOfBlockedTimeDetailResponseDto.yml"
     ReservationDetailResponseDto:
-      $ref: "./components/schemas/schedule/ReservationDetailResponseDto.yml"
+      $ref: "./components/schemas/reservation/ReservationDetailResponseDto.yml"
+    AdminReservationSearchRequestDto:
+      $ref: "./components/schemas/reservation/request/AdminReservationSearchRequestDto.yml"
+    PageOfReservationDetailResponseDto:
+      $ref: "./components/schemas/reservation/PageOfReservationDetailResponseDto.yml"
+    AdminReservationCreateRequestDto:
+      $ref: "./components/schemas/reservation/request/AdminReservationCreateRequestDto.yml"
+    ListOfReservationDetailResponseDto:
+      $ref: "./components/schemas/reservation/response/ListOfReservationDetailResponseDto.yml"
 
   responses:
     InternalServerError:
@@ -314,10 +343,22 @@ paths:
   /api/admin/operating-hours/confirm-disable:
     $ref: "./paths/admin/operatingHours/ConfirmDisableOperatingHours.yml"
 
+  /api/admin/blocked-times:
+    $ref: "./paths/admin/schedule/blockedTime/GetBlockedTimes.yml"
   /api/admin/blocked-times/preview-conflicts:
     $ref: "./paths/admin/schedule/blockedTime/PreviewBlockedTimeConflicts.yml"
   /api/admin/blocked-times/confirm:
     $ref: "./paths/admin/schedule/blockedTime/ConfirmBlockedTime.yml"
+  /api/admin/blocked-times/{blockedTimeId}:
+    $ref: "./paths/admin/schedule/blockedTime/BlockedTimeById.yml"
+
+  /api/admin/agenda:
+    $ref: "./paths/admin/agenda/AdminAgenda.yml"
+
+  /api/admin/reservations:
+    $ref: "./paths/admin/reservations/AdminReservations.yml"
+  /api/admin/reservations/{reservationId}/cancel:
+    $ref: "./paths/admin/reservations/CancelReservation.yml"
 
   /api/public/modalities:
     $ref: "./paths/modality/GetAllModalities.yml"

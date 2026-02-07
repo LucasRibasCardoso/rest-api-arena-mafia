@@ -12,6 +12,8 @@ import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
 import com.projetoExtensao.arenaMafia.infrastructure.web.exception.dto.ErrorResponseDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.exception.dto.FieldErrorResponseDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.schedule.dto.request.CreateReservationRequestDto;
+import com.projetoExtensao.arenaMafia.infrastructure.web.schedule.dto.response.scheduleDetail.ReservationDetailResponseDto;
+import com.projetoExtensao.arenaMafia.infrastructure.web.schedule.dto.response.scheduleDetail.ScheduleDetailResponseDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.schedule.dto.response.scheduleNormal.ScheduleEntryResponseDto;
 import com.projetoExtensao.arenaMafia.integration.config.WebIntegrationTestConfig;
 import com.projetoExtensao.arenaMafia.integration.config.util.timeInterval.InvalidTimeIntervalProvider;
@@ -717,20 +719,20 @@ public class ReservationControllerIntegrationTest extends WebIntegrationTestConf
     class SuccessScenarios {
 
       @Test
-      @DisplayName("Deve retornar uma reserva existente pelo ID")
+      @DisplayName("Deve retornar os detalhes de uma reserva")
       void shouldReturnExistingReservationById() {
         // Arrange
         Modality modality = mockPersistModality("Padel");
         Court court = mockPersistCourt("Court X", modality);
         LocalDate reservationDate = LocalDate.now().plusDays(3);
         TimeInterval timeInterval = new TimeInterval(LocalTime.of(12, 0), LocalTime.of(13, 0));
-        ScheduleEntry savedEntry =
+        Reservation savedEntry =
             mockPersistReservationByUser(
                 modality.getId(),
                 court.getId(),
                 reservationDate,
                 timeInterval,
-                BigDecimal.valueOf(75.00),
+                BigDecimal.valueOf(75.0),
                 defaultUser.getId());
 
         // Act & Assert
@@ -743,15 +745,20 @@ public class ReservationControllerIntegrationTest extends WebIntegrationTestConf
                 .then()
                 .statusCode(200)
                 .extract()
-                .as(ScheduleEntryResponseDto.class);
+                .as(ReservationDetailResponseDto.class);
 
-        assertThat(response.id()).isEqualTo(savedEntry.getId());
-        assertThat(response.courtId()).isEqualTo(savedEntry.getCourtId());
-        assertThat(response.date()).isEqualTo(savedEntry.getDateTimeSlot().date());
-        assertThat(response.timeInterval().startTime())
-            .isEqualTo(savedEntry.getDateTimeSlot().timeInterval().startTime());
-        assertThat(response.timeInterval().endTime())
-            .isEqualTo(savedEntry.getDateTimeSlot().timeInterval().endTime());
+        assertThat(response.reservationId()).isEqualTo(savedEntry.getId());
+        assertThat(response.courtId()).isEqualTo(court.getId());
+        assertThat(response.courtName()).isEqualTo(court.getName());
+        assertThat(response.username()).isEqualTo(defaultUsername);
+        assertThat(response.fullName()).isEqualTo(defaultFullName);
+        assertThat(response.userPhone()).isEqualTo(defaultPhone);
+        assertThat(response.date()).isEqualTo(reservationDate);
+        assertThat(response.timeInterval().startTime()).isEqualTo(timeInterval.startTime());
+        assertThat(response.timeInterval().endTime()).isEqualTo(timeInterval.endTime());
+        assertThat(response.modalityName()).isEqualTo(modality.getName());
+        assertThat(response.price().compareTo(BigDecimal.valueOf(75.0))).isEqualTo(0);
+        assertThat(response.status()).isEqualTo(savedEntry.getStatus());
       }
     }
 

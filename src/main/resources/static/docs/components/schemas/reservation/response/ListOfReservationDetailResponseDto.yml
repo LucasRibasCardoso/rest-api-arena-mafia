@@ -1,0 +1,11 @@
+type: array
+description: |
+  Lista de reservas criadas pela operação.
+  
+  Para reservas individuais: retorna uma lista com 1 elemento.
+  Para reservas recorrentes: retorna uma lista com múltiplos elementos (um por ocorrência).
+  
+  Todas as reservas retornam com status CONFIRMED.
+
+items:
+  $ref: "../ReservationDetailResponseDto.yml"

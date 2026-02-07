@@ -1,0 +1,26 @@
+type: object
+description: Representa um slot de horário disponível na agenda pública.
+required:
+  - type
+  - timeInterval
+  - availableModalityIds
+  - price
+properties:
+  type:
+    type: string
+    enum: [AVAILABLE_SLOT]
+    example: "AVAILABLE_SLOT"
+  timeInterval:
+    $ref: "../timeInterval/TimeIntervalDto.yml"
+  availableModalityIds:
+    type: array
+    description: Lista de IDs das modalidades disponíveis para este slot.
+    items:
+      type: string
+      format: uuid
+    example: ["550e8400-e29b-41d4-a716-446655440005", "550e8400-e29b-41d4-a716-446655440006"]
+  price:
+    type: number
+    format: decimal
+    description: O preço para reservar este slot, calculado com base no horário e outras regras.
+    example: 50.00

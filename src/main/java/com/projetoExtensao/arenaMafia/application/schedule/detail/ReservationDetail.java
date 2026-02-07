@@ -12,6 +12,7 @@ public record ReservationDetail(
     UUID userId,
     UUID courtId,
     String username,
+    String fullName,
     String userPhone,
     String courtName,
     LocalDate date,
@@ -20,7 +21,12 @@ public record ReservationDetail(
     BigDecimal price,
     ReservationStatus status,
     UUID recurringReservationId)
-    implements ScheduleDetail {
+    implements ScheduleEntryDetail {
+
+  @Override
+  public UUID id() {
+    return reservationId;
+  }
 
   /**
    * Verifica se a reserva está em andamento no momento atual.

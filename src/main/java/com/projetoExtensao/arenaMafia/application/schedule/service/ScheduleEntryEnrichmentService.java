@@ -4,7 +4,7 @@ import com.projetoExtensao.arenaMafia.application.court.port.repository.CourtRep
 import com.projetoExtensao.arenaMafia.application.modality.port.ModalityRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.schedule.detail.BlockedTimeDetail;
 import com.projetoExtensao.arenaMafia.application.schedule.detail.ReservationDetail;
-import com.projetoExtensao.arenaMafia.application.schedule.detail.ScheduleDetail;
+import com.projetoExtensao.arenaMafia.application.schedule.detail.ScheduleEntryDetail;
 import com.projetoExtensao.arenaMafia.application.schedule.result.ScheduleEntriesEnrichedResult;
 import com.projetoExtensao.arenaMafia.application.user.port.repository.UserRepositoryPort;
 import com.projetoExtensao.arenaMafia.domain.model.Court;
@@ -42,8 +42,7 @@ public class ScheduleEntryEnrichmentService {
    * @param scheduleEntries lista de entradas de agendamento a serem enriquecidas
    * @return listas de entradas enriquecidas
    */
-  public ScheduleEntriesEnrichedResult enrichScheduleEntries(
-      List<? extends ScheduleEntry> scheduleEntries) {
+  public ScheduleEntriesEnrichedResult enrichScheduleEntries(List<? extends ScheduleEntry> scheduleEntries) {
     if (scheduleEntries == null || scheduleEntries.isEmpty()) {
       return new ScheduleEntriesEnrichedResult(List.of(), List.of(), List.of());
     }
@@ -61,7 +60,7 @@ public class ScheduleEntryEnrichmentService {
     Map<UUID, Modality> modalityMap = loadModalities(reservations);
 
     // Enriquecer cada entrada usando polimorfismo
-    List<ScheduleDetail> scheduleDetails =
+    List<ScheduleEntryDetail> scheduleDetails =
         scheduleEntries.stream()
             .map(entry -> enrichSingleEntry(entry, userMap, courtMap, modalityMap))
             .toList();
@@ -79,8 +78,31 @@ public class ScheduleEntryEnrichmentService {
             .map(detail -> (BlockedTimeDetail) detail)
             .toList();
 
-    return new ScheduleEntriesEnrichedResult(
-        scheduleDetails, reservationDetails, blockedTimeDetails);
+    return new ScheduleEntriesEnrichedResult(scheduleDetails, reservationDetails, blockedTimeDetails);
+  }
+
+  /**
+   * Enriquece um único bloqueio de horário.
+   *
+   * @param blockedTime bloqueio de horário a ser enriquecido
+   * @return detalhes do bloqueio de horário enriquecido
+   */
+  public BlockedTimeDetail enrichBlockedTime(BlockedTime blockedTime) {
+    Map<UUID, Court> courtMap = loadCourts(List.of(blockedTime));
+    return enrichBlockedTime(blockedTime, courtMap);
+  }
+
+  /**
+   * Enriquece uma única reserva.
+   *
+   * @param reservation reserva a ser enriquecida
+   * @return detalhes da reserva enriquecida
+   */
+  public ReservationDetail enrichReservation(Reservation reservation) {
+    Map<UUID, User> userMap = loadUsers(List.of(reservation));
+    Map<UUID, Court> courtMap = loadCourts(List.of(reservation));
+    Map<UUID, Modality> modalityMap = loadModalities(List.of(reservation));
+    return enrichReservation(reservation, userMap, courtMap, modalityMap);
   }
 
   /**
@@ -92,19 +114,16 @@ public class ScheduleEntryEnrichmentService {
    * @param modalityMap mapa de modalidades
    * @return detalhes da entrada enriquecida
    */
-  private ScheduleDetail enrichSingleEntry(
+  private ScheduleEntryDetail enrichSingleEntry(
       ScheduleEntry entry,
       Map<UUID, User> userMap,
       Map<UUID, Court> courtMap,
       Map<UUID, Modality> modalityMap) {
 
     return switch (entry) {
-      case Reservation reservation ->
-          enrichReservation(reservation, userMap, courtMap, modalityMap);
+      case Reservation reservation -> enrichReservation(reservation, userMap, courtMap, modalityMap);
       case BlockedTime blockedTime -> enrichBlockedTime(blockedTime, courtMap);
-      default ->
-          throw new IllegalStateException(
-              "Tipo de ScheduleEntry não suportado: " + entry.getClass());
+      default -> throw new IllegalStateException("Tipo de ScheduleEntry não suportado: " + entry.getClass());
     };
   }
 
@@ -122,7 +141,8 @@ public class ScheduleEntryEnrichmentService {
         reservation.getId(),
         reservation.getUserId(),
         reservation.getCourtId(),
-        user.getFullName() != null ? user.getFullName() : "Usuário Desconhecido",
+        user.getUsername() != null ? user.getUsername() : "Usuário Desconhecido",
+        user.getFullName() != null ? user.getFullName() : "Nome completo Não Encontrado",
         user.getPhone() != null ? user.getPhone() : "Telefone Não Informado",
         court.getName() != null ? court.getName() : "Quadra Desconhecida",
         reservation.getDateTimeSlot().date(),

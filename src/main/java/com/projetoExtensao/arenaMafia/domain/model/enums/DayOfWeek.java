@@ -65,4 +65,21 @@ public enum DayOfWeek {
     int nextIndex = (this.ordinal() + 1) % values().length;
     return values()[nextIndex];
   }
+
+  /**
+   * Retorna o nome do dia da semana em português.
+   *
+   * @return nome do dia em português
+   */
+  public String getPortugueseName() {
+    return switch (this) {
+      case MONDAY -> "Segunda-feira";
+      case TUESDAY -> "Terça-feira";
+      case WEDNESDAY -> "Quarta-feira";
+      case THURSDAY -> "Quinta-feira";
+      case FRIDAY -> "Sexta-feira";
+      case SATURDAY -> "Sábado";
+      case SUNDAY -> "Domingo";
+    };
+  }
 }

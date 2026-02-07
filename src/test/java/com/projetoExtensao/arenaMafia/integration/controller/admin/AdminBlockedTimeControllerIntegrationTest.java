@@ -1,5 +1,8 @@
 package com.projetoExtensao.arenaMafia.integration.controller.admin;
 
+import static io.restassured.RestAssured.given;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.projetoExtensao.arenaMafia.application.court.port.repository.CourtRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.operatingHours.port.repository.OperatingHoursRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.schedule.port.gateway.BlockedTimePreviewCachePort;
@@ -14,33 +17,36 @@ import com.projetoExtensao.arenaMafia.domain.model.OperatingHours;
 import com.projetoExtensao.arenaMafia.domain.model.User;
 import com.projetoExtensao.arenaMafia.domain.model.enums.DayOfWeek;
 import com.projetoExtensao.arenaMafia.domain.model.enums.ReservationStatus;
+import com.projetoExtensao.arenaMafia.domain.model.schedule.BlockedTime;
+import com.projetoExtensao.arenaMafia.domain.model.schedule.ScheduleEntry;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
-import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.blockedtime.request.BlockedTimeConflictsPreviewRequestDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.blockedtime.request.BlockedTimeConfirmRequestDto;
+import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.blockedtime.request.BlockedTimeConflictsPreviewRequestDto;
+import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.blockedtime.request.BlockedTimeUpdateRequestDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.blockedtime.response.BlockedTimeConfirmResponseDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.blockedtime.response.BlockedTimeConflictsPreviewResponseDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.exception.dto.ErrorResponseDto;
+import com.projetoExtensao.arenaMafia.infrastructure.web.schedule.dto.response.scheduleDetail.BlockedTimeDetailResponseDto;
 import com.projetoExtensao.arenaMafia.integration.config.WebIntegrationTestConfig;
-import com.projetoExtensao.arenaMafia.integration.config.util.BlockedTime.InvalidListOfCourtIdsProvider;
+import com.projetoExtensao.arenaMafia.integration.config.util.blockedTime.InvalidListOfCourtIdsProvider;
 import com.projetoExtensao.arenaMafia.integration.config.util.timeInterval.InvalidTimeIntervalProvider;
 import io.restassured.builder.RequestSpecBuilder;
+import io.restassured.common.mapper.TypeRef;
 import io.restassured.specification.RequestSpecification;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
-import org.springframework.test.annotation.DirtiesContext;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
-
-import static io.restassured.RestAssured.given;
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
+import org.springframework.test.annotation.DirtiesContext;
 
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @DisplayName("Testes de integração para AdminBlockedTimeController")
@@ -100,21 +106,21 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
             LocalDate date = LocalDate.now().plusDays(1);
 
             var requestDto =
-                    new BlockedTimeConflictsPreviewRequestDto(
-                            List.of(courtId), date, date, null, true, null);
+                new BlockedTimeConflictsPreviewRequestDto(
+                    List.of(courtId), date, date, null, true, null);
 
             // Act
             var response =
-                    given()
-                            .spec(specification)
-                            .header("Authorization", accessToken)
-                            .body(requestDto)
-                            .when()
-                            .post("/preview-conflicts")
-                            .then()
-                            .statusCode(200)
-                            .extract()
-                            .as(BlockedTimeConflictsPreviewResponseDto.class);
+                given()
+                    .spec(specification)
+                    .header("Authorization", accessToken)
+                    .body(requestDto)
+                    .when()
+                    .post("/preview-conflicts")
+                    .then()
+                    .statusCode(200)
+                    .extract()
+                    .as(BlockedTimeConflictsPreviewResponseDto.class);
 
             // Assert
             assertThat(response.usersAffected()).isZero();
@@ -125,17 +131,22 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
             assertThat(response.inProgressReservations()).isEmpty();
 
             Optional<BlockedTimeConflictsPreview> previewSavedOpt =
-                    getPreviewSavedFromCache(response.previewKey());
+                getPreviewSavedFromCache(response.previewKey());
             assertThat(previewSavedOpt).isPresent();
 
             BlockedTimeConflictsPreview previewSaved = previewSavedOpt.get();
             assertThat(previewSaved.previewKey()).isEqualTo(response.previewKey());
             assertThat(previewSaved.usersAffected()).isEqualTo(response.usersAffected());
-            assertThat(previewSaved.blockedTimesAffected()).isEqualTo(response.blockedTimesAffected());
-            assertThat(previewSaved.reservationsAffected()).isEqualTo(response.reservationsAffected());
-            assertThat(previewSaved.conflictingBlockedTimes().size()).isEqualTo(response.conflictingBlockedTimes().size());
-            assertThat(previewSaved.conflictingReservations().size()).isEqualTo(response.conflictingReservations().size());
-            assertThat(previewSaved.inProgressReservations().size()).isEqualTo(response.inProgressReservations().size());
+            assertThat(previewSaved.blockedTimesAffected())
+                .isEqualTo(response.blockedTimesAffected());
+            assertThat(previewSaved.reservationsAffected())
+                .isEqualTo(response.reservationsAffected());
+            assertThat(previewSaved.conflictingBlockedTimes().size())
+                .isEqualTo(response.conflictingBlockedTimes().size());
+            assertThat(previewSaved.conflictingReservations().size())
+                .isEqualTo(response.conflictingReservations().size());
+            assertThat(previewSaved.inProgressReservations().size())
+                .isEqualTo(response.inProgressReservations().size());
             assertThat(previewSaved.request()).usingRecursiveComparison().isEqualTo(requestDto);
           }
 
@@ -149,35 +160,35 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
             LocalDate date = LocalDate.now().plusDays(1);
 
             mockPersistReservationByUser(
-                    modality.getId(),
-                    courtId,
-                    date,
-                    new TimeInterval(LocalTime.of(10, 0), LocalTime.of(11, 0)),
-                    DEFAULT_RESERVATION_PRICE,
-                    adminId);
+                modality.getId(),
+                courtId,
+                date,
+                new TimeInterval(LocalTime.of(10, 0), LocalTime.of(11, 0)),
+                DEFAULT_RESERVATION_PRICE,
+                adminId);
             mockPersistBlockedTimeSpecific(
-                    courtId,
-                    date,
-                    new TimeInterval(LocalTime.of(12, 0), LocalTime.of(13, 0)),
-                    "Manutenção",
-                    adminId);
+                courtId,
+                date,
+                new TimeInterval(LocalTime.of(12, 0), LocalTime.of(13, 0)),
+                "Manutenção",
+                adminId);
 
             var requestDto =
-                    new BlockedTimeConflictsPreviewRequestDto(
-                            List.of(courtId), date, date, null, true, null);
+                new BlockedTimeConflictsPreviewRequestDto(
+                    List.of(courtId), date, date, null, true, null);
 
             // Act
             var response =
-                    given()
-                            .spec(specification)
-                            .header("Authorization", accessToken)
-                            .body(requestDto)
-                            .when()
-                            .post("/preview-conflicts")
-                            .then()
-                            .statusCode(200)
-                            .extract()
-                            .as(BlockedTimeConflictsPreviewResponseDto.class);
+                given()
+                    .spec(specification)
+                    .header("Authorization", accessToken)
+                    .body(requestDto)
+                    .when()
+                    .post("/preview-conflicts")
+                    .then()
+                    .statusCode(200)
+                    .extract()
+                    .as(BlockedTimeConflictsPreviewResponseDto.class);
 
             // Assert
             assertThat(response.usersAffected()).isOne();
@@ -188,20 +199,23 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
             assertThat(response.inProgressReservations()).isEmpty();
 
             Optional<BlockedTimeConflictsPreview> previewSavedOpt =
-                    getPreviewSavedFromCache(response.previewKey());
+                getPreviewSavedFromCache(response.previewKey());
             assertThat(previewSavedOpt).isPresent();
 
             BlockedTimeConflictsPreview previewSaved = previewSavedOpt.get();
             assertThat(previewSaved.previewKey()).isEqualTo(response.previewKey());
             assertThat(previewSaved.usersAffected()).isEqualTo(response.usersAffected());
             assertThat(previewSaved.blockedTimesAffected())
-                    .isEqualTo(response.blockedTimesAffected());
+                .isEqualTo(response.blockedTimesAffected());
             assertThat(previewSaved.reservationsAffected())
-                    .isEqualTo(response.reservationsAffected());
+                .isEqualTo(response.reservationsAffected());
 
-            assertThat(previewSaved.conflictingBlockedTimes().size()).isEqualTo(response.conflictingBlockedTimes().size());
-            assertThat(previewSaved.conflictingReservations().size()).isEqualTo(response.conflictingReservations().size());
-            assertThat(previewSaved.inProgressReservations().size()).isEqualTo(response.inProgressReservations().size());
+            assertThat(previewSaved.conflictingBlockedTimes().size())
+                .isEqualTo(response.conflictingBlockedTimes().size());
+            assertThat(previewSaved.conflictingReservations().size())
+                .isEqualTo(response.conflictingReservations().size());
+            assertThat(previewSaved.inProgressReservations().size())
+                .isEqualTo(response.inProgressReservations().size());
             assertThat(previewSaved.request()).usingRecursiveComparison().isEqualTo(requestDto);
           }
 
@@ -221,27 +235,27 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
             TimeInterval timeInterval = new TimeInterval(startTime, endTime);
 
             mockPersistReservationByUser(
-                    modality.getId(), courtId2, date, timeInterval, DEFAULT_RESERVATION_PRICE, adminId);
+                modality.getId(), courtId2, date, timeInterval, DEFAULT_RESERVATION_PRICE, adminId);
             mockPersistReservationByUser(
-                    modality.getId(), courtId1, date, timeInterval, DEFAULT_RESERVATION_PRICE, adminId);
+                modality.getId(), courtId1, date, timeInterval, DEFAULT_RESERVATION_PRICE, adminId);
             mockPersistBlockedTimeSpecific(courtId1, date, timeInterval, "Manutenção", adminId);
 
             var requestDto =
-                    new BlockedTimeConflictsPreviewRequestDto(
-                            List.of(courtId1), date, date, null, true, null);
+                new BlockedTimeConflictsPreviewRequestDto(
+                    List.of(courtId1), date, date, null, true, null);
 
             // Act
             var response =
-                    given()
-                            .spec(specification)
-                            .header("Authorization", accessToken)
-                            .body(requestDto)
-                            .when()
-                            .post("/preview-conflicts")
-                            .then()
-                            .statusCode(200)
-                            .extract()
-                            .as(BlockedTimeConflictsPreviewResponseDto.class);
+                given()
+                    .spec(specification)
+                    .header("Authorization", accessToken)
+                    .body(requestDto)
+                    .when()
+                    .post("/preview-conflicts")
+                    .then()
+                    .statusCode(200)
+                    .extract()
+                    .as(BlockedTimeConflictsPreviewResponseDto.class);
 
             // Assert
             assertThat(response.usersAffected()).isZero();
@@ -259,20 +273,23 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
             assertThat(inProgressReservation.status()).isEqualTo(ReservationStatus.CONFIRMED);
 
             Optional<BlockedTimeConflictsPreview> previewSavedOpt =
-                    getPreviewSavedFromCache(response.previewKey());
+                getPreviewSavedFromCache(response.previewKey());
             assertThat(previewSavedOpt).isPresent();
 
             BlockedTimeConflictsPreview previewSaved = previewSavedOpt.get();
             assertThat(previewSaved.previewKey()).isEqualTo(response.previewKey());
             assertThat(previewSaved.usersAffected()).isEqualTo(response.usersAffected());
             assertThat(previewSaved.blockedTimesAffected())
-                    .isEqualTo(response.blockedTimesAffected());
+                .isEqualTo(response.blockedTimesAffected());
             assertThat(previewSaved.reservationsAffected())
-                    .isEqualTo(response.reservationsAffected());
+                .isEqualTo(response.reservationsAffected());
 
-            assertThat(previewSaved.conflictingBlockedTimes().size()).isEqualTo(response.conflictingBlockedTimes().size());
-            assertThat(previewSaved.conflictingReservations().size()).isEqualTo(response.conflictingReservations().size());
-            assertThat(previewSaved.inProgressReservations().size()).isEqualTo(response.inProgressReservations().size());
+            assertThat(previewSaved.conflictingBlockedTimes().size())
+                .isEqualTo(response.conflictingBlockedTimes().size());
+            assertThat(previewSaved.conflictingReservations().size())
+                .isEqualTo(response.conflictingReservations().size());
+            assertThat(previewSaved.inProgressReservations().size())
+                .isEqualTo(response.inProgressReservations().size());
             assertThat(previewSaved.request()).usingRecursiveComparison().isEqualTo(requestDto);
           }
 
@@ -288,21 +305,21 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
             TimeInterval timeInterval = new TimeInterval(LocalTime.of(14, 0), LocalTime.of(15, 0));
 
             var requestDto =
-                    new BlockedTimeConflictsPreviewRequestDto(
-                            List.of(courtId), date, date, timeInterval, false, null);
+                new BlockedTimeConflictsPreviewRequestDto(
+                    List.of(courtId), date, date, timeInterval, false, null);
 
             // Act
             var response =
-                    given()
-                            .spec(specification)
-                            .header("Authorization", accessToken)
-                            .body(requestDto)
-                            .when()
-                            .post("/preview-conflicts")
-                            .then()
-                            .statusCode(200)
-                            .extract()
-                            .as(BlockedTimeConflictsPreviewResponseDto.class);
+                given()
+                    .spec(specification)
+                    .header("Authorization", accessToken)
+                    .body(requestDto)
+                    .when()
+                    .post("/preview-conflicts")
+                    .then()
+                    .statusCode(200)
+                    .extract()
+                    .as(BlockedTimeConflictsPreviewResponseDto.class);
 
             // Assert
             assertThat(response.usersAffected()).isZero();
@@ -313,22 +330,22 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
             assertThat(response.inProgressReservations()).isEmpty();
 
             Optional<BlockedTimeConflictsPreview> previewSavedOpt =
-                    getPreviewSavedFromCache(response.previewKey());
+                getPreviewSavedFromCache(response.previewKey());
             assertThat(previewSavedOpt).isPresent();
 
             BlockedTimeConflictsPreview previewSaved = previewSavedOpt.get();
             assertThat(previewSaved.previewKey()).isEqualTo(response.previewKey());
             assertThat(previewSaved.usersAffected()).isEqualTo(response.usersAffected());
             assertThat(previewSaved.blockedTimesAffected())
-                    .isEqualTo(response.blockedTimesAffected());
+                .isEqualTo(response.blockedTimesAffected());
             assertThat(previewSaved.reservationsAffected())
-                    .isEqualTo(response.reservationsAffected());
+                .isEqualTo(response.reservationsAffected());
             assertThat(previewSaved.conflictingBlockedTimes())
-                    .isEqualTo(response.conflictingBlockedTimes());
+                .isEqualTo(response.conflictingBlockedTimes());
             assertThat(previewSaved.conflictingReservations())
-                    .isEqualTo(response.conflictingReservations());
+                .isEqualTo(response.conflictingReservations());
             assertThat(previewSaved.inProgressReservations())
-                    .isEqualTo(response.inProgressReservations());
+                .isEqualTo(response.inProgressReservations());
             assertThat(previewSaved.request()).usingRecursiveComparison().isEqualTo(requestDto);
           }
 
@@ -340,33 +357,34 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
             Modality modality = mockPersistModality("Futebol");
             UUID courtId = mockPersistCourt("Quadra 1", modality).getId();
             LocalDate date = LocalDate.now().plusDays(1);
-            TimeInterval conflictInterval = new TimeInterval(LocalTime.of(10, 0), LocalTime.of(11, 0));
+            TimeInterval conflictInterval =
+                new TimeInterval(LocalTime.of(10, 0), LocalTime.of(11, 0));
 
             mockPersistReservationByUser(
-                    modality.getId(),
-                    courtId,
-                    date,
-                    conflictInterval,
-                    DEFAULT_RESERVATION_PRICE,
-                    adminId);
+                modality.getId(),
+                courtId,
+                date,
+                conflictInterval,
+                DEFAULT_RESERVATION_PRICE,
+                adminId);
             mockPersistBlockedTimeSpecific(courtId, date, conflictInterval, "Manutenção", adminId);
 
             var requestDto =
-                    new BlockedTimeConflictsPreviewRequestDto(
-                            List.of(courtId), date, date, conflictInterval, false, null);
+                new BlockedTimeConflictsPreviewRequestDto(
+                    List.of(courtId), date, date, conflictInterval, false, null);
 
             // Act
             var response =
-                    given()
-                            .spec(specification)
-                            .header("Authorization", accessToken)
-                            .body(requestDto)
-                            .when()
-                            .post("/preview-conflicts")
-                            .then()
-                            .statusCode(200)
-                            .extract()
-                            .as(BlockedTimeConflictsPreviewResponseDto.class);
+                given()
+                    .spec(specification)
+                    .header("Authorization", accessToken)
+                    .body(requestDto)
+                    .when()
+                    .post("/preview-conflicts")
+                    .then()
+                    .statusCode(200)
+                    .extract()
+                    .as(BlockedTimeConflictsPreviewResponseDto.class);
 
             // Assert
             assertThat(response.usersAffected()).isOne();
@@ -376,18 +394,24 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
             assertThat(response.conflictingReservations().size()).isEqualTo(1);
             assertThat(response.inProgressReservations()).isEmpty();
 
-            Optional<BlockedTimeConflictsPreview> previewSavedOpt = getPreviewSavedFromCache(response.previewKey());
+            Optional<BlockedTimeConflictsPreview> previewSavedOpt =
+                getPreviewSavedFromCache(response.previewKey());
             assertThat(previewSavedOpt).isPresent();
 
             BlockedTimeConflictsPreview previewSaved = previewSavedOpt.get();
             assertThat(previewSaved.previewKey()).isEqualTo(response.previewKey());
             assertThat(previewSaved.usersAffected()).isEqualTo(response.usersAffected());
-            assertThat(previewSaved.blockedTimesAffected()).isEqualTo(response.blockedTimesAffected());
-            assertThat(previewSaved.reservationsAffected()).isEqualTo(response.reservationsAffected());
+            assertThat(previewSaved.blockedTimesAffected())
+                .isEqualTo(response.blockedTimesAffected());
+            assertThat(previewSaved.reservationsAffected())
+                .isEqualTo(response.reservationsAffected());
 
-            assertThat(previewSaved.conflictingBlockedTimes().size()).isEqualTo(response.conflictingBlockedTimes().size());
-            assertThat(previewSaved.conflictingReservations().size()).isEqualTo(response.conflictingReservations().size());
-            assertThat(previewSaved.inProgressReservations().size()).isEqualTo(response.inProgressReservations().size());
+            assertThat(previewSaved.conflictingBlockedTimes().size())
+                .isEqualTo(response.conflictingBlockedTimes().size());
+            assertThat(previewSaved.conflictingReservations().size())
+                .isEqualTo(response.conflictingReservations().size());
+            assertThat(previewSaved.inProgressReservations().size())
+                .isEqualTo(response.inProgressReservations().size());
 
             assertThat(previewSaved.request()).usingRecursiveComparison().isEqualTo(requestDto);
           }
@@ -407,25 +431,24 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
             TimeInterval timeInterval = new TimeInterval(startTime, endTime);
 
             mockPersistReservationByUser(
-                    modality.getId(), courtId, date, timeInterval, DEFAULT_RESERVATION_PRICE, adminId);
+                modality.getId(), courtId, date, timeInterval, DEFAULT_RESERVATION_PRICE, adminId);
             mockPersistBlockedTimeSpecific(courtId, date, timeInterval, "Manutenção", adminId);
 
-            var requestDto =
-                    new BlockedTimeConflictsPreviewRequestDto(
-                            List.of(courtId), date, date, timeInterval, false, null);
+            var requestDto = new BlockedTimeConflictsPreviewRequestDto(List.of(courtId), date, date, timeInterval, false, null);
 
             // Act
             var response =
-                    given()
-                            .spec(specification)
-                            .header("Authorization", accessToken)
-                            .body(requestDto)
-                            .when()
-                            .post("/preview-conflicts")
-                            .then()
-                            .statusCode(200)
-                            .extract()
-                            .as(BlockedTimeConflictsPreviewResponseDto.class);
+                given()
+                    .spec(specification)
+                    .header("Authorization", accessToken)
+                    .body(requestDto)
+                    .when()
+                    .post("/preview-conflicts")
+                    .then()
+                        .log().all()
+                    .statusCode(200)
+                    .extract()
+                    .as(BlockedTimeConflictsPreviewResponseDto.class);
 
             // Assert
             assertThat(response.usersAffected()).isZero();
@@ -438,32 +461,32 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
 
           @Test
           @DisplayName(
-                  "Cria preview de bloqueio para horário específico que atravessa a meia-noite sem conflitos")
+              "Cria preview de bloqueio para horário específico que atravessa a meia-noite sem conflitos")
           void shouldCreatePreviewForSpecificTimeCrossingMidnightWithoutConflicts() {
             // Arrange
             mockPersistOperatingHoursAllDaysWithTimeInterval(
-                    new TimeInterval(LocalTime.of(13, 30), LocalTime.of(2, 30)));
+                new TimeInterval(LocalTime.of(13, 30), LocalTime.of(2, 30)));
             Modality modality = mockPersistModality("Futebol");
             UUID courtId = mockPersistCourt("Quadra 1", modality).getId();
             LocalDate date = LocalDate.now().plusDays(1);
             TimeInterval timeInterval = new TimeInterval(LocalTime.of(23, 0), LocalTime.of(1, 0));
 
             var requestDto =
-                    new BlockedTimeConflictsPreviewRequestDto(
-                            List.of(courtId), date, date, timeInterval, false, null);
+                new BlockedTimeConflictsPreviewRequestDto(
+                    List.of(courtId), date, date, timeInterval, false, null);
 
             // Act
             var response =
-                    given()
-                            .spec(specification)
-                            .header("Authorization", accessToken)
-                            .body(requestDto)
-                            .when()
-                            .post("/preview-conflicts")
-                            .then()
-                            .statusCode(200)
-                            .extract()
-                            .as(BlockedTimeConflictsPreviewResponseDto.class);
+                given()
+                    .spec(specification)
+                    .header("Authorization", accessToken)
+                    .body(requestDto)
+                    .when()
+                    .post("/preview-conflicts")
+                    .then()
+                    .statusCode(200)
+                    .extract()
+                    .as(BlockedTimeConflictsPreviewResponseDto.class);
 
             // Assert
             assertThat(response.usersAffected()).isZero();
@@ -474,7 +497,7 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
             assertThat(response.inProgressReservations()).isEmpty();
 
             Optional<BlockedTimeConflictsPreview> previewSavedOpt =
-                    getPreviewSavedFromCache(response.previewKey());
+                getPreviewSavedFromCache(response.previewKey());
             assertThat(previewSavedOpt).isPresent();
 
             BlockedTimeConflictsPreview previewSaved = previewSavedOpt.get();
@@ -483,40 +506,40 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
 
           @Test
           @DisplayName(
-                  "Cria preview de bloqueio para horário específico que atravessa a meia-noite com conflitos")
+              "Cria preview de bloqueio para horário específico que atravessa a meia-noite com conflitos")
           void shouldCreatePreviewForSpecificTimeCrossingMidnightWithConflicts() {
             // Arrange
             mockPersistOperatingHoursAllDaysWithTimeInterval(
-                    new TimeInterval(LocalTime.of(13, 30), LocalTime.of(2, 30)));
+                new TimeInterval(LocalTime.of(13, 30), LocalTime.of(2, 30)));
             Modality modality = mockPersistModality("Futebol");
             UUID courtId = mockPersistCourt("Quadra 1", modality).getId();
             LocalDate date = LocalDate.now().plusDays(1);
             TimeInterval timeInterval = new TimeInterval(LocalTime.of(23, 0), LocalTime.of(1, 0));
 
             mockPersistReservationByUser(
-                    modality.getId(),
-                    courtId,
-                    date,
-                    new TimeInterval(LocalTime.of(0, 0), LocalTime.of(1, 0)),
-                    DEFAULT_RESERVATION_PRICE,
-                    adminId);
+                modality.getId(),
+                courtId,
+                date,
+                new TimeInterval(LocalTime.of(0, 0), LocalTime.of(1, 0)),
+                DEFAULT_RESERVATION_PRICE,
+                adminId);
 
             var requestDto =
-                    new BlockedTimeConflictsPreviewRequestDto(
-                            List.of(courtId), date, date, timeInterval, false, null);
+                new BlockedTimeConflictsPreviewRequestDto(
+                    List.of(courtId), date, date, timeInterval, false, null);
 
             // Act
             var response =
-                    given()
-                            .spec(specification)
-                            .header("Authorization", accessToken)
-                            .body(requestDto)
-                            .when()
-                            .post("/preview-conflicts")
-                            .then()
-                            .statusCode(200)
-                            .extract()
-                            .as(BlockedTimeConflictsPreviewResponseDto.class);
+                given()
+                    .spec(specification)
+                    .header("Authorization", accessToken)
+                    .body(requestDto)
+                    .when()
+                    .post("/preview-conflicts")
+                    .then()
+                    .statusCode(200)
+                    .extract()
+                    .as(BlockedTimeConflictsPreviewResponseDto.class);
 
             // Assert
             assertThat(response.usersAffected()).isOne();
@@ -527,7 +550,7 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
             assertThat(response.inProgressReservations()).isEmpty();
 
             Optional<BlockedTimeConflictsPreview> previewSavedOpt =
-                    getPreviewSavedFromCache(response.previewKey());
+                getPreviewSavedFromCache(response.previewKey());
             assertThat(previewSavedOpt).isPresent();
 
             BlockedTimeConflictsPreview previewSaved = previewSavedOpt.get();
@@ -541,7 +564,7 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
 
           @Test
           @DisplayName(
-                  "Cria preview de bloqueio consecutivo para 15 dias para o dia todo sem conflitos")
+              "Cria preview de bloqueio consecutivo para 15 dias para o dia todo sem conflitos")
           void shouldCreatePreviewForFullDayWithoutConflicts() {
             // Arrange
             mockPersistOperatingHoursAllDays();
@@ -550,21 +573,21 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
             LocalDate endDate = startDate.plusDays(15);
 
             var request =
-                    new BlockedTimeConflictsPreviewRequestDto(
-                            List.of(courtId), startDate, endDate, null, true, null);
+                new BlockedTimeConflictsPreviewRequestDto(
+                    List.of(courtId), startDate, endDate, null, true, null);
 
             // Act
             var response =
-                    given()
-                            .spec(specification)
-                            .header("Authorization", accessToken)
-                            .body(request)
-                            .when()
-                            .post("/preview-conflicts")
-                            .then()
-                            .statusCode(200)
-                            .extract()
-                            .as(BlockedTimeConflictsPreviewResponseDto.class);
+                given()
+                    .spec(specification)
+                    .header("Authorization", accessToken)
+                    .body(request)
+                    .when()
+                    .post("/preview-conflicts")
+                    .then()
+                    .statusCode(200)
+                    .extract()
+                    .as(BlockedTimeConflictsPreviewResponseDto.class);
 
             // Assert
             assertThat(response.usersAffected()).isZero();
@@ -575,7 +598,7 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
             assertThat(response.inProgressReservations()).isEmpty();
 
             Optional<BlockedTimeConflictsPreview> previewSavedOpt =
-                    getPreviewSavedFromCache(response.previewKey());
+                getPreviewSavedFromCache(response.previewKey());
             assertThat(previewSavedOpt).isPresent();
 
             BlockedTimeConflictsPreview previewSaved = previewSavedOpt.get();
@@ -584,7 +607,7 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
 
           @Test
           @DisplayName(
-                  "Cria preview de bloqueio consecutivo para 14 dias para dia todo com conflitos")
+              "Cria preview de bloqueio consecutivo para 14 dias para dia todo com conflitos")
           void shouldCreatePreviewForFullDayWithConflicts() {
             // Arrange
             mockPersistOperatingHoursAllDays();
@@ -594,49 +617,49 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
             LocalDate endDate = startDate.plusDays(14);
 
             mockPersistReservationByUser(
-                    modality.getId(),
-                    courtId,
-                    startDate.plusDays(7),
-                    new TimeInterval(LocalTime.of(10, 0), LocalTime.of(11, 0)),
-                    DEFAULT_RESERVATION_PRICE,
-                    adminId);
+                modality.getId(),
+                courtId,
+                startDate.plusDays(7),
+                new TimeInterval(LocalTime.of(10, 0), LocalTime.of(11, 0)),
+                DEFAULT_RESERVATION_PRICE,
+                adminId);
             mockPersistReservationByUser(
-                    modality.getId(),
-                    courtId,
-                    startDate.plusDays(9),
-                    new TimeInterval(LocalTime.of(10, 0), LocalTime.of(11, 0)),
-                    DEFAULT_RESERVATION_PRICE,
-                    adminId);
+                modality.getId(),
+                courtId,
+                startDate.plusDays(9),
+                new TimeInterval(LocalTime.of(10, 0), LocalTime.of(11, 0)),
+                DEFAULT_RESERVATION_PRICE,
+                adminId);
             mockPersistReservationByUser(
-                    modality.getId(),
-                    courtId,
-                    startDate.plusDays(14),
-                    new TimeInterval(LocalTime.of(10, 0), LocalTime.of(11, 0)),
-                    DEFAULT_RESERVATION_PRICE,
-                    adminId);
+                modality.getId(),
+                courtId,
+                startDate.plusDays(14),
+                new TimeInterval(LocalTime.of(10, 0), LocalTime.of(11, 0)),
+                DEFAULT_RESERVATION_PRICE,
+                adminId);
             mockPersistBlockedTimeSpecific(
-                    courtId,
-                    startDate.plusDays(14),
-                    new TimeInterval(LocalTime.of(12, 0), LocalTime.of(13, 0)),
-                    "Manutenção",
-                    adminId);
+                courtId,
+                startDate.plusDays(14),
+                new TimeInterval(LocalTime.of(12, 0), LocalTime.of(13, 0)),
+                "Manutenção",
+                adminId);
 
             var requestDto =
-                    new BlockedTimeConflictsPreviewRequestDto(
-                            List.of(courtId), startDate, endDate, null, true, null);
+                new BlockedTimeConflictsPreviewRequestDto(
+                    List.of(courtId), startDate, endDate, null, true, null);
 
             // Act
             var response =
-                    given()
-                            .spec(specification)
-                            .header("Authorization", accessToken)
-                            .body(requestDto)
-                            .when()
-                            .post("/preview-conflicts")
-                            .then()
-                            .statusCode(200)
-                            .extract()
-                            .as(BlockedTimeConflictsPreviewResponseDto.class);
+                given()
+                    .spec(specification)
+                    .header("Authorization", accessToken)
+                    .body(requestDto)
+                    .when()
+                    .post("/preview-conflicts")
+                    .then()
+                    .statusCode(200)
+                    .extract()
+                    .as(BlockedTimeConflictsPreviewResponseDto.class);
 
             // Assert
             assertThat(response.usersAffected()).isOne();
@@ -647,7 +670,7 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
             assertThat(response.inProgressReservations()).isEmpty();
 
             Optional<BlockedTimeConflictsPreview> previewSavedOpt =
-                    getPreviewSavedFromCache(response.previewKey());
+                getPreviewSavedFromCache(response.previewKey());
             assertThat(previewSavedOpt).isPresent();
 
             BlockedTimeConflictsPreview previewSaved = previewSavedOpt.get();
@@ -656,7 +679,7 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
 
           @Test
           @DisplayName(
-                  "Cria preview de bloqueio consecutivo para 21 dia com horário específico sem conflitos")
+              "Cria preview de bloqueio consecutivo para 21 dia com horário específico sem conflitos")
           void shouldCreatePreviewForSpecificTimeWithoutConflicts() {
             // Arrange
             mockPersistOperatingHoursAllDays();
@@ -666,21 +689,21 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
             TimeInterval timeInterval = new TimeInterval(LocalTime.of(14, 0), LocalTime.of(15, 0));
 
             var requestDto =
-                    new BlockedTimeConflictsPreviewRequestDto(
-                            List.of(courtId), startDate, endDate, timeInterval, false, null);
+                new BlockedTimeConflictsPreviewRequestDto(
+                    List.of(courtId), startDate, endDate, timeInterval, false, null);
 
             // Act
             var response =
-                    given()
-                            .spec(specification)
-                            .header("Authorization", accessToken)
-                            .body(requestDto)
-                            .when()
-                            .post("/preview-conflicts")
-                            .then()
-                            .statusCode(200)
-                            .extract()
-                            .as(BlockedTimeConflictsPreviewResponseDto.class);
+                given()
+                    .spec(specification)
+                    .header("Authorization", accessToken)
+                    .body(requestDto)
+                    .when()
+                    .post("/preview-conflicts")
+                    .then()
+                    .statusCode(200)
+                    .extract()
+                    .as(BlockedTimeConflictsPreviewResponseDto.class);
 
             // Assert
             assertThat(response.usersAffected()).isZero();
@@ -691,7 +714,7 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
             assertThat(response.inProgressReservations()).isEmpty();
 
             Optional<BlockedTimeConflictsPreview> previewSavedOpt =
-                    getPreviewSavedFromCache(response.previewKey());
+                getPreviewSavedFromCache(response.previewKey());
             assertThat(previewSavedOpt).isPresent();
 
             BlockedTimeConflictsPreview previewSaved = previewSavedOpt.get();
@@ -700,7 +723,7 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
 
           @Test
           @DisplayName(
-                  "Cria preview de bloqueio consecutivo para 7 dias com horário específico com conflitos")
+              "Cria preview de bloqueio consecutivo para 7 dias com horário específico com conflitos")
           void shouldCreatePreviewForSpecificTimeWithConflicts() {
             // Arrange
             mockPersistOperatingHoursAllDays();
@@ -709,41 +732,41 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
             LocalDate startDate = LocalDate.now().plusDays(1);
             LocalDate endDate = startDate.plusDays(7);
             TimeInterval conflictInterval =
-                    new TimeInterval(LocalTime.of(10, 0), LocalTime.of(11, 0));
+                new TimeInterval(LocalTime.of(10, 0), LocalTime.of(11, 0));
 
             mockPersistReservationByUser(
-                    modality.getId(),
-                    courtId,
-                    startDate.plusDays(3),
-                    conflictInterval,
-                    DEFAULT_RESERVATION_PRICE,
-                    adminId);
+                modality.getId(),
+                courtId,
+                startDate.plusDays(3),
+                conflictInterval,
+                DEFAULT_RESERVATION_PRICE,
+                adminId);
             mockPersistReservationByUser(
-                    modality.getId(),
-                    courtId,
-                    startDate.plusDays(5),
-                    conflictInterval,
-                    DEFAULT_RESERVATION_PRICE,
-                    adminId);
+                modality.getId(),
+                courtId,
+                startDate.plusDays(5),
+                conflictInterval,
+                DEFAULT_RESERVATION_PRICE,
+                adminId);
             mockPersistBlockedTimeSpecific(
-                    courtId, startDate.plusDays(5), conflictInterval, "Manutenção", adminId);
+                courtId, startDate.plusDays(5), conflictInterval, "Manutenção", adminId);
 
             var requestDto =
-                    new BlockedTimeConflictsPreviewRequestDto(
-                            List.of(courtId), startDate, endDate, conflictInterval, false, null);
+                new BlockedTimeConflictsPreviewRequestDto(
+                    List.of(courtId), startDate, endDate, conflictInterval, false, null);
 
             // Act
             var response =
-                    given()
-                            .spec(specification)
-                            .header("Authorization", accessToken)
-                            .body(requestDto)
-                            .when()
-                            .post("/preview-conflicts")
-                            .then()
-                            .statusCode(200)
-                            .extract()
-                            .as(BlockedTimeConflictsPreviewResponseDto.class);
+                given()
+                    .spec(specification)
+                    .header("Authorization", accessToken)
+                    .body(requestDto)
+                    .when()
+                    .post("/preview-conflicts")
+                    .then()
+                    .statusCode(200)
+                    .extract()
+                    .as(BlockedTimeConflictsPreviewResponseDto.class);
 
             // Assert
             assertThat(response.usersAffected()).isOne();
@@ -754,7 +777,7 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
             assertThat(response.inProgressReservations()).isEmpty();
 
             Optional<BlockedTimeConflictsPreview> previewSavedOpt =
-                    getPreviewSavedFromCache(response.previewKey());
+                getPreviewSavedFromCache(response.previewKey());
             assertThat(previewSavedOpt).isPresent();
 
             BlockedTimeConflictsPreview previewSaved = previewSavedOpt.get();
@@ -775,25 +798,26 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
 
             // Define um intervalo de 6 meses que comece na próxima terça e termine na quinta-feira
             LocalDate startDate = nextDayOfWeek(java.time.DayOfWeek.TUESDAY);
-            LocalDate endDate = startDate.plusMonths(6).with(TemporalAdjusters.next(java.time.DayOfWeek.THURSDAY));
+            LocalDate endDate =
+                startDate.plusMonths(6).with(TemporalAdjusters.next(java.time.DayOfWeek.THURSDAY));
             Set<DayOfWeek> selectedDaysOfWeek = Set.of(DayOfWeek.TUESDAY, DayOfWeek.THURSDAY);
 
             var requestDto =
-                    new BlockedTimeConflictsPreviewRequestDto(
-                            List.of(courtId), startDate, endDate, null, true, selectedDaysOfWeek);
+                new BlockedTimeConflictsPreviewRequestDto(
+                    List.of(courtId), startDate, endDate, null, true, selectedDaysOfWeek);
 
             // Act
             var response =
-                    given()
-                            .spec(specification)
-                            .header("Authorization", accessToken)
-                            .body(requestDto)
-                            .when()
-                            .post("/preview-conflicts")
-                            .then()
-                            .statusCode(200)
-                            .extract()
-                            .as(BlockedTimeConflictsPreviewResponseDto.class);
+                given()
+                    .spec(specification)
+                    .header("Authorization", accessToken)
+                    .body(requestDto)
+                    .when()
+                    .post("/preview-conflicts")
+                    .then()
+                    .statusCode(200)
+                    .extract()
+                    .as(BlockedTimeConflictsPreviewResponseDto.class);
 
             // Assert
             assertThat(response.usersAffected()).isZero();
@@ -803,7 +827,8 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
             assertThat(response.conflictingReservations()).isEmpty();
             assertThat(response.inProgressReservations()).isEmpty();
 
-            Optional<BlockedTimeConflictsPreview> previewSavedOpt = getPreviewSavedFromCache(response.previewKey());
+            Optional<BlockedTimeConflictsPreview> previewSavedOpt =
+                getPreviewSavedFromCache(response.previewKey());
             assertThat(previewSavedOpt).isPresent();
 
             BlockedTimeConflictsPreview previewSaved = previewSavedOpt.get();
@@ -821,64 +846,65 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
 
             // Define um intervalo de 3 meses que comece na próxima segunda e termine na sexta-feira
             LocalDate startDate = nextDayOfWeek(java.time.DayOfWeek.MONDAY);
-            LocalDate endDate = startDate.plusMonths(3).with(TemporalAdjusters.next(java.time.DayOfWeek.FRIDAY));
+            LocalDate endDate =
+                startDate.plusMonths(3).with(TemporalAdjusters.next(java.time.DayOfWeek.FRIDAY));
             Set<DayOfWeek> selectedDaysOfWeek =
-                    Set.of(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY, DayOfWeek.FRIDAY);
+                Set.of(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY, DayOfWeek.FRIDAY);
 
             // Mock de uma reserva que não deve conflitar
             mockPersistReservationByUser(
-                    modality.getId(),
-                    courtId,
-                    startDate.plusDays(1), // Terça-feira (dia seguinte a segunda)
-                    timeInterval,
-                    DEFAULT_RESERVATION_PRICE,
-                    adminId);
+                modality.getId(),
+                courtId,
+                startDate.plusDays(1), // Terça-feira (dia seguinte a segunda)
+                timeInterval,
+                DEFAULT_RESERVATION_PRICE,
+                adminId);
 
             // Mock de reservas e bloqueios que conflitam com as segundas e sextas-feiras
             mockPersistReservationByUser(
-                    modality.getId(),
-                    courtId,
-                    startDate.plusWeeks(2).with(java.time.DayOfWeek.WEDNESDAY), // Quarta-feira
-                    timeInterval,
-                    DEFAULT_RESERVATION_PRICE,
-                    adminId);
+                modality.getId(),
+                courtId,
+                startDate.plusWeeks(2).with(java.time.DayOfWeek.WEDNESDAY), // Quarta-feira
+                timeInterval,
+                DEFAULT_RESERVATION_PRICE,
+                adminId);
             mockPersistReservationByUser(
-                    modality.getId(),
-                    courtId,
-                    startDate.plusWeeks(4).with(java.time.DayOfWeek.MONDAY), // Segunda-feira
-                    timeInterval,
-                    DEFAULT_RESERVATION_PRICE,
-                    adminId);
+                modality.getId(),
+                courtId,
+                startDate.plusWeeks(4).with(java.time.DayOfWeek.MONDAY), // Segunda-feira
+                timeInterval,
+                DEFAULT_RESERVATION_PRICE,
+                adminId);
             mockPersistReservationByUser(
-                    modality.getId(),
-                    courtId,
-                    startDate.plusWeeks(2).with(java.time.DayOfWeek.FRIDAY), // Sexta-feira
-                    timeInterval,
-                    DEFAULT_RESERVATION_PRICE,
-                    adminId);
+                modality.getId(),
+                courtId,
+                startDate.plusWeeks(2).with(java.time.DayOfWeek.FRIDAY), // Sexta-feira
+                timeInterval,
+                DEFAULT_RESERVATION_PRICE,
+                adminId);
             mockPersistBlockedTimeSpecific(
-                    courtId,
-                    startDate.plusWeeks(6).with(java.time.DayOfWeek.FRIDAY), // Sexta-feira
-                    timeInterval,
-                    "Manutenção",
-                    adminId);
+                courtId,
+                startDate.plusWeeks(6).with(java.time.DayOfWeek.FRIDAY), // Sexta-feira
+                timeInterval,
+                "Manutenção",
+                adminId);
 
             var requestDto =
-                    new BlockedTimeConflictsPreviewRequestDto(
-                            List.of(courtId), startDate, endDate, null, true, selectedDaysOfWeek);
+                new BlockedTimeConflictsPreviewRequestDto(
+                    List.of(courtId), startDate, endDate, null, true, selectedDaysOfWeek);
 
             // Act
             var response =
-                    given()
-                            .spec(specification)
-                            .header("Authorization", accessToken)
-                            .body(requestDto)
-                            .when()
-                            .post("/preview-conflicts")
-                            .then()
-                            .statusCode(200)
-                            .extract()
-                            .as(BlockedTimeConflictsPreviewResponseDto.class);
+                given()
+                    .spec(specification)
+                    .header("Authorization", accessToken)
+                    .body(requestDto)
+                    .when()
+                    .post("/preview-conflicts")
+                    .then()
+                    .statusCode(200)
+                    .extract()
+                    .as(BlockedTimeConflictsPreviewResponseDto.class);
 
             // Assert
             assertThat(response.usersAffected()).isOne();
@@ -889,7 +915,7 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
             assertThat(response.inProgressReservations()).isEmpty();
 
             Optional<BlockedTimeConflictsPreview> previewSavedOpt =
-                    getPreviewSavedFromCache(response.previewKey());
+                getPreviewSavedFromCache(response.previewKey());
             assertThat(previewSavedOpt).isPresent();
 
             BlockedTimeConflictsPreview previewSaved = previewSavedOpt.get();
@@ -905,26 +931,27 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
 
             // Define um intervalo de 4 meses que comece na próxima quarta e termine na sexta-feira
             LocalDate startDate = nextDayOfWeek(java.time.DayOfWeek.WEDNESDAY);
-            LocalDate endDate = startDate.plusMonths(4).with(TemporalAdjusters.next(java.time.DayOfWeek.FRIDAY));
+            LocalDate endDate =
+                startDate.plusMonths(4).with(TemporalAdjusters.next(java.time.DayOfWeek.FRIDAY));
             Set<DayOfWeek> selectedDaysOfWeek = Set.of(DayOfWeek.WEDNESDAY, DayOfWeek.FRIDAY);
             TimeInterval timeInterval = new TimeInterval(LocalTime.of(14, 0), LocalTime.of(15, 0));
 
             var requestDto =
-                    new BlockedTimeConflictsPreviewRequestDto(
-                            List.of(courtId), startDate, endDate, timeInterval, false, selectedDaysOfWeek);
+                new BlockedTimeConflictsPreviewRequestDto(
+                    List.of(courtId), startDate, endDate, timeInterval, false, selectedDaysOfWeek);
 
             // Act
             var response =
-                    given()
-                            .spec(specification)
-                            .header("Authorization", accessToken)
-                            .body(requestDto)
-                            .when()
-                            .post("/preview-conflicts")
-                            .then()
-                            .statusCode(200)
-                            .extract()
-                            .as(BlockedTimeConflictsPreviewResponseDto.class);
+                given()
+                    .spec(specification)
+                    .header("Authorization", accessToken)
+                    .body(requestDto)
+                    .when()
+                    .post("/preview-conflicts")
+                    .then()
+                    .statusCode(200)
+                    .extract()
+                    .as(BlockedTimeConflictsPreviewResponseDto.class);
 
             // Assert
             assertThat(response.usersAffected()).isZero();
@@ -935,7 +962,7 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
             assertThat(response.inProgressReservations()).isEmpty();
 
             Optional<BlockedTimeConflictsPreview> previewSavedOpt =
-                    getPreviewSavedFromCache(response.previewKey());
+                getPreviewSavedFromCache(response.previewKey());
             assertThat(previewSavedOpt).isPresent();
 
             BlockedTimeConflictsPreview previewSaved = previewSavedOpt.get();
@@ -950,67 +977,68 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
             Modality modality = mockPersistModality("Futebol");
             UUID courtId = mockPersistCourt("Quadra 1", modality).getId();
             TimeInterval conflictInterval =
-                    new TimeInterval(LocalTime.of(10, 0), LocalTime.of(11, 0));
+                new TimeInterval(LocalTime.of(10, 0), LocalTime.of(11, 0));
             TimeInterval blockedTimeInterval =
-                    new TimeInterval(LocalTime.of(9, 0), LocalTime.of(12, 0));
+                new TimeInterval(LocalTime.of(9, 0), LocalTime.of(12, 0));
 
             // Define um intervalo de 2 meses que comece na próxima quinta e termine no sábado
             LocalDate startDate = nextDayOfWeek(java.time.DayOfWeek.THURSDAY);
-            LocalDate endDate = startDate.plusMonths(2).with(TemporalAdjusters.next(java.time.DayOfWeek.SATURDAY));
+            LocalDate endDate =
+                startDate.plusMonths(2).with(TemporalAdjusters.next(java.time.DayOfWeek.SATURDAY));
             Set<DayOfWeek> selectedDaysOfWeek = Set.of(DayOfWeek.THURSDAY, DayOfWeek.SATURDAY);
 
             // Mock de uma reserva que não deve conflitar
             mockPersistReservationByUser(
-                    modality.getId(),
-                    courtId,
-                    startDate.plusDays(1), // Sexta-feira (dia seguinte a quinta)
-                    conflictInterval,
-                    DEFAULT_RESERVATION_PRICE,
-                    adminId);
+                modality.getId(),
+                courtId,
+                startDate.plusDays(1), // Sexta-feira (dia seguinte a quinta)
+                conflictInterval,
+                DEFAULT_RESERVATION_PRICE,
+                adminId);
 
             // Mock de reservas e bloqueios que conflitam com as quintas e sábados
             mockPersistReservationByUser(
-                    modality.getId(),
-                    courtId,
-                    startDate.plusWeeks(1).with(java.time.DayOfWeek.THURSDAY), // Quinta-feira
-                    conflictInterval,
-                    DEFAULT_RESERVATION_PRICE,
-                    adminId);
+                modality.getId(),
+                courtId,
+                startDate.plusWeeks(1).with(java.time.DayOfWeek.THURSDAY), // Quinta-feira
+                conflictInterval,
+                DEFAULT_RESERVATION_PRICE,
+                adminId);
             mockPersistReservationByUser(
-                    modality.getId(),
-                    courtId,
-                    startDate.plusWeeks(3).with(java.time.DayOfWeek.SATURDAY), // Sábado
-                    conflictInterval,
-                    DEFAULT_RESERVATION_PRICE,
-                    adminId);
+                modality.getId(),
+                courtId,
+                startDate.plusWeeks(3).with(java.time.DayOfWeek.SATURDAY), // Sábado
+                conflictInterval,
+                DEFAULT_RESERVATION_PRICE,
+                adminId);
             mockPersistBlockedTimeSpecific(
-                    courtId,
-                    startDate.plusWeeks(5).with(java.time.DayOfWeek.SATURDAY), // Sábado
-                    conflictInterval,
-                    "Manutenção",
-                    adminId);
+                courtId,
+                startDate.plusWeeks(5).with(java.time.DayOfWeek.SATURDAY), // Sábado
+                conflictInterval,
+                "Manutenção",
+                adminId);
 
             var requestDto =
-                    new BlockedTimeConflictsPreviewRequestDto(
-                            List.of(courtId),
-                            startDate,
-                            endDate,
-                            blockedTimeInterval,
-                            false,
-                            selectedDaysOfWeek);
+                new BlockedTimeConflictsPreviewRequestDto(
+                    List.of(courtId),
+                    startDate,
+                    endDate,
+                    blockedTimeInterval,
+                    false,
+                    selectedDaysOfWeek);
 
             // Act
             var response =
-                    given()
-                            .spec(specification)
-                            .header("Authorization", accessToken)
-                            .body(requestDto)
-                            .when()
-                            .post("/preview-conflicts")
-                            .then()
-                            .statusCode(200)
-                            .extract()
-                            .as(BlockedTimeConflictsPreviewResponseDto.class);
+                given()
+                    .spec(specification)
+                    .header("Authorization", accessToken)
+                    .body(requestDto)
+                    .when()
+                    .post("/preview-conflicts")
+                    .then()
+                    .statusCode(200)
+                    .extract()
+                    .as(BlockedTimeConflictsPreviewResponseDto.class);
 
             // Assert
             assertThat(response.usersAffected()).isOne();
@@ -1021,7 +1049,7 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
             assertThat(response.inProgressReservations()).isEmpty();
 
             Optional<BlockedTimeConflictsPreview> previewSavedOpt =
-                    getPreviewSavedFromCache(response.previewKey());
+                getPreviewSavedFromCache(response.previewKey());
             assertThat(previewSavedOpt).isPresent();
 
             BlockedTimeConflictsPreview previewSaved = previewSavedOpt.get();
@@ -1034,7 +1062,8 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
         class BlockedTimeMultipleCourtsScenarios {
 
           @Test
-          @DisplayName("Cria preview de bloqueio para horário específico com conflitos em múltiplas quadras")
+          @DisplayName(
+              "Cria preview de bloqueio para horário específico com conflitos em múltiplas quadras")
           void shouldCreatePreviewForMultipleCourtsWithConflicts() {
             // Arrange
             mockPersistOperatingHoursAllDays();
@@ -1043,33 +1072,33 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
             UUID courtId2 = mockPersistCourt("Quadra 2", modality).getId();
             LocalDate date = LocalDate.now().plusDays(1);
             TimeInterval conflictInterval =
-                    new TimeInterval(LocalTime.of(10, 0), LocalTime.of(11, 0));
+                new TimeInterval(LocalTime.of(10, 0), LocalTime.of(11, 0));
 
             mockPersistReservationByUser(
-                    modality.getId(),
-                    courtId1,
-                    date,
-                    conflictInterval,
-                    DEFAULT_RESERVATION_PRICE,
-                    adminId);
+                modality.getId(),
+                courtId1,
+                date,
+                conflictInterval,
+                DEFAULT_RESERVATION_PRICE,
+                adminId);
             mockPersistBlockedTimeSpecific(courtId2, date, conflictInterval, "Manutenção", adminId);
 
             var requestDto =
-                    new BlockedTimeConflictsPreviewRequestDto(
-                            List.of(courtId1, courtId2), date, date, conflictInterval, false, null);
+                new BlockedTimeConflictsPreviewRequestDto(
+                    List.of(courtId1, courtId2), date, date, conflictInterval, false, null);
 
             // Act
             var response =
-                    given()
-                            .spec(specification)
-                            .header("Authorization", accessToken)
-                            .body(requestDto)
-                            .when()
-                            .post("/preview-conflicts")
-                            .then()
-                            .statusCode(200)
-                            .extract()
-                            .as(BlockedTimeConflictsPreviewResponseDto.class);
+                given()
+                    .spec(specification)
+                    .header("Authorization", accessToken)
+                    .body(requestDto)
+                    .when()
+                    .post("/preview-conflicts")
+                    .then()
+                    .statusCode(200)
+                    .extract()
+                    .as(BlockedTimeConflictsPreviewResponseDto.class);
 
             // Assert
             assertThat(response.usersAffected()).isOne();
@@ -1080,7 +1109,7 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
             assertThat(response.inProgressReservations()).isEmpty();
 
             Optional<BlockedTimeConflictsPreview> previewSavedOpt =
-                    getPreviewSavedFromCache(response.previewKey());
+                getPreviewSavedFromCache(response.previewKey());
             assertThat(previewSavedOpt).isPresent();
 
             BlockedTimeConflictsPreview previewSaved = previewSavedOpt.get();
@@ -1088,7 +1117,8 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
           }
 
           @Test
-          @DisplayName("Cria preview de bloqueio para o dia todo com conflitos em múltiplas quadras")
+          @DisplayName(
+              "Cria preview de bloqueio para o dia todo com conflitos em múltiplas quadras")
           void shouldCreatePreviewForMultipleCourtsFullDayWithConflicts() {
             // Arrange
             mockPersistOperatingHoursAllDays();
@@ -1098,35 +1128,35 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
             LocalDate date = LocalDate.now().plusDays(1);
 
             mockPersistReservationByUser(
-                    modality.getId(),
-                    courtId1,
-                    date,
-                    new TimeInterval(LocalTime.of(10, 0), LocalTime.of(11, 0)),
-                    DEFAULT_RESERVATION_PRICE,
-                    adminId);
+                modality.getId(),
+                courtId1,
+                date,
+                new TimeInterval(LocalTime.of(10, 0), LocalTime.of(11, 0)),
+                DEFAULT_RESERVATION_PRICE,
+                adminId);
             mockPersistBlockedTimeSpecific(
-                    courtId2,
-                    date,
-                    new TimeInterval(LocalTime.of(12, 0), LocalTime.of(13, 0)),
-                    "Manutenção",
-                    adminId);
+                courtId2,
+                date,
+                new TimeInterval(LocalTime.of(12, 0), LocalTime.of(13, 0)),
+                "Manutenção",
+                adminId);
 
             var requestDto =
-                    new BlockedTimeConflictsPreviewRequestDto(
-                            List.of(courtId1, courtId2), date, date, null, true, null);
+                new BlockedTimeConflictsPreviewRequestDto(
+                    List.of(courtId1, courtId2), date, date, null, true, null);
 
             // Act
             var response =
-                    given()
-                            .spec(specification)
-                            .header("Authorization", accessToken)
-                            .body(requestDto)
-                            .when()
-                            .post("/preview-conflicts")
-                            .then()
-                            .statusCode(200)
-                            .extract()
-                            .as(BlockedTimeConflictsPreviewResponseDto.class);
+                given()
+                    .spec(specification)
+                    .header("Authorization", accessToken)
+                    .body(requestDto)
+                    .when()
+                    .post("/preview-conflicts")
+                    .then()
+                    .statusCode(200)
+                    .extract()
+                    .as(BlockedTimeConflictsPreviewResponseDto.class);
 
             // Assert
             assertThat(response.usersAffected()).isOne();
@@ -1137,7 +1167,7 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
             assertThat(response.inProgressReservations()).isEmpty();
 
             Optional<BlockedTimeConflictsPreview> previewSavedOpt =
-                    getPreviewSavedFromCache(response.previewKey());
+                getPreviewSavedFromCache(response.previewKey());
             assertThat(previewSavedOpt).isPresent();
 
             BlockedTimeConflictsPreview previewSaved = previewSavedOpt.get();
@@ -1152,32 +1182,37 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
 
         @InvalidListOfCourtIdsProvider
         @DisplayName("Tenta criar bloqueio com lista inválida de IDs de quadras")
-        void shouldReturn400WhenInvalidListOfCourtIds(List<UUID> invalidCourtIds, String expectedErrorMessage) {
+        void shouldReturn400WhenInvalidListOfCourtIds(
+            List<UUID> invalidCourtIds, String expectedErrorMessage) {
           // Arrange
           var requestDto =
-                  new BlockedTimeConflictsPreviewRequestDto(
-                          invalidCourtIds,
-                          LocalDate.now().plusDays(1),
-                          LocalDate.now().plusDays(1),
-                          null,
-                          true,
-                          null);
+              new BlockedTimeConflictsPreviewRequestDto(
+                  invalidCourtIds,
+                  LocalDate.now().plusDays(1),
+                  LocalDate.now().plusDays(1),
+                  null,
+                  true,
+                  null);
 
           // Act
           var response =
-                  given()
-                          .spec(specification)
-                          .header("Authorization", accessToken)
-                          .body(requestDto)
-                          .when()
-                          .post("/preview-conflicts")
-                          .then()
-                          .statusCode(400)
-                          .extract()
-                          .as(ErrorResponseDto.class);
+              given()
+                  .spec(specification)
+                  .header("Authorization", accessToken)
+                  .body(requestDto)
+                  .when()
+                  .post("/preview-conflicts")
+                  .then()
+                  .statusCode(400)
+                  .extract()
+                  .as(ErrorResponseDto.class);
 
           // Assert
-          assertValidationError(response, PREVIEW_CONFLICTS_PATH, "courtIds", ErrorCode.valueOf(expectedErrorMessage));
+          assertValidationError(
+              response,
+              PREVIEW_CONFLICTS_PATH,
+              "courtIds",
+              ErrorCode.valueOf(expectedErrorMessage));
         }
 
         @Test
@@ -1185,24 +1220,28 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
         void shouldReturn400WhenStartDateIsNull() {
           // Arrange
           var requestDto =
-                  new BlockedTimeConflictsPreviewRequestDto(
-                          List.of(UUID.randomUUID()), null, LocalDate.now().plusDays(1), null, true, null);
+              new BlockedTimeConflictsPreviewRequestDto(
+                  List.of(UUID.randomUUID()), null, LocalDate.now().plusDays(1), null, true, null);
 
           // Act
           var response =
-                  given()
-                          .spec(specification)
-                          .header("Authorization", accessToken)
-                          .body(requestDto)
-                          .when()
-                          .post("/preview-conflicts")
-                          .then()
-                          .statusCode(400)
-                          .extract()
-                          .as(ErrorResponseDto.class);
+              given()
+                  .spec(specification)
+                  .header("Authorization", accessToken)
+                  .body(requestDto)
+                  .when()
+                  .post("/preview-conflicts")
+                  .then()
+                  .statusCode(400)
+                  .extract()
+                  .as(ErrorResponseDto.class);
 
           // Assert
-          assertValidationError(response, PREVIEW_CONFLICTS_PATH, "startDate", ErrorCode.BLOCKED_TIME_START_DATE_REQUIRED);
+          assertValidationError(
+              response,
+              PREVIEW_CONFLICTS_PATH,
+              "startDate",
+              ErrorCode.BLOCKED_TIME_START_DATE_REQUIRED);
         }
 
         @Test
@@ -1210,29 +1249,34 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
         void shouldReturn400WhenEndDateIsNull() {
           // Arrange
           var requestDto =
-                  new BlockedTimeConflictsPreviewRequestDto(
-                          List.of(UUID.randomUUID()), LocalDate.now().plusDays(1), null, null, true, null);
+              new BlockedTimeConflictsPreviewRequestDto(
+                  List.of(UUID.randomUUID()), LocalDate.now().plusDays(1), null, null, true, null);
 
           // Act
           var response =
-                  given()
-                          .spec(specification)
-                          .header("Authorization", accessToken)
-                          .body(requestDto)
-                          .when()
-                          .post("/preview-conflicts")
-                          .then()
-                          .statusCode(400)
-                          .extract()
-                          .as(ErrorResponseDto.class);
+              given()
+                  .spec(specification)
+                  .header("Authorization", accessToken)
+                  .body(requestDto)
+                  .when()
+                  .post("/preview-conflicts")
+                  .then()
+                  .statusCode(400)
+                  .extract()
+                  .as(ErrorResponseDto.class);
 
           // Assert
-          assertValidationError(response, PREVIEW_CONFLICTS_PATH, "endDate", ErrorCode.BLOCKED_TIME_END_DATE_REQUIRED);
+          assertValidationError(
+              response,
+              PREVIEW_CONFLICTS_PATH,
+              "endDate",
+              ErrorCode.BLOCKED_TIME_END_DATE_REQUIRED);
         }
 
         @InvalidTimeIntervalProvider
         @DisplayName("Tenta criar bloqueio com intervalo de tempo inválido")
-        void shouldReturn400WhenInvalidTimeInterval(String startTime, String endTime, String expectedErrorCode) {
+        void shouldReturn400WhenInvalidTimeInterval(
+            String startTime, String endTime, String expectedErrorCode) {
           // Arrange
           Map<String, Object> timeInterval = new HashMap<>();
           timeInterval.put("startTime", startTime);
@@ -1248,19 +1292,23 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
 
           // Act
           var response =
-                  given()
-                          .spec(specification)
-                          .header("Authorization", accessToken)
-                          .body(jsonRequest)
-                          .when()
-                          .post("/preview-conflicts")
-                          .then()
-                          .statusCode(400)
-                          .extract()
-                          .as(ErrorResponseDto.class);
+              given()
+                  .spec(specification)
+                  .header("Authorization", accessToken)
+                  .body(jsonRequest)
+                  .when()
+                  .post("/preview-conflicts")
+                  .then()
+                  .statusCode(400)
+                  .extract()
+                  .as(ErrorResponseDto.class);
 
           // Assert
-          assertValidationError(response, PREVIEW_CONFLICTS_PATH, "timeInterval", ErrorCode.valueOf(expectedErrorCode));
+          assertValidationError(
+              response,
+              PREVIEW_CONFLICTS_PATH,
+              "timeInterval",
+              ErrorCode.valueOf(expectedErrorCode));
         }
 
         @Test
@@ -1268,29 +1316,33 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
         void shouldReturn400WhenIsFullDayIsNull() {
           // Arrange
           var requestDto =
-                  new BlockedTimeConflictsPreviewRequestDto(
-                          List.of(UUID.randomUUID()),
-                          LocalDate.now().plusDays(1),
-                          LocalDate.now().plusDays(1),
-                          null,
-                          null,
-                          null);
+              new BlockedTimeConflictsPreviewRequestDto(
+                  List.of(UUID.randomUUID()),
+                  LocalDate.now().plusDays(1),
+                  LocalDate.now().plusDays(1),
+                  null,
+                  null,
+                  null);
 
           // Act
           var response =
-                  given()
-                          .spec(specification)
-                          .header("Authorization", accessToken)
-                          .body(requestDto)
-                          .when()
-                          .post("/preview-conflicts")
-                          .then()
-                          .statusCode(400)
-                          .extract()
-                          .as(ErrorResponseDto.class);
+              given()
+                  .spec(specification)
+                  .header("Authorization", accessToken)
+                  .body(requestDto)
+                  .when()
+                  .post("/preview-conflicts")
+                  .then()
+                  .statusCode(400)
+                  .extract()
+                  .as(ErrorResponseDto.class);
 
           // Assert
-          assertValidationError(response, PREVIEW_CONFLICTS_PATH, "isFullDay", ErrorCode.BLOCKED_TIME_IS_FULL_DAY_REQUIRED);
+          assertValidationError(
+              response,
+              PREVIEW_CONFLICTS_PATH,
+              "isFullDay",
+              ErrorCode.BLOCKED_TIME_IS_FULL_DAY_REQUIRED);
         }
 
         // ============ Regras de Negócio DTO ============
@@ -1299,29 +1351,33 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
         void shouldReturn400WhenStartDateInPast() {
           // Arrange
           var requestDto =
-                  new BlockedTimeConflictsPreviewRequestDto(
-                          List.of(UUID.randomUUID()),
-                          LocalDate.now().minusDays(1),
-                          LocalDate.now().plusDays(1),
-                          null,
-                          true,
-                          null);
+              new BlockedTimeConflictsPreviewRequestDto(
+                  List.of(UUID.randomUUID()),
+                  LocalDate.now().minusDays(1),
+                  LocalDate.now().plusDays(1),
+                  null,
+                  true,
+                  null);
 
           // Act
           var response =
-                  given()
-                          .spec(specification)
-                          .header("Authorization", accessToken)
-                          .body(requestDto)
-                          .when()
-                          .post("/preview-conflicts")
-                          .then()
-                          .statusCode(400)
-                          .extract()
-                          .as(ErrorResponseDto.class);
+              given()
+                  .spec(specification)
+                  .header("Authorization", accessToken)
+                  .body(requestDto)
+                  .when()
+                  .post("/preview-conflicts")
+                  .then()
+                  .statusCode(400)
+                  .extract()
+                  .as(ErrorResponseDto.class);
 
           // Assert
-          assertValidationError(response, PREVIEW_CONFLICTS_PATH, "startDate", ErrorCode.BLOCKED_TIME_START_DATE_IN_PAST);
+          assertValidationError(
+              response,
+              PREVIEW_CONFLICTS_PATH,
+              "startDate",
+              ErrorCode.BLOCKED_TIME_START_DATE_IN_PAST);
         }
 
         @Test
@@ -1329,29 +1385,33 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
         void shouldReturn400WhenEndDateBeforeStartDate() {
           // Arrange
           var requestDto =
-                  new BlockedTimeConflictsPreviewRequestDto(
-                          List.of(UUID.randomUUID()),
-                          LocalDate.now().plusDays(5),
-                          LocalDate.now().plusDays(1),
-                          null,
-                          true,
-                          null);
+              new BlockedTimeConflictsPreviewRequestDto(
+                  List.of(UUID.randomUUID()),
+                  LocalDate.now().plusDays(5),
+                  LocalDate.now().plusDays(1),
+                  null,
+                  true,
+                  null);
 
           // Act
           var response =
-                  given()
-                          .spec(specification)
-                          .header("Authorization", accessToken)
-                          .body(requestDto)
-                          .when()
-                          .post("/preview-conflicts")
-                          .then()
-                          .statusCode(400)
-                          .extract()
-                          .as(ErrorResponseDto.class);
+              given()
+                  .spec(specification)
+                  .header("Authorization", accessToken)
+                  .body(requestDto)
+                  .when()
+                  .post("/preview-conflicts")
+                  .then()
+                  .statusCode(400)
+                  .extract()
+                  .as(ErrorResponseDto.class);
 
           // Assert
-          assertValidationError(response, PREVIEW_CONFLICTS_PATH, "startDate", ErrorCode.BLOCKED_TIME_START_DATE_AFTER_END_DATE);
+          assertValidationError(
+              response,
+              PREVIEW_CONFLICTS_PATH,
+              "startDate",
+              ErrorCode.BLOCKED_TIME_START_DATE_AFTER_END_DATE);
         }
 
         @Test
@@ -1359,29 +1419,33 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
         void shouldReturn400WhenIsFullDayFalseAndTimeIntervalNull() {
           // Arrange
           var requestDto =
-                  new BlockedTimeConflictsPreviewRequestDto(
-                          List.of(UUID.randomUUID()),
-                          LocalDate.now().plusDays(1),
-                          LocalDate.now().plusDays(1),
-                          null,
-                          false,
-                          null);
+              new BlockedTimeConflictsPreviewRequestDto(
+                  List.of(UUID.randomUUID()),
+                  LocalDate.now().plusDays(1),
+                  LocalDate.now().plusDays(1),
+                  null,
+                  false,
+                  null);
 
           // Act
           var response =
-                  given()
-                          .spec(specification)
-                          .header("Authorization", accessToken)
-                          .body(requestDto)
-                          .when()
-                          .post("/preview-conflicts")
-                          .then()
-                          .statusCode(400)
-                          .extract()
-                          .as(ErrorResponseDto.class);
+              given()
+                  .spec(specification)
+                  .header("Authorization", accessToken)
+                  .body(requestDto)
+                  .when()
+                  .post("/preview-conflicts")
+                  .then()
+                  .statusCode(400)
+                  .extract()
+                  .as(ErrorResponseDto.class);
 
           // Assert
-          assertValidationError(response, PREVIEW_CONFLICTS_PATH, "timeInterval", ErrorCode.BLOCKED_TIME_TIME_INTERVAL_REQUIRED_WHEN_NOT_FULL_DAY);
+          assertValidationError(
+              response,
+              PREVIEW_CONFLICTS_PATH,
+              "timeInterval",
+              ErrorCode.BLOCKED_TIME_TIME_INTERVAL_REQUIRED_WHEN_NOT_FULL_DAY);
         }
 
         @Test
@@ -1395,30 +1459,30 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
           UUID courtId3 = mockPersistCourt("Quadra 3", modality).getId();
 
           var requestDto =
-                  new BlockedTimeConflictsPreviewRequestDto(
-                          List.of(courtId1, courtId2, courtId3),
-                          LocalDate.now().plusDays(1),
-                          LocalDate.now().plusDays(365),
-                          timeIntervalOh,
-                          false,
-                          null);
+              new BlockedTimeConflictsPreviewRequestDto(
+                  List.of(courtId1, courtId2, courtId3),
+                  LocalDate.now().plusDays(1),
+                  LocalDate.now().plusDays(365),
+                  timeIntervalOh,
+                  false,
+                  null);
 
           // Act
           var response =
-                  given()
-                          .spec(specification)
-                          .header("Authorization", accessToken)
-                          .body(requestDto)
-                          .when()
-                          .post("/preview-conflicts")
-                          .then()
-                          .statusCode(400)
-                          .extract()
-                          .as(ErrorResponseDto.class);
-
+              given()
+                  .spec(specification)
+                  .header("Authorization", accessToken)
+                  .body(requestDto)
+                  .when()
+                  .post("/preview-conflicts")
+                  .then()
+                  .statusCode(400)
+                  .extract()
+                  .as(ErrorResponseDto.class);
 
           // Assert
-          assertBusinessError(response, 400, PREVIEW_CONFLICTS_PATH, ErrorCode.BLOCKED_TIME_TOO_MANY_OCCURRENCES);
+          assertBusinessError(
+              response, 400, PREVIEW_CONFLICTS_PATH, ErrorCode.SCHEDULE_ENTRY_TOO_MANY_OCCURRENCES);
         }
 
         @Test
@@ -1432,33 +1496,38 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
           TimeInterval invalidInterval = new TimeInterval(LocalTime.of(7, 0), LocalTime.of(8, 0));
 
           var requestDto =
-                  new BlockedTimeConflictsPreviewRequestDto(
-                          List.of(courtId),
-                          LocalDate.now().plusDays(1),
-                          LocalDate.now().plusDays(1),
-                          invalidInterval,
-                          false,
-                          null);
+              new BlockedTimeConflictsPreviewRequestDto(
+                  List.of(courtId),
+                  LocalDate.now().plusDays(1),
+                  LocalDate.now().plusDays(1),
+                  invalidInterval,
+                  false,
+                  null);
 
           // Act
           var response =
-                  given()
-                          .spec(specification)
-                          .header("Authorization", accessToken)
-                          .body(requestDto)
-                          .when()
-                          .post("/preview-conflicts")
-                          .then()
-                          .statusCode(400)
-                          .extract()
-                          .as(ErrorResponseDto.class);
+              given()
+                  .spec(specification)
+                  .header("Authorization", accessToken)
+                  .body(requestDto)
+                  .when()
+                  .post("/preview-conflicts")
+                  .then()
+                  .statusCode(400)
+                  .extract()
+                  .as(ErrorResponseDto.class);
 
           // Assert
-          assertBusinessError(response, 400, PREVIEW_CONFLICTS_PATH, ErrorCode.BLOCKED_TIME_OUTSIDE_OPERATING_HOURS);
+          assertBusinessError(
+              response,
+              400,
+              PREVIEW_CONFLICTS_PATH,
+              ErrorCode.SCHEDULE_ENTRY_TIME_INTERVAL_OUTSIDE_OPERATING_HOURS);
         }
 
         @Test
-        @DisplayName("Tenta criar bloqueio com todos os dias da semana inválidos fora do intervalo de datas informado")
+        @DisplayName(
+            "Tenta criar bloqueio com todos os dias da semana inválidos fora do intervalo de datas informado")
         void shouldReturn400WhenSelectedDaysOfWeekOutsideDateRange() {
           // Arrange
           mockPersistOperatingHoursAllDays();
@@ -1472,33 +1541,40 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
           Set<DayOfWeek> selectedDaysOfWeek = Set.of(DayOfWeek.THURSDAY, DayOfWeek.FRIDAY);
 
           var requestDto =
-                  new BlockedTimeConflictsPreviewRequestDto(
-                          List.of(courtId),
-                          startDateMonday,
-                          endDateDateWed,
-                          null,
-                          true,
-                          selectedDaysOfWeek);
+              new BlockedTimeConflictsPreviewRequestDto(
+                  List.of(courtId),
+                  startDateMonday,
+                  endDateDateWed,
+                  null,
+                  true,
+                  selectedDaysOfWeek);
 
           // Act
           var response =
-                  given()
-                          .spec(specification)
-                          .header("Authorization", accessToken)
-                          .body(requestDto)
-                          .when()
-                          .post("/preview-conflicts")
-                          .then().log().all()
-                          .statusCode(400)
-                          .extract()
-                          .as(ErrorResponseDto.class);
+              given()
+                  .spec(specification)
+                  .header("Authorization", accessToken)
+                  .body(requestDto)
+                  .when()
+                  .post("/preview-conflicts")
+                  .then()
+                  .log()
+                  .all()
+                  .statusCode(400)
+                  .extract()
+                  .as(ErrorResponseDto.class);
 
           // Assert
-          assertBusinessError(response, 400, PREVIEW_CONFLICTS_PATH, ErrorCode.BLOCKED_TIME_SELECTED_DAYS_OUTSIDE_DATE_RANGE);
+          assertBusinessError(
+              response,
+              400,
+              PREVIEW_CONFLICTS_PATH,
+              ErrorCode.SCHEDULE_ENTRY_SELECTED_DAYS_OUTSIDE_DATE_RANGE);
         }
 
         @Test
-        @DisplayName("Tenta criar bloqueio com um dia da semana inválido fora do intervalo de datas informado")
+        @DisplayName(
+            "Tenta criar bloqueio com um dia da semana inválido fora do intervalo de datas informado")
         void shouldReturn400WhenOneSelectedDayOfWeekOutsideDateRange() {
           // Arrange
           mockPersistOperatingHoursAllDays();
@@ -1512,24 +1588,33 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
           Set<DayOfWeek> selectedDaysOfWeek = Set.of(DayOfWeek.THURSDAY, DayOfWeek.FRIDAY);
 
           var requestDto =
-                  new BlockedTimeConflictsPreviewRequestDto(
-                          List.of(courtId), startDateMonday, endDateDateWed, null, true, selectedDaysOfWeek);
+              new BlockedTimeConflictsPreviewRequestDto(
+                  List.of(courtId),
+                  startDateMonday,
+                  endDateDateWed,
+                  null,
+                  true,
+                  selectedDaysOfWeek);
 
           // Act
           var response =
-                  given()
-                          .spec(specification)
-                          .header("Authorization", accessToken)
-                          .body(requestDto)
-                          .when()
-                          .post("/preview-conflicts")
-                          .then()
-                          .statusCode(400)
-                          .extract()
-                          .as(ErrorResponseDto.class);
+              given()
+                  .spec(specification)
+                  .header("Authorization", accessToken)
+                  .body(requestDto)
+                  .when()
+                  .post("/preview-conflicts")
+                  .then()
+                  .statusCode(400)
+                  .extract()
+                  .as(ErrorResponseDto.class);
 
           // Assert
-          assertBusinessError(response, 400, PREVIEW_CONFLICTS_PATH, ErrorCode.BLOCKED_TIME_SELECTED_DAYS_OUTSIDE_DATE_RANGE);
+          assertBusinessError(
+              response,
+              400,
+              PREVIEW_CONFLICTS_PATH,
+              ErrorCode.SCHEDULE_ENTRY_SELECTED_DAYS_OUTSIDE_DATE_RANGE);
         }
 
         @Test
@@ -1540,7 +1625,8 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
           LocalDate singleDate = LocalDate.now().plusDays(1);
           Set<DayOfWeek> selectedDays = Set.of(DayOfWeek.MONDAY, DayOfWeek.FRIDAY);
 
-          var requestDto = new BlockedTimeConflictsPreviewRequestDto(
+          var requestDto =
+              new BlockedTimeConflictsPreviewRequestDto(
                   List.of(UUID.randomUUID()),
                   singleDate,
                   singleDate,
@@ -1549,20 +1635,26 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
                   selectedDays); // Não deveria ser informado para um único dia
 
           // Act
-          var response = given()
+          var response =
+              given()
                   .spec(specification)
                   .header("Authorization", accessToken)
                   .body(requestDto)
                   .when()
                   .post("/preview-conflicts")
                   .then()
-                  .log().all()
+                  .log()
+                  .all()
                   .statusCode(400)
                   .extract()
                   .as(ErrorResponseDto.class);
 
           // Assert
-          assertValidationError(response, PREVIEW_CONFLICTS_PATH, "selectedDaysOfWeek", ErrorCode.BLOCKED_TIME_SELECTED_DAYS_NOT_ALLOWED_FOR_SINGLE_DATE);
+          assertValidationError(
+              response,
+              PREVIEW_CONFLICTS_PATH,
+              "selectedDaysOfWeek",
+              ErrorCode.SELECTED_DAYS_NOT_ALLOWED_FOR_SINGLE_DATE);
         }
 
         @Test
@@ -1576,7 +1668,8 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
           LocalDate date = LocalDate.now().plusDays(1);
           TimeInterval timeInterval = new TimeInterval(LocalTime.of(14, 0), LocalTime.of(15, 0));
 
-          var requestDto = new BlockedTimeConflictsPreviewRequestDto(
+          var requestDto =
+              new BlockedTimeConflictsPreviewRequestDto(
                   List.of(courtId),
                   date,
                   date,
@@ -1585,7 +1678,8 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
                   null);
 
           // Act
-          var response = given()
+          var response =
+              given()
                   .spec(specification)
                   .header("Authorization", accessToken)
                   .body(requestDto)
@@ -1597,7 +1691,11 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
                   .as(ErrorResponseDto.class);
 
           // Assert
-          assertValidationError(response, PREVIEW_CONFLICTS_PATH, "timeInterval", ErrorCode.BLOCKED_TIME_TIME_INTERVAL_NOT_ALLOWED_WHEN_FULL_DAY);
+          assertValidationError(
+              response,
+              PREVIEW_CONFLICTS_PATH,
+              "timeInterval",
+              ErrorCode.BLOCKED_TIME_TIME_INTERVAL_NOT_ALLOWED_WHEN_FULL_DAY);
         }
       }
 
@@ -1617,24 +1715,28 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
           TimeInterval validInterval = new TimeInterval(LocalTime.of(9, 0), LocalTime.of(10, 0));
 
           var requestDto =
-                  new BlockedTimeConflictsPreviewRequestDto(
-                          List.of(courtId), nextSunday, nextSunday, validInterval, false, null);
+              new BlockedTimeConflictsPreviewRequestDto(
+                  List.of(courtId), nextSunday, nextSunday, validInterval, false, null);
 
           // Act
           var response =
-                  given()
-                          .spec(specification)
-                          .header("Authorization", accessToken)
-                          .body(requestDto)
-                          .when()
-                          .post("/preview-conflicts")
-                          .then()
-                          .statusCode(404)
-                          .extract()
-                          .as(ErrorResponseDto.class);
+              given()
+                  .spec(specification)
+                  .header("Authorization", accessToken)
+                  .body(requestDto)
+                  .when()
+                  .post("/preview-conflicts")
+                  .then()
+                  .statusCode(404)
+                  .extract()
+                  .as(ErrorResponseDto.class);
 
           // Assert
-          assertBusinessError(response, 404, PREVIEW_CONFLICTS_PATH, ErrorCode.OPERATING_HOURS_APPLICABLE_NOT_FOUND);
+          assertBusinessError(
+              response,
+              404,
+              PREVIEW_CONFLICTS_PATH,
+              ErrorCode.OPERATING_HOURS_APPLICABLE_NOT_FOUND);
         }
 
         @Test
@@ -1646,21 +1748,26 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
           Court court = mockPersistCourt("Quadra 1", mockPersistModality("Futebol"));
 
           var requestDto =
-                  new BlockedTimeConflictsPreviewRequestDto(
-                          List.of(court.getId(), UUID.randomUUID()), date, date, timeIntervalOh, false, null);
+              new BlockedTimeConflictsPreviewRequestDto(
+                  List.of(court.getId(), UUID.randomUUID()),
+                  date,
+                  date,
+                  timeIntervalOh,
+                  false,
+                  null);
 
           // Act
           var response =
-                  given()
-                          .spec(specification)
-                          .header("Authorization", accessToken)
-                          .body(requestDto)
-                          .when()
-                          .post("/preview-conflicts")
-                          .then()
-                          .statusCode(404)
-                          .extract()
-                          .as(ErrorResponseDto.class);
+              given()
+                  .spec(specification)
+                  .header("Authorization", accessToken)
+                  .body(requestDto)
+                  .when()
+                  .post("/preview-conflicts")
+                  .then()
+                  .statusCode(404)
+                  .extract()
+                  .as(ErrorResponseDto.class);
 
           // Assert
           assertBusinessError(response, 404, PREVIEW_CONFLICTS_PATH, ErrorCode.COURT_NOT_FOUND);
@@ -1685,12 +1792,15 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
           UUID courtId = mockPersistCourt("Quadra 1", modality).getId();
           LocalDate date = LocalDate.now().plusDays(1);
 
-          String previewKey = createPreviewAndGetKey(List.of(courtId), date, date, null, true, null);
+          String previewKey =
+              createPreviewAndGetKey(List.of(courtId), date, date, null, true, null);
 
-          var confirmRequest = new BlockedTimeConfirmRequestDto(previewKey, "Manutenção programada");
+          var confirmRequest =
+              new BlockedTimeConfirmRequestDto(previewKey, "Manutenção programada");
 
           // Act
-          var response = given()
+          var response =
+              given()
                   .spec(specification)
                   .header("Authorization", accessToken)
                   .body(confirmRequest)
@@ -1714,7 +1824,8 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
 
           assertThat(createdBlockedTime.getCourtId()).isEqualTo(courtId);
           assertThat(createdBlockedTime.getDateTimeSlot().date()).isEqualTo(date);
-          assertThat(createdBlockedTime.getDateTimeSlot().timeInterval()).isEqualTo(operatingHours.getTimeInterval());
+          assertThat(createdBlockedTime.getDateTimeSlot().timeInterval())
+              .isEqualTo(operatingHours.getTimeInterval());
           assertThat(createdBlockedTime.getDescription()).isEqualTo("Manutenção programada");
           assertThat(createdBlockedTime.isFullDay()).isTrue();
           assertThat(createdBlockedTime.getBlockedByAdminId()).isEqualTo(adminId);
@@ -1724,7 +1835,8 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
         }
 
         @Test
-        @DisplayName("Confirma bloqueio pontual para dia inteiro com conflitos de reservas e blocked times")
+        @DisplayName(
+            "Confirma bloqueio pontual para dia inteiro com conflitos de reservas e blocked times")
         void shouldConfirmBlockedTimeForFullDayWithConflicts() {
           // Arrange
           var operatingHours = mockPersistOperatingHoursAllDays();
@@ -1732,36 +1844,40 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
           UUID courtId = mockPersistCourt("Quadra 1", modality).getId();
           LocalDate date = LocalDate.now().plusDays(1);
 
-          var reservation = mockPersistReservationByUser(
+          var reservation =
+              mockPersistReservationByUser(
                   modality.getId(),
                   courtId,
                   date,
                   new TimeInterval(LocalTime.of(10, 0), LocalTime.of(11, 0)),
                   DEFAULT_RESERVATION_PRICE,
-                  adminId
-          );
+                  adminId);
 
-          var existingBlockedTime = mockPersistBlockedTimeSpecific(
+          var existingBlockedTime =
+              mockPersistBlockedTimeSpecific(
                   courtId,
                   date,
                   new TimeInterval(LocalTime.of(12, 0), LocalTime.of(13, 0)),
                   "Manutenção anterior",
-                  adminId
-          );
+                  adminId);
 
-          String previewKey = createPreviewAndGetKey(List.of(courtId), date, date, null, true, null);
+          String previewKey =
+              createPreviewAndGetKey(List.of(courtId), date, date, null, true, null);
 
-          var confirmRequest = new BlockedTimeConfirmRequestDto(previewKey, "Bloqueio para dia todo");
+          var confirmRequest =
+              new BlockedTimeConfirmRequestDto(previewKey, "Bloqueio para dia todo");
 
           // Act
-          var response = given()
+          var response =
+              given()
                   .spec(specification)
                   .header("Authorization", accessToken)
                   .body(confirmRequest)
                   .when()
                   .post("/confirm")
                   .then()
-                  .log().all()
+                  .log()
+                  .all()
                   .statusCode(200)
                   .extract()
                   .as(BlockedTimeConfirmResponseDto.class);
@@ -1786,7 +1902,8 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
 
           assertThat(createdBlockedTime.getCourtId()).isEqualTo(courtId);
           assertThat(createdBlockedTime.getDateTimeSlot().date()).isEqualTo(date);
-          assertThat(createdBlockedTime.getDateTimeSlot().timeInterval()).isEqualTo(operatingHours.getTimeInterval());
+          assertThat(createdBlockedTime.getDateTimeSlot().timeInterval())
+              .isEqualTo(operatingHours.getTimeInterval());
           assertThat(createdBlockedTime.getDescription()).isEqualTo("Bloqueio para dia todo");
           assertThat(createdBlockedTime.isFullDay()).isTrue();
 
@@ -1804,12 +1921,14 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
           LocalDate date = LocalDate.now().plusDays(1);
           TimeInterval timeInterval = new TimeInterval(LocalTime.of(14, 0), LocalTime.of(15, 0));
 
-          String previewKey = createPreviewAndGetKey(List.of(courtId), date, date, timeInterval, false, null);
+          String previewKey =
+              createPreviewAndGetKey(List.of(courtId), date, date, timeInterval, false, null);
 
           var confirmRequest = new BlockedTimeConfirmRequestDto(previewKey, "Evento privado");
 
           // Act
-          var response = given()
+          var response =
+              given()
                   .spec(specification)
                   .header("Authorization", accessToken)
                   .body(confirmRequest)
@@ -1852,26 +1971,28 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
 
           // Cria reservas que entrarão em conflito
           mockPersistReservationByUser(
-                  modality.getId(),
-                  courtId,
-                  startDate.plusDays(7),
-                  timeInterval,
-                  DEFAULT_RESERVATION_PRICE, adminId
-          );
+              modality.getId(),
+              courtId,
+              startDate.plusDays(7),
+              timeInterval,
+              DEFAULT_RESERVATION_PRICE,
+              adminId);
           mockPersistReservationByUser(
-                  modality.getId(),
-                  courtId,
-                  startDate.plusDays(9),
-                  timeInterval,
-                  DEFAULT_RESERVATION_PRICE, adminId
-          );
+              modality.getId(),
+              courtId,
+              startDate.plusDays(9),
+              timeInterval,
+              DEFAULT_RESERVATION_PRICE,
+              adminId);
 
-          String previewKey = createPreviewAndGetKey(List.of(courtId), startDate, endDate, null, true, null);
+          String previewKey =
+              createPreviewAndGetKey(List.of(courtId), startDate, endDate, null, true, null);
 
           var confirmRequest = new BlockedTimeConfirmRequestDto(previewKey, "Reforma da quadra");
 
           // Act
-          var response = given()
+          var response =
+              given()
                   .spec(specification)
                   .header("Authorization", accessToken)
                   .body(confirmRequest)
@@ -1904,12 +2025,15 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
           Set<DayOfWeek> selectedDays = Set.of(DayOfWeek.TUESDAY, DayOfWeek.THURSDAY);
           TimeInterval timeInterval = new TimeInterval(LocalTime.of(19, 0), LocalTime.of(21, 0));
 
-          String previewKey = createPreviewAndGetKey(List.of(courtId), startDate, endDate, timeInterval, false, selectedDays);
+          String previewKey =
+              createPreviewAndGetKey(
+                  List.of(courtId), startDate, endDate, timeInterval, false, selectedDays);
 
           var confirmRequest = new BlockedTimeConfirmRequestDto(previewKey, "Aulas de vôlei");
 
           // Act
-          var response = given()
+          var response =
+              given()
                   .spec(specification)
                   .header("Authorization", accessToken)
                   .body(confirmRequest)
@@ -1936,12 +2060,14 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
           UUID courtId2 = mockPersistCourt("Quadra 2", modality).getId();
           LocalDate date = LocalDate.now().plusDays(1);
 
-          String previewKey = createPreviewAndGetKey(List.of(courtId1, courtId2), date, date, null, true, null);
+          String previewKey =
+              createPreviewAndGetKey(List.of(courtId1, courtId2), date, date, null, true, null);
 
           var confirmRequest = new BlockedTimeConfirmRequestDto(previewKey, "Torneio especial");
 
           // Act
-          var response = given()
+          var response =
+              given()
                   .spec(specification)
                   .header("Authorization", accessToken)
                   .body(confirmRequest)
@@ -1972,38 +2098,41 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
           TimeInterval inProgressInterval = new TimeInterval(startTime, endTime);
 
           var inProgressReservation =
-                  mockPersistReservationByUser(
-                          modality.getId(),
-                          courtId,
-                          LocalDate.now(),
-                          inProgressInterval,
-                          DEFAULT_RESERVATION_PRICE,
-                          adminId);
+              mockPersistReservationByUser(
+                  modality.getId(),
+                  courtId,
+                  LocalDate.now(),
+                  inProgressInterval,
+                  DEFAULT_RESERVATION_PRICE,
+                  adminId);
 
           // Cria reserva futura que deve ser cancelada
           TimeInterval futureInterval = new TimeInterval(LocalTime.of(20, 0), LocalTime.of(21, 0));
           var futureReservation =
-                  mockPersistReservationByUser(
-                          modality.getId(),
-                          courtId,
-                          date,
-                          futureInterval,
-                          DEFAULT_RESERVATION_PRICE,
-                          adminId);
+              mockPersistReservationByUser(
+                  modality.getId(),
+                  courtId,
+                  date,
+                  futureInterval,
+                  DEFAULT_RESERVATION_PRICE,
+                  adminId);
 
-          String previewKey = createPreviewAndGetKey(List.of(courtId), date, date, null, true, null);
+          String previewKey =
+              createPreviewAndGetKey(List.of(courtId), date, date, null, true, null);
 
           var confirmRequest = new BlockedTimeConfirmRequestDto(previewKey, "Manutenção urgente");
 
           // Act
-          var response = given()
+          var response =
+              given()
                   .spec(specification)
                   .header("Authorization", accessToken)
                   .body(confirmRequest)
                   .when()
                   .post("/confirm")
                   .then()
-                  .log().all()
+                  .log()
+                  .all()
                   .statusCode(200)
                   .extract()
                   .as(BlockedTimeConfirmResponseDto.class);
@@ -2011,11 +2140,13 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
           // Assert
           assertThat(response.totalBlockedTimesCreated()).isEqualTo(1);
           // A reserva em andamento não deve ser cancelada
-          var inProgressReservationAfter = reservationRepository.findByIdOrElseThrow(inProgressReservation.getId());
+          var inProgressReservationAfter =
+              reservationRepository.findByIdOrElseThrow(inProgressReservation.getId());
           assertThat(inProgressReservationAfter.getStatus()).isEqualTo(ReservationStatus.CONFIRMED);
 
           // A reserva futura deve ser cancelada
-          var futureReservationAfter = reservationRepository.findByIdOrElseThrow(futureReservation.getId());
+          var futureReservationAfter =
+              reservationRepository.findByIdOrElseThrow(futureReservation.getId());
           assertThat(futureReservationAfter.getStatus()).isEqualTo(ReservationStatus.CANCELLED);
         }
       }
@@ -2031,7 +2162,8 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
           var confirmRequest = new BlockedTimeConfirmRequestDto("", "Descrição válida");
 
           // Act
-          var response = given()
+          var response =
+              given()
                   .spec(specification)
                   .header("Authorization", accessToken)
                   .body(confirmRequest)
@@ -2043,7 +2175,8 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
                   .as(ErrorResponseDto.class);
 
           // Assert
-          assertValidationError(response, CONFIRM_PATH, "previewKey", ErrorCode.PREVIEW_KEY_REQUIRED);
+          assertValidationError(
+              response, CONFIRM_PATH, "previewKey", ErrorCode.PREVIEW_KEY_REQUIRED);
         }
 
         @Test
@@ -2053,7 +2186,8 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
           var confirmRequest = new BlockedTimeConfirmRequestDto("invalid-key!", "Descrição válida");
 
           // Act
-          var response = given()
+          var response =
+              given()
                   .spec(specification)
                   .header("Authorization", accessToken)
                   .body(confirmRequest)
@@ -2075,7 +2209,8 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
           var confirmRequest = new BlockedTimeConfirmRequestDto("valid-key", "");
 
           // Act
-          var response = given()
+          var response =
+              given()
                   .spec(specification)
                   .header("Authorization", accessToken)
                   .body(confirmRequest)
@@ -2087,7 +2222,8 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
                   .as(ErrorResponseDto.class);
 
           // Assert
-          assertValidationError(response, CONFIRM_PATH, "description", ErrorCode.BLOCKED_TIME_DESCRIPTION_REQUIRED);
+          assertValidationError(
+              response, CONFIRM_PATH, "description", ErrorCode.BLOCKED_TIME_DESCRIPTION_REQUIRED);
         }
 
         @Test
@@ -2097,7 +2233,8 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
           var confirmRequest = new BlockedTimeConfirmRequestDto("valid-key", "ab");
 
           // Act
-          var response = given()
+          var response =
+              given()
                   .spec(specification)
                   .header("Authorization", accessToken)
                   .body(confirmRequest)
@@ -2109,7 +2246,11 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
                   .as(ErrorResponseDto.class);
 
           // Assert
-          assertValidationError(response, CONFIRM_PATH, "description", ErrorCode.BLOCKED_TIME_DESCRIPTION_INVALID_LENGTH);
+          assertValidationError(
+              response,
+              CONFIRM_PATH,
+              "description",
+              ErrorCode.BLOCKED_TIME_DESCRIPTION_INVALID_LENGTH);
         }
 
         @Test
@@ -2120,7 +2261,8 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
           var confirmRequest = new BlockedTimeConfirmRequestDto("valid-key", longDescription);
 
           // Act
-          var response = given()
+          var response =
+              given()
                   .spec(specification)
                   .header("Authorization", accessToken)
                   .body(confirmRequest)
@@ -2132,9 +2274,12 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
                   .as(ErrorResponseDto.class);
 
           // Assert
-          assertValidationError(response, CONFIRM_PATH, "description", ErrorCode.BLOCKED_TIME_DESCRIPTION_INVALID_LENGTH);
+          assertValidationError(
+              response,
+              CONFIRM_PATH,
+              "description",
+              ErrorCode.BLOCKED_TIME_DESCRIPTION_INVALID_LENGTH);
         }
-
       }
 
       @Nested
@@ -2151,17 +2296,20 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
           LocalDate date = LocalDate.now().plusDays(1);
 
           // Cria preview com admin atual
-          String previewKey = createPreviewAndGetKey(List.of(courtId), date, date, null, true, null);
+          String previewKey =
+              createPreviewAndGetKey(List.of(courtId), date, date, null, true, null);
 
           // Cria outro admin e faz login
           User otherAdmin = mockPersistOtherAdminUser();
           AuthTokensTest otherAdminTokens = mockLogin(otherAdmin.getUsername(), defaultPassword);
           String otherAdminAccessToken = "Bearer " + otherAdminTokens.accessToken();
 
-          var confirmRequest = new BlockedTimeConfirmRequestDto(previewKey, "Tentativa de uso indevido");
+          var confirmRequest =
+              new BlockedTimeConfirmRequestDto(previewKey, "Tentativa de uso indevido");
 
           // Act
-          var response = given()
+          var response =
+              given()
                   .spec(specification)
                   .header("Authorization", otherAdminAccessToken)
                   .body(confirmRequest)
@@ -2186,11 +2334,12 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
         void shouldReturn404WhenPreviewKeyNotFound() {
           // Arrange
           String invalidPreviewKey = "blocked-time-preview:" + adminId + ":" + UUID.randomUUID();
-          var confirmRequest = new BlockedTimeConfirmRequestDto(
-                  invalidPreviewKey, "Descrição válida");
+          var confirmRequest =
+              new BlockedTimeConfirmRequestDto(invalidPreviewKey, "Descrição válida");
 
           // Act
-          var response = given()
+          var response =
+              given()
                   .spec(specification)
                   .header("Authorization", accessToken)
                   .body(confirmRequest)
@@ -2215,7 +2364,8 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
           LocalDate date = LocalDate.now().plusDays(1);
 
           // Cria preview válido
-          String previewKey = createPreviewAndGetKey(List.of(court.getId()), date, date, null, true, null);
+          String previewKey =
+              createPreviewAndGetKey(List.of(court.getId()), date, date, null, true, null);
 
           // Remove a quadra do banco
           court.disable();
@@ -2224,7 +2374,8 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
           var confirmRequest = new BlockedTimeConfirmRequestDto(previewKey, "Descrição válida");
 
           // Act
-          var response = given()
+          var response =
+              given()
                   .spec(specification)
                   .header("Authorization", accessToken)
                   .body(confirmRequest)
@@ -2249,7 +2400,8 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
           LocalDate date = LocalDate.now().plusDays(1);
 
           // Cria preview válido para domingo
-          String previewKey = createPreviewAndGetKey(List.of(courtId), date, date, null, true, null);
+          String previewKey =
+              createPreviewAndGetKey(List.of(courtId), date, date, null, true, null);
 
           // Remove o horário de funcionamento do dia
           operatingHours.disable();
@@ -2258,7 +2410,8 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
           var confirmRequest = new BlockedTimeConfirmRequestDto(previewKey, "Descrição válida");
 
           // Act
-          var response = given()
+          var response =
+              given()
                   .spec(specification)
                   .header("Authorization", accessToken)
                   .body(confirmRequest)
@@ -2270,7 +2423,8 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
                   .as(ErrorResponseDto.class);
 
           // Assert
-          assertBusinessError(response, 404, CONFIRM_PATH, ErrorCode.OPERATING_HOURS_APPLICABLE_NOT_FOUND);
+          assertBusinessError(
+              response, 404, CONFIRM_PATH, ErrorCode.OPERATING_HOURS_APPLICABLE_NOT_FOUND);
         }
       }
 
@@ -2279,7 +2433,8 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
       class ConflictScenarios {
 
         @Test
-        @DisplayName("Retorna erro quando preview está desatualizado por causa de nova reserva criada")
+        @DisplayName(
+            "Retorna erro quando preview está desatualizado por causa de nova reserva criada")
         void shouldReturn409WhenPreviewIsStaleNewReservationCreated() {
           // Arrange
           mockPersistOperatingHoursAllDays();
@@ -2288,18 +2443,24 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
           LocalDate date = LocalDate.now().plusDays(1);
 
           // Admin 1 gera preview sem conflitos
-          String previewKey = createPreviewAndGetKey(List.of(courtId), date, date, null, true, null);
+          String previewKey =
+              createPreviewAndGetKey(List.of(courtId), date, date, null, true, null);
 
           // Simula race condition: uma reserva é criada após o preview ser gerado
           mockPersistReservationByUser(
-                  modality.getId(), courtId, date,
-                  new TimeInterval(LocalTime.of(10, 0), LocalTime.of(11, 0)),
-                  DEFAULT_RESERVATION_PRICE, adminId);
+              modality.getId(),
+              courtId,
+              date,
+              new TimeInterval(LocalTime.of(10, 0), LocalTime.of(11, 0)),
+              DEFAULT_RESERVATION_PRICE,
+              adminId);
 
-          var confirmRequest = new BlockedTimeConfirmRequestDto(previewKey, "Bloqueio após race condition");
+          var confirmRequest =
+              new BlockedTimeConfirmRequestDto(previewKey, "Bloqueio após race condition");
 
           // Act
-          var response = given()
+          var response =
+              given()
                   .spec(specification)
                   .header("Authorization", accessToken)
                   .body(confirmRequest)
@@ -2315,7 +2476,8 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
         }
 
         @Test
-        @DisplayName("Retorna erro quando preview está desatualizado por causa de outro bloqueio criado")
+        @DisplayName(
+            "Retorna erro quando preview está desatualizado por causa de outro bloqueio criado")
         void shouldReturn409WhenPreviewIsStaleNewBlockedTimeCreated() {
           // Arrange
           mockPersistOperatingHoursAllDays();
@@ -2324,18 +2486,23 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
           LocalDate date = LocalDate.now().plusDays(1);
 
           // Admin 1 gera preview sem conflitos
-          String previewKey = createPreviewAndGetKey(List.of(courtId), date, date, null, true, null);
+          String previewKey =
+              createPreviewAndGetKey(List.of(courtId), date, date, null, true, null);
 
           // Simula race condition: outro BlockedTime é criado após o preview ser gerado
           mockPersistBlockedTimeSpecific(
-                  courtId, date,
-                  new TimeInterval(LocalTime.of(14, 0), LocalTime.of(15, 0)),
-                  "Bloqueio criado por outro admin", adminId);
+              courtId,
+              date,
+              new TimeInterval(LocalTime.of(14, 0), LocalTime.of(15, 0)),
+              "Bloqueio criado por outro admin",
+              adminId);
 
-          var confirmRequest = new BlockedTimeConfirmRequestDto(previewKey, "Bloqueio após race condition");
+          var confirmRequest =
+              new BlockedTimeConfirmRequestDto(previewKey, "Bloqueio após race condition");
 
           // Act
-          var response = given()
+          var response =
+              given()
                   .spec(specification)
                   .header("Authorization", accessToken)
                   .body(confirmRequest)
@@ -2351,7 +2518,8 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
         }
 
         @Test
-        @DisplayName("Retorna erro quando preview está desatualizado por causa de reserva cancelada")
+        @DisplayName(
+            "Retorna erro quando preview está desatualizado por causa de reserva cancelada")
         void shouldReturn409WhenPreviewIsStaleReservationCancelled() {
           // Arrange
           mockPersistOperatingHoursAllDays();
@@ -2360,22 +2528,29 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
           LocalDate date = LocalDate.now().plusDays(1);
 
           // Cria reserva que será um conflito
-          var reservation = mockPersistReservationByUser(
-                  modality.getId(), courtId, date,
+          var reservation =
+              mockPersistReservationByUser(
+                  modality.getId(),
+                  courtId,
+                  date,
                   new TimeInterval(LocalTime.of(10, 0), LocalTime.of(11, 0)),
-                  DEFAULT_RESERVATION_PRICE, adminId);
+                  DEFAULT_RESERVATION_PRICE,
+                  adminId);
 
           // Admin 1 gera preview COM conflito (1 reserva)
-          String previewKey = createPreviewAndGetKey(List.of(courtId), date, date, null, true, null);
+          String previewKey =
+              createPreviewAndGetKey(List.of(courtId), date, date, null, true, null);
 
           // Simula race condition: a reserva é cancelada após o preview ser gerado
           reservation.cancel();
           reservationRepository.save(reservation);
 
-          var confirmRequest = new BlockedTimeConfirmRequestDto(previewKey, "Bloqueio após race condition");
+          var confirmRequest =
+              new BlockedTimeConfirmRequestDto(previewKey, "Bloqueio após race condition");
 
           // Act
-          var response = given()
+          var response =
+              given()
                   .spec(specification)
                   .header("Authorization", accessToken)
                   .body(confirmRequest)
@@ -2393,8 +2568,586 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
     }
   }
 
+  @Nested
+  @DisplayName("Testes para o endpoint GET /api/admin/blocked-times")
+  class GetAllBlockedTimeTests {
+
+    @Test
+    @DisplayName("Deve retornar blocked times filtrados por courtId com paginação")
+    void shouldReturnBlockedTimesFilteredByCourtId() {
+      // Arrange
+      Modality modality = mockPersistModality("Futebol");
+      UUID courtId = mockPersistCourt("Quadra 1", modality).getId();
+      UUID otherCourtId = mockPersistCourt("Quadra 2", modality).getId();
+      LocalDate date = LocalDate.now().plusDays(1);
+
+      // Persiste 2 bloqueios para a Quadra 1
+      var blockedTime1 =
+          mockPersistBlockedTimeSpecific(
+              courtId,
+              date,
+              new TimeInterval(LocalTime.of(10, 0), LocalTime.of(11, 0)),
+              "Bloqueio 1",
+              adminId);
+      var blockedTime2 =
+          mockPersistBlockedTimeSpecific(
+              courtId,
+              date.plusDays(1),
+              new TimeInterval(LocalTime.of(14, 0), LocalTime.of(15, 0)),
+              "Bloqueio 2",
+              adminId);
+
+      // Persiste 1 bloqueio para a Quadra 2 (não deve retornar)
+      mockPersistBlockedTimeSpecific(
+          otherCourtId,
+          date,
+          new TimeInterval(LocalTime.of(10, 0), LocalTime.of(11, 0)),
+          "Bloqueio Outra Quadra",
+          adminId);
+
+      // Act
+      var response =
+          given()
+              .spec(specification)
+              .header("Authorization", accessToken)
+              .queryParam("courtId", courtId)
+              .queryParam("page", 0)
+              .queryParam("size", 10)
+              .when()
+              .get()
+              .then()
+              .statusCode(200)
+              .extract()
+              .response();
+
+      // Assert
+      // Validando metadados da paginação
+      assertThat(response.jsonPath().getInt("totalElements")).isEqualTo(2);
+      assertThat(response.jsonPath().getInt("totalPages")).isEqualTo(1);
+
+      // Validando o conteúdo
+      List<String> returnedIds = response.jsonPath().getList("content.blockedTimeId", String.class);
+
+      assertThat(returnedIds)
+          .hasSize(2)
+          .containsExactlyInAnyOrder(
+              blockedTime1.getId().toString(), blockedTime2.getId().toString());
+    }
+
+    @Test
+    @DisplayName("Deve respeitar os parâmetros de paginação (page e size)")
+    void shouldRespectPaginationParameters() {
+      // Arrange
+      Modality modality = mockPersistModality("Tenis");
+      UUID courtId = mockPersistCourt("Quadra Central", modality).getId();
+      LocalDate date = LocalDate.now().plusDays(1);
+
+      // Cria 5 bloqueios
+      for (int i = 0; i < 5; i++) {
+        mockPersistBlockedTimeSpecific(
+            courtId,
+            date.plusDays(i),
+            new TimeInterval(LocalTime.of(10, 0), LocalTime.of(11, 0)),
+            "Manutenção: " + 1,
+            adminId);
+      }
+
+      // Act - Requisita a página 0 com tamanho 2
+      var responsePage0 =
+          given()
+              .spec(specification)
+              .header("Authorization", accessToken)
+              .queryParam("courtId", courtId)
+              .queryParam("page", 0)
+              .queryParam("size", 2)
+              .when()
+              .get()
+              .then()
+              .statusCode(200)
+              .extract()
+              .response();
+
+      // Act - Requisita a página 1 com tamanho 2
+      var responsePage1 =
+          given()
+              .spec(specification)
+              .header("Authorization", accessToken)
+              .queryParam("courtId", courtId)
+              .queryParam("page", 1)
+              .queryParam("size", 2)
+              .when()
+              .get()
+              .then()
+              .statusCode(200)
+              .extract()
+              .response();
+
+      // Assert
+      // Página 0
+      assertThat(responsePage0.jsonPath().getInt("numberOfElements")).isEqualTo(2);
+      assertThat(responsePage0.jsonPath().getInt("totalElements")).isEqualTo(5);
+
+      // Página 1
+      assertThat(responsePage1.jsonPath().getInt("numberOfElements")).isEqualTo(2);
+
+      // Garante que os IDs da página 0 não estão na página 1
+      List<UUID> idsPage0 = responsePage0.jsonPath().getList("content.blockedTimeId", UUID.class);
+      List<UUID> idsPage1 = responsePage1.jsonPath().getList("content.blockedTimeId", UUID.class);
+
+      assertThat(idsPage0).doesNotContainAnyElementsOf(idsPage1);
+    }
+
+    @Test
+    @DisplayName("Deve retornar todos os blocked times quando courtId não for informado")
+    void shouldReturnAllBlockedTimesWhenNoCourtIdProvided() {
+      // Arrange
+      Modality modality = mockPersistModality("Volei");
+      UUID court1 = mockPersistCourt("Quadra 1", modality).getId();
+      UUID court2 = mockPersistCourt("Quadra 2", modality).getId();
+
+      mockPersistBlockedTimeSpecific(
+          court1,
+          LocalDate.now().plusDays(1),
+          new TimeInterval(LocalTime.of(10, 0), LocalTime.of(11, 0)),
+          "Manutenção",
+          adminId);
+
+      mockPersistBlockedTimeSpecific(
+          court2,
+          LocalDate.now().plusDays(1),
+          new TimeInterval(LocalTime.of(10, 0), LocalTime.of(11, 0)),
+          "Manutenção",
+          adminId);
+
+      // Act
+      var response =
+          given()
+              .spec(specification)
+              .header("Authorization", accessToken)
+              .when()
+              .get()
+              .then()
+              .statusCode(200)
+              .extract()
+              .response();
+
+      // Assert
+      // Deve conter pelo menos esses 2 (pode haver sujeira de outros testes se o banco não for
+      // limpo)
+      assertThat(response.jsonPath().getInt("totalElements")).isGreaterThanOrEqualTo(2);
+
+      List<String> descriptions = response.jsonPath().getList("content.description");
+      assertThat(descriptions).contains("Manutenção", "Manutenção");
+    }
+  }
+
+  @Nested
+  @DisplayName("Testes para o endpoint PATCH /api/admin/blocked-times/{blockedTimeId}")
+  class UpdateBlockedTimeTests {
+
+    @Nested
+    @DisplayName("Cenários de sucesso - 200 OK")
+    class SuccessScenarios {
+
+      @Test
+      @DisplayName("Atualiza a descrição de um BlockedTime único")
+      void shouldUpdateBlockedTimeDescription_whenDescriptionIsValid() {
+        // Arrange
+        Modality modality = mockPersistModality("Futebol");
+        Court court = mockPersistCourt("Quadra 1", modality);
+
+        ScheduleEntry blockedTime =
+            mockPersistBlockedTimeSpecific(
+                court.getId(),
+                LocalDate.now().plusDays(1),
+                new TimeInterval(LocalTime.of(10, 0), LocalTime.of(15, 0)),
+                "Manutenção na quadra",
+                adminId);
+
+        BlockedTimeUpdateRequestDto requestDto =
+            new BlockedTimeUpdateRequestDto("Quadra 1 em manutenção", false);
+
+        // Act
+        List<BlockedTimeDetailResponseDto> response =
+            given()
+                .spec(specification)
+                .header("Authorization", accessToken)
+                .body(requestDto)
+                .when()
+                .patch("/{blockedTimeId}", blockedTime.getId())
+                .then()
+                .statusCode(200)
+                .extract()
+                .as(new TypeRef<>() {});
+
+        // Assert
+        assertThat(response).hasSize(1);
+        assertThat(response.getFirst().description()).isEqualTo("Quadra 1 em manutenção");
+
+        BlockedTime updatedBlockedTime =
+            blockedTimeRepository.findByIdOrElseThrow(blockedTime.getId());
+        assertThat(updatedBlockedTime.getDescription()).isEqualTo("Quadra 1 em manutenção");
+      }
+
+      @Test
+      @DisplayName("Atualiza a descrição de todos os BlockedTime recorrentes")
+      void shouldUpdateAllRecurringBlockedTimes_whenUpdateAllRecurringIsTrue() {
+        // Arrange
+        Modality modality = mockPersistModality("Futebol");
+        Court court = mockPersistCourt("Quadra 1", modality);
+        UUID recurringId = UUID.randomUUID();
+
+        BlockedTime blockedTime1 =
+            mockPersistBlockedTimeRecurring(
+                court.getId(),
+                LocalDate.now().plusDays(1),
+                new TimeInterval(LocalTime.of(10, 0), LocalTime.of(11, 0)),
+                "Manutenção recorrente",
+                adminId,
+                recurringId);
+
+        BlockedTime blockedTime2 =
+            mockPersistBlockedTimeRecurring(
+                court.getId(),
+                LocalDate.now().plusDays(2),
+                new TimeInterval(LocalTime.of(10, 0), LocalTime.of(11, 0)),
+                "Manutenção recorrente",
+                adminId,
+                recurringId);
+
+        BlockedTimeUpdateRequestDto requestDto =
+            new BlockedTimeUpdateRequestDto("Manutenção atualizada", true);
+
+        // Act
+        List<BlockedTimeDetailResponseDto> response =
+            given()
+                .spec(specification)
+                .header("Authorization", accessToken)
+                .body(requestDto)
+                .when()
+                .patch("/{blockedTimeId}", blockedTime1.getId())
+                .then()
+                .statusCode(200)
+                .extract()
+                .as(new TypeRef<>() {});
+
+        // Assert
+        assertThat(response).hasSize(2);
+        assertThat(response)
+            .extracting(BlockedTimeDetailResponseDto::description)
+            .containsOnly("Manutenção atualizada");
+
+        BlockedTime updatedBlockedTime1 =
+            blockedTimeRepository.findByIdOrElseThrow(blockedTime1.getId());
+        BlockedTime updatedBlockedTime2 =
+            blockedTimeRepository.findByIdOrElseThrow(blockedTime2.getId());
+
+        assertThat(updatedBlockedTime1.getDescription()).isEqualTo("Manutenção atualizada");
+        assertThat(updatedBlockedTime2.getDescription()).isEqualTo("Manutenção atualizada");
+      }
+
+      @Test
+      @DisplayName("Atualiza apenas um BlockedTime recorrente quando updateAllRecurring é false")
+      void shouldUpdateOnlyOneRecurringBlockedTime_whenUpdateAllRecurringIsFalse() {
+        // Arrange
+        Modality modality = mockPersistModality("Futebol");
+        Court court = mockPersistCourt("Quadra 1", modality);
+        UUID recurringId = UUID.randomUUID();
+
+        BlockedTime blockedTime1 =
+            mockPersistBlockedTimeRecurring(
+                court.getId(),
+                LocalDate.now().plusDays(1),
+                new TimeInterval(LocalTime.of(10, 0), LocalTime.of(11, 0)),
+                "Manutenção recorrente",
+                adminId,
+                recurringId);
+
+        BlockedTime blockedTime2 =
+            mockPersistBlockedTimeRecurring(
+                court.getId(),
+                LocalDate.now().plusDays(2),
+                new TimeInterval(LocalTime.of(10, 0), LocalTime.of(11, 0)),
+                "Manutenção recorrente",
+                adminId,
+                recurringId);
+
+        BlockedTimeUpdateRequestDto requestDto =
+            new BlockedTimeUpdateRequestDto("Manutenção única", false);
+
+        // Act
+        List<BlockedTimeDetailResponseDto> response =
+            given()
+                .spec(specification)
+                .header("Authorization", accessToken)
+                .body(requestDto)
+                .when()
+                .patch("/{blockedTimeId}", blockedTime1.getId())
+                .then()
+                .statusCode(200)
+                .extract()
+                .as(new TypeRef<>() {});
+
+        // Assert
+        assertThat(response).hasSize(1);
+        assertThat(response.getFirst().description()).isEqualTo("Manutenção única");
+
+        BlockedTime updatedBlockedTime1 = blockedTimeRepository.findByIdOrElseThrow(blockedTime1.getId());
+        BlockedTime notUpdatedBlockedTime2 = blockedTimeRepository.findByIdOrElseThrow(blockedTime2.getId());
+
+        assertThat(updatedBlockedTime1.getDescription()).isEqualTo("Manutenção única");
+        assertThat(notUpdatedBlockedTime2.getDescription()).isEqualTo("Manutenção recorrente");
+      }
+    }
+
+    @Nested
+    @DisplayName("Cenários de erro - 400 Bad Request")
+    class BadRequestScenarios {
+      @Test
+      @DisplayName("Retorna erro quando a descrição é vazia")
+      void shouldReturn400_whenDescriptionIsBlank() {
+        // Arrange
+        BlockedTimeUpdateRequestDto requestDto = new BlockedTimeUpdateRequestDto("", false);
+        UUID nonExistentId = UUID.randomUUID();
+
+        // Act
+        ErrorResponseDto response =
+            given()
+                .spec(specification)
+                .header("Authorization", accessToken)
+                .body(requestDto)
+                .when()
+                .patch("/{blockedTimeId}", nonExistentId)
+                .then()
+                .statusCode(400)
+                .extract()
+                .as(ErrorResponseDto.class);
+
+        // Assert
+        assertValidationError(
+            response,
+            "/api/admin/blocked-times/" + nonExistentId,
+            "description",
+            ErrorCode.BLOCKED_TIME_DESCRIPTION_REQUIRED);
+      }
+
+      @ParameterizedTest
+      @ValueSource(ints = {2, 501})
+      @DisplayName("Retorna erro quando o tamanho da descrição é inválido")
+      void shouldReturn400_whenDescriptionLengthIsInvalid(int length) {
+        // Arrange
+        UUID nonExistentId = UUID.randomUUID();
+        String longDescription = "a".repeat(length);
+
+        BlockedTimeUpdateRequestDto requestDto =
+            new BlockedTimeUpdateRequestDto(longDescription, false);
+
+        // Act
+        var response =
+            given()
+                .spec(specification)
+                .header("Authorization", accessToken)
+                .body(requestDto)
+                .when()
+                .patch("/{blockedTimeId}", nonExistentId)
+                .then()
+                .statusCode(400)
+                .extract()
+                .as(ErrorResponseDto.class);
+
+        // Assert
+        String path = "/api/admin/blocked-times/" + nonExistentId;
+        assertValidationError(response, path, "description", ErrorCode.BLOCKED_TIME_DESCRIPTION_INVALID_LENGTH);
+      }
+    }
+
+    @Nested
+    @DisplayName("Cenários de erro - 404 Not Found")
+    class NotFoundScenarios {
+      @Test
+      @DisplayName("Retorna erro quando o BlockedTime não existe")
+      void shouldReturn404_whenBlockedTimeNotFound() {
+        // Arrange
+        BlockedTimeUpdateRequestDto requestDto =
+            new BlockedTimeUpdateRequestDto("Nova descrição", false);
+        UUID nonExistentId = UUID.randomUUID();
+
+        // Act
+        ErrorResponseDto response =
+            given()
+                .spec(specification)
+                .header("Authorization", accessToken)
+                .body(requestDto)
+                .when()
+                .patch("/{blockedTimeId}", nonExistentId)
+                .then()
+                .statusCode(404)
+                .extract()
+                .as(ErrorResponseDto.class);
+
+        // Assert
+        assertBusinessError(
+            response,
+            404,
+            "/api/admin/blocked-times/" + nonExistentId,
+            ErrorCode.BLOCKED_TIME_NOT_FOUND);
+      }
+    }
+  }
+
+  @Nested
+  @DisplayName("Testes para o endpoint DELETE /api/admin/blocked-times/{blockedTimeId}")
+  class DeleteBlockedTimeTests {
+
+    @Nested
+    @DisplayName("Cenários de sucesso - 204 No Content")
+    class SuccessScenarios {
+
+      @Test
+      @DisplayName("Deleta um BlockedTime único")
+      void shouldDeleteBlockedTime_whenItExists() {
+        // Arrange
+        Modality modality = mockPersistModality("Futebol");
+        Court court = mockPersistCourt("Quadra 1", modality);
+
+        ScheduleEntry blockedTime =
+            mockPersistBlockedTimeSpecific(
+                court.getId(),
+                LocalDate.now().plusDays(1),
+                new TimeInterval(LocalTime.of(10, 0), LocalTime.of(15, 0)),
+                "Manutenção na quadra",
+                adminId);
+
+        // Act
+        given()
+            .spec(specification)
+            .header("Authorization", accessToken)
+            .when()
+            .delete("/{blockedTimeId}", blockedTime.getId())
+            .then()
+            .statusCode(204);
+
+        // Assert
+        assertThat(blockedTimeRepository.findById(blockedTime.getId())).isEmpty();
+      }
+
+      @Test
+      @DisplayName("Deleta todos os BlockedTime recorrentes quando deleteAllRecurring é true")
+      void shouldDeleteAllRecurringBlockedTimes_whenDeleteAllRecurringIsTrue() {
+        // Arrange
+        Modality modality = mockPersistModality("Futebol");
+        Court court = mockPersistCourt("Quadra 1", modality);
+        UUID recurringId = UUID.randomUUID();
+
+        BlockedTime blockedTime1 =
+            mockPersistBlockedTimeRecurring(
+                court.getId(),
+                LocalDate.now().plusDays(1),
+                new TimeInterval(LocalTime.of(10, 0), LocalTime.of(11, 0)),
+                "Manutenção recorrente",
+                adminId,
+                recurringId);
+
+        BlockedTime blockedTime2 =
+            mockPersistBlockedTimeRecurring(
+                court.getId(),
+                LocalDate.now().plusDays(2),
+                new TimeInterval(LocalTime.of(10, 0), LocalTime.of(11, 0)),
+                "Manutenção recorrente",
+                adminId,
+                recurringId);
+
+        // Act
+        given()
+            .spec(specification)
+            .header("Authorization", accessToken)
+            .queryParam("deleteAllRecurring", true)
+            .when()
+            .delete("/{blockedTimeId}", blockedTime1.getId())
+            .then()
+            .statusCode(204);
+
+        // Assert
+        assertThat(blockedTimeRepository.findById(blockedTime1.getId())).isEmpty();
+        assertThat(blockedTimeRepository.findById(blockedTime2.getId())).isEmpty();
+      }
+
+      @Test
+      @DisplayName("Deleta apenas um BlockedTime recorrente quando deleteAllRecurring é false")
+      void shouldDeleteOnlyOneRecurringBlockedTime_whenDeleteAllRecurringIsFalse() {
+        // Arrange
+        Modality modality = mockPersistModality("Futebol");
+        Court court = mockPersistCourt("Quadra 1", modality);
+        UUID recurringId = UUID.randomUUID();
+
+        BlockedTime blockedTime1 =
+            mockPersistBlockedTimeRecurring(
+                court.getId(),
+                LocalDate.now().plusDays(1),
+                new TimeInterval(LocalTime.of(10, 0), LocalTime.of(11, 0)),
+                "Manutenção recorrente",
+                adminId,
+                recurringId);
+
+        BlockedTime blockedTime2 =
+            mockPersistBlockedTimeRecurring(
+                court.getId(),
+                LocalDate.now().plusDays(2),
+                new TimeInterval(LocalTime.of(10, 0), LocalTime.of(11, 0)),
+                "Manutenção recorrente",
+                adminId,
+                recurringId);
+
+        // Act
+        given()
+            .spec(specification)
+            .header("Authorization", accessToken)
+            .queryParam("deleteAllRecurring", false)
+            .when()
+            .delete("/{blockedTimeId}", blockedTime1.getId())
+            .then()
+            .statusCode(204);
+
+        // Assert
+        assertThat(blockedTimeRepository.findById(blockedTime1.getId())).isEmpty();
+        assertThat(blockedTimeRepository.findById(blockedTime2.getId())).isPresent();
+      }
+    }
+
+    @Nested
+    @DisplayName("Cenários de erro - 404 Not Found")
+    class NotFoundScenarios {
+      @Test
+      @DisplayName("Retorna erro quando o BlockedTime não existe")
+      void shouldReturn404_whenBlockedTimeNotFound() {
+        // Arrange
+        UUID nonExistentId = UUID.randomUUID();
+
+        // Act
+        ErrorResponseDto response =
+            given()
+                .spec(specification)
+                .header("Authorization", accessToken)
+                .when()
+                .delete("/{blockedTimeId}", nonExistentId)
+                .then()
+                .statusCode(404)
+                .extract()
+                .as(ErrorResponseDto.class);
+
+        // Assert
+        assertBusinessError(
+            response,
+            404,
+            "/api/admin/blocked-times/" + nonExistentId,
+            ErrorCode.BLOCKED_TIME_NOT_FOUND);
+      }
+    }
+  }
+
   /**
    * Cria um preview de conflitos e retorna a previewKey gerada.
+   *
    * @return previewKey do preview criado
    */
   private String createPreviewAndGetKey(
@@ -2409,33 +3162,35 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
         new BlockedTimeConflictsPreviewRequestDto(
             courtIds, startDate, endDate, timeInterval, isFullDay, selectedDaysOfWeek);
 
-    var response = given()
-        .spec(specification)
-        .header("Authorization", accessToken)
-        .body(requestDto)
-        .when()
-        .post("/preview-conflicts")
-        .then()
-        .statusCode(200)
-        .extract()
-        .as(BlockedTimeConflictsPreviewResponseDto.class);
+    var response =
+        given()
+            .spec(specification)
+            .header("Authorization", accessToken)
+            .body(requestDto)
+            .when()
+            .post("/preview-conflicts")
+            .then()
+            .statusCode(200)
+            .extract()
+            .as(BlockedTimeConflictsPreviewResponseDto.class);
 
     return response.previewKey();
   }
 
   /**
-   * Recupera um preview salvo no cache pelo previewKey.
-   * Retorna Optional.empty() se o preview não for encontrado ou não pertencer ao admin
+   * Recupera um preview salvo no cache pelo previewKey. Retorna Optional.empty() se o preview não
+   * for encontrado ou não pertencer ao admin
+   *
    * @param previewKey Chave do preview
    * @return Optional com o preview salvo ou vazio se não encontrado
    */
   private Optional<BlockedTimeConflictsPreview> getPreviewSavedFromCache(String previewKey) {
-    try{
-      BlockedTimeConflictsPreview previewSaved = blockedTimePreviewCachePort.getPreviewOrElseThrow(previewKey, adminId);
+    try {
+      BlockedTimeConflictsPreview previewSaved =
+          blockedTimePreviewCachePort.getPreviewOrElseThrow(previewKey, adminId);
       return Optional.of(previewSaved);
     } catch (PreviewNotFoundException e) {
       return Optional.empty();
     }
   }
-
 }

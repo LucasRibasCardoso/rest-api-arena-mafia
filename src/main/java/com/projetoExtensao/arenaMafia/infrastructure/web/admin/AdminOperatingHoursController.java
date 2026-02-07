@@ -95,7 +95,7 @@ public class AdminOperatingHoursController {
 
   @GetMapping("/{hourId}")
   @CustomRateLimiter(limiterName = "globalLimiter")
-  public ResponseEntity<OperatingHoursResponseDto> getById(@PathVariable UUID hourId) {
+  public ResponseEntity<OperatingHoursResponseDto> getOperatingHoursDetails(@PathVariable UUID hourId) {
     OperatingHours operatingHours = findByIdOperatingHoursUseCase.execute(hourId);
     OperatingHoursResponseDto response = operatingHoursMapper.toDto(operatingHours);
     return ResponseEntity.ok().body(response);

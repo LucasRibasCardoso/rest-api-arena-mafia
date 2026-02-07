@@ -6,9 +6,9 @@ import com.projetoExtensao.arenaMafia.domain.valueobjects.DateTimeSlot;
 import java.time.Instant;
 import java.util.UUID;
 
-public class BlockedTime extends ScheduleEntry {
+public class    BlockedTime extends ScheduleEntry {
 
-  private final String description;
+  private String description;
   private final UUID blockedByAdminId;
   private final boolean isFullDay;
   private final UUID recurringBlockedTimeId;
@@ -174,6 +174,16 @@ public class BlockedTime extends ScheduleEntry {
   }
 
   // --- Comportamentos de Negócio ---
+
+  public void updateDescription(String newDescription) {
+    validateDescription(newDescription);
+    this.description = newDescription;
+  }
+
+  @Override
+  public boolean isRecurring() {
+    return recurringBlockedTimeId != null;
+  }
 
   /**
    * Verifica se o bloqueio de horário está ativo. BlockedTime sempre retorna true, pois bloqueios
