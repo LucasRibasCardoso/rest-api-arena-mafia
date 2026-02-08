@@ -85,4 +85,18 @@ public class ReservationRepositoryAdapter implements ReservationRepositoryPort {
   public Page<Reservation> search(Specification<ReservationEntity> spec, Pageable pageable) {
     return reservationJpaRepository.findAll(spec, pageable).map(reservationMapper::toDomain);
   }
+
+  @Override
+  public List<Reservation> findAllPastReservationsByUser(UUID userId) {
+    return reservationJpaRepository.findAllPastReservationsByUser(userId).stream()
+        .map(reservationMapper::toDomain)
+        .toList();
+  }
+
+  @Override
+  public List<Reservation> findAllFutureActiveReservationsByUser(UUID userId) {
+    return reservationJpaRepository.findAllFutureActiveReservationsByUser(userId).stream()
+        .map(reservationMapper::toDomain)
+        .toList();
+  }
 }

@@ -11,7 +11,7 @@ import java.util.UUID;
 
 public class Reservation extends ScheduleEntry {
 
-  private final UUID userId;
+  private UUID userId;
   private final UUID modalityId;
   private final UUID scheduledByAdminId;
   private final BigDecimal price;
@@ -220,6 +220,13 @@ public class Reservation extends ScheduleEntry {
   }
 
   // --- Comportamentos de Negócio ---
+  public void transferOwnership(UUID newOwnerId) {
+    if (newOwnerId == null) {
+      throw new InvalidReservationException(ErrorCode.RESERVATION_NEW_OWNER_ID_REQUIRED);
+    }
+    this.userId = newOwnerId;
+  }
+
   @Override
   public boolean isRecurring() {
     return this.recurringReservationId != null;

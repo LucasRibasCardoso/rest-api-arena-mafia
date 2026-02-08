@@ -14,8 +14,6 @@ public interface PriceRuleRepositoryPort {
 
   List<PriceRule> findAll(Specification<PriceRuleEntity> spec);
 
-  Optional<PriceRule> findDefaultRule();
-
   PriceRule findDefaultRuleOrElseThrow();
 
   Optional<PriceRule> findByName(String name);

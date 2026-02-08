@@ -20,6 +20,8 @@ public interface UserRepositoryPort {
 
   Optional<User> findByUsername(String username);
 
+  User findSystemUserOrElseThrow();
+
   Optional<User> findById(UUID id);
 
   User findByIdOrElseThrow(UUID id);
@@ -37,4 +39,6 @@ public interface UserRepositoryPort {
   List<User> findByStatusAndUpdateAtBefore(AccountStatus status, Instant dateTime);
 
   void deleteAll(List<User> users);
+
+  void delete(User user);
 }

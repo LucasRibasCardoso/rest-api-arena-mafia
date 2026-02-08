@@ -29,4 +29,8 @@ public interface ReservationRepositoryPort {
   List<Reservation> findAllFutureRecurringReservations(UUID recurringReservationId);
 
   List<Reservation> findAllFutureReservationsByIds(List<UUID> ids);
+
+  List<Reservation> findAllPastReservationsByUser(UUID userId);
+
+  List<Reservation> findAllFutureActiveReservationsByUser(UUID userId);
 }

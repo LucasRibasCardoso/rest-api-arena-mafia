@@ -15,6 +15,8 @@ import java.util.UUID;
 
 public class User {
 
+  public static final String SYSTEM_USERNAME = "system_ghost_user";
+
   private final UUID id;
   private final Instant createdAt;
   private String username;
@@ -62,6 +64,31 @@ public class User {
 
     return new User(
         newId, username, fullName, phone, passwordHash, status, RoleEnum.ROLE_USER, now, now);
+  }
+
+  /**
+   * Factory Method para criar uma instância de User interno do sistema.
+   * @param encodedPassword senha criptografada
+   * @return User interno do sistema
+   */
+  public static User createSystemUser(String encodedPassword) {
+    UUID newId = UUID.randomUUID();
+    Instant now = Instant.now();
+
+    String ghostFullName = "Usuário Excluído";
+    String dummyPhone = "+550000000000";
+
+    return new User(
+            newId,
+            SYSTEM_USERNAME,
+            ghostFullName,
+            dummyPhone,
+            encodedPassword,
+            AccountStatus.LOCKED,
+            RoleEnum.ROLE_SYSTEM,
+            now,
+            now
+    );
   }
 
   /**
@@ -247,6 +274,10 @@ public class User {
 
   public boolean isPendingVerification() {
     return this.status == AccountStatus.PENDING_VERIFICATION;
+  }
+
+  public boolean isDisabled() {
+    return this.status == AccountStatus.DISABLED;
   }
 
   // Getters

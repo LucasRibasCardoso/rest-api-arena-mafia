@@ -16,6 +16,8 @@ import java.util.UUID;
 
 public class PriceRule {
 
+  private static final BigDecimal DEFAULT_PRICE = new BigDecimal("50.00");
+
   private final UUID id;
   private final Set<DayOfWeek> daysOfWeek;
   private final TimeInterval timeInterval;
@@ -82,17 +84,16 @@ public class PriceRule {
    * Cria a regra de preço base para o sistema, que é aplicada quando nenhuma outra regra é
    * aplicável.
    *
-   * @param price Preço base a ser definido
    * @return Nova instância de PriceRule representando o preço base
    */
-  public static PriceRule createDefault(BigDecimal price) {
+  public static PriceRule createDefault() {
     UUID id = UUID.randomUUID();
     Instant now = Instant.now();
 
     String name = "Regra de Preço Padrão";
     int priority = 0;
 
-    return new PriceRule(id, name, null, null, price, priority, true, true, now);
+    return new PriceRule(id, name, null, null, DEFAULT_PRICE, priority, true, true, now);
   }
 
   /**

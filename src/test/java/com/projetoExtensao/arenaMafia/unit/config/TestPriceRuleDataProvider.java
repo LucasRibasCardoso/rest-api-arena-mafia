@@ -33,11 +33,7 @@ public final class TestPriceRuleDataProvider {
   }
 
   public static PriceRule createDefaultPriceRule() {
-    return PriceRule.createDefault(new BigDecimal("50.00"));
-  }
-
-  public static PriceRule createDefaultPriceRule(BigDecimal price) {
-    return PriceRule.createDefault(price);
+    return PriceRule.createDefault();
   }
 
   public static PriceRule createWeekendPriceRule() {

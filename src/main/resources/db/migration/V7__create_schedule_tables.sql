@@ -28,7 +28,7 @@ CREATE TABLE tb_reservations
     cancelled_by_admin_id    UUID,
     PRIMARY KEY (id),
     CONSTRAINT fk_reservations_schedule_entry FOREIGN KEY (id) REFERENCES tb_schedule_entries (id) ON DELETE CASCADE,
-    CONSTRAINT fk_reservations_user FOREIGN KEY (user_id) REFERENCES tb_users (id) ON DELETE CASCADE,
+    CONSTRAINT fk_reservations_user FOREIGN KEY (user_id) REFERENCES tb_users (id) ON DELETE RESTRICT,
     CONSTRAINT fk_reservations_modality FOREIGN KEY (modality_id) REFERENCES tb_modalities (id) ON DELETE RESTRICT,
     CONSTRAINT fk_reservations_admin FOREIGN KEY (scheduled_by_admin_id) REFERENCES tb_users (id) ON DELETE SET NULL,
     CONSTRAINT chk_reservation_price CHECK (price >= 0)

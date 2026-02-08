@@ -15,6 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class ReservationBatchCancellationService {
 
+  private static final String ACCOUNT_DISABLED_REASON = "Sua conta foi desativada pelo administrador. Suas reservas foram canceladas automaticamente.";
+
   private final ReservationRepositoryPort reservationRepository;
   private final UserRepositoryPort userRepository;
   private final ApplicationEventPublisher eventPublisher;
@@ -29,7 +31,7 @@ public class ReservationBatchCancellationService {
   }
 
   /**
-   * Cancela reservas em lote e lança exception se qualquer uma falhar.
+   * Cancela reservas em lote por ação de admin e lança exception se qualquer uma falhar.
    *
    * <p>Garante atomicidade: ou todas as reservas são canceladas com sucesso, ou nenhuma é cancelada
    * (rollback). As notificações só são enviadas após confirmar que todas as operações foram
@@ -37,7 +39,7 @@ public class ReservationBatchCancellationService {
    *
    * @param reservations Lista de reservas a serem canceladas
    * @param reason Motivo do cancelamento
-   * @param adminId ID do administrador responsável pelo cancelamento dos bloqueios
+   * @param adminId ID do administrador responsável pelo cancelamento
    * @return Quantidade de reservas canceladas com sucesso
    * @throws BatchCancellationFailedException se qualquer reserva falhar ao ser cancelada
    */
@@ -48,8 +50,54 @@ public class ReservationBatchCancellationService {
     Map<UUID, User> usersMap = fetchUsersInBatch(reservations);
 
     try {
-      cancelAndSaveReservations(reservations, adminId);
+      cancelByAdminAndSaveReservations(reservations, adminId);
       publishCancellationEvents(reservations, usersMap, reason);
+    } catch (Exception e) {
+      throw new BatchCancellationFailedException();
+    }
+    return reservations.size();
+  }
+
+  /**
+   * Cancela reservas em lote devido à desativação de conta pelo admin.
+   *
+   * <p>Utilizado quando um administrador desativa a conta de um usuário. Notifica o usuário sobre
+   * o cancelamento de suas reservas, pois ele não está ciente da ação.
+   *
+   * @param reservations Lista de reservas a serem canceladas
+   * @param user Usuário dono das reservas (para notificação)
+   * @return Quantidade de reservas canceladas com sucesso
+   * @throws BatchCancellationFailedException se qualquer reserva falhar ao ser cancelada
+   */
+  @Transactional
+  public int cancelReservationsDueToAccountDisabled(List<Reservation> reservations, User user) {
+    if (reservations == null || reservations.isEmpty()) return 0;
+
+    try {
+      cancelAndSaveReservations(reservations);
+      publishAccountDisabledCancellationEvent(reservations, user);
+    } catch (Exception e) {
+      throw new BatchCancellationFailedException();
+    }
+    return reservations.size();
+  }
+
+  /**
+   * Cancela reservas em lote de forma silenciosa (sem notificação).
+   *
+   * <p>Utilizado quando o próprio usuário desativa sua conta. Neste cenário, não faz sentido
+   * notificar o usuário sobre o cancelamento, pois ele já está ciente da ação.
+   *
+   * @param reservations Lista de reservas a serem canceladas
+   * @return Quantidade de reservas canceladas com sucesso
+   * @throws BatchCancellationFailedException se qualquer reserva falhar ao ser cancelada
+   */
+  @Transactional
+  public int cancelReservationsInBatchSilently(List<Reservation> reservations) {
+    if (reservations == null || reservations.isEmpty()) return 0;
+
+    try {
+      cancelAndSaveReservations(reservations);
     } catch (Exception e) {
       throw new BatchCancellationFailedException();
     }
@@ -66,22 +114,34 @@ public class ReservationBatchCancellationService {
             .collect(Collectors.toMap(User::getId, user -> user, (existing, replacement) -> existing));
   }
 
-  private void cancelAndSaveReservations(List<Reservation> reservations, UUID adminId) {
-    for (Reservation reservation : reservations) {
-      reservation.cancelByAdmin(adminId);
-      reservationRepository.save(reservation);
-    }
+  private void cancelByAdminAndSaveReservations(List<Reservation> reservations, UUID adminId) {
+    reservations.forEach(reservation -> reservation.cancelByAdmin(adminId));
+    reservationRepository.saveAll(reservations);
+  }
+
+  private void cancelAndSaveReservations(List<Reservation> reservations) {
+    reservations.forEach(Reservation::cancel);
+    reservationRepository.saveAll(reservations);
   }
 
   private void publishCancellationEvents(List<Reservation> reservations, Map<UUID, User> usersMap, String reason) {
     Map<UUID, List<Reservation>> reservationsByUser =
         reservations.stream().collect(Collectors.groupingBy(Reservation::getUserId));
 
-      reservationsByUser.forEach((userId, userReservations) -> {
-        User user = usersMap.get(userId);
-        createAndPublishCancellationEvent(user, reason, userReservations);
-      });
-    }
+    reservationsByUser.forEach((userId, userReservations) -> {
+      User user = usersMap.get(userId);
+      createAndPublishCancellationEvent(user, reason, userReservations);
+    });
+  }
+
+  private void publishAccountDisabledCancellationEvent(List<Reservation> reservations, User user) {
+    var event = new OnReservationsCancelledByAdminEvent(
+        user.getUsername(),
+        user.getPhone(),
+        ACCOUNT_DISABLED_REASON,
+        reservations);
+    eventPublisher.publishEvent(event);
+  }
 
   private void createAndPublishCancellationEvent(User user, String reason, List<Reservation> reservations) {
     var event = new OnReservationsCancelledByAdminEvent(user.getUsername(), user.getPhone(), reason, reservations);

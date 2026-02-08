@@ -1,6 +1,7 @@
 package com.projetoExtensao.arenaMafia.infrastructure.adapter.repository;
 
 import com.projetoExtensao.arenaMafia.application.user.port.repository.UserRepositoryPort;
+import com.projetoExtensao.arenaMafia.domain.exception.notFound.SystemUserNotFoundException;
 import com.projetoExtensao.arenaMafia.domain.exception.notFound.UserNotFoundException;
 import com.projetoExtensao.arenaMafia.domain.model.User;
 import com.projetoExtensao.arenaMafia.domain.model.enums.AccountStatus;
@@ -55,6 +56,19 @@ public class UserRepositoryAdapter implements UserRepositoryPort {
   @Override
   public Optional<User> findByUsername(String username) {
     return userJpaRepository.findByUsername(username).map(userMapper::toDomain);
+  }
+
+  @Override
+  public User findSystemUserOrElseThrow() {
+    return userJpaRepository
+        .findByUsername(User.SYSTEM_USERNAME)
+        .map(userMapper::toDomain)
+        .orElseThrow(SystemUserNotFoundException::new);
+  }
+
+  @Override
+  public void delete(User user) {
+    userJpaRepository.delete(userMapper.toEntity(user));
   }
 
   @Override
