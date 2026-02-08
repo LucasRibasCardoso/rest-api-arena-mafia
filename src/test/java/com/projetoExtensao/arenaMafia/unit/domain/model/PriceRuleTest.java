@@ -67,11 +67,10 @@ public class PriceRuleTest {
     @DisplayName("createDefault() deve criar uma regra de preço padrão corretamente")
     void createDefault_shouldCreateDefaultPriceRuleSuccessfully() {
       // Arrange
-      BigDecimal basePrice = new BigDecimal("80.00");
       Instant startTime = Instant.now();
 
       // Act
-      PriceRule priceRule = PriceRule.createDefault(basePrice);
+      PriceRule priceRule = PriceRule.createDefault();
 
       // Assert
       assertThat(priceRule).isNotNull();
@@ -79,7 +78,7 @@ public class PriceRuleTest {
       assertThat(priceRule.getName()).isEqualTo("Regra de Preço Padrão");
       assertThat(priceRule.getDaysOfWeek()).isNull();
       assertThat(priceRule.getTimeInterval()).isNull();
-      assertThat(priceRule.getPrice()).isEqualByComparingTo(basePrice);
+      assertThat(priceRule.getPrice()).isEqualByComparingTo(BigDecimal.valueOf(50));
       assertThat(priceRule.getPriority()).isZero();
       assertThat(priceRule.isDefault()).isTrue();
       assertThat(priceRule.isActive()).isTrue();
@@ -376,7 +375,7 @@ public class PriceRuleTest {
     void disable_shouldThrowException_whenPriceRuleIsDefault() {
       // Arrange
       PriceRule defaultPriceRule =
-          TestPriceRuleDataProvider.createDefaultPriceRule(new BigDecimal("100.00"));
+          TestPriceRuleDataProvider.createDefaultPriceRule();
       assertThat(defaultPriceRule.isDefault()).isTrue();
 
       // Act & Assert
@@ -530,7 +529,7 @@ public class PriceRuleTest {
     void isApplicable_shouldReturnTrue_forActiveDefaultRule() {
       // Arrange
       PriceRule defaultRule =
-          TestPriceRuleDataProvider.createDefaultPriceRule(new BigDecimal("100.00"));
+          TestPriceRuleDataProvider.createDefaultPriceRule();
 
       // Act & Assert
       assertThat(defaultRule.isApplicable(DayOfWeek.MONDAY, LocalTime.of(10, 0))).isTrue();

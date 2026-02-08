@@ -323,6 +323,22 @@ public abstract class BaseTestContainersConfig {
     return userRepository.save(adminUser);
   }
 
+  /**
+   * Retorna o System User (ghost user) existente ou cria um novo caso não exista.
+   * Necessário para testes que envolvam cleanup de contas desativadas (migração de reservas).
+   *
+   * @return O System User existente ou recém-criado
+   */
+  public User mockPersistSystemUser() {
+    try {
+      return userRepository.findSystemUserOrElseThrow();
+    } catch (Exception e) {
+      String passwordEncoded = passwordEncoder.encode(UUID.randomUUID().toString());
+      User systemUser = User.createSystemUser(passwordEncoded);
+      return userRepository.save(systemUser);
+    }
+  }
+
   public User mockPersistOtherAdminUser() {
     String passwordEncoded = passwordEncoder.encode(defaultPassword);
     Instant now = Instant.now();
@@ -624,7 +640,7 @@ public abstract class BaseTestContainersConfig {
   }
 
   public PriceRule mockPersistDefaultPriceRule() {
-    PriceRule priceRule = PriceRule.createDefault(BigDecimal.valueOf(50));
+    PriceRule priceRule = PriceRule.createDefault();
     return priceRuleRepository.save(priceRule);
   }
 

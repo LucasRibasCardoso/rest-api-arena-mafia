@@ -76,4 +76,31 @@ public interface ReservationJpaRepository
           ORDER BY r.dateTimeSlot.date ASC, r.dateTimeSlot.timeInterval.startTime ASC
           """)
   List<ReservationEntity> findAllFutureReservationsByIds(@Param("ids") List<UUID> ids);
+
+  /**
+   * Busca todas as reservas passadas (histórico) de um usuário.
+   * Considera datas estritamente anteriores à data atual.
+   */
+  @Query(
+          """
+              SELECT r FROM ReservationEntity r
+              WHERE r.userId = :userId
+              AND r.dateTimeSlot.date < CURRENT_DATE
+              ORDER BY r.dateTimeSlot.date DESC, r.dateTimeSlot.timeInterval.startTime DESC
+              """)
+  List<ReservationEntity> findAllPastReservationsByUser(@Param("userId") UUID userId);
+
+  /**
+   * Busca todas as reservas futuras ativas (não canceladas) de um usuário.
+   * Considera hoje e datas futuras.
+   */
+  @Query(
+          """
+              SELECT r FROM ReservationEntity r
+              WHERE r.userId = :userId
+              AND r.dateTimeSlot.date >= CURRENT_DATE
+              AND r.status <> 'CANCELLED'
+              ORDER BY r.dateTimeSlot.date ASC, r.dateTimeSlot.timeInterval.startTime ASC
+              """)
+  List<ReservationEntity> findAllFutureActiveReservationsByUser(@Param("userId") UUID userId);
 }

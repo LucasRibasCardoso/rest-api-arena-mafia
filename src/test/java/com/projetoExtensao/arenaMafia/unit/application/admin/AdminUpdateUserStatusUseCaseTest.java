@@ -2,9 +2,10 @@ package com.projetoExtensao.arenaMafia.unit.application.admin;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
+import com.projetoExtensao.arenaMafia.application.schedule.port.repository.ReservationRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.schedule.service.ReservationBatchCancellationService;
 import com.projetoExtensao.arenaMafia.application.user.usecase.admin.imp.AdminUpdateUserStatusUseCaseImp;
 import com.projetoExtensao.arenaMafia.application.user.port.repository.UserRepositoryPort;
 import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
@@ -15,7 +16,15 @@ import com.projetoExtensao.arenaMafia.domain.exception.forbidden.AdminCannotUpda
 import com.projetoExtensao.arenaMafia.domain.exception.notFound.UserNotFoundException;
 import com.projetoExtensao.arenaMafia.domain.model.User;
 import com.projetoExtensao.arenaMafia.domain.model.enums.AccountStatus;
+import com.projetoExtensao.arenaMafia.domain.model.schedule.Reservation;
+import com.projetoExtensao.arenaMafia.domain.valueobjects.DateTimeSlot;
+import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
 import com.projetoExtensao.arenaMafia.unit.config.TestDataProvider;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -31,11 +40,37 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class AdminUpdateUserStatusUseCaseTest {
 
   @Mock private UserRepositoryPort userRepositoryPort;
+  @Mock private ReservationRepositoryPort reservationRepository;
+  @Mock private ReservationBatchCancellationService reservationBatchCancellationService;
   @InjectMocks private AdminUpdateUserStatusUseCaseImp adminUpdateUserStatusUseCase;
 
   @Test
-  @DisplayName("Deve desativar a conta do usuário")
-  void execute_ShouldUpdateUserStatus_WhenValidInput() {
+  @DisplayName("Deve desativar a conta do usuário e cancelar reservas futuras com notificação")
+  void execute_ShouldUpdateUserStatusAndCancelFutureReservationsWithNotification_WhenDisablingAccount() {
+    // Arrange
+    UUID authenticatedAdminId = UUID.randomUUID();
+    UUID targetUserId = UUID.randomUUID();
+    AccountStatus newStatus = AccountStatus.DISABLED;
+    User user = TestDataProvider.UserBuilder.defaultUser().withStatus(AccountStatus.ACTIVE).build();
+    List<Reservation> futureReservations = createFutureReservations(targetUserId, 2);
+
+    when(userRepositoryPort.findByIdOrElseThrow(targetUserId)).thenReturn(user);
+    when(reservationRepository.findAllFutureActiveReservationsByUser(user.getId()))
+        .thenReturn(futureReservations);
+
+    // Act
+    adminUpdateUserStatusUseCase.execute(authenticatedAdminId, targetUserId, newStatus);
+
+    // Assert
+    assertThat(user.getStatus()).isEqualTo(AccountStatus.DISABLED);
+    verify(reservationRepository, times(1)).findAllFutureActiveReservationsByUser(user.getId());
+    verify(reservationBatchCancellationService, times(1))
+        .cancelReservationsDueToAccountDisabled(futureReservations, user);
+  }
+
+  @Test
+  @DisplayName("Deve desativar a conta sem reservas futuras")
+  void execute_ShouldUpdateUserStatusWithoutReservations_WhenDisablingAccount() {
     // Arrange
     UUID authenticatedAdminId = UUID.randomUUID();
     UUID targetUserId = UUID.randomUUID();
@@ -43,17 +78,22 @@ public class AdminUpdateUserStatusUseCaseTest {
     User user = TestDataProvider.UserBuilder.defaultUser().withStatus(AccountStatus.ACTIVE).build();
 
     when(userRepositoryPort.findByIdOrElseThrow(targetUserId)).thenReturn(user);
+    when(reservationRepository.findAllFutureActiveReservationsByUser(user.getId()))
+        .thenReturn(Collections.emptyList());
 
     // Act
     adminUpdateUserStatusUseCase.execute(authenticatedAdminId, targetUserId, newStatus);
 
     // Assert
     assertThat(user.getStatus()).isEqualTo(AccountStatus.DISABLED);
+    verify(reservationRepository, times(1)).findAllFutureActiveReservationsByUser(user.getId());
+    verify(reservationBatchCancellationService, times(1))
+        .cancelReservationsDueToAccountDisabled(Collections.emptyList(), user);
   }
 
   @Test
-  @DisplayName("Deve bloquear a conta do usuário")
-  void execute_ShouldBlockUserAccount_WhenValidInput() {
+  @DisplayName("Deve bloquear a conta do usuário sem cancelar reservas")
+  void execute_ShouldBlockUserAccountWithoutCancellingReservations_WhenValidInput() {
     // Arrange
     UUID authenticatedAdminId = UUID.randomUUID();
     UUID targetUserId = UUID.randomUUID();
@@ -67,11 +107,13 @@ public class AdminUpdateUserStatusUseCaseTest {
 
     // Assert
     assertThat(user.getStatus()).isEqualTo(AccountStatus.LOCKED);
+    verify(reservationRepository, never()).findAllFutureActiveReservationsByUser(any());
+    verify(reservationBatchCancellationService, never()).cancelReservationsInBatchSilently(anyList());
   }
 
   @Test
-  @DisplayName("Deve ativar a conta do usuário")
-  void execute_ShouldActivateUserAccount_WhenValidInput() {
+  @DisplayName("Deve ativar a conta do usuário sem cancelar reservas")
+  void execute_ShouldActivateUserAccountWithoutCancellingReservations_WhenValidInput() {
     // Arrange
     UUID authenticatedAdminId = UUID.randomUUID();
     UUID targetUserId = UUID.randomUUID();
@@ -85,6 +127,8 @@ public class AdminUpdateUserStatusUseCaseTest {
 
     // Assert
     assertThat(user.getStatus()).isEqualTo(AccountStatus.ACTIVE);
+    verify(reservationRepository, never()).findAllFutureActiveReservationsByUser(any());
+    verify(reservationBatchCancellationService, never()).cancelReservationsInBatchSilently(anyList());
   }
 
   @Test
@@ -93,13 +137,12 @@ public class AdminUpdateUserStatusUseCaseTest {
   void execute_ShouldThrowAdminCannotUpdateOwnStatusException_WhenAdminTriesToUpdateOwnStatus() {
     // Arrange
     UUID authenticatedAdminId = UUID.randomUUID();
-    UUID targetUserId = authenticatedAdminId;
     AccountStatus newStatus = AccountStatus.DISABLED;
 
     // Act & Assert
     assertThatThrownBy(
             () ->
-                adminUpdateUserStatusUseCase.execute(authenticatedAdminId, targetUserId, newStatus))
+                adminUpdateUserStatusUseCase.execute(authenticatedAdminId, authenticatedAdminId, newStatus))
         .isInstanceOf(AdminCannotUpdateOwnStatusException.class)
         .satisfies(
             ex -> {
@@ -113,7 +156,7 @@ public class AdminUpdateUserStatusUseCaseTest {
   @DisplayName(
       "Deve lançar AccountStatusForbiddenException quando tentar atualizar para um status inválido")
   void execute_ShouldThrowAccountStatusForbiddenException_WhenUpdatingToInvalidStatus() {
-    // Arrnge
+    // Arrange
     UUID authenticatedAdminId = UUID.randomUUID();
     UUID targetUserId = UUID.randomUUID();
     AccountStatus newStatus = AccountStatus.PENDING_VERIFICATION;
@@ -216,5 +259,18 @@ public class AdminUpdateUserStatusUseCaseTest {
               var exception = (AccountStatusConflictException) ex;
               assertThat(exception.getErrorCode()).isEqualTo(errorCode);
             });
+  }
+
+  private List<Reservation> createFutureReservations(UUID userId, int count) {
+    return java.util.stream.IntStream.range(0, count)
+        .mapToObj(i -> Reservation.createByUser(
+            UUID.randomUUID(),
+            UUID.randomUUID(),
+            userId,
+            BigDecimal.valueOf(50.00),
+            new DateTimeSlot(
+                LocalDate.now().plusDays(i + 1),
+                new TimeInterval(LocalTime.of(10, 0), LocalTime.of(11, 0)))))
+        .toList();
   }
 }

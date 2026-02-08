@@ -36,6 +36,7 @@ public enum ErrorCode {
   // ==================== ERROS DE USUÁRIO (USER) ====================
   // User - Geral
   USER_NOT_FOUND("Usuário não encontrado."),
+  SYSTEM_USER_NOT_FOUND("Usuário do sistema não foi encontrado"),
 
   // User - Username
   USERNAME_REQUIRED("O nome de usuário é obrigatório."),
@@ -238,6 +239,7 @@ public enum ErrorCode {
       "Não é possível cancelar a reserva com menos de 1:30 horas de antecedência."),
   RESERVATION_CANCELLATION_IN_BATCH_FAILED(
       "Falha ao cancelar reservas em lote. O processo foi revertido e nenhuma reserva foi cancelada."),
+  RESERVATION_NEW_OWNER_ID_REQUIRED("O ID do novo dono da reserva é obrigatório."),
 
   // ==================== ERROS DE CONFLITO DE AGENDAMENTO ====================
   UNSUPPORTED_SCHEDULE_ENTRY_TYPE("O tipo de entrada de agendamento fornecido não é suportado."),
