@@ -2,10 +2,9 @@ package com.projetoExtensao.arenaMafia.infrastructure.adapter.gateway.notificati
 
 import com.projetoExtensao.arenaMafia.infrastructure.adapter.gateway.notificationStrategies.sms.SmsProvider;
 import com.projetoExtensao.arenaMafia.infrastructure.adapter.gateway.notificationStrategies.sms.SmsStrategy;
+import com.projetoExtensao.arenaMafia.infrastructure.utils.PhoneFormatterUtils;
 import java.util.List;
 import java.util.Map;
-
-import com.projetoExtensao.arenaMafia.infrastructure.utils.PhoneFormatterUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,14 +19,11 @@ import org.springframework.web.client.RestClientException;
 public class ComteleSmsAdapter implements SmsStrategy {
 
   private static final Logger logger = LoggerFactory.getLogger(ComteleSmsAdapter.class);
-
+  private final RestClient restClient;
   @Value("${comtele.api-url}")
   private String apiUrl;
-
   @Value("${comtele.api-key}")
   private String apiKey;
-
-  private final RestClient restClient;
 
   public ComteleSmsAdapter(RestClient.Builder restClientBuilder) {
     this.restClient = restClientBuilder.build();

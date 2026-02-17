@@ -1,9 +1,8 @@
 package com.projetoExtensao.arenaMafia.infrastructure.persistence.specification;
 
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.BlockedTimeEntity;
-import java.util.UUID;
-
 import jakarta.persistence.criteria.Predicate;
+import java.util.UUID;
 import org.springframework.data.jpa.domain.Specification;
 
 public class BlockedTimeSpecification {

@@ -32,11 +32,11 @@ public class AdminListUsersUseCaseImp implements AdminListUsersUseCase {
   @Override
   public Page<User> execute(AdminUserSearchRequestDto criteria, Pageable pageable) {
     if (pageable.getSort().isUnsorted()) {
-      pageable = PageRequest.of(
+      pageable =
+          PageRequest.of(
               pageable.getPageNumber(),
               pageable.getPageSize(),
-              Sort.by(Sort.Direction.DESC, "createdAt")
-      );
+              Sort.by(Sort.Direction.DESC, "createdAt"));
     }
 
     validateSearchCriteria(criteria);

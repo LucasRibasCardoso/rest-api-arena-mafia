@@ -6,9 +6,6 @@ import jakarta.validation.constraints.Size;
 
 public record BlockedTimeUpdateRequestDto(
     @NotBlank(message = "BLOCKED_TIME_DESCRIPTION_REQUIRED")
-    @Size(min = 3, max = 500, message = "BLOCKED_TIME_DESCRIPTION_INVALID_LENGTH")
-    String description,
-
-    @NotNull(message = "BLOCKED_TIME_UPDATE_RECURRING_FLAG_REQUIRED")
-    Boolean updateAllRecurring
-) {}
+        @Size(min = 3, max = 500, message = "BLOCKED_TIME_DESCRIPTION_INVALID_LENGTH")
+        String description,
+    @NotNull(message = "BLOCKED_TIME_UPDATE_RECURRING_FLAG_REQUIRED") Boolean updateAllRecurring) {}

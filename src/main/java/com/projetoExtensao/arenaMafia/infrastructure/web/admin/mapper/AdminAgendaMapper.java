@@ -22,12 +22,15 @@ public class AdminAgendaMapper {
 
   public AdminAgendaItemResponseDto toDto(AdminAgendaItem item) {
     return switch (item) {
-      case AdminAvailableSlotAgendaItem availableSlotAgendaItem -> mapAdminAvailableSlot(availableSlotAgendaItem);
-      case AdminScheduleEntryAgendaItem scheduleEntryAgendaItem -> mapScheduleDetailSlot(scheduleEntryAgendaItem);
+      case AdminAvailableSlotAgendaItem availableSlotAgendaItem ->
+          mapAdminAvailableSlot(availableSlotAgendaItem);
+      case AdminScheduleEntryAgendaItem scheduleEntryAgendaItem ->
+          mapScheduleDetailSlot(scheduleEntryAgendaItem);
     };
   }
 
-  private AdminAvailableItemResponseDto mapAdminAvailableSlot(AdminAvailableSlotAgendaItem availableSlot) {
+  private AdminAvailableItemResponseDto mapAdminAvailableSlot(
+      AdminAvailableSlotAgendaItem availableSlot) {
     TimeIntervalDto timeIntervalDto = toTimeIntervalDto(availableSlot.timeInterval());
     return new AdminAvailableItemResponseDto(
         availableSlot.courtId(),
@@ -37,8 +40,10 @@ public class AdminAgendaMapper {
         availableSlot.price());
   }
 
-  private AdminScheduleDetailResponseDto mapScheduleDetailSlot(AdminScheduleEntryAgendaItem scheduleEntry) {
-    return new AdminScheduleDetailResponseDto(scheduleEntryMapper.toDetailDto(scheduleEntry.detail()));
+  private AdminScheduleDetailResponseDto mapScheduleDetailSlot(
+      AdminScheduleEntryAgendaItem scheduleEntry) {
+    return new AdminScheduleDetailResponseDto(
+        scheduleEntryMapper.toDetailDto(scheduleEntry.detail()));
   }
 
   private TimeIntervalDto toTimeIntervalDto(TimeInterval timeInterval) {

@@ -61,11 +61,10 @@ public class FindAdminAgendaUseCaseImp implements FindAdminAgendaUseCase {
     this.enrichmentService = enrichmentService;
   }
 
-
   @Override
   public List<AdminAgendaItem> execute(LocalDate date, Optional<UUID> courtId) {
     DayOfWeek dayOfWeek = DayOfWeek.convertToDayOfWeek(date);
-    
+
     List<Court> courts = getActiveCourts(courtId);
     List<PriceRule> priceRules = getActivePriceRules();
     List<ScheduleEntry> schedules = getActiveSchedulesByDateAndCourts(date, courts);
@@ -73,23 +72,23 @@ public class FindAdminAgendaUseCaseImp implements FindAdminAgendaUseCase {
 
     List<AvailableSlotWithModalities> availableSlots =
         availableSlotGenerationService.generateAvailableSlotsDetailsForCourts(
-            courts,
-            schedules,
-            operatingHours,
-            priceRules,
-            dayOfWeek);
+            courts, schedules, operatingHours, priceRules, dayOfWeek);
 
-    ScheduleEntriesEnrichedResult enrichedResult = enrichmentService.enrichScheduleEntries(schedules);
+    ScheduleEntriesEnrichedResult enrichedResult =
+        enrichmentService.enrichScheduleEntries(schedules);
     List<ScheduleEntryDetail> scheduleDetails = enrichedResult.allEnrichedEntries();
 
-    List<AdminAvailableSlotAgendaItem> availableSlotItems = mapAvailableSlotsToAgendaItems(availableSlots, courts);
-    List<AdminScheduleEntryAgendaItem> scheduleEntryAgendaItems = mapScheduleDetailToAgendaItem(scheduleDetails);
-    
+    List<AdminAvailableSlotAgendaItem> availableSlotItems =
+        mapAvailableSlotsToAgendaItems(availableSlots, courts);
+    List<AdminScheduleEntryAgendaItem> scheduleEntryAgendaItems =
+        mapScheduleDetailToAgendaItem(scheduleDetails);
+
     return buildAgendaListAndSort(availableSlotItems, scheduleEntryAgendaItems);
   }
 
   private List<PriceRule> getActivePriceRules() {
-    List<PriceRule> priceRules = priceRuleRepositoryPort.findAll(PriceRuleSpecification.byActiveStatus(true));
+    List<PriceRule> priceRules =
+        priceRuleRepositoryPort.findAll(PriceRuleSpecification.byActiveStatus(true));
     if (priceRules.isEmpty()) {
       throw new PriceRuleNotFoundException();
     }
@@ -110,7 +109,8 @@ public class FindAdminAgendaUseCaseImp implements FindAdminAgendaUseCase {
   }
 
   private List<OperatingHours> getApplicableOperatingHours(DayOfWeek dayOfWeek) {
-    List<OperatingHours> operatingHours = operatingHoursRepositoryPort.findAll(OperatingHoursSpecification.byActiveStatus(true));
+    List<OperatingHours> operatingHours =
+        operatingHoursRepositoryPort.findAll(OperatingHoursSpecification.byActiveStatus(true));
     if (operatingHours.isEmpty()) {
       throw new OperatingHoursNotFoundException();
     }
@@ -118,40 +118,35 @@ public class FindAdminAgendaUseCaseImp implements FindAdminAgendaUseCase {
     return availableSlotGenerationService.filterApplicableOperatingHours(operatingHours, dayOfWeek);
   }
 
-  private List<ScheduleEntry> getActiveSchedulesByDateAndCourts(LocalDate date, List<Court> courts) {
-    List<ScheduleEntry> allSchedules = scheduleEntryRepositoryPort.findAllActiveSchedulesByDate(date);
+  private List<ScheduleEntry> getActiveSchedulesByDateAndCourts(
+      LocalDate date, List<Court> courts) {
+    List<ScheduleEntry> allSchedules =
+        scheduleEntryRepositoryPort.findAllActiveSchedulesByDate(date);
 
     // Filtrar apenas schedules das quadras selecionadas
     List<UUID> courtIds = courts.stream().map(Court::getId).toList();
-    return allSchedules.stream()
-        .filter(s -> courtIds.contains(s.getCourtId()))
-        .toList();
+    return allSchedules.stream().filter(s -> courtIds.contains(s.getCourtId())).toList();
   }
 
   private List<AdminAvailableSlotAgendaItem> mapAvailableSlotsToAgendaItems(
-      List<AvailableSlotWithModalities> availableSlots,
-      List<Court> courts) {
-    
-    Map<UUID, String> courtNamesMap = courts.stream().collect(Collectors.toMap(Court::getId, Court::getName));
+      List<AvailableSlotWithModalities> availableSlots, List<Court> courts) {
+
+    Map<UUID, String> courtNamesMap =
+        courts.stream().collect(Collectors.toMap(Court::getId, Court::getName));
 
     return availableSlots.stream()
         .map(
             slot -> {
               String courtName = courtNamesMap.getOrDefault(slot.courtId(), "Quadra Desconhecida");
               return new AdminAvailableSlotAgendaItem(
-                  slot.courtId(),
-                  courtName,
-                  slot.timeInterval(),
-                  slot.modalityIds(),
-                  slot.price());
+                  slot.courtId(), courtName, slot.timeInterval(), slot.modalityIds(), slot.price());
             })
         .toList();
   }
 
-  private List<AdminScheduleEntryAgendaItem> mapScheduleDetailToAgendaItem(List<ScheduleEntryDetail> scheduleDetails) {
-    return scheduleDetails.stream()
-        .map(AdminScheduleEntryAgendaItem::new)
-        .toList();
+  private List<AdminScheduleEntryAgendaItem> mapScheduleDetailToAgendaItem(
+      List<ScheduleEntryDetail> scheduleDetails) {
+    return scheduleDetails.stream().map(AdminScheduleEntryAgendaItem::new).toList();
   }
 
   private List<AdminAgendaItem> buildAgendaListAndSort(
@@ -167,7 +162,8 @@ public class FindAdminAgendaUseCaseImp implements FindAdminAgendaUseCase {
 
   private String getCourtName(AdminAgendaItem item) {
     if (item instanceof AdminAvailableSlotAgendaItem s) return s.courtName();
-    if (item instanceof AdminScheduleEntryAgendaItem(ScheduleEntryDetail detail)) return detail.courtName();
+    if (item instanceof AdminScheduleEntryAgendaItem(ScheduleEntryDetail detail))
+      return detail.courtName();
     return "";
   }
 }

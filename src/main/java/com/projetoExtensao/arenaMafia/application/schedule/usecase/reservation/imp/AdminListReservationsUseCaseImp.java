@@ -31,13 +31,14 @@ public class AdminListReservationsUseCaseImp implements AdminListReservationsUse
   }
 
   @Override
-  public Page<ReservationDetail> execute(AdminReservationSearchRequestDto criteria, Pageable pageable) {
+  public Page<ReservationDetail> execute(
+      AdminReservationSearchRequestDto criteria, Pageable pageable) {
     if (pageable.getSort().isUnsorted()) {
-      pageable = PageRequest.of(
-          pageable.getPageNumber(),
-          pageable.getPageSize(),
-          Sort.by(Sort.Direction.DESC, "createdAt")
-      );
+      pageable =
+          PageRequest.of(
+              pageable.getPageNumber(),
+              pageable.getPageSize(),
+              Sort.by(Sort.Direction.DESC, "createdAt"));
     }
 
     validateSearchCriteria(criteria);
@@ -47,7 +48,8 @@ public class AdminListReservationsUseCaseImp implements AdminListReservationsUse
     return reservationsPage.map(enrichmentService::enrichReservation);
   }
 
-  private Specification<ReservationEntity> buildSpecification(AdminReservationSearchRequestDto criteria) {
+  private Specification<ReservationEntity> buildSpecification(
+      AdminReservationSearchRequestDto criteria) {
     Specification<ReservationEntity> specification = Specification.unrestricted();
 
     if (criteria.searchTerm() != null && !criteria.searchTerm().isEmpty()) {
@@ -64,7 +66,8 @@ public class AdminListReservationsUseCaseImp implements AdminListReservationsUse
 
     if (criteria.startDate() != null || criteria.endDate() != null) {
       specification =
-          specification.and(ReservationSpecification.byDateRange(criteria.startDate(), criteria.endDate()));
+          specification.and(
+              ReservationSpecification.byDateRange(criteria.startDate(), criteria.endDate()));
     }
 
     return specification;

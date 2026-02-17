@@ -100,9 +100,8 @@ public class SecurityConfig {
                     // Endpoints públicos
                     .requestMatchers("/api/auth/**", "/api/public/**")
                     .permitAll()
-
-                        .requestMatchers("/actuator/**").hasRole(RoleEnum.ROLE_MODERATOR.name().substring(5))
-
+                    .requestMatchers("/actuator/**")
+                    .hasRole(RoleEnum.ROLE_MODERATOR.name().substring(5))
 
                     // Qualquer outra requisição requer autenticação
                     .anyRequest()
@@ -120,7 +119,8 @@ public class SecurityConfig {
   }
 
   @Bean
-  public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
+  public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration)
+      throws Exception {
     return configuration.getAuthenticationManager();
   }
 }

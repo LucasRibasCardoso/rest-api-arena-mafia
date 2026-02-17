@@ -21,6 +21,7 @@ import com.projetoExtensao.arenaMafia.domain.exception.badRequest.ReservationPas
 import com.projetoExtensao.arenaMafia.domain.exception.conflict.CourtNotSupportsModalityException;
 import com.projetoExtensao.arenaMafia.domain.exception.conflict.ScheduleConflictException;
 import com.projetoExtensao.arenaMafia.domain.exception.forbidden.AccountStatusForbiddenException;
+import com.projetoExtensao.arenaMafia.domain.exception.notFound.ModalityNotFoundException;
 import com.projetoExtensao.arenaMafia.domain.exception.notFound.OperatingHoursNotFoundException;
 import com.projetoExtensao.arenaMafia.domain.exception.notFound.UserNotFoundException;
 import com.projetoExtensao.arenaMafia.domain.model.Court;
@@ -31,8 +32,6 @@ import com.projetoExtensao.arenaMafia.domain.model.schedule.Reservation;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.DateTimeSlot;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.specification.PriceRuleSpecification;
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.reservation.request.AdminReservationCreateRequestDto;
-import com.projetoExtensao.arenaMafia.domain.exception.notFound.ModalityNotFoundException;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -40,7 +39,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

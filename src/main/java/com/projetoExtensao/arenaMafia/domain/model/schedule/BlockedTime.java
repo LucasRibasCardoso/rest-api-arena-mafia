@@ -8,10 +8,10 @@ import java.util.UUID;
 
 public class    BlockedTime extends ScheduleEntry {
 
-  private String description;
   private final UUID blockedByAdminId;
   private final boolean isFullDay;
   private final UUID recurringBlockedTimeId;
+  private String description;
 
   private BlockedTime(
       UUID id,

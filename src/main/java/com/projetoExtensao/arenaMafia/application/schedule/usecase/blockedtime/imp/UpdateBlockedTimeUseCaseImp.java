@@ -7,7 +7,6 @@ import com.projetoExtensao.arenaMafia.application.schedule.service.ScheduleEntry
 import com.projetoExtensao.arenaMafia.application.schedule.usecase.blockedtime.UpdateBlockedTimeUseCase;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.BlockedTime;
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.blockedtime.request.BlockedTimeUpdateRequestDto;
-
 import java.util.List;
 import java.util.UUID;
 import org.springframework.stereotype.Service;

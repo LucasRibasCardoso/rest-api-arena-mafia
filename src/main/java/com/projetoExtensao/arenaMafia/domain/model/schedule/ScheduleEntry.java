@@ -71,6 +71,7 @@ public abstract class ScheduleEntry {
 
   /**
    * Verifica se o agendamento é recorrente ou não
+   *
    * @return true se o agendamento for recorrente, false caso contrário
    */
   public abstract boolean isRecurring();

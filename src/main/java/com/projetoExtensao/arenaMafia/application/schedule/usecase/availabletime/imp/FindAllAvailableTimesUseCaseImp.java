@@ -59,12 +59,7 @@ public class FindAllAvailableTimesUseCaseImp implements FindAllAvailableTimesUse
     List<OperatingHours> operatingHours = getApplicableOperatingHours(dayOfWeek);
 
     return availableSlotGenerationService.generateSimpleAvailableSlotsForCourts(
-            courts,
-            schedules,
-            operatingHours,
-            priceRules,
-            dayOfWeek
-    );
+        courts, schedules, operatingHours, priceRules, dayOfWeek);
   }
 
   /**
@@ -132,7 +127,7 @@ public class FindAllAvailableTimesUseCaseImp implements FindAllAvailableTimesUse
    */
   private List<OperatingHours> getApplicableOperatingHours(DayOfWeek dayOfWeek) {
     List<OperatingHours> operatingHours =
-            operatingHoursRepositoryPort.findAll(OperatingHoursSpecification.byActiveStatus(true));
+        operatingHoursRepositoryPort.findAll(OperatingHoursSpecification.byActiveStatus(true));
 
     if (operatingHours.isEmpty()) {
       throw new OperatingHoursNotFoundException();

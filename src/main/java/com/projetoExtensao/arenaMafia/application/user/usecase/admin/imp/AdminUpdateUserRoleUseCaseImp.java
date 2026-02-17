@@ -1,7 +1,7 @@
 package com.projetoExtensao.arenaMafia.application.user.usecase.admin.imp;
 
-import com.projetoExtensao.arenaMafia.application.user.usecase.admin.AdminUpdateUserRoleUseCase;
 import com.projetoExtensao.arenaMafia.application.user.port.repository.UserRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.user.usecase.admin.AdminUpdateUserRoleUseCase;
 import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 import com.projetoExtensao.arenaMafia.domain.exception.forbidden.AdminCannotUpdateOwnRoleException;
 import com.projetoExtensao.arenaMafia.domain.exception.forbidden.AdminCannotUpdateRoleOfUnverifiedUserException;

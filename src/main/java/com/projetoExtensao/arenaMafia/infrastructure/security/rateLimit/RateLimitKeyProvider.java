@@ -14,16 +14,14 @@ public class RateLimitKeyProvider {
   /**
    * Gera a chave para rate limiting baseada no usuário/IP e tipo de operação.
    *
-   * Para usuários autenticados: {username}:{operationType}
-   * Para usuários anônimos: {clientIp}:{operationType}
+   * <p>Para usuários autenticados: {username}:{operationType} Para usuários anônimos:
+   * {clientIp}:{operationType}
    *
-   * Exemplos:
-   * - user123:sms
-   * - 192.168.1.1:sms
-   * - user123:auth
+   * <p>Exemplos: - user123:sms - 192.168.1.1:sms - user123:auth
    *
    * @param request a requisição HTTP
-   * @param operationType tipo de operação (ex: "sms", "auth", "login"). Se vazio, ignora a separação.
+   * @param operationType tipo de operação (ex: "sms", "auth", "login"). Se vazio, ignora a
+   *     separação.
    * @return chave única para rate limiting
    */
   public String resolveKey(HttpServletRequest request, String operationType) {
@@ -38,8 +36,8 @@ public class RateLimitKeyProvider {
   }
 
   /**
-   * Versão simplificada que mantém compatibilidade com código existente.
-   * Resolve a chave sem diferenciação por operação.
+   * Versão simplificada que mantém compatibilidade com código existente. Resolve a chave sem
+   * diferenciação por operação.
    */
   public String resolveKey(HttpServletRequest request) {
     return resolveKey(request, "");

@@ -7,4 +7,4 @@ public record PublicScheduleEntryResponseDto(
     TimeIntervalDto timeInterval,
     ScheduleEntryType entryType,
     String description // Ex: "Reservado" ou "Manutenção"
-) implements PublicAgendaItemResponseDto {}
+    ) implements PublicAgendaItemResponseDto {}

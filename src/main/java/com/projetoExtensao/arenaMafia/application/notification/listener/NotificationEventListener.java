@@ -117,20 +117,24 @@ public class NotificationEventListener {
 
   @Async
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-  public void onRecurringReservationCreateByAdmin(OnRecurringReservationCreatedByAdminEvent eventData) {
+  public void onRecurringReservationCreateByAdmin(
+      OnRecurringReservationCreatedByAdminEvent eventData) {
     try {
       String message = buildRecurringReservationCreateByAdminMessage(eventData);
       smsPort.send(eventData.userPhone(), message);
 
     } catch (Exception e) {
       logger.error(
-          "Falha ao processar evento de criação de reservas recorrentes por admin: {}", e.getMessage(), e);
+          "Falha ao processar evento de criação de reservas recorrentes por admin: {}",
+          e.getMessage(),
+          e);
     }
   }
 
   @Async
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-  public void onRecurringReservationCancelledByAdmin(OnRecurringReservationCancelledByAdminEvent eventData) {
+  public void onRecurringReservationCancelledByAdmin(
+      OnRecurringReservationCancelledByAdminEvent eventData) {
     try {
       String message = buildRecurringReservationCancellationByAdminMessage(eventData);
       smsPort.send(eventData.userPhone(), message);
@@ -204,7 +208,8 @@ public class NotificationEventListener {
         .formatted(username, date, startTime, endTime, reservation.getId());
   }
 
-  private String buildReservationCancellationByAdminMessage(String username, Reservation reservation, String adminReason) {
+  private String buildReservationCancellationByAdminMessage(
+      String username, Reservation reservation, String adminReason) {
     String date = reservation.getDateTimeSlot().date().toString();
     String startTime = reservation.getDateTimeSlot().timeInterval().startTime().toString();
     String endTime = reservation.getDateTimeSlot().timeInterval().endTime().toString();
@@ -223,7 +228,8 @@ public class NotificationEventListener {
         .formatted(username, date, startTime, endTime, adminReason, reservation.getId());
   }
 
-  private String buildRecurringReservationCreateByAdminMessage(OnRecurringReservationCreatedByAdminEvent eventData) {
+  private String buildRecurringReservationCreateByAdminMessage(
+      OnRecurringReservationCreatedByAdminEvent eventData) {
     List<Reservation> reservations = eventData.reservations();
 
     LocalDate startDate = extractStartDate(reservations);
@@ -235,7 +241,8 @@ public class NotificationEventListener {
     BigDecimal maxPrice = extractMaxPrice(reservations);
 
     // Formatar preço (usar minPrice se todos iguais, senão range)
-    String priceText = minPrice.equals(maxPrice) ? minPrice.toString() : minPrice + " - " + maxPrice;
+    String priceText =
+        minPrice.equals(maxPrice) ? minPrice.toString() : minPrice + " - " + maxPrice;
 
     return """
            Arena Máfia - Reservas Confirmadas!
@@ -261,7 +268,8 @@ public class NotificationEventListener {
             recurringId);
   }
 
-  private String buildRecurringReservationCancellationByAdminMessage(OnRecurringReservationCancelledByAdminEvent eventData) {
+  private String buildRecurringReservationCancellationByAdminMessage(
+      OnRecurringReservationCancelledByAdminEvent eventData) {
     List<Reservation> reservations = eventData.reservations();
 
     LocalDate startDate = extractStartDate(reservations);
@@ -294,7 +302,8 @@ public class NotificationEventListener {
             recurringId);
   }
 
-  private String buildReservationsCancelledByAdminMessage(OnReservationsCancelledByAdminEvent eventData) {
+  private String buildReservationsCancelledByAdminMessage(
+      OnReservationsCancelledByAdminEvent eventData) {
     List<Reservation> reservations = eventData.reservations();
 
     StringBuilder reservationsList = new StringBuilder();
@@ -317,9 +326,7 @@ public class NotificationEventListener {
            Para mais informações, entre em contato com nossa central.
            """
         .formatted(
-            eventData.username(),
-            reservationsList.toString().trim(),
-            eventData.adminReason());
+            eventData.username(), reservationsList.toString().trim(), eventData.adminReason());
   }
 
   //  ================================ Métodos auxiliares ================================
@@ -347,9 +354,7 @@ public class NotificationEventListener {
   }
 
   private String buildDaysOfWeek(Set<DayOfWeek> daysOfWeek) {
-    return daysOfWeek.stream()
-        .map(DayOfWeek::getPortugueseName)
-        .collect(Collectors.joining(", "));
+    return daysOfWeek.stream().map(DayOfWeek::getPortugueseName).collect(Collectors.joining(", "));
   }
 
   private BigDecimal extractMinPrice(List<Reservation> reservations) {

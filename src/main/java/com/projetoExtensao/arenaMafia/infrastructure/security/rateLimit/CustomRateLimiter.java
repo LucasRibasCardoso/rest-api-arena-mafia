@@ -9,19 +9,18 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface CustomRateLimiter {
   /**
-   * O nome da instância do RateLimiter definida no application.yml.
-   * Exemplos: "loginRateLimiter", "sensitiveOperationLimiter", "smsRateLimiter", "globalLimiter"
+   * O nome da instância do RateLimiter definida no application.yml. Exemplos: "loginRateLimiter",
+   * "sensitiveOperationLimiter", "smsRateLimiter", "globalLimiter"
    */
   String limiterName();
 
   /**
-   * O tipo de operação para diferenciação do rate limit.
-   * Exemplos: "sms", "auth", "login"
+   * O tipo de operação para diferenciação do rate limit. Exemplos: "sms", "auth", "login"
    *
-   * Isso permite que múltiplos endpoints usando o mesmo limiter tenham limites separados.
-   * Por exemplo: signup (sms), resend-otp (sms), login (auth) podem ter limites individuais.
+   * <p>Isso permite que múltiplos endpoints usando o mesmo limiter tenham limites separados. Por
+   * exemplo: signup (sms), resend-otp (sms), login (auth) podem ter limites individuais.
    *
-   * Padrão: "" (vazio) = usa apenas username/IP sem diferenciação por operação
+   * <p>Padrão: "" (vazio) = usa apenas username/IP sem diferenciação por operação
    */
   String operationType() default "";
 }

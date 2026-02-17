@@ -23,7 +23,6 @@ import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.specification.CourtSpecification;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.specification.OperatingHoursSpecification;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.specification.PriceRuleSpecification;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;

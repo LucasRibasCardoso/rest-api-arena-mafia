@@ -2,7 +2,6 @@ package com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.reservation.
 
 import com.projetoExtensao.arenaMafia.domain.model.enums.ReservationStatus;
 import jakarta.validation.constraints.Size;
-
 import java.time.LocalDate;
 import java.util.UUID;
 

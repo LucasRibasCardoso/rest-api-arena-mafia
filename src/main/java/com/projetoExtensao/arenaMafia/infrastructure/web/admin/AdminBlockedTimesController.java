@@ -85,10 +85,10 @@ public class AdminBlockedTimesController {
   @GetMapping
   @CustomRateLimiter(limiterName = "globalLimiter")
   public ResponseEntity<Page<BlockedTimeDetailResponseDto>> getBlockedTimes(
-          @RequestParam(required = false) UUID courtId,
-          Pageable pageable) {
+      @RequestParam(required = false) UUID courtId, Pageable pageable) {
     Page<BlockedTimeDetail> blockedTimesPage = findAllBlockedTimeUseCase.execute(courtId, pageable);
-    Page<BlockedTimeDetailResponseDto> responsePage = blockedTimesPage.map(scheduleEntryMapper::toDetailDto);
+    Page<BlockedTimeDetailResponseDto> responsePage =
+        blockedTimesPage.map(scheduleEntryMapper::toDetailDto);
     return ResponseEntity.ok(responsePage);
   }
 
@@ -98,8 +98,10 @@ public class AdminBlockedTimesController {
       @PathVariable UUID blockedTimeId,
       @RequestBody @Valid BlockedTimeUpdateRequestDto requestDto) {
 
-    List<BlockedTimeDetail> updatedBlockedTimes = updateBlockedTimeUseCase.execute(blockedTimeId, requestDto);
-    List<BlockedTimeDetailResponseDto> response = scheduleEntryMapper.toDetailDtoList(updatedBlockedTimes);
+    List<BlockedTimeDetail> updatedBlockedTimes =
+        updateBlockedTimeUseCase.execute(blockedTimeId, requestDto);
+    List<BlockedTimeDetailResponseDto> response =
+        scheduleEntryMapper.toDetailDtoList(updatedBlockedTimes);
 
     return ResponseEntity.ok(response);
   }

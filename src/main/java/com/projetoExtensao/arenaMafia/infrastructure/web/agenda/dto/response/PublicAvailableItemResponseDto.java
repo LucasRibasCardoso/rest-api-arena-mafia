@@ -6,7 +6,5 @@ import java.util.Set;
 import java.util.UUID;
 
 public record PublicAvailableItemResponseDto(
-        TimeIntervalDto timeInterval,
-        Set<UUID> availableModalityIds,
-        BigDecimal price
-) implements PublicAgendaItemResponseDto {}
+    TimeIntervalDto timeInterval, Set<UUID> availableModalityIds, BigDecimal price)
+    implements PublicAgendaItemResponseDto {}

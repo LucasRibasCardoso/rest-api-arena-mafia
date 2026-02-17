@@ -83,7 +83,8 @@ public class CreateReservationUseCaseImp implements CreateReservationUseCase {
 
     // Calcula o preço da reserva
     BigDecimal price = calculatePrice(request);
-    Reservation reservation = saveReservation(request.modalityId(), request.courtId(), userId, price, dateTimeSlot);
+    Reservation reservation =
+        saveReservation(request.modalityId(), request.courtId(), userId, price, dateTimeSlot);
 
     // Envia notificação de confirmação de reserva de forma assíncrona
     publishConfirmationEvent(user, reservation);
@@ -113,7 +114,8 @@ public class CreateReservationUseCaseImp implements CreateReservationUseCase {
    * @param dateTimeSlot Intervalo de data e hora da reserva
    * @return Reserva criada
    */
-  private Reservation saveReservation(UUID modalityId, UUID courtId, UUID userId, BigDecimal price, DateTimeSlot dateTimeSlot) {
+  private Reservation saveReservation(
+      UUID modalityId, UUID courtId, UUID userId, BigDecimal price, DateTimeSlot dateTimeSlot) {
     var reservation = Reservation.createByUser(modalityId, courtId, userId, price, dateTimeSlot);
     return reservationRepositoryPort.save(reservation);
   }
@@ -125,7 +127,8 @@ public class CreateReservationUseCaseImp implements CreateReservationUseCase {
    * @param reservation Reserva criada
    */
   private void publishConfirmationEvent(User user, Reservation reservation) {
-    eventPublisher.publishEvent(new OnReservationCreatedEvent(user.getUsername(), user.getPhone(), reservation));
+    eventPublisher.publishEvent(
+        new OnReservationCreatedEvent(user.getUsername(), user.getPhone(), reservation));
   }
 
   /**
@@ -201,8 +204,10 @@ public class CreateReservationUseCaseImp implements CreateReservationUseCase {
    * @return preço calculado
    */
   private BigDecimal calculatePrice(CreateReservationRequestDto request) {
-    List<PriceRule> activePriceRules = priceRuleRepositoryPort.findAll(PriceRuleSpecification.byActiveStatus(true));
+    List<PriceRule> activePriceRules =
+        priceRuleRepositoryPort.findAll(PriceRuleSpecification.byActiveStatus(true));
 
-    return priceCalculatorService.calculatePrice(request.timeInterval(), request.date(), activePriceRules);
+    return priceCalculatorService.calculatePrice(
+        request.timeInterval(), request.date(), activePriceRules);
   }
 }

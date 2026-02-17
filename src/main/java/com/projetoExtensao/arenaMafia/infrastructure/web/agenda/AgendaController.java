@@ -20,18 +20,20 @@ public class AgendaController {
   private final AgendaMapper agendaMapper;
   private final FindPublicAgendaUseCase findPublicAgendaUseCase;
 
-
-  public AgendaController(AgendaMapper agendaMapper, FindPublicAgendaUseCase findPublicAgendaUseCase) {
+  public AgendaController(
+      AgendaMapper agendaMapper, FindPublicAgendaUseCase findPublicAgendaUseCase) {
     this.agendaMapper = agendaMapper;
     this.findPublicAgendaUseCase = findPublicAgendaUseCase;
   }
 
   @GetMapping
   @CustomRateLimiter(limiterName = "globalLimiter")
-  public ResponseEntity<List<PublicAgendaItemResponseDto>> getAgenda(@RequestParam("date") LocalDate date) {
+  public ResponseEntity<List<PublicAgendaItemResponseDto>> getAgenda(
+      @RequestParam("date") LocalDate date) {
 
     List<AgendaItem> agendaItems = findPublicAgendaUseCase.execute(date);
-    List<PublicAgendaItemResponseDto> agendaResponse = agendaItems.stream().map(agendaMapper::toDto).toList();
+    List<PublicAgendaItemResponseDto> agendaResponse =
+        agendaItems.stream().map(agendaMapper::toDto).toList();
 
     return ResponseEntity.ok(agendaResponse);
   }

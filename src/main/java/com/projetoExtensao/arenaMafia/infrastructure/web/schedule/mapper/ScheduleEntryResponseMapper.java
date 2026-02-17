@@ -35,8 +35,8 @@ public class ScheduleEntryResponseMapper {
     return (R) getDetailStrategy(detail).toDetailDto(detail);
   }
 
-  public <D extends ScheduleEntryDetail, R extends ScheduleDetailResponseDto> List<R> toDetailDtoList(
-      List<D> details) {
+  public <D extends ScheduleEntryDetail, R extends ScheduleDetailResponseDto>
+      List<R> toDetailDtoList(List<D> details) {
     return details.stream().map(this::<R>toDetailDto).toList();
   }
 
@@ -54,7 +54,8 @@ public class ScheduleEntryResponseMapper {
   }
 
   @SuppressWarnings("unchecked")
-  private <D extends ScheduleEntryDetail> ScheduleEntryMapperStrategy<?, D> getDetailStrategy(D detail) {
+  private <D extends ScheduleEntryDetail> ScheduleEntryMapperStrategy<?, D> getDetailStrategy(
+      D detail) {
     ScheduleEntryMapperStrategy<?, D> strategy =
         (ScheduleEntryMapperStrategy<?, D>) detailStrategies.get(detail.getClass());
 

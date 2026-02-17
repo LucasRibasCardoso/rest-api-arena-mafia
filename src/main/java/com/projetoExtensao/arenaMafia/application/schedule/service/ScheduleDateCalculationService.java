@@ -2,8 +2,8 @@ package com.projetoExtensao.arenaMafia.application.schedule.service;
 
 import com.projetoExtensao.arenaMafia.application.operatingHours.port.repository.OperatingHoursRepositoryPort;
 import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
-import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidScheduleDateCalculationException;
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidBlockedTimeException;
+import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidScheduleDateCalculationException;
 import com.projetoExtensao.arenaMafia.domain.exception.notFound.OperatingHoursNotFoundException;
 import com.projetoExtensao.arenaMafia.domain.model.OperatingHours;
 import com.projetoExtensao.arenaMafia.domain.model.enums.DayOfWeek;

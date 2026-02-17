@@ -126,10 +126,10 @@ public class DynamicScheduleEntryCompletionScheduler {
         "CONCLUÍDO: {} reservas confirmadas foram reagendadas", confirmedReservations.size());
   }
 
-
   /**
-   * Reagenda todos os bloqueios confirmados existentes quando a aplicação é iniciada. Garante que blockedTimes
-   * criados antes da inicialização da aplicação também sejam deletados automaticamente.
+   * Reagenda todos os bloqueios confirmados existentes quando a aplicação é iniciada. Garante que
+   * blockedTimes criados antes da inicialização da aplicação também sejam deletados
+   * automaticamente.
    */
   @EventListener(ApplicationReadyEvent.class)
   public void rescheduleExistingBlockedTimes() {
@@ -189,7 +189,7 @@ public class DynamicScheduleEntryCompletionScheduler {
       logger.info("Reserva {} concluída automaticamente", reservationId);
     } catch (Exception e) {
       logger.debug(
-              "Reserva {} não pôde ser concluída automaticamente: {}", reservationId, e.getMessage());
+          "Reserva {} não pôde ser concluída automaticamente: {}", reservationId, e.getMessage());
     } finally {
       scheduledTasks.remove(reservationId);
     }
@@ -206,7 +206,7 @@ public class DynamicScheduleEntryCompletionScheduler {
       logger.info("Bloqueio {} deletado automaticamente", blockedTimeId);
     } catch (Exception e) {
       logger.debug(
-              "Bloqueio {} não pôde ser deletado automaticamente: {}", blockedTimeId, e.getMessage());
+          "Bloqueio {} não pôde ser deletado automaticamente: {}", blockedTimeId, e.getMessage());
     } finally {
       scheduledTasks.remove(blockedTimeId);
     }

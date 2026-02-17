@@ -42,7 +42,8 @@ public class ScheduleEntryEnrichmentService {
    * @param scheduleEntries lista de entradas de agendamento a serem enriquecidas
    * @return listas de entradas enriquecidas
    */
-  public ScheduleEntriesEnrichedResult enrichScheduleEntries(List<? extends ScheduleEntry> scheduleEntries) {
+  public ScheduleEntriesEnrichedResult enrichScheduleEntries(
+      List<? extends ScheduleEntry> scheduleEntries) {
     if (scheduleEntries == null || scheduleEntries.isEmpty()) {
       return new ScheduleEntriesEnrichedResult(List.of(), List.of(), List.of());
     }
@@ -78,7 +79,8 @@ public class ScheduleEntryEnrichmentService {
             .map(detail -> (BlockedTimeDetail) detail)
             .toList();
 
-    return new ScheduleEntriesEnrichedResult(scheduleDetails, reservationDetails, blockedTimeDetails);
+    return new ScheduleEntriesEnrichedResult(
+        scheduleDetails, reservationDetails, blockedTimeDetails);
   }
 
   /**
@@ -121,9 +123,12 @@ public class ScheduleEntryEnrichmentService {
       Map<UUID, Modality> modalityMap) {
 
     return switch (entry) {
-      case Reservation reservation -> enrichReservation(reservation, userMap, courtMap, modalityMap);
+      case Reservation reservation ->
+          enrichReservation(reservation, userMap, courtMap, modalityMap);
       case BlockedTime blockedTime -> enrichBlockedTime(blockedTime, courtMap);
-      default -> throw new IllegalStateException("Tipo de ScheduleEntry não suportado: " + entry.getClass());
+      default ->
+          throw new IllegalStateException(
+              "Tipo de ScheduleEntry não suportado: " + entry.getClass());
     };
   }
 

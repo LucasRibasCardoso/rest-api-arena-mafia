@@ -46,8 +46,11 @@ public class PriceRuleRepositoryAdapter implements PriceRuleRepositoryPort {
 
   @Override
   public PriceRule findDefaultRuleOrElseThrow() {
-    var entity = priceRuleJpaRepository.findByIsDefaultTrue().orElseThrow(DefaultPriceRuleNotFoundException::new);
-    return  priceRuleMapper.toDomain(entity);
+    var entity =
+        priceRuleJpaRepository
+            .findByIsDefaultTrue()
+            .orElseThrow(DefaultPriceRuleNotFoundException::new);
+    return priceRuleMapper.toDomain(entity);
   }
 
   @Override

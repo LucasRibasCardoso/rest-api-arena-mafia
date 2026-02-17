@@ -2,8 +2,8 @@ package com.projetoExtensao.arenaMafia.application.user.usecase.admin.imp;
 
 import com.projetoExtensao.arenaMafia.application.schedule.port.repository.ReservationRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.schedule.service.ReservationBatchCancellationService;
-import com.projetoExtensao.arenaMafia.application.user.usecase.admin.AdminUpdateUserStatusUseCase;
 import com.projetoExtensao.arenaMafia.application.user.port.repository.UserRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.user.usecase.admin.AdminUpdateUserStatusUseCase;
 import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 import com.projetoExtensao.arenaMafia.domain.exception.forbidden.AdminCannotUpdateOwnStatusException;
 import com.projetoExtensao.arenaMafia.domain.exception.forbidden.AdminCannotUpdateStatusOfUnverifiedUserException;
