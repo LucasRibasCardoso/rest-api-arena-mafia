@@ -20,7 +20,7 @@ spring:
           max-wait: -1ms
   security:
     jwt:
-      secret-key: ${JWT_SECRET_KEY:551VM4LcN284uYnv3MjDckhe9IQ6ta7/0jNwrvNqRz0=}
+      secret-key: ${JWT_SECRET_KEY}
       access-token-expiration-ms: ${JWT_ACCESS_TOKEN_EXPIRATION_MS:3600000} # 1 hora
       refresh-token-expiration-days: ${JWT_REFRESH_TOKEN_EXPIRATION_DAYS:7} # 7 dias
       issuer: "arena-mafia-api"
@@ -28,15 +28,15 @@ spring:
     hibernate:
       ddl-auto: validate
   flyway:
-    enable: true
+    enabled: true
 
 management:
   server:
     port: 9091
     address: 0.0.0.0
-    endpoint:
-      health:
-        show-details: never
+  endpoint:
+    health:
+      show-details: never
   endpoints:
     web:
       exposure:
@@ -68,3 +68,10 @@ resilience4j:
         limitForPeriod: 100
         limitRefreshPeriod: 1m
         timeoutDuration: 0
+
+      # Limite para endpoints que disparam envio de SMS (OTP)
+      smsRateLimiter:
+        limitForPeriod: 3
+        limitRefreshPeriod: 1m
+        timeoutDuration: 0
+

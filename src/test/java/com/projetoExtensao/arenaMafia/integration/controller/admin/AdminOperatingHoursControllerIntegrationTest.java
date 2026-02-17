@@ -12,9 +12,7 @@ import com.projetoExtensao.arenaMafia.domain.model.Court;
 import com.projetoExtensao.arenaMafia.domain.model.Modality;
 import com.projetoExtensao.arenaMafia.domain.model.User;
 import com.projetoExtensao.arenaMafia.domain.model.enums.DayOfWeek;
-import com.projetoExtensao.arenaMafia.domain.model.schedule.Reservation;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
-import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.court.response.CourtDisablePreviewResponseDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.operatingHours.request.CreateOperatingHoursRequestDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.operatingHours.request.OperatingHoursDisableConfirmRequestDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.operatingHours.response.OperatingHoursDisablePreviewResponseDto;
@@ -26,7 +24,6 @@ import com.projetoExtensao.arenaMafia.integration.config.util.dayOfWeek.InvalidD
 import com.projetoExtensao.arenaMafia.integration.config.util.timeInterval.InvalidTimeIntervalProvider;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.specification.RequestSpecification;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -133,7 +130,8 @@ public class AdminOperatingHoursControllerIntegrationTest extends WebIntegration
 
       @Test
       @DisplayName(
-          "Deve criar horário de funcionamento para todos os dias da semana quando nulo é fornecido")
+          "Deve criar horário de funcionamento para todos os dias da semana quando nulo é"
+              + " fornecido")
       void shouldReturn201_whenCreatingOperatingHoursForAllDaysOfWeek() {
         // Arrange
         var timeInterval = new TimeInterval(LocalTime.of(8, 0), LocalTime.of(0, 0));
@@ -162,7 +160,8 @@ public class AdminOperatingHoursControllerIntegrationTest extends WebIntegration
 
       @Test
       @DisplayName(
-          "Deve criar horário de funcionamento para todos os dias da semana quando lista vazia é fornecida")
+          "Deve criar horário de funcionamento para todos os dias da semana quando lista vazia é"
+              + " fornecida")
       void shouldReturn201_whenProvidingEmptyDaysOfWeekList() {
         // Arrange
         var timeInterval = new TimeInterval(LocalTime.of(8, 0), LocalTime.of(18, 0));
@@ -692,7 +691,9 @@ public class AdminOperatingHoursControllerIntegrationTest extends WebIntegration
       class SuccessScenarios {
 
         @Test
-        @DisplayName("Deve criar preview de desativação para um horário sem conflitos com agendamentos futuros")
+        @DisplayName(
+            "Deve criar preview de desativação para um horário sem conflitos com agendamentos"
+                + " futuros")
         void shouldReturn200_whenCreatingPreviewForValidOperatingHours() {
           // Arrange
           var operatingHour = mockPersistOperatingHoursAllDays();
@@ -720,14 +721,17 @@ public class AdminOperatingHoursControllerIntegrationTest extends WebIntegration
           assertThat(response.reservationsAffectedCount()).isZero();
           assertThat(response.inProgressReservations().size()).isZero();
 
-          Optional<OperatingHoursDisablePreview> previewInCache = getPreviewFromCache(response.previewKey());
+          Optional<OperatingHoursDisablePreview> previewInCache =
+              getPreviewFromCache(response.previewKey());
           assertThat(previewInCache).isPresent();
 
           assertResponsePreviewMatchesPreviewSaved(response, previewInCache.get());
         }
 
         @Test
-        @DisplayName("Deve criar preview de desativação para um horário que o fim é meia noite em ponto  e possui agendamentos futuros")
+        @DisplayName(
+            "Deve criar preview de desativação para um horário que o fim é meia noite em ponto  e"
+                + " possui agendamentos futuros")
         void shouldReturn200_whenCreatingPreviewForOperatingHoursWithFutureSchedules() {
           // Arrange
           TimeInterval timeInterval = new TimeInterval(LocalTime.of(8, 0), LocalTime.of(0, 0));
@@ -743,16 +747,14 @@ public class AdminOperatingHoursControllerIntegrationTest extends WebIntegration
               nextDayOfWeek(java.time.DayOfWeek.FRIDAY),
               new TimeInterval(LocalTime.of(22, 0), LocalTime.of(0, 0)),
               "Manutenção",
-              adminId
-          );
+              adminId);
           mockPersistReservationByUser(
               modality.getId(),
               court.getId(),
               nextDayOfWeek(java.time.DayOfWeek.TUESDAY),
               new TimeInterval(LocalTime.of(14, 0), LocalTime.of(15, 0)),
               new BigDecimal(85),
-              adminId
-          );
+              adminId);
           // Reserva no passado que não deve ser afetada
           mockPersistReservationByUser(
               modality.getId(),
@@ -760,8 +762,7 @@ public class AdminOperatingHoursControllerIntegrationTest extends WebIntegration
               LocalDate.now().minusDays(1),
               new TimeInterval(LocalTime.of(14, 0), LocalTime.of(15, 0)),
               new BigDecimal(85),
-              adminId
-          );
+              adminId);
           // Reserva em andamento que não deve ser afetada mas deve constar no preview
           mockPersistReservationByUser(
               modality.getId(),
@@ -781,7 +782,8 @@ public class AdminOperatingHoursControllerIntegrationTest extends WebIntegration
                   .when()
                   .post("/{operatingHourId}/preview-disable", operatingHourId)
                   .then()
-                      .log().all()
+                  .log()
+                  .all()
                   .statusCode(200)
                   .extract()
                   .as(OperatingHoursDisablePreviewResponseDto.class);
@@ -796,15 +798,19 @@ public class AdminOperatingHoursControllerIntegrationTest extends WebIntegration
           assertThat(response.reservationsAffectedCount()).isOne();
           assertThat(response.inProgressReservations().size()).isOne();
 
-          Optional<OperatingHoursDisablePreview> previewInCache = getPreviewFromCache(response.previewKey());
+          Optional<OperatingHoursDisablePreview> previewInCache =
+              getPreviewFromCache(response.previewKey());
           assertThat(previewInCache).isPresent();
 
           assertResponsePreviewMatchesPreviewSaved(response, previewInCache.get());
         }
 
         @Test
-        @DisplayName("Deve criar preview de desativação para um horário que o fim atravessa a meia noite e possui agendamentos futuros")
-        void shouldReturn200_whenCreatingPreviewForOperatingHoursCrossMidnightWithFutureSchedules() {
+        @DisplayName(
+            "Deve criar preview de desativação para um horário que o fim atravessa a meia noite e"
+                + " possui agendamentos futuros")
+        void
+            shouldReturn200_whenCreatingPreviewForOperatingHoursCrossMidnightWithFutureSchedules() {
           // Arrange
           TimeInterval timeInterval = new TimeInterval(LocalTime.of(8, 0), LocalTime.of(1, 0));
           var operatingHour = mockPersistOperatingHoursAllDaysWithTimeInterval(timeInterval);
@@ -815,52 +821,50 @@ public class AdminOperatingHoursControllerIntegrationTest extends WebIntegration
           Court court = mockPersistCourt("Quadra A", modality);
 
           mockPersistBlockedTimeSpecific(
-                  court.getId(),
-                  nextDayOfWeek(java.time.DayOfWeek.FRIDAY),
-                  new TimeInterval(LocalTime.of(22, 0), LocalTime.of(0, 0)),
-                  "Manutenção",
-                  adminId
-          );
+              court.getId(),
+              nextDayOfWeek(java.time.DayOfWeek.FRIDAY),
+              new TimeInterval(LocalTime.of(22, 0), LocalTime.of(0, 0)),
+              "Manutenção",
+              adminId);
           mockPersistReservationByUser(
-                  modality.getId(),
-                  court.getId(),
-                  nextDayOfWeek(java.time.DayOfWeek.TUESDAY),
-                  new TimeInterval(LocalTime.of(14, 0), LocalTime.of(15, 0)),
-                  new BigDecimal(85),
-                  adminId
-          );
+              modality.getId(),
+              court.getId(),
+              nextDayOfWeek(java.time.DayOfWeek.TUESDAY),
+              new TimeInterval(LocalTime.of(14, 0), LocalTime.of(15, 0)),
+              new BigDecimal(85),
+              adminId);
           // Reserva no passado que não deve ser afetada
           mockPersistReservationByUser(
-                  modality.getId(),
-                  court.getId(),
-                  LocalDate.now().minusDays(1),
-                  new TimeInterval(LocalTime.of(14, 0), LocalTime.of(15, 0)),
-                  new BigDecimal(85),
-                  adminId
-          );
+              modality.getId(),
+              court.getId(),
+              LocalDate.now().minusDays(1),
+              new TimeInterval(LocalTime.of(14, 0), LocalTime.of(15, 0)),
+              new BigDecimal(85),
+              adminId);
           // Reserva em andamento que não deve ser afetada mas deve constar no preview
           mockPersistReservationByUser(
-                  modality.getId(),
-                  court.getId(),
-                  LocalDate.now(),
-                  new TimeInterval(
-                          normalizeToValidMinutes(LocalTime.now().minusMinutes(30)),
-                          normalizeToValidMinutes(LocalTime.now().plusMinutes(30))),
-                  BigDecimal.valueOf(80),
-                  adminId);
+              modality.getId(),
+              court.getId(),
+              LocalDate.now(),
+              new TimeInterval(
+                  normalizeToValidMinutes(LocalTime.now().minusMinutes(30)),
+                  normalizeToValidMinutes(LocalTime.now().plusMinutes(30))),
+              BigDecimal.valueOf(80),
+              adminId);
 
           // Act
           var response =
-                  given()
-                          .spec(specification)
-                          .header("Authorization", accessToken)
-                          .when()
-                          .post("/{operatingHourId}/preview-disable", operatingHourId)
-                          .then()
-                          .log().all()
-                          .statusCode(200)
-                          .extract()
-                          .as(OperatingHoursDisablePreviewResponseDto.class);
+              given()
+                  .spec(specification)
+                  .header("Authorization", accessToken)
+                  .when()
+                  .post("/{operatingHourId}/preview-disable", operatingHourId)
+                  .then()
+                  .log()
+                  .all()
+                  .statusCode(200)
+                  .extract()
+                  .as(OperatingHoursDisablePreviewResponseDto.class);
 
           // Assert
           assertThat(response.previewKey()).isNotEmpty();
@@ -872,14 +876,17 @@ public class AdminOperatingHoursControllerIntegrationTest extends WebIntegration
           assertThat(response.reservationsAffectedCount()).isOne();
           assertThat(response.inProgressReservations().size()).isOne();
 
-          Optional<OperatingHoursDisablePreview> previewInCache = getPreviewFromCache(response.previewKey());
+          Optional<OperatingHoursDisablePreview> previewInCache =
+              getPreviewFromCache(response.previewKey());
           assertThat(previewInCache).isPresent();
 
           assertResponsePreviewMatchesPreviewSaved(response, previewInCache.get());
         }
 
         @Test
-        @DisplayName("Deve criar preview de desativação para um horário que não atravesse a meia noite e possui múltiplos agendamentos futuros")
+        @DisplayName(
+            "Deve criar preview de desativação para um horário que não atravesse a meia noite e"
+                + " possui múltiplos agendamentos futuros")
         void shouldReturn200_whenCreatingPreviewForOperatingHoursWithMultipleFutureSchedules() {
           // Arrange
           TimeInterval timeInterval = new TimeInterval(LocalTime.of(8, 0), LocalTime.of(23, 0));
@@ -895,16 +902,14 @@ public class AdminOperatingHoursControllerIntegrationTest extends WebIntegration
               nextDayOfWeek(java.time.DayOfWeek.WEDNESDAY),
               new TimeInterval(LocalTime.of(18, 0), LocalTime.of(20, 0)),
               "Evento Especial",
-              adminId
-          );
+              adminId);
           mockPersistReservationByUser(
               modality.getId(),
               court.getId(),
               nextDayOfWeek(java.time.DayOfWeek.THURSDAY),
               new TimeInterval(LocalTime.of(16, 0), LocalTime.of(17, 0)),
               new BigDecimal(100),
-              adminId
-          );
+              adminId);
           // Reserva no passado que não deve ser afetada
           mockPersistReservationByUser(
               modality.getId(),
@@ -912,8 +917,7 @@ public class AdminOperatingHoursControllerIntegrationTest extends WebIntegration
               LocalDate.now().minusDays(1),
               new TimeInterval(LocalTime.of(14, 0), LocalTime.of(15, 0)),
               new BigDecimal(85),
-              adminId
-          );
+              adminId);
           // Reserva em andamento que não deve ser afetada mas deve constar no preview
           mockPersistReservationByUser(
               modality.getId(),
@@ -933,7 +937,8 @@ public class AdminOperatingHoursControllerIntegrationTest extends WebIntegration
                   .when()
                   .post("/{operatingHourId}/preview-disable", operatingHourId)
                   .then()
-                      .log().all()
+                  .log()
+                  .all()
                   .statusCode(200)
                   .extract()
                   .as(OperatingHoursDisablePreviewResponseDto.class);
@@ -948,7 +953,8 @@ public class AdminOperatingHoursControllerIntegrationTest extends WebIntegration
           assertThat(response.reservationsAffectedCount()).isOne();
           assertThat(response.inProgressReservations().size()).isOne();
 
-          Optional<OperatingHoursDisablePreview> previewInCache = getPreviewFromCache(response.previewKey());
+          Optional<OperatingHoursDisablePreview> previewInCache =
+              getPreviewFromCache(response.previewKey());
           assertThat(previewInCache).isPresent();
 
           assertResponsePreviewMatchesPreviewSaved(response, previewInCache.get());
@@ -1009,7 +1015,6 @@ public class AdminOperatingHoursControllerIntegrationTest extends WebIntegration
           String path = "/api/admin/operating-hours/" + nonExistentId + "/preview-disable";
           assertBusinessError(response, 404, path, ErrorCode.OPERATING_HOURS_NOT_FOUND);
         }
-
       }
 
       @Nested
@@ -1051,7 +1056,9 @@ public class AdminOperatingHoursControllerIntegrationTest extends WebIntegration
       class SuccessScenarios {
 
         @Test
-        @DisplayName("Deve confirmar desativação de um horário de funcionamento com preview válido sem conflitos")
+        @DisplayName(
+            "Deve confirmar desativação de um horário de funcionamento com preview válido sem"
+                + " conflitos")
         void shouldReturn200_whenConfirmingDisableWithValidPreview() {
           // Arrange
           var operatingHour = mockPersistOperatingHoursAllDays();
@@ -1059,7 +1066,8 @@ public class AdminOperatingHoursControllerIntegrationTest extends WebIntegration
 
           String previewKey = createPreviewAndGetKey(operatingHourId);
 
-          var request = new OperatingHoursDisableConfirmRequestDto(previewKey, "Desativação temporária");
+          var request =
+              new OperatingHoursDisableConfirmRequestDto(previewKey, "Desativação temporária");
 
           // Act
           given()
@@ -1080,7 +1088,9 @@ public class AdminOperatingHoursControllerIntegrationTest extends WebIntegration
         }
 
         @Test
-        @DisplayName("Deve confirmar desativação de um horário de funcionamento com preview válido com conflitos")
+        @DisplayName(
+            "Deve confirmar desativação de um horário de funcionamento com preview válido com"
+                + " conflitos")
         void shouldReturn200_whenConfirmingDisableWithValidPreviewWithConflicts() {
           // Arrange
           TimeInterval timeInterval = new TimeInterval(LocalTime.of(8, 0), LocalTime.of(23, 0));
@@ -1096,20 +1106,19 @@ public class AdminOperatingHoursControllerIntegrationTest extends WebIntegration
               nextDayOfWeek(java.time.DayOfWeek.WEDNESDAY),
               new TimeInterval(LocalTime.of(18, 0), LocalTime.of(20, 0)),
               "Evento Especial",
-              adminId
-          );
+              adminId);
           mockPersistReservationByUser(
               modality.getId(),
               court.getId(),
               nextDayOfWeek(java.time.DayOfWeek.THURSDAY),
               new TimeInterval(LocalTime.of(16, 0), LocalTime.of(17, 0)),
               new BigDecimal(100),
-              adminId
-          );
+              adminId);
 
           String previewKey = createPreviewAndGetKey(operatingHourId);
 
-          var request = new OperatingHoursDisableConfirmRequestDto(previewKey, "Desativação temporária");
+          var request =
+              new OperatingHoursDisableConfirmRequestDto(previewKey, "Desativação temporária");
 
           // Act
           given()
@@ -1162,7 +1171,9 @@ public class AdminOperatingHoursControllerIntegrationTest extends WebIntegration
         @DisplayName("Tenta confirmar desativação com a chave de preview inválida")
         void shouldReturn400_whenConfirmingDisableWithInvalidPreviewKey() {
           // Arrange
-          var request = new OperatingHoursDisableConfirmRequestDto("invalid-preview-key", "Desativação temporária");
+          var request =
+              new OperatingHoursDisableConfirmRequestDto(
+                  "invalid-preview-key", "Desativação temporária");
 
           // Act
           var response =
@@ -1205,7 +1216,11 @@ public class AdminOperatingHoursControllerIntegrationTest extends WebIntegration
 
           // Assert
           String path = "/api/admin/operating-hours/confirm-disable";
-          assertValidationError(response, path, "description", ErrorCode.OPERATING_HOURS_DISABLE_DESCRIPTION_REQUIRED);
+          assertValidationError(
+              response,
+              path,
+              "description",
+              ErrorCode.OPERATING_HOURS_DISABLE_DESCRIPTION_REQUIRED);
         }
 
         @Test
@@ -1232,7 +1247,11 @@ public class AdminOperatingHoursControllerIntegrationTest extends WebIntegration
 
           // Assert
           String path = "/api/admin/operating-hours/confirm-disable";
-          assertValidationError(response, path, "description", ErrorCode.OPERATING_HOURS_DISABLE_DESCRIPTION_INVALID_LENGTH);
+          assertValidationError(
+              response,
+              path,
+              "description",
+              ErrorCode.OPERATING_HOURS_DISABLE_DESCRIPTION_INVALID_LENGTH);
         }
 
         @Test
@@ -1259,7 +1278,11 @@ public class AdminOperatingHoursControllerIntegrationTest extends WebIntegration
 
           // Assert
           String path = "/api/admin/operating-hours/confirm-disable";
-          assertValidationError(response, path, "description", ErrorCode.OPERATING_HOURS_DISABLE_DESCRIPTION_INVALID_LENGTH);
+          assertValidationError(
+              response,
+              path,
+              "description",
+              ErrorCode.OPERATING_HOURS_DISABLE_DESCRIPTION_INVALID_LENGTH);
         }
       }
 
@@ -1280,7 +1303,8 @@ public class AdminOperatingHoursControllerIntegrationTest extends WebIntegration
 
           String previewKey = createPreviewAndGetKey(operatingHourId);
 
-          var request = new OperatingHoursDisableConfirmRequestDto(previewKey, "Desativação temporária");
+          var request =
+              new OperatingHoursDisableConfirmRequestDto(previewKey, "Desativação temporária");
 
           // Act
           var response =
@@ -1311,7 +1335,9 @@ public class AdminOperatingHoursControllerIntegrationTest extends WebIntegration
           // Arrange
           String nonExistentPreviewKey = operatingHoursPreviewCache.generateKey(adminId);
 
-          var request = new OperatingHoursDisableConfirmRequestDto(nonExistentPreviewKey, "Desativação temporária");
+          var request =
+              new OperatingHoursDisableConfirmRequestDto(
+                  nonExistentPreviewKey, "Desativação temporária");
 
           // Act
           var response =
@@ -1337,14 +1363,17 @@ public class AdminOperatingHoursControllerIntegrationTest extends WebIntegration
       class ConflictScenarios {
 
         @Test
-        @DisplayName("Tenta confirmar desativação com preview desatualizado devido a mudanças nos agendamentos")
+        @DisplayName(
+            "Tenta confirmar desativação com preview desatualizado devido a mudanças nos"
+                + " agendamentos")
         void shouldReturn409_whenConfirmingDisableWithStalePreviewDueToScheduleChanges() {
           // Arrange
           var operatingHour = mockPersistOperatingHoursAllDays();
           UUID operatingHourId = operatingHour.getId();
 
           String previewKey = createPreviewAndGetKey(operatingHourId);
-          var request = new OperatingHoursDisableConfirmRequestDto(previewKey, "Desativação temporária");
+          var request =
+              new OperatingHoursDisableConfirmRequestDto(previewKey, "Desativação temporária");
 
           // Criar um agendamento futuro que tornará o preview desatualizado
           Modality modality = mockPersistModality("Volei");
@@ -1356,8 +1385,7 @@ public class AdminOperatingHoursControllerIntegrationTest extends WebIntegration
               nextDayOfWeek(java.time.DayOfWeek.TUESDAY),
               new TimeInterval(LocalTime.of(14, 0), LocalTime.of(15, 0)),
               new BigDecimal(85),
-              adminId
-          );
+              adminId);
 
           // Act
           var response =
@@ -1385,7 +1413,8 @@ public class AdminOperatingHoursControllerIntegrationTest extends WebIntegration
           UUID operatingHourId = operatingHour.getId();
 
           String previewKey = createPreviewAndGetKey(operatingHourId);
-          var request = new OperatingHoursDisableConfirmRequestDto(previewKey, "Desativação temporária");
+          var request =
+              new OperatingHoursDisableConfirmRequestDto(previewKey, "Desativação temporária");
 
           operatingHour.disable();
           operatingHoursRepository.save(operatingHour);
@@ -1412,32 +1441,36 @@ public class AdminOperatingHoursControllerIntegrationTest extends WebIntegration
   }
 
   private void assertResponsePreviewMatchesPreviewSaved(
-          OperatingHoursDisablePreviewResponseDto previewResponse,
-          OperatingHoursDisablePreview previewSaved
-  ) {
+      OperatingHoursDisablePreviewResponseDto previewResponse,
+      OperatingHoursDisablePreview previewSaved) {
 
     assertThat(previewResponse.previewKey()).isEqualTo(previewSaved.previewKey());
     assertThat(previewResponse.operatingHoursId()).isEqualTo(previewSaved.operatingHoursId());
     assertThat(previewResponse.usersAffectedCount()).isEqualTo(previewSaved.usersAffectedCount());
-    assertThat(previewResponse.blockedTimesAffectedCount()).isEqualTo(previewSaved.blockedTimesAffectedCount());
-    assertThat(previewResponse.reservationsAffectedCount()).isEqualTo(previewSaved.reservationsAffectedCount());
+    assertThat(previewResponse.blockedTimesAffectedCount())
+        .isEqualTo(previewSaved.blockedTimesAffectedCount());
+    assertThat(previewResponse.reservationsAffectedCount())
+        .isEqualTo(previewSaved.reservationsAffectedCount());
 
-    assertThat(previewResponse.affectedBlockedTimes().size()).isEqualTo(previewSaved.affectedBlockedTimes().size());
-    assertThat(previewResponse.affectedReservations().size()).isEqualTo(previewSaved.affectedReservations().size());
-    assertThat(previewResponse.inProgressReservations().size()).isEqualTo(previewSaved.inProgressReservations().size());
+    assertThat(previewResponse.affectedBlockedTimes().size())
+        .isEqualTo(previewSaved.affectedBlockedTimes().size());
+    assertThat(previewResponse.affectedReservations().size())
+        .isEqualTo(previewSaved.affectedReservations().size());
+    assertThat(previewResponse.inProgressReservations().size())
+        .isEqualTo(previewSaved.inProgressReservations().size());
   }
 
   private String createPreviewAndGetKey(UUID operatingHourId) {
     var response =
-            given()
-                    .spec(specification)
-                    .header("Authorization", accessToken)
-                    .when()
-                    .post("/{operatingHourId}/preview-disable", operatingHourId)
-                    .then()
-                    .statusCode(200)
-                    .extract()
-                    .as(OperatingHoursDisablePreviewResponseDto.class);
+        given()
+            .spec(specification)
+            .header("Authorization", accessToken)
+            .when()
+            .post("/{operatingHourId}/preview-disable", operatingHourId)
+            .then()
+            .statusCode(200)
+            .extract()
+            .as(OperatingHoursDisablePreviewResponseDto.class);
 
     return response.previewKey();
   }

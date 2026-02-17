@@ -7,10 +7,6 @@ spring:
   h2:
     console:
       enabled: true
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
 
   data:
     redis:
@@ -46,3 +42,14 @@ springdoc:
     enabled: true
   swagger-ui:
     url: /docs/openapi.yml
+
+# Provedores SMS disponíveis: MOCK, AWS, COMTELE
+app:
+  sms:
+    provider: ${SMS_PROVIDER:MOCK}
+
+# Comtele Configuration (usado quando app.sms.provider=COMTELE)
+comtele:
+  api-url: ${COMTELE_API_URL:}
+  api-key: ${COMTELE_API_KEY:}
+

@@ -1,7 +1,5 @@
 package com.projetoExtensao.arenaMafia.infrastructure.persistence.repository;
 
-import com.projetoExtensao.arenaMafia.infrastructure.config.bean.SchedulingConfig;
-import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.ReservationEntity;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.ScheduleEntryEntity;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -44,14 +42,14 @@ public interface ScheduleEntryJpaRepository
    */
   @Query(
       """
-       SELECT s FROM ScheduleEntryEntity  s
-       WHERE s.courtId = :courtId
-       AND (TYPE(s) = BlockedTimeEntity
-          OR
-          (TYPE(s) = ReservationEntity AND TREAT(s AS ReservationEntity).status = 'CONFIRMED'))
-        AND s.dateTimeSlot.date >= CURRENT_DATE
-        ORDER BY s.dateTimeSlot.date ASC, s.dateTimeSlot.timeInterval.startTime ASC
-       """)
+      SELECT s FROM ScheduleEntryEntity  s
+      WHERE s.courtId = :courtId
+      AND (TYPE(s) = BlockedTimeEntity
+         OR
+         (TYPE(s) = ReservationEntity AND TREAT(s AS ReservationEntity).status = 'CONFIRMED'))
+       AND s.dateTimeSlot.date >= CURRENT_DATE
+       ORDER BY s.dateTimeSlot.date ASC, s.dateTimeSlot.timeInterval.startTime ASC
+      """)
   List<ScheduleEntryEntity> findAllSchedulesByCourtIdFromToday(@Param("courtId") UUID courtId);
 
   /**
@@ -101,29 +99,29 @@ public interface ScheduleEntryJpaRepository
    */
   @Query(
       """
-  SELECT s FROM ScheduleEntryEntity s
-  WHERE s.dateTimeSlot.date >= CURRENT_DATE
-  AND (TYPE(s) = BlockedTimeEntity
-       OR (TYPE(s) = ReservationEntity AND TREAT(s AS ReservationEntity).status = 'CONFIRMED'))
-  AND FUNCTION('date_part', 'dow', s.dateTimeSlot.date) IN :indexDaysOfWeek
-  AND (
-      (s.dateTimeSlot.timeInterval.startTime < s.dateTimeSlot.timeInterval.endTime
-       AND (
-            s.dateTimeSlot.timeInterval.startTime < :timeIntervalEndTime
-            AND
-            s.dateTimeSlot.timeInterval.endTime > :timeIntervalStartTime
-       )
+      SELECT s FROM ScheduleEntryEntity s
+      WHERE s.dateTimeSlot.date >= CURRENT_DATE
+      AND (TYPE(s) = BlockedTimeEntity
+           OR (TYPE(s) = ReservationEntity AND TREAT(s AS ReservationEntity).status = 'CONFIRMED'))
+      AND FUNCTION('date_part', 'dow', s.dateTimeSlot.date) IN :indexDaysOfWeek
+      AND (
+          (s.dateTimeSlot.timeInterval.startTime < s.dateTimeSlot.timeInterval.endTime
+           AND (
+                s.dateTimeSlot.timeInterval.startTime < :timeIntervalEndTime
+                AND
+                s.dateTimeSlot.timeInterval.endTime > :timeIntervalStartTime
+           )
+          )
+          OR
+          (s.dateTimeSlot.timeInterval.startTime > s.dateTimeSlot.timeInterval.endTime
+           AND (
+                s.dateTimeSlot.timeInterval.startTime < :timeIntervalEndTime
+                OR
+                s.dateTimeSlot.timeInterval.endTime > :timeIntervalStartTime
+           )
+          )
       )
-      OR
-      (s.dateTimeSlot.timeInterval.startTime > s.dateTimeSlot.timeInterval.endTime
-       AND (
-            s.dateTimeSlot.timeInterval.startTime < :timeIntervalEndTime
-            OR
-            s.dateTimeSlot.timeInterval.endTime > :timeIntervalStartTime
-       )
-      )
-  )
-  """)
+      """)
   List<ScheduleEntryEntity> findSchedulesFromTodayByDaysOfWeekAndTimeInterval(
       @Param("indexDaysOfWeek") Set<Integer> indexDaysOfWeek,
       @Param("timeIntervalStartTime") LocalTime timeIntervalStartTime,
@@ -139,38 +137,40 @@ public interface ScheduleEntryJpaRepository
    */
   @Query(
       """
-              SELECT s FROM ScheduleEntryEntity s
-              WHERE s.courtId = :courtId
-              AND s.dateTimeSlot.date = :date
-              AND (TYPE(s) = BlockedTimeEntity
-                  OR
-                  (TYPE(s) = ReservationEntity AND TREAT(s AS ReservationEntity).status = 'CONFIRMED'))
-              ORDER BY s.dateTimeSlot.timeInterval.startTime ASC
-              """)
+      SELECT s FROM ScheduleEntryEntity s
+      WHERE s.courtId = :courtId
+      AND s.dateTimeSlot.date = :date
+      AND (TYPE(s) = BlockedTimeEntity
+          OR
+          (TYPE(s) = ReservationEntity AND TREAT(s AS ReservationEntity).status = 'CONFIRMED'))
+      ORDER BY s.dateTimeSlot.timeInterval.startTime ASC
+      """)
   List<ScheduleEntryEntity> findSchedulesByCourtAndDate(
       @Param("courtId") UUID courtId, @Param("date") LocalDate date);
 
   @Query(
       """
-                SELECT s FROM ScheduleEntryEntity s
-                WHERE (TYPE(s) = BlockedTimeEntity
-                  OR
-                  (TYPE(s) = ReservationEntity AND TREAT(s AS ReservationEntity).status = 'CONFIRMED'))
-                AND (s.dateTimeSlot.date < :date
-                     OR (s.dateTimeSlot.date = :date AND s.dateTimeSlot.timeInterval.endTime <= :time))
-                ORDER BY s.dateTimeSlot.date ASC, s.dateTimeSlot.timeInterval.endTime ASC
-                """)
-  List<ScheduleEntryEntity> findAllActiveSchedulesEndedBeforeOrEqual(@Param("date") LocalDate date, @Param("time") LocalTime time);
+      SELECT s FROM ScheduleEntryEntity s
+      WHERE (TYPE(s) = BlockedTimeEntity
+        OR
+        (TYPE(s) = ReservationEntity AND TREAT(s AS ReservationEntity).status = 'CONFIRMED'))
+      AND (s.dateTimeSlot.date < :date
+           OR (s.dateTimeSlot.date = :date AND s.dateTimeSlot.timeInterval.endTime <= :time))
+      ORDER BY s.dateTimeSlot.date ASC, s.dateTimeSlot.timeInterval.endTime ASC
+      """)
+  List<ScheduleEntryEntity> findAllActiveSchedulesEndedBeforeOrEqual(
+      @Param("date") LocalDate date, @Param("time") LocalTime time);
 
   @Query(
       """
-              SELECT s FROM ScheduleEntryEntity s
-              WHERE (TYPE(s) = BlockedTimeEntity
-                  OR
-                  (TYPE(s) = ReservationEntity AND TREAT(s AS ReservationEntity).status = 'CONFIRMED'))
-              AND (s.dateTimeSlot.date > :date
-                   OR (s.dateTimeSlot.date = :date AND s.dateTimeSlot.timeInterval.endTime > :time))
-              ORDER BY s.dateTimeSlot.date ASC, s.dateTimeSlot.timeInterval.endTime ASC
-              """)
-  List<ScheduleEntryEntity> findAllActiveSchedulesEndedAfter(@Param("date") LocalDate date, @Param("time") LocalTime time);
+      SELECT s FROM ScheduleEntryEntity s
+      WHERE (TYPE(s) = BlockedTimeEntity
+          OR
+          (TYPE(s) = ReservationEntity AND TREAT(s AS ReservationEntity).status = 'CONFIRMED'))
+      AND (s.dateTimeSlot.date > :date
+           OR (s.dateTimeSlot.date = :date AND s.dateTimeSlot.timeInterval.endTime > :time))
+      ORDER BY s.dateTimeSlot.date ASC, s.dateTimeSlot.timeInterval.endTime ASC
+      """)
+  List<ScheduleEntryEntity> findAllActiveSchedulesEndedAfter(
+      @Param("date") LocalDate date, @Param("time") LocalTime time);
 }

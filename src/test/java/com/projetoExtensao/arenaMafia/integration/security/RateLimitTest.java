@@ -79,7 +79,7 @@ public class RateLimitTest extends WebIntegrationTestConfig {
     var request = new ResendOtpRequestDto(otpSessionId);
 
     // Act
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 3; i++) {
       given().spec(specification).body(request).when().post("/resend-otp").then().statusCode(204);
     }
 

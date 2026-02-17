@@ -31,7 +31,7 @@ public class NotificationEventListenerTest {
 
   @Test
   @DisplayName("Deve gerar OTP e enviar SMS para o número atual do usuário")
-  void onUserRegistration_shouldGenerateOtpAndSendSms_onEvent() {
+  void onOtpVerificationRequired_shouldGenerateOtpAndSendSms_onEvent() {
     // Arrange
     User user = TestDataProvider.createActiveUser();
     UUID userId = user.getId();
@@ -40,7 +40,7 @@ public class NotificationEventListenerTest {
     when(otpPort.generateOtpCode(userId)).thenReturn(otpCode);
 
     // Act
-    eventListener.onUserRegistration(event);
+    eventListener.onOtpVerificationRequired(event);
 
     // Assert
     verify(otpPort, times(1)).generateOtpCode(userId);
@@ -55,7 +55,7 @@ public class NotificationEventListenerTest {
 
   @Test
   @DisplayName("Deve gerar o OTP e enviar SMS para o novo número de telefone do usuário")
-  void onUserRegistration_shouldGenerateOtpAndSendSmsOnEvent() {
+  void onOtpVerificationRequired_shouldGenerateOtpAndSendSmsOnEvent() {
     // Arrange
     User user = TestDataProvider.createActiveUser();
     UUID userId = user.getId();
@@ -65,7 +65,7 @@ public class NotificationEventListenerTest {
     when(otpPort.generateOtpCode(userId)).thenReturn(otpCode);
 
     // Act
-    eventListener.onUserRegistration(event);
+    eventListener.onOtpVerificationRequired(event);
 
     verify(otpPort, times(1)).generateOtpCode(userId);
 
@@ -79,7 +79,7 @@ public class NotificationEventListenerTest {
 
   @Test
   @DisplayName("Não deve enviar SMS se a geração de OTP falhar")
-  void onUserRegistration_shouldNotSendSms_whenOtpGenerationFails() {
+  void onOtpVerificationRequired_shouldNotSendSms_whenOtpGenerationFails() {
     // Arrange
     User user = TestDataProvider.createActiveUser();
     OnVerificationRequiredEvent event = new OnVerificationRequiredEvent(user);
@@ -88,7 +88,7 @@ public class NotificationEventListenerTest {
         .thenThrow(new RuntimeException("Falha ao conectar com o Redis"));
 
     // Act & Assert
-    assertDoesNotThrow(() -> eventListener.onUserRegistration(event));
+    assertDoesNotThrow(() -> eventListener.onOtpVerificationRequired(event));
 
     verify(smsPort, never()).send(anyString(), anyString());
   }

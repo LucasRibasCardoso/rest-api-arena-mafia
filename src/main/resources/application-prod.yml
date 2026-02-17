@@ -19,3 +19,14 @@ spring:
 springdoc:
   api-docs:
     enabled: false
+
+# Provedores SMS disponíveis: MOCK, AWS, COMTELE
+app:
+  sms:
+    provider: ${SMS_PROVIDER:COMTELE}
+
+# Comtele Configuration (usado quando app.sms.provider=COMTELE)
+comtele:
+  api-url: ${COMTELE_API_URL:}
+  api-key: ${COMTELE_API_KEY:}
+

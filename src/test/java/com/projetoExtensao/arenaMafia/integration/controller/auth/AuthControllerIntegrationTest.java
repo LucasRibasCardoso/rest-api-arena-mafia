@@ -25,7 +25,6 @@ import com.projetoExtensao.arenaMafia.infrastructure.web.auth.dto.response.Signu
 import com.projetoExtensao.arenaMafia.infrastructure.web.exception.dto.ErrorResponseDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.exception.dto.FieldErrorResponseDto;
 import com.projetoExtensao.arenaMafia.integration.config.WebIntegrationTestConfig;
-import com.projetoExtensao.arenaMafia.integration.config.util.*;
 import com.projetoExtensao.arenaMafia.integration.config.util.user.InvalidFullNameProvider;
 import com.projetoExtensao.arenaMafia.integration.config.util.user.InvalidOtpCodeProvider;
 import com.projetoExtensao.arenaMafia.integration.config.util.user.InvalidOtpSessionIdProvider;

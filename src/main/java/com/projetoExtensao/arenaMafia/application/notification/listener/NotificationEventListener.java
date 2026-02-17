@@ -3,6 +3,7 @@ package com.projetoExtensao.arenaMafia.application.notification.listener;
 import com.projetoExtensao.arenaMafia.application.notification.event.*;
 import com.projetoExtensao.arenaMafia.application.notification.gateway.OtpPort;
 import com.projetoExtensao.arenaMafia.application.notification.gateway.SmsPort;
+import com.projetoExtensao.arenaMafia.application.notification.gateway.WhatsAppPort;
 import com.projetoExtensao.arenaMafia.application.priceRule.port.PriceRuleRepositoryPort;
 import com.projetoExtensao.arenaMafia.domain.model.User;
 import com.projetoExtensao.arenaMafia.domain.model.enums.DayOfWeek;
@@ -28,22 +29,25 @@ public class NotificationEventListener {
 
   private static final Logger logger = LoggerFactory.getLogger(NotificationEventListener.class);
 
-  private final SmsPort smsPort;
   private final OtpPort otpPort;
+  private final SmsPort smsPort;
+  private final WhatsAppPort whatsAppPort;
   private final PriceRuleRepositoryPort priceRuleRepositoryPort;
 
   public NotificationEventListener(
-      SmsPort smsPort,
       OtpPort otpPort,
+      SmsPort smsPort,
+      WhatsAppPort whatsAppPort,
       PriceRuleRepositoryPort priceRuleRepositoryPort) {
-    this.smsPort = smsPort;
     this.otpPort = otpPort;
+    this.smsPort = smsPort;
+    this.whatsAppPort = whatsAppPort;
     this.priceRuleRepositoryPort = priceRuleRepositoryPort;
   }
 
   @Async
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-  public void onUserRegistration(OnVerificationRequiredEvent eventData) {
+  public void onOtpVerificationRequired(OnVerificationRequiredEvent eventData) {
     try {
       User user = eventData.user();
       String recipientPhone = eventData.getRecipientPhone();
@@ -53,10 +57,8 @@ public class NotificationEventListener {
 
       smsPort.send(recipientPhone, message);
 
-      logger.info("SMS de verificação enviado para o usuário: {}", user.getUsername());
-
     } catch (Exception e) {
-      logger.error("Falha ao processar o evento de registro do usuário: {}", e.getMessage(), e);
+      logger.error("Falha ao processar o evento de verificação OTP via SMS: {}", e.getMessage());
     }
   }
 
@@ -77,11 +79,6 @@ public class NotificationEventListener {
       String message = buildReservationConfirmationMessage(eventData.username(), reservation);
       smsPort.send(eventData.userPhone(), message);
 
-      logger.info(
-          "SMS de confirmação de reserva enviado para o usuário: {} - Reserva ID: {}",
-          eventData.username(),
-          reservation.getId());
-
     } catch (Exception e) {
       logger.error("Falha ao processar evento de criação de reserva: {}", e.getMessage(), e);
     }
@@ -95,11 +92,6 @@ public class NotificationEventListener {
 
       String message = buildReservationCancellationMessage(eventData.username(), reservation);
       smsPort.send(eventData.userPhone(), message);
-
-      logger.info(
-          "SMS de cancelamento de reserva enviado para o usuário: {} - Reserva ID: {}",
-          eventData.username(),
-          reservation.getId());
 
     } catch (Exception e) {
       logger.error("Falha ao processar evento de cancelamento de reserva: {}", e.getMessage(), e);
@@ -117,11 +109,6 @@ public class NotificationEventListener {
               eventData.username(), reservation, eventData.adminReason());
       smsPort.send(eventData.userPhone(), message);
 
-      logger.info(
-          "SMS de cancelamento de reserva por admin enviado para o usuário: {} - Reserva ID: {}",
-          eventData.username(),
-          reservation.getId());
-
     } catch (Exception e) {
       logger.error(
           "Falha ao processar evento de cancelamento de reserva por admin: {}", e.getMessage(), e);
@@ -134,11 +121,6 @@ public class NotificationEventListener {
     try {
       String message = buildRecurringReservationCreateByAdminMessage(eventData);
       smsPort.send(eventData.userPhone(), message);
-
-      logger.info(
-          "SMS de criação de reservas recorrentes por admin enviado para o usuário: {} - Recurring ID: {}",
-          eventData.username(),
-          eventData.reservations().getFirst().getRecurringReservationId());
 
     } catch (Exception e) {
       logger.error(
@@ -153,10 +135,6 @@ public class NotificationEventListener {
       String message = buildRecurringReservationCancellationByAdminMessage(eventData);
       smsPort.send(eventData.userPhone(), message);
 
-      logger.info(
-          "SMS de cancelamento de reservas recorrentes por admin enviado para o usuário: {} - Recurring ID: {}",
-          eventData.username(),
-          eventData.reservations().getFirst().getRecurringReservationId());
     } catch (Exception e) {
       logger.error(
           "Falha ao processar evento de cancelamento de reservas recorrentes por admin: {}",
@@ -172,10 +150,6 @@ public class NotificationEventListener {
       String message = buildReservationsCancelledByAdminMessage(eventData);
       smsPort.send(eventData.userPhone(), message);
 
-      logger.info(
-          "SMS de cancelamento em lote de reservas por admin enviado para o usuário: {} - Quantidade: {}",
-          eventData.username(),
-          eventData.reservations().size());
     } catch (Exception e) {
       logger.error(
           "Falha ao processar evento de cancelamento em lote de reservas por admin: {}",

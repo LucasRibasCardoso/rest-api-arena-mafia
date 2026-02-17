@@ -90,7 +90,7 @@ public class UserController {
   }
 
   @PostMapping("/phone/verification")
-  @CustomRateLimiter(limiterName = "sensitiveOperationLimiter")
+  @CustomRateLimiter(limiterName = "smsRateLimiter", operationType = "sms")
   public ResponseEntity<Void> initiatePhoneVerification(
       @AuthenticationPrincipal UserDetailsAdapter authenticatedUser,
       @Valid @RequestBody InitiateChangePhoneRequestDto request) {
@@ -111,7 +111,7 @@ public class UserController {
   }
 
   @PostMapping("/phone/verification/resend-otp")
-  @CustomRateLimiter(limiterName = "sensitiveOperationLimiter")
+  @CustomRateLimiter(limiterName = "smsRateLimiter", operationType = "sms")
   public ResponseEntity<Void> resendPhoneVerificationCode(
       @AuthenticationPrincipal UserDetailsAdapter authenticatedUser) {
     resendChangePhoneOtpUseCase.execute(authenticatedUser.user().getId());
