@@ -10,7 +10,6 @@ import com.projetoExtensao.arenaMafia.domain.model.schedule.Reservation;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -43,7 +42,8 @@ public class AccountCleanupUseCaseImp implements AccountCleanupUseCase {
     Instant limitDate = Instant.now().minus(24, ChronoUnit.HOURS); // 1 dia atrás
 
     List<User> accountsToClean =
-        userRepository.findByStatusAndCreatedAtBefore(AccountStatus.PENDING_VERIFICATION, limitDate);
+        userRepository.findByStatusAndCreatedAtBefore(
+            AccountStatus.PENDING_VERIFICATION, limitDate);
 
     if (accountsToClean.isEmpty()) {
       logger.info("Nenhuma conta pendente foi encontrada para limpar. Tarefa concluída.");
@@ -64,7 +64,8 @@ public class AccountCleanupUseCaseImp implements AccountCleanupUseCase {
     logger.info("INICIANDO TAREFA AGENDADA: Limpeza de contas desativadas.");
     Instant limitDate = Instant.now().minus(7, ChronoUnit.DAYS); // 7 dia atrás
 
-    List<User> accountsToClean = userRepository.findByStatusAndUpdateAtBefore(AccountStatus.DISABLED, limitDate);
+    List<User> accountsToClean =
+        userRepository.findByStatusAndUpdateAtBefore(AccountStatus.DISABLED, limitDate);
 
     if (accountsToClean.isEmpty()) {
       logger.info("Nenhuma conta desativada elegível para exclusão.");
@@ -83,7 +84,8 @@ public class AccountCleanupUseCaseImp implements AccountCleanupUseCase {
 
   private void processUserDeletion(User user, User systemUser) {
     try {
-      List<Reservation> allReservations = reservationRepositoryPort.findAllPastReservationsByUser(user.getId());
+      List<Reservation> allReservations =
+          reservationRepositoryPort.findAllPastReservationsByUser(user.getId());
 
       // Transferir reservas para o usuário do sistema
       if (!allReservations.isEmpty()) {
@@ -94,7 +96,9 @@ public class AccountCleanupUseCaseImp implements AccountCleanupUseCase {
       // Exclusão definitiva da conta
       refreshTokenRepository.deleteByUser(user);
       userRepository.delete(user);
-      logger.info("SUCESSO: Dados removidos. Histórico preservado anonimamente. Usuário {} excluído.", user.getId());
+      logger.info(
+          "SUCESSO: Dados removidos. Histórico preservado anonimamente. Usuário {} excluído.",
+          user.getId());
 
     } catch (Exception e) {
       logger.error("Falha ao processar exclusão do usuário {}: {}", user.getId(), e.getMessage());

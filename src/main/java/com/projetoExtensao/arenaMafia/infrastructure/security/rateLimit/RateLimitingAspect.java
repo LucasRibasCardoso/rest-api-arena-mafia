@@ -40,15 +40,16 @@ public class RateLimitingAspect {
       throws Throwable {
 
     String limiterName = customRateLimiter.limiterName();
+    String operationType = customRateLimiter.operationType();
     RateLimiter baseRateLimiter = rateLimiterRegistry.rateLimiter(limiterName);
 
-    String key = rateLimitKeyProvider.resolveKey(request);
+    String key = rateLimitKeyProvider.resolveKey(request, operationType);
     String dynamicLimiterName = limiterName + "#" + key;
 
     RateLimiterConfig config = baseRateLimiter.getRateLimiterConfig();
     RateLimiter rateLimiterForKey = rateLimiterRegistry.rateLimiter(dynamicLimiterName, config);
 
-    logger.debug("Aplicando rate limit '{} para a chave '{}'", limiterName, key);
+    logger.debug("Aplicando rate limit '{}' para a chave '{}'", limiterName, key);
 
     RateLimiter.waitForPermission(rateLimiterForKey);
     return joinPoint.proceed();

@@ -8,7 +8,6 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,11 +32,11 @@ public class AdminAgendaController {
   @GetMapping
   @CustomRateLimiter(limiterName = "globalLimiter")
   public ResponseEntity<List<AdminAgendaItemResponseDto>> getAgenda(
-          @RequestParam("date") LocalDate date,
-          @RequestParam(value = "courtId", required = false) UUID courtId) {
+      @RequestParam("date") LocalDate date,
+      @RequestParam(value = "courtId", required = false) UUID courtId) {
 
-    List<AdminAgendaItemResponseDto> response = findAdminAgendaUseCase.execute(date, Optional.ofNullable(courtId))
-            .stream()
+    List<AdminAgendaItemResponseDto> response =
+        findAdminAgendaUseCase.execute(date, Optional.ofNullable(courtId)).stream()
             .map(adminAgendaMapper::toDto)
             .toList();
 

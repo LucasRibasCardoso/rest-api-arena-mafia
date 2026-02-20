@@ -18,8 +18,6 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
-
 import org.springframework.stereotype.Service;
 
 @Service
@@ -37,6 +35,7 @@ public class AvailableSlotGenerationService {
 
   /**
    * Gera slots disponíveis com modalidades aceitas para multiplas quadras
+   *
    * @param courts lista de quadras
    * @param schedules lista de agendamentos
    * @param operatingHours lista de horários de funcionamento
@@ -61,11 +60,7 @@ public class AvailableSlotGenerationService {
 
               List<AvailableSlot> courtSlots =
                   this.generateAvailableSlotsForCourt(
-                          court,
-                          operatingHours,
-                          courtSchedules,
-                          priceRules,
-                          dayOfWeek);
+                      court, operatingHours, courtSchedules, priceRules, dayOfWeek);
 
               return courtSlots.stream()
                   .map(
@@ -105,10 +100,12 @@ public class AvailableSlotGenerationService {
                       .toList();
 
               List<AvailableSlot> courtSlots =
-                  this.generateAvailableSlotsForCourt(court, operatingHours, courtSchedules, priceRules, dayOfWeek);
+                  this.generateAvailableSlotsForCourt(
+                      court, operatingHours, courtSchedules, priceRules, dayOfWeek);
 
               return courtSlots.stream()
-                      .map(slot -> new AvailableSlot(slot.courtId(), slot.timeInterval(), slot.price()));
+                  .map(
+                      slot -> new AvailableSlot(slot.courtId(), slot.timeInterval(), slot.price()));
             })
         .toList();
   }
@@ -122,12 +119,13 @@ public class AvailableSlotGenerationService {
    * @return lista de horários de funcionamento aplicáveis
    * @throws OperatingHoursNotFoundException se não houver horários aplicáveis para o dia da semana
    */
-  public List<OperatingHours> filterApplicableOperatingHours(List<OperatingHours> allOperatingHours, DayOfWeek dayOfWeek) {
+  public List<OperatingHours> filterApplicableOperatingHours(
+      List<OperatingHours> allOperatingHours, DayOfWeek dayOfWeek) {
 
     List<OperatingHours> applicableOperatingHours =
-            allOperatingHours.stream()
-                    .filter(oh -> oh.getDaysOfWeek() == null || oh.getDaysOfWeek().contains(dayOfWeek))
-                    .toList();
+        allOperatingHours.stream()
+            .filter(oh -> oh.getDaysOfWeek() == null || oh.getDaysOfWeek().contains(dayOfWeek))
+            .toList();
 
     if (applicableOperatingHours.isEmpty()) {
       throw new OperatingHoursNotFoundException(ErrorCode.OPERATING_HOURS_APPLICABLE_NOT_FOUND);
@@ -146,21 +144,20 @@ public class AvailableSlotGenerationService {
    * @return lista de slots disponíveis
    */
   private List<AvailableSlot> generateAvailableSlotsForCourt(
-          Court court,
-          List<OperatingHours> operatingHoursList,
-          List<ScheduleEntry> confirmedSchedules,
-          List<PriceRule> priceRules,
-          DayOfWeek dayOfWeek) {
+      Court court,
+      List<OperatingHours> operatingHoursList,
+      List<ScheduleEntry> confirmedSchedules,
+      List<PriceRule> priceRules,
+      DayOfWeek dayOfWeek) {
 
     return operatingHoursList.stream()
-            .map(OperatingHours::getTimeInterval)
-            .flatMap(interval -> generateSlots(interval, court.getOffsetMinutes()).stream())
-            .filter(slot -> !scheduleAvailabilityService.isSlotOccupied(slot, confirmedSchedules))
-            .map(slot -> buildAvailableSlot(court, slot, priceRules, dayOfWeek))
-            .sorted(Comparator.comparing(availableSlot -> availableSlot.timeInterval().startTime()))
-            .toList();
+        .map(OperatingHours::getTimeInterval)
+        .flatMap(interval -> generateSlots(interval, court.getOffsetMinutes()).stream())
+        .filter(slot -> !scheduleAvailabilityService.isSlotOccupied(slot, confirmedSchedules))
+        .map(slot -> buildAvailableSlot(court, slot, priceRules, dayOfWeek))
+        .sorted(Comparator.comparing(availableSlot -> availableSlot.timeInterval().startTime()))
+        .toList();
   }
-
 
   /**
    * Cria um objeto AvailableSlot com o preço calculado.
@@ -171,7 +168,8 @@ public class AvailableSlotGenerationService {
    * @param dayOfWeek dia da semana
    * @return AvailableSlot criado
    */
-  private AvailableSlot buildAvailableSlot(Court court, TimeInterval slot, List<PriceRule> priceRules, DayOfWeek dayOfWeek) {
+  private AvailableSlot buildAvailableSlot(
+      Court court, TimeInterval slot, List<PriceRule> priceRules, DayOfWeek dayOfWeek) {
     BigDecimal price = priceCalculatorService.calculateSlotPrice(slot, priceRules, dayOfWeek);
     return new AvailableSlot(court.getId(), slot, price);
   }
@@ -184,7 +182,8 @@ public class AvailableSlotGenerationService {
    * @param courtOffset minutos de offset (ex: 30)
    * @return lista de slots de 1 hora válidos
    */
-  private List<TimeInterval> generateSlots(TimeInterval operatingInterval, OffsetMinutes courtOffset) {
+  private List<TimeInterval> generateSlots(
+      TimeInterval operatingInterval, OffsetMinutes courtOffset) {
     List<TimeInterval> slots = new ArrayList<>();
 
     LocalTime currentSlotStartTime =
@@ -224,7 +223,8 @@ public class AvailableSlotGenerationService {
    * @param operatingStartTime horário de início do funcionamento
    * @return horário ajustado para o offset da quadra
    */
-  private LocalTime alignStartTimeToOffset(OffsetMinutes courtOffset, LocalTime operatingStartTime) {
+  private LocalTime alignStartTimeToOffset(
+      OffsetMinutes courtOffset, LocalTime operatingStartTime) {
 
     if (operatingStartTime.getMinute() == courtOffset.getValue()) {
       return operatingStartTime;

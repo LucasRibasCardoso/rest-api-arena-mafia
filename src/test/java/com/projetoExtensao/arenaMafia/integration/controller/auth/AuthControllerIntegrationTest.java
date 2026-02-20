@@ -25,7 +25,6 @@ import com.projetoExtensao.arenaMafia.infrastructure.web.auth.dto.response.Signu
 import com.projetoExtensao.arenaMafia.infrastructure.web.exception.dto.ErrorResponseDto;
 import com.projetoExtensao.arenaMafia.infrastructure.web.exception.dto.FieldErrorResponseDto;
 import com.projetoExtensao.arenaMafia.integration.config.WebIntegrationTestConfig;
-import com.projetoExtensao.arenaMafia.integration.config.util.*;
 import com.projetoExtensao.arenaMafia.integration.config.util.user.InvalidFullNameProvider;
 import com.projetoExtensao.arenaMafia.integration.config.util.user.InvalidOtpCodeProvider;
 import com.projetoExtensao.arenaMafia.integration.config.util.user.InvalidOtpSessionIdProvider;
@@ -47,9 +46,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.test.annotation.DirtiesContext;
 
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @DisplayName("Testes de Integração para AuthController")
 public class AuthControllerIntegrationTest extends WebIntegrationTestConfig {
 

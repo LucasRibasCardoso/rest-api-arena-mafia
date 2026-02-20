@@ -30,15 +30,13 @@ public class SystemUserConfig implements CommandLineRunner {
     try {
       User systemUser = userRepositoryPort.findSystemUserOrElseThrow();
       logger.info("System User encontrado: ID [{}]", systemUser.getId());
-    }
-    catch (SystemUserNotFoundException e) {
+    } catch (SystemUserNotFoundException e) {
       String hash = passwordEncoderPort.encode(UUID.randomUUID().toString());
       User newGhostUser = User.createSystemUser(hash);
       userRepositoryPort.save(newGhostUser);
 
       logger.info("System User criado com sucesso: ID [{}]", newGhostUser.getId());
-    }
-    catch (Exception e) {
+    } catch (Exception e) {
       logger.error("Erro ao verificar/criar usuário", e);
       throw new IllegalStateException("Falha ao inicializar usuário", e);
     }

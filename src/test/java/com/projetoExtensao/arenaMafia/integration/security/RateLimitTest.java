@@ -18,10 +18,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @TestPropertySource(properties = "resilience4j.ratelimiter.enabled=true")
 public class RateLimitTest extends WebIntegrationTestConfig {
 
@@ -79,7 +77,7 @@ public class RateLimitTest extends WebIntegrationTestConfig {
     var request = new ResendOtpRequestDto(otpSessionId);
 
     // Act
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 3; i++) {
       given().spec(specification).body(request).when().post("/resend-otp").then().statusCode(204);
     }
 

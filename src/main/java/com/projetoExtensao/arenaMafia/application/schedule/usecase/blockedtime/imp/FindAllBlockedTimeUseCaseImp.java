@@ -34,11 +34,11 @@ public class FindAllBlockedTimeUseCaseImp implements FindAllBlockedTimeUseCase {
   public Page<BlockedTimeDetail> execute(UUID courtId, Pageable pageable) {
     // Define a ordenação padrão por data decrescente, se nenhuma ordenação for fornecida
     if (pageable.getSort().isUnsorted()) {
-      pageable = PageRequest.of(
+      pageable =
+          PageRequest.of(
               pageable.getPageNumber(),
               pageable.getPageSize(),
-              Sort.by(Sort.Direction.DESC, "dateTimeSlot.date")
-      );
+              Sort.by(Sort.Direction.DESC, "dateTimeSlot.date"));
     }
 
     // Monta a especificação com base nos filtros fornecidos e realiza a busca

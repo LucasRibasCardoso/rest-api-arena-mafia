@@ -21,11 +21,13 @@ public class AgendaMapper {
     return switch (agendaItem) {
       case ScheduleEntryAgendaItem scheduleEntry -> mapScheduleEntry(scheduleEntry);
       case AvailableSlotAgendaItem availableSlot -> mapAvailableSlot(availableSlot);
-      case GroupedBlockedTimeAgendaItem groupedBlockedTime -> mapGroupedBlockedTime(groupedBlockedTime);
+      case GroupedBlockedTimeAgendaItem groupedBlockedTime ->
+          mapGroupedBlockedTime(groupedBlockedTime);
     };
   }
 
-  private PublicScheduleEntryResponseDto mapScheduleEntry(ScheduleEntryAgendaItem scheduleEntryAgendaItem) {
+  private PublicScheduleEntryResponseDto mapScheduleEntry(
+      ScheduleEntryAgendaItem scheduleEntryAgendaItem) {
     return switch (scheduleEntryAgendaItem.scheduleEntry()) {
       case Reservation reservation -> mapReservation(reservation);
       case BlockedTime blockedTime -> mapBlockedTime(blockedTime);
@@ -42,28 +44,22 @@ public class AgendaMapper {
     TimeIntervalDto timeInterval = toTimeIntervalDto(blockedTime.getDateTimeSlot().timeInterval());
 
     return new PublicScheduleEntryResponseDto(
-            timeInterval,
-            ScheduleEntryType.BLOCKED_TIME,
-            blockedTime.getDescription()
-    );
+        timeInterval, ScheduleEntryType.BLOCKED_TIME, blockedTime.getDescription());
   }
 
-  private PublicAvailableItemResponseDto mapAvailableSlot(AvailableSlotAgendaItem availableSlotAgendaItem) {
+  private PublicAvailableItemResponseDto mapAvailableSlot(
+      AvailableSlotAgendaItem availableSlotAgendaItem) {
     TimeIntervalDto timeInterval = toTimeIntervalDto(availableSlotAgendaItem.timeInterval());
 
     return new PublicAvailableItemResponseDto(
-        timeInterval,
-        availableSlotAgendaItem.modalityIds(),
-        availableSlotAgendaItem.price());
+        timeInterval, availableSlotAgendaItem.modalityIds(), availableSlotAgendaItem.price());
   }
 
-  private PublicScheduleEntryResponseDto mapGroupedBlockedTime(GroupedBlockedTimeAgendaItem groupedBlockedTime) {
+  private PublicScheduleEntryResponseDto mapGroupedBlockedTime(
+      GroupedBlockedTimeAgendaItem groupedBlockedTime) {
     TimeIntervalDto timeInterval = toTimeIntervalDto(groupedBlockedTime.timeInterval());
     return new PublicScheduleEntryResponseDto(
-            timeInterval,
-            ScheduleEntryType.BLOCKED_TIME,
-            groupedBlockedTime.description()
-    );
+        timeInterval, ScheduleEntryType.BLOCKED_TIME, groupedBlockedTime.description());
   }
 
   private TimeIntervalDto toTimeIntervalDto(TimeInterval timeInterval) {

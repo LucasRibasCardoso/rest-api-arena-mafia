@@ -68,6 +68,7 @@ public class User {
 
   /**
    * Factory Method para criar uma instância de User interno do sistema.
+   *
    * @param encodedPassword senha criptografada
    * @return User interno do sistema
    */
@@ -79,16 +80,15 @@ public class User {
     String dummyPhone = "+550000000000";
 
     return new User(
-            newId,
-            SYSTEM_USERNAME,
-            ghostFullName,
-            dummyPhone,
-            encodedPassword,
-            AccountStatus.LOCKED,
-            RoleEnum.ROLE_SYSTEM,
-            now,
-            now
-    );
+        newId,
+        SYSTEM_USERNAME,
+        ghostFullName,
+        dummyPhone,
+        encodedPassword,
+        AccountStatus.LOCKED,
+        RoleEnum.ROLE_SYSTEM,
+        now,
+        now);
   }
 
   /**

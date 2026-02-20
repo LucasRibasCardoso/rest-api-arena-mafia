@@ -9,8 +9,38 @@ import org.springframework.stereotype.Component;
 @Component
 public class RateLimitKeyProvider {
 
+  private static final String OPERATION_SEPARATOR = ":";
+
+  /**
+   * Gera a chave para rate limiting baseada no usuário/IP e tipo de operação.
+   *
+   * <p>Para usuários autenticados: {username}:{operationType} Para usuários anônimos:
+   * {clientIp}:{operationType}
+   *
+   * <p>Exemplos: - user123:sms - 192.168.1.1:sms - user123:auth
+   *
+   * @param request a requisição HTTP
+   * @param operationType tipo de operação (ex: "sms", "auth", "login"). Se vazio, ignora a
+   *     separação.
+   * @return chave única para rate limiting
+   */
+  public String resolveKey(HttpServletRequest request, String operationType) {
+    String baseKey = getUsernameFromPrincipal().orElseGet(() -> getIpFromRequest(request));
+
+    // Se operationType está vazio, retorna apenas a chave base (username/IP)
+    if (operationType == null || operationType.isEmpty()) {
+      return baseKey;
+    }
+
+    return baseKey + OPERATION_SEPARATOR + operationType;
+  }
+
+  /**
+   * Versão simplificada que mantém compatibilidade com código existente. Resolve a chave sem
+   * diferenciação por operação.
+   */
   public String resolveKey(HttpServletRequest request) {
-    return getUsernameFromPrincipal().orElseGet(() -> getIpFromRequest(request));
+    return resolveKey(request, "");
   }
 
   private Optional<String> getUsernameFromPrincipal() {
@@ -28,6 +58,12 @@ public class RateLimitKeyProvider {
     if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
       return xForwardedFor.split(",")[0].trim();
     }
+
+    String xRealIp = request.getHeader("X-Real-IP");
+    if (xRealIp != null && !xRealIp.isEmpty()) {
+      return xRealIp;
+    }
+
     return request.getRemoteAddr();
   }
 }

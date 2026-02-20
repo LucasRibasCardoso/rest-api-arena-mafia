@@ -22,9 +22,9 @@ public class DeleteBlockedTimeUseCaseImp implements DeleteBlockedTimeUseCase {
     BlockedTime blockedTime = blockedTimeRepositoryPort.findByIdOrElseThrow(blockedTimeId);
 
     if (blockedTime.isRecurring() && deleteAllRecurring) {
-      blockedTimeRepositoryPort.deleteAllByRecurringBlockedTimeId(blockedTime.getRecurringBlockedTimeId());
-    } 
-    else {
+      blockedTimeRepositoryPort.deleteAllByRecurringBlockedTimeId(
+          blockedTime.getRecurringBlockedTimeId());
+    } else {
       blockedTimeRepositoryPort.deleteById(blockedTimeId);
     }
   }

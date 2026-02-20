@@ -4,7 +4,4 @@ import com.projetoExtensao.arenaMafia.domain.model.schedule.Reservation;
 import java.util.List;
 
 public record OnReservationsCancelledByAdminEvent(
-    String username,
-    String userPhone,
-    String adminReason,
-    List<Reservation> reservations) {}
+    String username, String userPhone, String adminReason, List<Reservation> reservations) {}

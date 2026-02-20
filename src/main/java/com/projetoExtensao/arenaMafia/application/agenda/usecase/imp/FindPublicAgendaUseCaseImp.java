@@ -23,7 +23,6 @@ import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.specification.CourtSpecification;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.specification.OperatingHoursSpecification;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.specification.PriceRuleSpecification;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
@@ -66,17 +65,11 @@ public class FindPublicAgendaUseCaseImp implements FindPublicAgendaUseCase {
     List<OperatingHours> operatingHours = getApplicableOperatingHours(dayOfWeek);
 
     List<AvailableSlotWithModalities> availableSlots =
-            availableSlotGenerationService.generateAvailableSlotsDetailsForCourts(
-                courts,
-                schedules,
-                operatingHours,
-                priceRules,
-                dayOfWeek
-        );
+        availableSlotGenerationService.generateAvailableSlotsDetailsForCourts(
+            courts, schedules, operatingHours, priceRules, dayOfWeek);
 
     return buildAgendaListAndSort(schedules, availableSlots);
   }
-
 
   private void validateDate(LocalDate date) {
     if (date.isBefore(LocalDate.now())) {
@@ -93,7 +86,8 @@ public class FindPublicAgendaUseCaseImp implements FindPublicAgendaUseCase {
   }
 
   private List<PriceRule> getActivePriceRules() {
-    List<PriceRule> priceRules = priceRuleRepositoryPort.findAll(PriceRuleSpecification.byActiveStatus(true));
+    List<PriceRule> priceRules =
+        priceRuleRepositoryPort.findAll(PriceRuleSpecification.byActiveStatus(true));
     if (priceRules.isEmpty()) {
       throw new PriceRuleNotFoundException();
     }
@@ -140,28 +134,29 @@ public class FindPublicAgendaUseCaseImp implements FindPublicAgendaUseCase {
    * @return lista de itens da agenda ordenados cronologicamente por horário de início
    */
   private List<AgendaItem> buildAgendaListAndSort(
-          List<ScheduleEntry> scheduleEntries,
-          List<AvailableSlotWithModalities> availableSlots) {
+      List<ScheduleEntry> scheduleEntries, List<AvailableSlotWithModalities> availableSlots) {
 
-    Map<TimeInterval, List<AvailableSlotWithModalities>> slotsByTime = groupAvailableSlotsByTimeInterval(availableSlots);
-    Map<TimeInterval, List<ScheduleEntry>> schedulesByTime = groupScheduleEntriesByTimeInterval(scheduleEntries);
+    Map<TimeInterval, List<AvailableSlotWithModalities>> slotsByTime =
+        groupAvailableSlotsByTimeInterval(availableSlots);
+    Map<TimeInterval, List<ScheduleEntry>> schedulesByTime =
+        groupScheduleEntriesByTimeInterval(scheduleEntries);
 
     Set<TimeInterval> allTimeIntervals = getAllUniqueTimeIntervals(slotsByTime, schedulesByTime);
 
     return allTimeIntervals.stream()
-            .flatMap(
-                    timeInterval ->
-                            createAgendaItemsForTimeInterval(
-                                    timeInterval,
-                                    schedulesByTime.getOrDefault(timeInterval, List.of()),
-                                    slotsByTime.getOrDefault(timeInterval, List.of()))
-                                    .stream())
-            .sorted(Comparator.comparing(item -> item.getTimeInterval().startTime()))
-            .toList();
+        .flatMap(
+            timeInterval ->
+                createAgendaItemsForTimeInterval(
+                    timeInterval,
+                    schedulesByTime.getOrDefault(timeInterval, List.of()),
+                    slotsByTime.getOrDefault(timeInterval, List.of()))
+                    .stream())
+        .sorted(Comparator.comparing(item -> item.getTimeInterval().startTime()))
+        .toList();
   }
 
   private Map<TimeInterval, List<AvailableSlotWithModalities>> groupAvailableSlotsByTimeInterval(
-          List<AvailableSlotWithModalities> availableSlots) {
+      List<AvailableSlotWithModalities> availableSlots) {
     return availableSlots.stream()
         .collect(Collectors.groupingBy(AvailableSlotWithModalities::timeInterval));
   }
@@ -183,8 +178,7 @@ public class FindPublicAgendaUseCaseImp implements FindPublicAgendaUseCase {
    * @return conjunto com todos os intervalos de tempo únicos
    */
   private Set<TimeInterval> getAllUniqueTimeIntervals(
-          Map<TimeInterval, ?> slotsByTime,
-          Map<TimeInterval, ?> schedulesByTime) {
+      Map<TimeInterval, ?> slotsByTime, Map<TimeInterval, ?> schedulesByTime) {
     Set<TimeInterval> allTimeIntervals = new HashSet<>(slotsByTime.keySet());
     allTimeIntervals.addAll(schedulesByTime.keySet());
     return allTimeIntervals;
@@ -245,9 +239,11 @@ public class FindPublicAgendaUseCaseImp implements FindPublicAgendaUseCase {
    *
    * @param timeInterval intervalo de tempo
    * @param availableSlots lista de slots disponíveis neste horário (pode estar vazia)
-   * @return Optional contendo o item agrupado com todas as modalidades, ou Optional.empty() se não houver slots disponíveis
+   * @return Optional contendo o item agrupado com todas as modalidades, ou Optional.empty() se não
+   *     houver slots disponíveis
    */
-  private Optional<AgendaItem> createGroupedAvailableSlotItem(TimeInterval timeInterval, List<AvailableSlotWithModalities> availableSlots) {
+  private Optional<AgendaItem> createGroupedAvailableSlotItem(
+      TimeInterval timeInterval, List<AvailableSlotWithModalities> availableSlots) {
 
     if (availableSlots.isEmpty()) {
       return Optional.empty();

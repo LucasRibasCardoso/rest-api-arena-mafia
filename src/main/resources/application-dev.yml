@@ -7,10 +7,6 @@ spring:
   h2:
     console:
       enabled: true
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
 
   data:
     redis:
@@ -46,3 +42,5 @@ springdoc:
     enabled: true
   swagger-ui:
     url: /docs/openapi.yml
+
+

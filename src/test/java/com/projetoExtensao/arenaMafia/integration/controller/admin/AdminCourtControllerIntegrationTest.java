@@ -1,7 +1,6 @@
 package com.projetoExtensao.arenaMafia.integration.controller.admin;
 
 import static io.restassured.RestAssured.given;
-import static io.restassured.RestAssured.post;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -32,12 +31,10 @@ import com.projetoExtensao.arenaMafia.integration.config.WebIntegrationTestConfi
 import com.projetoExtensao.arenaMafia.integration.config.util.court.InvalidCourtNameProvider;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.specification.RequestSpecification;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.*;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -46,9 +43,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.test.annotation.DirtiesContext;
 
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @DisplayName("Testes de integração para AdminCourtController")
 public class AdminCourtControllerIntegrationTest extends WebIntegrationTestConfig {
 
@@ -808,7 +803,8 @@ public class AdminCourtControllerIntegrationTest extends WebIntegrationTestConfi
         ErrorCode errorCode = ErrorCode.COURT_NOT_FOUND;
 
         assertThat(response.status()).isEqualTo(404);
-        assertThat(response.path()).isEqualTo("/api/admin/courts/" + nonExistentCourtId + "/enable");
+        assertThat(response.path())
+            .isEqualTo("/api/admin/courts/" + nonExistentCourtId + "/enable");
         assertThat(response.errorCode()).isEqualTo(errorCode.name());
         assertThat(response.developerMessage()).isEqualTo(errorCode.getMessage());
       }
@@ -869,15 +865,15 @@ public class AdminCourtControllerIntegrationTest extends WebIntegrationTestConfi
 
           // Act
           var response =
-                  given()
-                          .spec(specification)
-                          .header("Authorization", accessToken)
-                          .when()
-                          .post("/{courtId}/preview-disable", court.getId())
-                          .then()
-                          .statusCode(200)
-                          .extract()
-                          .as(CourtDisablePreviewResponseDto.class);
+              given()
+                  .spec(specification)
+                  .header("Authorization", accessToken)
+                  .when()
+                  .post("/{courtId}/preview-disable", court.getId())
+                  .then()
+                  .statusCode(200)
+                  .extract()
+                  .as(CourtDisablePreviewResponseDto.class);
 
           // Assert
           assertThat(response.previewKey()).isNotNull();
@@ -887,7 +883,8 @@ public class AdminCourtControllerIntegrationTest extends WebIntegrationTestConfi
           assertThat(response.blockedTimesAffectedCount()).isZero();
           assertThat(response.reservationsAffectedCount()).isZero();
 
-          Optional<CourtDisablePreview> previewOpt = getPreviewSavedFromCache(response.previewKey());
+          Optional<CourtDisablePreview> previewOpt =
+              getPreviewSavedFromCache(response.previewKey());
           assertThat(previewOpt).isPresent();
 
           assertResponsePreviewMatchesPreviewSaved(response, previewOpt.get());
@@ -899,56 +896,58 @@ public class AdminCourtControllerIntegrationTest extends WebIntegrationTestConfi
           // Arrange
           Modality modality = mockPersistModality("Volei");
           Court court = mockPersistCourt("Quadra 1", modality);
-          User user = mockPersistUser("test_username", "Username Test", "+55992052149", "password123");
+          User user =
+              mockPersistUser("test_username", "Username Test", "+55992052149", "password123");
 
           // Cria agendamentos que serão afetados
           mockPersistReservationByUser(
-                  modality.getId(),
-                  court.getId(),
-                  LocalDate.now().minusDays(1),
-                  new TimeInterval(LocalTime.of(8, 0), LocalTime.of(9, 0)),
-                  BigDecimal.valueOf(50),
-                  adminId);
+              modality.getId(),
+              court.getId(),
+              LocalDate.now().minusDays(1),
+              new TimeInterval(LocalTime.of(8, 0), LocalTime.of(9, 0)),
+              BigDecimal.valueOf(50),
+              adminId);
           mockPersistReservationByUser(
-                  modality.getId(),
-                  court.getId(),
-                  LocalDate.now().plusDays(1),
-                  new TimeInterval(LocalTime.of(8, 0), LocalTime.of(9, 0)),
-                  BigDecimal.valueOf(50),
-                  adminId);
+              modality.getId(),
+              court.getId(),
+              LocalDate.now().plusDays(1),
+              new TimeInterval(LocalTime.of(8, 0), LocalTime.of(9, 0)),
+              BigDecimal.valueOf(50),
+              adminId);
           mockPersistReservationByUser(
-                  modality.getId(),
-                  court.getId(),
-                  LocalDate.now().plusDays(365),
-                  new TimeInterval(LocalTime.of(14, 0), LocalTime.of(15, 0)),
-                  BigDecimal.valueOf(80),
-                  adminId);
+              modality.getId(),
+              court.getId(),
+              LocalDate.now().plusDays(365),
+              new TimeInterval(LocalTime.of(14, 0), LocalTime.of(15, 0)),
+              BigDecimal.valueOf(80),
+              adminId);
           mockPersistReservationByUser(
-                  modality.getId(),
-                  court.getId(),
-                  LocalDate.now().plusDays(5),
-                  new TimeInterval(LocalTime.of(9, 0), LocalTime.of(10, 0)),
-                  BigDecimal.valueOf(80),
-                  user.getId());
+              modality.getId(),
+              court.getId(),
+              LocalDate.now().plusDays(5),
+              new TimeInterval(LocalTime.of(9, 0), LocalTime.of(10, 0)),
+              BigDecimal.valueOf(80),
+              user.getId());
           mockPersistBlockedTimeSpecific(
-                  court.getId(),
-                  LocalDate.now().plusDays(9),
-                  new TimeInterval(LocalTime.of(10, 0), LocalTime.of(12, 0)),
-                  "Feriado Municipal",
-                  adminId);
+              court.getId(),
+              LocalDate.now().plusDays(9),
+              new TimeInterval(LocalTime.of(10, 0), LocalTime.of(12, 0)),
+              "Feriado Municipal",
+              adminId);
 
           // Act
           var response =
-                  given()
-                          .spec(specification)
-                          .header("Authorization", accessToken)
-                          .when()
-                          .post("/{courtId}/preview-disable", court.getId())
-                          .then()
-                          .log().all()
-                          .statusCode(200)
-                          .extract()
-                          .as(CourtDisablePreviewResponseDto.class);
+              given()
+                  .spec(specification)
+                  .header("Authorization", accessToken)
+                  .when()
+                  .post("/{courtId}/preview-disable", court.getId())
+                  .then()
+                  .log()
+                  .all()
+                  .statusCode(200)
+                  .extract()
+                  .as(CourtDisablePreviewResponseDto.class);
 
           // Assert
           assertThat(response.previewKey()).isNotNull();
@@ -958,51 +957,54 @@ public class AdminCourtControllerIntegrationTest extends WebIntegrationTestConfi
           assertThat(response.blockedTimesAffectedCount()).isEqualTo(1);
           assertThat(response.reservationsAffectedCount()).isEqualTo(3);
 
-          Optional<CourtDisablePreview> previewOpt = getPreviewSavedFromCache(response.previewKey());
+          Optional<CourtDisablePreview> previewOpt =
+              getPreviewSavedFromCache(response.previewKey());
           assertThat(previewOpt).isPresent();
 
           assertResponsePreviewMatchesPreviewSaved(response, previewOpt.get());
         }
 
         @Test
-        @DisplayName("Deve criar um preview de desabilitação de quadra com agendamentos afetados e reservas em andamento")
+        @DisplayName(
+            "Deve criar um preview de desabilitação de quadra com agendamentos afetados e reservas"
+                + " em andamento")
         void previewDisable_shouldReturn200AndPreviewDisableCourtWithOngoingReservations() {
           // Arrange
           Modality modality = mockPersistModality("Futebol");
           Court court = mockPersistCourt("Quadra 1", modality);
 
-          TimeInterval inProgressInterval = new TimeInterval(
+          TimeInterval inProgressInterval =
+              new TimeInterval(
                   normalizeToValidMinutes(LocalTime.now().minusMinutes(30)),
-                  normalizeToValidMinutes(LocalTime.now().plusMinutes(30))
-          );
+                  normalizeToValidMinutes(LocalTime.now().plusMinutes(30)));
 
           // Cria agendamentos que serão afetados, incluindo uma reserva em andamento
           mockPersistReservationByUser(
-                  modality.getId(),
-                  court.getId(),
-                  LocalDate.now(),
-                  inProgressInterval,
-                  BigDecimal.valueOf(60),
-                  adminId);
+              modality.getId(),
+              court.getId(),
+              LocalDate.now(),
+              inProgressInterval,
+              BigDecimal.valueOf(60),
+              adminId);
           mockPersistReservationByUser(
-                  modality.getId(),
-                  court.getId(),
-                  LocalDate.now().plusDays(5),
-                  new TimeInterval(LocalTime.of(12, 0), LocalTime.of(13, 0)),
-                  BigDecimal.valueOf(70),
-                  adminId);
+              modality.getId(),
+              court.getId(),
+              LocalDate.now().plusDays(5),
+              new TimeInterval(LocalTime.of(12, 0), LocalTime.of(13, 0)),
+              BigDecimal.valueOf(70),
+              adminId);
 
           // Act
           var response =
-                  given()
-                          .spec(specification)
-                          .header("Authorization", accessToken)
-                          .when()
-                          .post("/{courtId}/preview-disable", court.getId())
-                          .then()
-                          .statusCode(200)
-                          .extract()
-                          .as(CourtDisablePreviewResponseDto.class);
+              given()
+                  .spec(specification)
+                  .header("Authorization", accessToken)
+                  .when()
+                  .post("/{courtId}/preview-disable", court.getId())
+                  .then()
+                  .statusCode(200)
+                  .extract()
+                  .as(CourtDisablePreviewResponseDto.class);
 
           // Assert
           assertThat(response.previewKey()).isNotNull();
@@ -1013,7 +1015,8 @@ public class AdminCourtControllerIntegrationTest extends WebIntegrationTestConfi
           assertThat(response.reservationsAffectedCount()).isEqualTo(1);
           assertThat(response.inProgressReservations().size()).isEqualTo(1);
 
-          Optional<CourtDisablePreview> previewOpt = getPreviewSavedFromCache(response.previewKey());
+          Optional<CourtDisablePreview> previewOpt =
+              getPreviewSavedFromCache(response.previewKey());
           assertThat(previewOpt).isPresent();
 
           assertResponsePreviewMatchesPreviewSaved(response, previewOpt.get());
@@ -1032,15 +1035,15 @@ public class AdminCourtControllerIntegrationTest extends WebIntegrationTestConfi
 
           // Act & Assert
           var response =
-                  given()
-                          .spec(specification)
-                          .header("Authorization", accessToken)
-                          .when()
-                          .post("/{courtId}/preview-disable", invalidCourtId)
-                          .then()
-                          .statusCode(400)
-                          .extract()
-                          .as(ErrorResponseDto.class);
+              given()
+                  .spec(specification)
+                  .header("Authorization", accessToken)
+                  .when()
+                  .post("/{courtId}/preview-disable", invalidCourtId)
+                  .then()
+                  .statusCode(400)
+                  .extract()
+                  .as(ErrorResponseDto.class);
 
           String expectedPath = "/api/admin/courts/" + invalidCourtId + "/preview-disable";
 
@@ -1060,15 +1063,15 @@ public class AdminCourtControllerIntegrationTest extends WebIntegrationTestConfi
 
           // Act & Assert
           var response =
-                  given()
-                          .spec(specification)
-                          .header("Authorization", accessToken)
-                          .when()
-                          .post("/{courtId}/preview-disable", nonExistentCourtId)
-                          .then()
-                          .statusCode(404)
-                          .extract()
-                          .as(ErrorResponseDto.class);
+              given()
+                  .spec(specification)
+                  .header("Authorization", accessToken)
+                  .when()
+                  .post("/{courtId}/preview-disable", nonExistentCourtId)
+                  .then()
+                  .statusCode(404)
+                  .extract()
+                  .as(ErrorResponseDto.class);
 
           String expectedPath = "/api/admin/courts/" + nonExistentCourtId + "/preview-disable";
           assertBusinessError(response, 404, expectedPath, ErrorCode.COURT_NOT_FOUND);
@@ -1091,15 +1094,15 @@ public class AdminCourtControllerIntegrationTest extends WebIntegrationTestConfi
 
           // Act & Assert
           var response =
-                  given()
-                          .spec(specification)
-                          .header("Authorization", accessToken)
-                          .when()
-                          .post("/{courtId}/preview-disable", court.getId())
-                          .then()
-                          .statusCode(409)
-                          .extract()
-                          .as(ErrorResponseDto.class);
+              given()
+                  .spec(specification)
+                  .header("Authorization", accessToken)
+                  .when()
+                  .post("/{courtId}/preview-disable", court.getId())
+                  .then()
+                  .statusCode(409)
+                  .extract()
+                  .as(ErrorResponseDto.class);
 
           String expectedPath = "/api/admin/courts/" + court.getId() + "/preview-disable";
           assertBusinessError(response, 409, expectedPath, ErrorCode.COURT_ALREADY_DISABLED);
@@ -1118,7 +1121,8 @@ public class AdminCourtControllerIntegrationTest extends WebIntegrationTestConfi
       class SuccessScenarios {
 
         @Test
-        @DisplayName("Deve confirmar a desabilitação de uma quadra com sucesso sem agendamentos afetados")
+        @DisplayName(
+            "Deve confirmar a desabilitação de uma quadra com sucesso sem agendamentos afetados")
         void confirmDisable_shouldReturn200AndDisableCourtSuccessfully_withoutAffectedBookings() {
           // Arrange
           Court court = mockPersistCourt("Quadra 1", mockPersistModality("Volei"));
@@ -1128,13 +1132,13 @@ public class AdminCourtControllerIntegrationTest extends WebIntegrationTestConfi
 
           // Act
           given()
-                  .spec(specification)
-                  .header("Authorization", accessToken)
-                  .when()
-                  .body(request)
-                  .post("/confirm-disable")
-                  .then()
-                  .statusCode(204);
+              .spec(specification)
+              .header("Authorization", accessToken)
+              .when()
+              .body(request)
+              .post("/confirm-disable")
+              .then()
+              .statusCode(204);
 
           // Assert
           Court disabledCourt = courtRepository.findById(court.getId()).orElseThrow();
@@ -1145,7 +1149,8 @@ public class AdminCourtControllerIntegrationTest extends WebIntegrationTestConfi
         }
 
         @Test
-        @DisplayName("Deve confirmar a desabilitação de uma quadra com sucesso com agendamentos afetados")
+        @DisplayName(
+            "Deve confirmar a desabilitação de uma quadra com sucesso com agendamentos afetados")
         void confirmDisable_shouldReturn200AndDisableCourtSuccessfully_withAffectedBookings() {
           // Arrange
           Modality modality = mockPersistModality("Volei");
@@ -1153,34 +1158,34 @@ public class AdminCourtControllerIntegrationTest extends WebIntegrationTestConfi
 
           // Cria reserva que será afetada
           Reservation affectedReservation =
-                  mockPersistReservationByUser(
-                          modality.getId(),
-                          court.getId(),
-                          LocalDate.now().plusDays(1),
-                          new TimeInterval(LocalTime.of(8, 0), LocalTime.of(9, 0)),
-                          BigDecimal.valueOf(50),
-                          adminId);
+              mockPersistReservationByUser(
+                  modality.getId(),
+                  court.getId(),
+                  LocalDate.now().plusDays(1),
+                  new TimeInterval(LocalTime.of(8, 0), LocalTime.of(9, 0)),
+                  BigDecimal.valueOf(50),
+                  adminId);
 
           // Cria reserva em andamento que não deve ser afetada
           Reservation inProgressReservation =
-                  mockPersistReservationByUser(
-                          modality.getId(),
-                          court.getId(),
-                          LocalDate.now(),
-                          new TimeInterval(
-                                  normalizeToValidMinutes(LocalTime.now().minusMinutes(30)),
-                                  normalizeToValidMinutes(LocalTime.now().plusMinutes(30))),
-                          BigDecimal.valueOf(50),
-                          adminId);
+              mockPersistReservationByUser(
+                  modality.getId(),
+                  court.getId(),
+                  LocalDate.now(),
+                  new TimeInterval(
+                      normalizeToValidMinutes(LocalTime.now().minusMinutes(30)),
+                      normalizeToValidMinutes(LocalTime.now().plusMinutes(30))),
+                  BigDecimal.valueOf(50),
+                  adminId);
 
           // Cria blocked time que será afetado
           BlockedTime blockedTime =
-                  mockPersistBlockedTimeSpecific(
-                          court.getId(),
-                          LocalDate.now().plusDays(2),
-                          new TimeInterval(LocalTime.of(10, 0), LocalTime.of(12, 0)),
-                          "Manutenção",
-                          adminId);
+              mockPersistBlockedTimeSpecific(
+                  court.getId(),
+                  LocalDate.now().plusDays(2),
+                  new TimeInterval(LocalTime.of(10, 0), LocalTime.of(12, 0)),
+                  "Manutenção",
+                  adminId);
 
           String previewKey = createPreviewAndGetKey(court.getId());
 
@@ -1188,14 +1193,15 @@ public class AdminCourtControllerIntegrationTest extends WebIntegrationTestConfi
 
           // Act
           given()
-                  .spec(specification)
-                  .header("Authorization", accessToken)
-                  .when()
-                  .body(request)
-                  .post("/confirm-disable")
-                  .then()
-                  .log().all()
-                  .statusCode(204);
+              .spec(specification)
+              .header("Authorization", accessToken)
+              .when()
+              .body(request)
+              .post("/confirm-disable")
+              .then()
+              .log()
+              .all()
+              .statusCode(204);
 
           // Assert
           Court disabledCourt = courtRepository.findById(court.getId()).orElseThrow();
@@ -1205,15 +1211,18 @@ public class AdminCourtControllerIntegrationTest extends WebIntegrationTestConfi
           assertThat(previewOpt).isNotPresent();
 
           // Verifica se a reserva afetada foi cancelada
-          Reservation canceledReservation = reservationRepositoryPort.findByIdOrElseThrow(affectedReservation.getId());
+          Reservation canceledReservation =
+              reservationRepositoryPort.findByIdOrElseThrow(affectedReservation.getId());
           assertThat(canceledReservation.getStatus()).isEqualTo(ReservationStatus.CANCELLED);
 
           // Verifica se a reserva em andamento não foi afetada
-          Reservation ongoingReservation = reservationRepositoryPort.findByIdOrElseThrow(inProgressReservation.getId());
+          Reservation ongoingReservation =
+              reservationRepositoryPort.findByIdOrElseThrow(inProgressReservation.getId());
           assertThat(ongoingReservation.getStatus()).isEqualTo(ReservationStatus.CONFIRMED);
 
           // Verifica se o blocked time afetado foi removido
-          Optional<BlockedTime> removedBlockedTimeOpt = blockedTimeRepositoryPort.findById(blockedTime.getId());
+          Optional<BlockedTime> removedBlockedTimeOpt =
+              blockedTimeRepositoryPort.findById(blockedTime.getId());
           assertThat(removedBlockedTimeOpt).isNotPresent();
         }
       }
@@ -1230,38 +1239,41 @@ public class AdminCourtControllerIntegrationTest extends WebIntegrationTestConfi
 
           // Act & Assert
           var response =
-                  given()
-                          .spec(specification)
-                          .header("Authorization", accessToken)
-                          .when()
-                          .body(request)
-                          .post("/confirm-disable")
-                          .then()
-                          .statusCode(400)
-                          .extract()
-                          .as(ErrorResponseDto.class);
+              given()
+                  .spec(specification)
+                  .header("Authorization", accessToken)
+                  .when()
+                  .body(request)
+                  .post("/confirm-disable")
+                  .then()
+                  .statusCode(400)
+                  .extract()
+                  .as(ErrorResponseDto.class);
 
-          assertValidationError(response, PATH_CONFIRM_DISABLE, "previewKey", ErrorCode.PREVIEW_KEY_REQUIRED);
+          assertValidationError(
+              response, PATH_CONFIRM_DISABLE, "previewKey", ErrorCode.PREVIEW_KEY_REQUIRED);
         }
 
         @Test
-        @DisplayName("Tenta confirmar a desabilitação de uma quadra informando uma previewKey inválida")
+        @DisplayName(
+            "Tenta confirmar a desabilitação de uma quadra informando uma previewKey inválida")
         void confirmDisable_shouldReturn400BadRequest_whenPreviewKeyIsInvalid() {
           // Arrange
-          var request = new CourtDisableConfirmRequestDto("invalid-preview-key", "Desativação da Quadra");
+          var request =
+              new CourtDisableConfirmRequestDto("invalid-preview-key", "Desativação da Quadra");
 
           // Act & Assert
           var response =
-                  given()
-                          .spec(specification)
-                          .header("Authorization", accessToken)
-                          .when()
-                          .body(request)
-                          .post("/confirm-disable")
-                          .then()
-                          .statusCode(400)
-                          .extract()
-                          .as(ErrorResponseDto.class);
+              given()
+                  .spec(specification)
+                  .header("Authorization", accessToken)
+                  .when()
+                  .body(request)
+                  .post("/confirm-disable")
+                  .then()
+                  .statusCode(400)
+                  .extract()
+                  .as(ErrorResponseDto.class);
 
           assertBusinessError(response, 400, PATH_CONFIRM_DISABLE, ErrorCode.PREVIEW_KEY_INVALID);
         }
@@ -1275,22 +1287,27 @@ public class AdminCourtControllerIntegrationTest extends WebIntegrationTestConfi
 
           // Act & Assert
           var response =
-                  given()
-                          .spec(specification)
-                          .header("Authorization", accessToken)
-                          .when()
-                          .body(request)
-                          .post("/confirm-disable")
-                          .then()
-                          .statusCode(400)
-                          .extract()
-                          .as(ErrorResponseDto.class);
+              given()
+                  .spec(specification)
+                  .header("Authorization", accessToken)
+                  .when()
+                  .body(request)
+                  .post("/confirm-disable")
+                  .then()
+                  .statusCode(400)
+                  .extract()
+                  .as(ErrorResponseDto.class);
 
-          assertValidationError(response, PATH_CONFIRM_DISABLE, "description", ErrorCode.COURT_DISABLE_DESCRIPTION_REQUIRED);
+          assertValidationError(
+              response,
+              PATH_CONFIRM_DISABLE,
+              "description",
+              ErrorCode.COURT_DISABLE_DESCRIPTION_REQUIRED);
         }
 
         @Test
-        @DisplayName("Tenta confirmar a desabilitação de uma quadra com motivo inválido (muito curto)")
+        @DisplayName(
+            "Tenta confirmar a desabilitação de uma quadra com motivo inválido (muito curto)")
         void confirmDisable_shouldReturn400BadRequest_whenReasonIsInvalid() {
           // Arrange
           String previewKey = courtDisablePreviewCachePort.generateKey(adminId);
@@ -1298,22 +1315,27 @@ public class AdminCourtControllerIntegrationTest extends WebIntegrationTestConfi
 
           // Act & Assert
           var response =
-                  given()
-                          .spec(specification)
-                          .header("Authorization", accessToken)
-                          .when()
-                          .body(request)
-                          .post("/confirm-disable")
-                          .then()
-                          .statusCode(400)
-                          .extract()
-                          .as(ErrorResponseDto.class);
+              given()
+                  .spec(specification)
+                  .header("Authorization", accessToken)
+                  .when()
+                  .body(request)
+                  .post("/confirm-disable")
+                  .then()
+                  .statusCode(400)
+                  .extract()
+                  .as(ErrorResponseDto.class);
 
-          assertValidationError(response, PATH_CONFIRM_DISABLE, "description", ErrorCode.COURT_DISABLE_DESCRIPTION_INVALID_LENGTH);
+          assertValidationError(
+              response,
+              PATH_CONFIRM_DISABLE,
+              "description",
+              ErrorCode.COURT_DISABLE_DESCRIPTION_INVALID_LENGTH);
         }
 
         @Test
-        @DisplayName("Tenta confirmar a desabilitação de uma quadra com motivo inválido (muito longo)")
+        @DisplayName(
+            "Tenta confirmar a desabilitação de uma quadra com motivo inválido (muito longo)")
         void confirmDisable_shouldReturn400BadRequest_whenReasonIsTooLong() {
           // Arrange
           String previewKey = courtDisablePreviewCachePort.generateKey(adminId);
@@ -1322,18 +1344,22 @@ public class AdminCourtControllerIntegrationTest extends WebIntegrationTestConfi
 
           // Act & Assert
           var response =
-                  given()
-                          .spec(specification)
-                          .header("Authorization", accessToken)
-                          .when()
-                          .body(request)
-                          .post("/confirm-disable")
-                          .then()
-                          .statusCode(400)
-                          .extract()
-                          .as(ErrorResponseDto.class);
+              given()
+                  .spec(specification)
+                  .header("Authorization", accessToken)
+                  .when()
+                  .body(request)
+                  .post("/confirm-disable")
+                  .then()
+                  .statusCode(400)
+                  .extract()
+                  .as(ErrorResponseDto.class);
 
-          assertValidationError(response, PATH_CONFIRM_DISABLE, "description", ErrorCode.COURT_DISABLE_DESCRIPTION_INVALID_LENGTH);
+          assertValidationError(
+              response,
+              PATH_CONFIRM_DISABLE,
+              "description",
+              ErrorCode.COURT_DISABLE_DESCRIPTION_INVALID_LENGTH);
         }
       }
 
@@ -1342,7 +1368,8 @@ public class AdminCourtControllerIntegrationTest extends WebIntegrationTestConfi
       class ForbiddenScenarios {
 
         @Test
-        @DisplayName("Tenta confirmar a desabilitação de uma quadra com a previewKey de outro administrador")
+        @DisplayName(
+            "Tenta confirmar a desabilitação de uma quadra com a previewKey de outro administrador")
         void confirmDisable_shouldReturn403Forbidden_whenUsingAnotherAdminPreviewKey() {
           // Arrange
           User otherAdmin = mockPersistOtherAdminUser();
@@ -1356,18 +1383,19 @@ public class AdminCourtControllerIntegrationTest extends WebIntegrationTestConfi
 
           // Act & Assert
           var response =
-                  given()
-                          .spec(specification)
-                          .header("Authorization", otherAdminAccessToken)
-                          .when()
-                          .body(request)
-                          .post("/confirm-disable")
-                          .then()
-                          .statusCode(403)
-                          .extract()
-                          .as(ErrorResponseDto.class);
+              given()
+                  .spec(specification)
+                  .header("Authorization", otherAdminAccessToken)
+                  .when()
+                  .body(request)
+                  .post("/confirm-disable")
+                  .then()
+                  .statusCode(403)
+                  .extract()
+                  .as(ErrorResponseDto.class);
 
-          assertBusinessError(response, 403, PATH_CONFIRM_DISABLE, ErrorCode.PREVIEW_KEY_OWNERSHIP_INVALID);
+          assertBusinessError(
+              response, 403, PATH_CONFIRM_DISABLE, ErrorCode.PREVIEW_KEY_OWNERSHIP_INVALID);
         }
       }
 
@@ -1376,25 +1404,27 @@ public class AdminCourtControllerIntegrationTest extends WebIntegrationTestConfi
       class NotFoundScenarios {
 
         @Test
-        @DisplayName("Tenta confirmar a desabilitação de uma quadra utilizando um previewKey expirada")
+        @DisplayName(
+            "Tenta confirmar a desabilitação de uma quadra utilizando um previewKey expirada")
         void confirmDisable_shouldReturn404NotFound_whenPreviewKeyIsExpired() {
           // Arrange
           String expiredPreviewKey = courtDisablePreviewCachePort.generateKey(adminId);
 
-          var request = new CourtDisableConfirmRequestDto(expiredPreviewKey, "Desativação da Quadra");
+          var request =
+              new CourtDisableConfirmRequestDto(expiredPreviewKey, "Desativação da Quadra");
 
           // Act & Assert
           var response =
-                  given()
-                          .spec(specification)
-                          .header("Authorization", accessToken)
-                          .when()
-                          .body(request)
-                          .post("/confirm-disable")
-                          .then()
-                          .statusCode(404)
-                          .extract()
-                          .as(ErrorResponseDto.class);
+              given()
+                  .spec(specification)
+                  .header("Authorization", accessToken)
+                  .when()
+                  .body(request)
+                  .post("/confirm-disable")
+                  .then()
+                  .statusCode(404)
+                  .extract()
+                  .as(ErrorResponseDto.class);
 
           assertBusinessError(response, 404, PATH_CONFIRM_DISABLE, ErrorCode.PREVIEW_NOT_FOUND);
         }
@@ -1405,7 +1435,8 @@ public class AdminCourtControllerIntegrationTest extends WebIntegrationTestConfi
       class ConflictScenarios {
 
         @Test
-        @DisplayName("Tenta confirmar a desabilitação de uma quadra mas o preview está desatualizado")
+        @DisplayName(
+            "Tenta confirmar a desabilitação de uma quadra mas o preview está desatualizado")
         void confirmDisable_shouldReturn409Conflict_whenPreviewIsOutdated() {
           // Arrange
           Modality modality = mockPersistModality("Volei");
@@ -1416,31 +1447,29 @@ public class AdminCourtControllerIntegrationTest extends WebIntegrationTestConfi
 
           // Adiciona uma reserva que será afetada após a criação do preview
           mockPersistReservationByUser(
-                  modality.getId(),
-                  court.getId(),
-                  LocalDate.now().plusDays(2),
-                  new TimeInterval(LocalTime.of(10, 0), LocalTime.of(11, 0)),
-                  BigDecimal.valueOf(50),
-                  adminId
-          );
+              modality.getId(),
+              court.getId(),
+              LocalDate.now().plusDays(2),
+              new TimeInterval(LocalTime.of(10, 0), LocalTime.of(11, 0)),
+              BigDecimal.valueOf(50),
+              adminId);
 
           var request = new CourtDisableConfirmRequestDto(previewKey, "Desativação da Quadra");
 
           // Act & Assert
           var response =
-                  given()
-                          .spec(specification)
-                          .header("Authorization", accessToken)
-                          .when()
-                          .body(request)
-                          .post("/confirm-disable")
-                          .then()
-                          .statusCode(409)
-                          .extract()
-                          .as(ErrorResponseDto.class);
+              given()
+                  .spec(specification)
+                  .header("Authorization", accessToken)
+                  .when()
+                  .body(request)
+                  .post("/confirm-disable")
+                  .then()
+                  .statusCode(409)
+                  .extract()
+                  .as(ErrorResponseDto.class);
 
-          assertBusinessError(
-                  response, 409, PATH_CONFIRM_DISABLE, ErrorCode.PREVIEW_DATA_STALE);
+          assertBusinessError(response, 409, PATH_CONFIRM_DISABLE, ErrorCode.PREVIEW_DATA_STALE);
         }
 
         @Test
@@ -1461,18 +1490,19 @@ public class AdminCourtControllerIntegrationTest extends WebIntegrationTestConfi
 
           // Act & Assert
           var response =
-                  given()
-                          .spec(specification)
-                          .header("Authorization", accessToken)
-                          .when()
-                          .body(request)
-                          .post("/confirm-disable")
-                          .then()
-                          .statusCode(409)
-                          .extract()
-                          .as(ErrorResponseDto.class);
+              given()
+                  .spec(specification)
+                  .header("Authorization", accessToken)
+                  .when()
+                  .body(request)
+                  .post("/confirm-disable")
+                  .then()
+                  .statusCode(409)
+                  .extract()
+                  .as(ErrorResponseDto.class);
 
-          assertBusinessError(response, 409, PATH_CONFIRM_DISABLE, ErrorCode.COURT_ALREADY_DISABLED);
+          assertBusinessError(
+              response, 409, PATH_CONFIRM_DISABLE, ErrorCode.COURT_ALREADY_DISABLED);
         }
       }
     }
@@ -1782,18 +1812,21 @@ public class AdminCourtControllerIntegrationTest extends WebIntegrationTestConfi
   }
 
   private void assertResponsePreviewMatchesPreviewSaved(
-          CourtDisablePreviewResponseDto response,
-          CourtDisablePreview previewSaved
-  ) {
+      CourtDisablePreviewResponseDto response, CourtDisablePreview previewSaved) {
     assertThat(response.courtId()).isEqualTo(previewSaved.courtId());
     assertThat(response.courtName()).isEqualTo(previewSaved.courtName());
     assertThat(response.usersAffectedCount()).isEqualTo(previewSaved.usersAffectedCount());
-    assertThat(response.blockedTimesAffectedCount()).isEqualTo(previewSaved.blockedTimesAffectedCount());
-    assertThat(response.reservationsAffectedCount()).isEqualTo(previewSaved.reservationsAffectedCount());
+    assertThat(response.blockedTimesAffectedCount())
+        .isEqualTo(previewSaved.blockedTimesAffectedCount());
+    assertThat(response.reservationsAffectedCount())
+        .isEqualTo(previewSaved.reservationsAffectedCount());
 
-    assertThat(response.affectedBlockedTimes().size()).isEqualTo(previewSaved.affectedBlockedTimes().size());
-    assertThat(response.affectedReservations().size()).isEqualTo(previewSaved.affectedReservations().size());
-    assertThat(response.inProgressReservations().size()).isEqualTo(previewSaved.inProgressReservations().size());
+    assertThat(response.affectedBlockedTimes().size())
+        .isEqualTo(previewSaved.affectedBlockedTimes().size());
+    assertThat(response.affectedReservations().size())
+        .isEqualTo(previewSaved.affectedReservations().size());
+    assertThat(response.inProgressReservations().size())
+        .isEqualTo(previewSaved.inProgressReservations().size());
   }
 
   private String createPreviewAndGetKey(UUID courtId) {
@@ -1812,8 +1845,9 @@ public class AdminCourtControllerIntegrationTest extends WebIntegrationTestConfi
   }
 
   private Optional<CourtDisablePreview> getPreviewSavedFromCache(String previewKey) {
-    try{
-      CourtDisablePreview previewSaved = courtDisablePreviewCachePort.getPreviewOrElseThrow(previewKey, adminId);
+    try {
+      CourtDisablePreview previewSaved =
+          courtDisablePreviewCachePort.getPreviewOrElseThrow(previewKey, adminId);
       return Optional.of(previewSaved);
     } catch (PreviewNotFoundException e) {
       return Optional.empty();

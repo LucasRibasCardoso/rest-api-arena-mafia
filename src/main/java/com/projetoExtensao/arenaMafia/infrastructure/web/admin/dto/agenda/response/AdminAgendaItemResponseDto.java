@@ -13,5 +13,4 @@ public sealed interface AdminAgendaItemResponseDto
     permits AdminAvailableItemResponseDto, AdminScheduleDetailResponseDto {
 
   TimeIntervalDto timeInterval();
-
 }

@@ -135,7 +135,8 @@ public class ConfirmOperatingHoursDisableUseCaseImp implements ConfirmOperatingH
    * @param description A descrição da desativação.
    * @param adminId Identificador do administrador que está cancelando as reservas
    */
-  private void cancelAffectedReservations(List<ReservationDetail> reservations, String description, UUID adminId) {
+  private void cancelAffectedReservations(
+      List<ReservationDetail> reservations, String description, UUID adminId) {
     List<UUID> reservationIdsToCancel =
         reservations.stream()
             .filter(detail -> !detail.isInProgress())
@@ -146,10 +147,12 @@ public class ConfirmOperatingHoursDisableUseCaseImp implements ConfirmOperatingH
       return;
     }
 
-    List<Reservation> reservationsToCancel = reservationRepositoryPort.findAllFutureReservationsByIds(reservationIdsToCancel);
+    List<Reservation> reservationsToCancel =
+        reservationRepositoryPort.findAllFutureReservationsByIds(reservationIdsToCancel);
 
     String cancellationReason = String.format("Quadra desativada: %s", description);
-    reservationBatchCancellationService.cancelReservationsInBatchByAdmin(reservationsToCancel, cancellationReason, adminId);
+    reservationBatchCancellationService.cancelReservationsInBatchByAdmin(
+        reservationsToCancel, cancellationReason, adminId);
   }
 
   /**

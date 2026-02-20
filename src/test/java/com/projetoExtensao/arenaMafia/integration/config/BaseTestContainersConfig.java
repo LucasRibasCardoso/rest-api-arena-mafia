@@ -38,6 +38,8 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.junit.jupiter.api.AfterEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -50,22 +52,75 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.jdbc.JdbcTestUtils;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.containers.localstack.LocalStackContainer;
+import org.testcontainers.utility.DockerImageName;
 
-@Testcontainers
+/**
+ * Configuração base para testes de integração com Testcontainers.
+ * Utiliza o padrão Singleton para reutilizar containers entre classes de teste,
+ * reduzindo significativamente o tempo de execução da suite de testes.
+ */
 @ActiveProfiles("test")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public abstract class BaseTestContainersConfig {
 
-  @Container
-  private static final PostgreSQLContainer<?> postgreSQLContainer =
-      new PostgreSQLContainer<>("postgres:16-alpine");
+  // =================== Singleton Containers ===================
+  // Containers são iniciados uma vez e reutilizados por todas as classes de teste
 
-  @Container
-  private static final GenericContainer<?> redis =
-      new GenericContainer<>("redis:7-alpine").withExposedPorts(6379);
+  private static final PostgreSQLContainer<?> postgreSQLContainer;
+  private static final GenericContainer<?> redis;
+  private static final LocalStackContainer localStack;
 
+  static {
+    // PostgreSQL
+    postgreSQLContainer = new PostgreSQLContainer<>("postgres:16-alpine")
+        .withReuse(true);
+    postgreSQLContainer.start();
+
+    // Redis
+    redis = new GenericContainer<>("redis:7-alpine")
+        .withExposedPorts(6379)
+        .withReuse(true);
+    redis.start();
+
+    // LocalStack (SQS)
+    localStack = new LocalStackContainer(DockerImageName.parse("localstack/localstack:3.0"))
+        .withServices(LocalStackContainer.Service.SQS)
+        .withReuse(true);
+    localStack.start();
+
+    // Configurar filas SQS uma única vez
+    setupSqsQueues();
+  }
+
+  private static void setupSqsQueues() {
+    try {
+      // 1. Criar as filas
+      localStack.execInContainer("awslocal", "sqs", "create-queue", "--queue-name", "sms-queue");
+      localStack.execInContainer("awslocal", "sqs", "create-queue", "--queue-name", "whatsapp-dlq");
+      localStack.execInContainer("awslocal", "sqs", "create-queue", "--queue-name", "whatsapp-queue");
+
+      // 2. Configurar VisibilityTimeout baixo para retries rápidos em testes
+      localStack.execInContainer(
+          "sh", "-c",
+          "awslocal sqs set-queue-attributes " +
+          "--queue-url http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/whatsapp-queue " +
+          "--attributes '{\"VisibilityTimeout\":\"1\"}'");
+
+      // 3. Configurar Redrive Policy: após 3 falhas, move para DLQ
+      localStack.execInContainer(
+          "sh", "-c",
+          "awslocal sqs set-queue-attributes " +
+          "--queue-url http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/whatsapp-queue " +
+          "--attributes '{\"RedrivePolicy\":\"{\\\"deadLetterTargetArn\\\":\\\"arn:aws:sqs:us-east-1:000000000000:whatsapp-dlq\\\",\\\"maxReceiveCount\\\":\\\"3\\\"}\"}'");
+    } catch (Exception e) {
+      throw new RuntimeException("Falha ao configurar filas SQS no LocalStack", e);
+    }
+  }
+
+  // =================== Injeção de Dependências ===================
+
+  @PersistenceContext private EntityManager entityManager;
   @Autowired private JdbcTemplate jdbcTemplate;
   @Autowired private RedisTemplate<String, String> redisTemplate;
   @Autowired private PasswordEncoderPort passwordEncoder;
@@ -94,20 +149,46 @@ public abstract class BaseTestContainersConfig {
     // Redis
     registry.add("spring.data.redis.host", redis::getHost);
     registry.add("spring.data.redis.port", () -> redis.getMappedPort(6379));
+
+    // LocalStack (SQS)
+    registry.add("spring.cloud.aws.region.static", localStack::getRegion);
+    registry.add("spring.cloud.aws.credentials.access-key", localStack::getAccessKey);
+    registry.add("spring.cloud.aws.credentials.secret-key", localStack::getSecretKey);
+    registry.add("spring.cloud.aws.sqs.endpoint", () -> localStack.getEndpointOverride(LocalStackContainer.Service.SQS).toString());
   }
 
   @AfterEach
   void cleanupAfterEach() {
+    // Limpa o cache de primeiro nível do Hibernate para evitar
+    // referências a entidades que serão deletadas via JDBC
+    entityManager.clear();
+
+    // Limpeza eficiente: deleta tabelas filhas primeiro para evitar FK violations
+    // Ordem correta baseada nas dependências de foreign keys
     JdbcTestUtils.deleteFromTables(
         jdbcTemplate,
+        // Nível 1: Tabelas mais dependentes (subtabelas de schedule_entries)
+        "tb_reservations",
+        "tb_blocked_times",
+        // Nível 2: Tabelas com FK para outras tabelas
+        "tb_schedule_entries",
         "tb_refresh_token",
         "tb_court_modalities",
         "tb_operating_hours",
         "tb_price_rules",
+        // Nível 3: Tabelas intermediárias
         "tb_courts",
         "tb_modalities",
+        // Nível 4: Tabelas base
         "tb_users");
-    redisTemplate.getConnectionFactory().getConnection().serverCommands().flushAll();
+
+    // Limpa cache do Redis (OTP codes, rate limit, sessions, etc.)
+    var connectionFactory = redisTemplate.getConnectionFactory();
+    if (connectionFactory != null) {
+      var connection = connectionFactory.getConnection();
+      connection.serverCommands().flushAll();
+      connection.close();
+    }
   }
 
   /**
@@ -508,12 +589,6 @@ public abstract class BaseTestContainersConfig {
     OperatingHours operatingHours4 = OperatingHours.create(inactiveDays, timeIntervalInactive);
     operatingHours4.disable();
     operatingHoursRepository.save(operatingHours4);
-  }
-
-  public OperatingHours mockPersistOperatingHoursFixedInterval(
-      Set<DayOfWeek> daysOfWeeks, TimeInterval timeInterval) {
-    OperatingHours operatingHours = OperatingHours.create(daysOfWeeks, timeInterval);
-    return operatingHoursRepository.save(operatingHours);
   }
 
   public OperatingHours mockPersistOperatingHours() {

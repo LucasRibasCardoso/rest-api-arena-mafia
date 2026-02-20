@@ -18,10 +18,11 @@ public class ReservationSpecification {
       String searchTerm = "%" + term.toLowerCase() + "%";
 
       var userJoin = root.join("user", JoinType.LEFT);
-      var userMatches = criteriaBuilder.or(
-          criteriaBuilder.like(criteriaBuilder.lower(userJoin.get("username")), searchTerm),
-          criteriaBuilder.like(criteriaBuilder.lower(userJoin.get("fullName")), searchTerm),
-          criteriaBuilder.like(userJoin.get("phone"), searchTerm));
+      var userMatches =
+          criteriaBuilder.or(
+              criteriaBuilder.like(criteriaBuilder.lower(userJoin.get("username")), searchTerm),
+              criteriaBuilder.like(criteriaBuilder.lower(userJoin.get("fullName")), searchTerm),
+              criteriaBuilder.like(userJoin.get("phone"), searchTerm));
 
       // Use distinct to avoid duplicate results when joining
       if (query != null) {
@@ -41,13 +42,15 @@ public class ReservationSpecification {
     };
   }
 
-  public static Specification<ReservationEntity> byDateRange(LocalDate startDate, LocalDate endDate) {
+  public static Specification<ReservationEntity> byDateRange(
+      LocalDate startDate, LocalDate endDate) {
     return (root, query, criteriaBuilder) -> {
       if (startDate != null && endDate != null) {
         return criteriaBuilder.between(root.get("dateTimeSlot").get("date"), startDate, endDate);
       }
       if (startDate != null) {
-        return criteriaBuilder.greaterThanOrEqualTo(root.get("dateTimeSlot").get("date"), startDate);
+        return criteriaBuilder.greaterThanOrEqualTo(
+            root.get("dateTimeSlot").get("date"), startDate);
       }
       if (endDate != null) {
         return criteriaBuilder.lessThanOrEqualTo(root.get("dateTimeSlot").get("date"), endDate);

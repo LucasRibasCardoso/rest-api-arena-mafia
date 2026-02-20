@@ -19,3 +19,13 @@ spring:
 springdoc:
   api-docs:
     enabled: false
+
+app:
+  notification:
+    sms-provider: COMTELE
+    whatsapp-provider: MOCK
+
+comtele:
+  api-url: ${COMTELE_API_URL}
+  api-key: ${COMTELE_API_KEY}
+

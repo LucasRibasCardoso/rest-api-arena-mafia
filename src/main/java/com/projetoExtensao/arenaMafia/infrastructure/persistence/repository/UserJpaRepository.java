@@ -9,7 +9,8 @@ import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
-public interface UserJpaRepository extends JpaRepository<UserEntity, UUID>, JpaSpecificationExecutor<UserEntity> {
+public interface UserJpaRepository
+    extends JpaRepository<UserEntity, UUID>, JpaSpecificationExecutor<UserEntity> {
   Optional<UserEntity> findByUsername(String username);
 
   Optional<UserEntity> findByPhone(String phone);

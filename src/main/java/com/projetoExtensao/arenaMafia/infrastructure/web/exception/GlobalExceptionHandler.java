@@ -155,13 +155,15 @@ public class GlobalExceptionHandler {
 
   @ExceptionHandler(NoResourceFoundException.class)
   public ResponseEntity<ErrorResponseDto> handleNoResourceFoundException(
-          NoResourceFoundException e, HttpServletRequest request) {
+      NoResourceFoundException e, HttpServletRequest request) {
 
-    logger.warn("Tentativa de acesso a recurso inexistente: {} {}", request.getMethod(), request.getRequestURI());
+    logger.warn(
+        "Tentativa de acesso a recurso inexistente: {} {}",
+        request.getMethod(),
+        request.getRequestURI());
 
     // Retorna 404 corretamente
-    return buildGeneralErrorResponse(
-            HttpStatus.NOT_FOUND, ErrorCode.RESOURCE_NOT_FOUND, request);
+    return buildGeneralErrorResponse(HttpStatus.NOT_FOUND, ErrorCode.RESOURCE_NOT_FOUND, request);
   }
 
   /**

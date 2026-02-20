@@ -40,8 +40,7 @@ public class ConditionalSelectedDaysOfWeekValidator
         if (selectedDaysOfWeek != null && !selectedDaysOfWeek.isEmpty()) {
           context.disableDefaultConstraintViolation();
           context
-              .buildConstraintViolationWithTemplate(
-                  "SELECTED_DAYS_NOT_ALLOWED_FOR_SINGLE_DATE")
+              .buildConstraintViolationWithTemplate("SELECTED_DAYS_NOT_ALLOWED_FOR_SINGLE_DATE")
               .addPropertyNode("selectedDaysOfWeek")
               .addConstraintViolation();
           return false;

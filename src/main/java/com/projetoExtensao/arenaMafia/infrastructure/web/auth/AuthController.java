@@ -70,7 +70,7 @@ public class AuthController {
   }
 
   @PostMapping("/signup")
-  @CustomRateLimiter(limiterName = "sensitiveOperationLimiter")
+  @CustomRateLimiter(limiterName = "smsRateLimiter", operationType = "sms")
   public ResponseEntity<SignupResponseDto> signup(@Valid @RequestBody SignupRequestDto request) {
     OtpSessionId otpSessionId = signUpUseCase.execute(request);
 
@@ -91,7 +91,7 @@ public class AuthController {
   }
 
   @PostMapping("/resend-otp")
-  @CustomRateLimiter(limiterName = "sensitiveOperationLimiter")
+  @CustomRateLimiter(limiterName = "smsRateLimiter", operationType = "sms")
   public ResponseEntity<Void> resendOtp(@Valid @RequestBody ResendOtpRequestDto request) {
     resendOtpUseCase.execute(request.otpSessionId());
     return ResponseEntity.noContent().build();
@@ -128,7 +128,7 @@ public class AuthController {
   }
 
   @PostMapping("/forgot-password")
-  @CustomRateLimiter(limiterName = "sensitiveOperationLimiter")
+  @CustomRateLimiter(limiterName = "smsRateLimiter", operationType = "sms")
   public ResponseEntity<ForgotPasswordResponseDto> forgotPassword(
       @Valid @RequestBody ForgotPasswordRequestDto request) {
     ForgotPasswordResponseDto response = forgotPasswordUseCase.execute(request);

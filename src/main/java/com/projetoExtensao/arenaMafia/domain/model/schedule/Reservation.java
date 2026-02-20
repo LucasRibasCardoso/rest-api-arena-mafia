@@ -11,11 +11,11 @@ import java.util.UUID;
 
 public class Reservation extends ScheduleEntry {
 
-  private UUID userId;
   private final UUID modalityId;
   private final UUID scheduledByAdminId;
   private final BigDecimal price;
   private final UUID recurringReservationId;
+  private UUID userId;
   private UUID cancelledByAdminId;
   private ReservationStatus status;
 

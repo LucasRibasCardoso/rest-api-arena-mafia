@@ -2,8 +2,8 @@ package com.projetoExtensao.arenaMafia.application.user.usecase.admin.imp;
 
 import com.projetoExtensao.arenaMafia.application.schedule.port.repository.ReservationRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.schedule.service.ReservationBatchCancellationService;
-import com.projetoExtensao.arenaMafia.application.user.usecase.admin.AdminUpdateUserStatusUseCase;
 import com.projetoExtensao.arenaMafia.application.user.port.repository.UserRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.user.usecase.admin.AdminUpdateUserStatusUseCase;
 import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 import com.projetoExtensao.arenaMafia.domain.exception.forbidden.AdminCannotUpdateOwnStatusException;
 import com.projetoExtensao.arenaMafia.domain.exception.forbidden.AdminCannotUpdateStatusOfUnverifiedUserException;
@@ -54,12 +54,15 @@ public class AdminUpdateUserStatusUseCaseImp implements AdminUpdateUserStatusUse
 
   private void validateIfUserIsVerified(User user) {
     if (user.isPendingVerification()) {
-      throw new AdminCannotUpdateStatusOfUnverifiedUserException(ErrorCode.ADMIN_CANNOT_UPDATE_STATUS_OF_UNVERIFIED_USER);
+      throw new AdminCannotUpdateStatusOfUnverifiedUserException(
+          ErrorCode.ADMIN_CANNOT_UPDATE_STATUS_OF_UNVERIFIED_USER);
     }
   }
 
   private void cancelFutureReservationsAndNotifyUser(User user) {
-    List<Reservation> futureReservations = reservationRepository.findAllFutureActiveReservationsByUser(user.getId());
-    reservationBatchCancellationService.cancelReservationsDueToAccountDisabled(futureReservations, user);
+    List<Reservation> futureReservations =
+        reservationRepository.findAllFutureActiveReservationsByUser(user.getId());
+    reservationBatchCancellationService.cancelReservationsDueToAccountDisabled(
+        futureReservations, user);
   }
 }

@@ -79,8 +79,7 @@ public class ReservationController {
   @GetMapping("/{id}")
   @CustomRateLimiter(limiterName = "globalLimiter")
   public ResponseEntity<ReservationDetailResponseDto> getReservationDetails(
-      @AuthenticationPrincipal UserDetailsAdapter authenticatedUser,
-      @PathVariable UUID id) {
+      @AuthenticationPrincipal UserDetailsAdapter authenticatedUser, @PathVariable UUID id) {
 
     UUID userId = extractUserId(authenticatedUser);
     ReservationDetail reservation = findByIdReservationUseCase.execute(userId, id);

@@ -38,7 +38,8 @@ public class DisableMyAccountUseCaseImp implements DisableMyAccountUseCase {
   }
 
   private void cancelFutureReservations(UUID userId) {
-    List<Reservation> futureReservations = reservationRepository.findAllFutureActiveReservationsByUser(userId);
+    List<Reservation> futureReservations =
+        reservationRepository.findAllFutureActiveReservationsByUser(userId);
     reservationBatchCancellationService.cancelReservationsInBatchSilently(futureReservations);
   }
 }

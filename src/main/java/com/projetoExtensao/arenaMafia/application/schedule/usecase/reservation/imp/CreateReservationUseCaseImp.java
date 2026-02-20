@@ -2,21 +2,18 @@ package com.projetoExtensao.arenaMafia.application.schedule.usecase.reservation.
 
 import com.projetoExtensao.arenaMafia.application.court.port.repository.CourtRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.modality.port.ModalityRepositoryPort;
-import com.projetoExtensao.arenaMafia.application.notification.event.OnReservationCreatedEvent;
 import com.projetoExtensao.arenaMafia.application.priceRule.port.PriceRuleRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.priceRule.service.PriceCalculatorService;
 import com.projetoExtensao.arenaMafia.application.schedule.port.repository.ReservationRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.schedule.scheduler.DynamicScheduleEntryCompletionScheduler;
 import com.projetoExtensao.arenaMafia.application.schedule.service.ScheduleAvailabilityService;
 import com.projetoExtensao.arenaMafia.application.schedule.usecase.reservation.CreateReservationUseCase;
-import com.projetoExtensao.arenaMafia.application.user.port.repository.UserRepositoryPort;
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.ReservationPastDateException;
 import com.projetoExtensao.arenaMafia.domain.exception.conflict.CourtNotSupportsModalityException;
 import com.projetoExtensao.arenaMafia.domain.exception.notFound.CourtNotFoundException;
 import com.projetoExtensao.arenaMafia.domain.exception.notFound.ModalityNotFoundException;
 import com.projetoExtensao.arenaMafia.domain.model.Court;
 import com.projetoExtensao.arenaMafia.domain.model.PriceRule;
-import com.projetoExtensao.arenaMafia.domain.model.User;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.Reservation;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.DateTimeSlot;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.specification.PriceRuleSpecification;
@@ -26,7 +23,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,9 +33,7 @@ public class CreateReservationUseCaseImp implements CreateReservationUseCase {
   private final PriceCalculatorService priceCalculatorService;
   private final ScheduleAvailabilityService scheduleAvailabilityService;
   private final DynamicScheduleEntryCompletionScheduler completionScheduler;
-  private final UserRepositoryPort userRepositoryPort;
   private final CourtRepositoryPort courtRepositoryPort;
-  private final ApplicationEventPublisher eventPublisher;
   private final ModalityRepositoryPort modalityRepositoryPort;
   private final PriceRuleRepositoryPort priceRuleRepositoryPort;
   private final ReservationRepositoryPort reservationRepositoryPort;
@@ -48,30 +42,23 @@ public class CreateReservationUseCaseImp implements CreateReservationUseCase {
       PriceCalculatorService priceCalculatorService,
       ScheduleAvailabilityService scheduleAvailabilityService,
       DynamicScheduleEntryCompletionScheduler completionScheduler,
-      UserRepositoryPort userRepositoryPort,
       CourtRepositoryPort courtRepositoryPort,
       ModalityRepositoryPort modalityRepositoryPort,
       PriceRuleRepositoryPort priceRuleRepositoryPort,
-      ReservationRepositoryPort reservationRepositoryPort,
-      ApplicationEventPublisher eventPublisher) {
+      ReservationRepositoryPort reservationRepositoryPort) {
     this.priceRuleRepositoryPort = priceRuleRepositoryPort;
     this.reservationRepositoryPort = reservationRepositoryPort;
     this.completionScheduler = completionScheduler;
-    this.userRepositoryPort = userRepositoryPort;
     this.courtRepositoryPort = courtRepositoryPort;
     this.scheduleAvailabilityService = scheduleAvailabilityService;
     this.modalityRepositoryPort = modalityRepositoryPort;
     this.priceCalculatorService = priceCalculatorService;
-    this.eventPublisher = eventPublisher;
   }
 
   @Override
   public Reservation execute(UUID userId, CreateReservationRequestDto request) {
     // Valida se a data da reserva não está no passado
     validateReservationDate(request.date());
-
-    // Busca o usuário que está fazendo a reserva
-    User user = userRepositoryPort.findByIdOrElseThrow(userId);
 
     // Valida se a modalidade existe e se a quadra suporta a modalidade
     validateModalityExists(request.modalityId());
@@ -83,10 +70,8 @@ public class CreateReservationUseCaseImp implements CreateReservationUseCase {
 
     // Calcula o preço da reserva
     BigDecimal price = calculatePrice(request);
-    Reservation reservation = saveReservation(request.modalityId(), request.courtId(), userId, price, dateTimeSlot);
-
-    // Envia notificação de confirmação de reserva de forma assíncrona
-    publishConfirmationEvent(user, reservation);
+    Reservation reservation =
+        saveReservation(request.modalityId(), request.courtId(), userId, price, dateTimeSlot);
 
     // Agenda a conclusão automática da reserva
     scheduleAutomaticCompletion(reservation);
@@ -113,19 +98,10 @@ public class CreateReservationUseCaseImp implements CreateReservationUseCase {
    * @param dateTimeSlot Intervalo de data e hora da reserva
    * @return Reserva criada
    */
-  private Reservation saveReservation(UUID modalityId, UUID courtId, UUID userId, BigDecimal price, DateTimeSlot dateTimeSlot) {
+  private Reservation saveReservation(
+      UUID modalityId, UUID courtId, UUID userId, BigDecimal price, DateTimeSlot dateTimeSlot) {
     var reservation = Reservation.createByUser(modalityId, courtId, userId, price, dateTimeSlot);
     return reservationRepositoryPort.save(reservation);
-  }
-
-  /**
-   * Publica um evento de confirmação de reserva para processamento assíncrono de notificações.
-   *
-   * @param user Usuário que fez a reserva
-   * @param reservation Reserva criada
-   */
-  private void publishConfirmationEvent(User user, Reservation reservation) {
-    eventPublisher.publishEvent(new OnReservationCreatedEvent(user.getUsername(), user.getPhone(), reservation));
   }
 
   /**
@@ -201,8 +177,10 @@ public class CreateReservationUseCaseImp implements CreateReservationUseCase {
    * @return preço calculado
    */
   private BigDecimal calculatePrice(CreateReservationRequestDto request) {
-    List<PriceRule> activePriceRules = priceRuleRepositoryPort.findAll(PriceRuleSpecification.byActiveStatus(true));
+    List<PriceRule> activePriceRules =
+        priceRuleRepositoryPort.findAll(PriceRuleSpecification.byActiveStatus(true));
 
-    return priceCalculatorService.calculatePrice(request.timeInterval(), request.date(), activePriceRules);
+    return priceCalculatorService.calculatePrice(
+        request.timeInterval(), request.date(), activePriceRules);
   }
 }

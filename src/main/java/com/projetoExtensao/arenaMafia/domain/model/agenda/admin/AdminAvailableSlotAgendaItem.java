@@ -2,7 +2,6 @@ package com.projetoExtensao.arenaMafia.domain.model.agenda.admin;
 
 import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
 import java.math.BigDecimal;
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 

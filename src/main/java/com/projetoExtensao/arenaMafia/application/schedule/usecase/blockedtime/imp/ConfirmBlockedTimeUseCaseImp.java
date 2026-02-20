@@ -89,7 +89,9 @@ public class ConfirmBlockedTimeUseCaseImp implements ConfirmBlockedTimeUseCase {
     validatePreviewIsNotStale(preview, effectiveDaysOfWeek, searchInterval);
 
     // Processa os conflitos: cancela reservas e remove bloqueios conflitantes
-    int reservationsCancelled = cancelConflictingReservations(preview.conflictingReservations(), request.description(), adminId);
+    int reservationsCancelled =
+        cancelConflictingReservations(
+            preview.conflictingReservations(), request.description(), adminId);
     int blockedTimesCancelled = removeConflictingBlockedTimes(preview.conflictingBlockedTimes());
 
     // Cria e salva os novos BlockedTimes
@@ -104,7 +106,8 @@ public class ConfirmBlockedTimeUseCaseImp implements ConfirmBlockedTimeUseCase {
     scheduleBlockedTimeDeletion(blockedTimesCreated);
 
     // Extrair IDs dos BlockedTimes criados
-    List<UUID> blockedTimesCreateIds = blockedTimesCreated.stream().map(BlockedTime::getId).toList();
+    List<UUID> blockedTimesCreateIds =
+        blockedTimesCreated.stream().map(BlockedTime::getId).toList();
 
     return new ConfirmBlockedTimeResult(
         blockedTimesCreateIds,
@@ -116,6 +119,7 @@ public class ConfirmBlockedTimeUseCaseImp implements ConfirmBlockedTimeUseCase {
 
   /**
    * Agenda a deleção dos blockedTimes ao seu termino
+   *
    * @param blockedTimes Lista de BlockedTimes a serem agendados para deleção
    */
   private void scheduleBlockedTimeDeletion(List<BlockedTime> blockedTimes) {
@@ -179,7 +183,8 @@ public class ConfirmBlockedTimeUseCaseImp implements ConfirmBlockedTimeUseCase {
    * @param adminId ID do administrador responsável pela criação dos bloqueios
    * @return Quantidade de reservas canceladas com sucesso
    */
-  private int cancelConflictingReservations(List<ReservationDetail> conflictingReservations, String description, UUID adminId) {
+  private int cancelConflictingReservations(
+      List<ReservationDetail> conflictingReservations, String description, UUID adminId) {
     List<UUID> reservationIdsToCancel =
         conflictingReservations.stream()
             .filter(detail -> !detail.isInProgress())
@@ -190,10 +195,12 @@ public class ConfirmBlockedTimeUseCaseImp implements ConfirmBlockedTimeUseCase {
       return 0;
     }
 
-    List<Reservation> reservationsToCancel = reservationRepository.findAllFutureReservationsByIds(reservationIdsToCancel);
+    List<Reservation> reservationsToCancel =
+        reservationRepository.findAllFutureReservationsByIds(reservationIdsToCancel);
 
     String cancellationReason = String.format("Bloqueio de horário criado: %s", description);
-    return reservationBatchCancellationService.cancelReservationsInBatchByAdmin(reservationsToCancel, cancellationReason, adminId);
+    return reservationBatchCancellationService.cancelReservationsInBatchByAdmin(
+        reservationsToCancel, cancellationReason, adminId);
   }
 
   /**

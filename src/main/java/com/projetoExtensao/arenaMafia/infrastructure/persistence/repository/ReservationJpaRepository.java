@@ -49,6 +49,7 @@ public interface ReservationJpaRepository
 
   /**
    * Busca todas as reservas recorrentes futuras
+   *
    * @param recurringReservationId ID da reserva recorrente
    * @return lista de reservas recorrentes futuras
    */
@@ -60,10 +61,12 @@ public interface ReservationJpaRepository
           AND r.status = 'CONFIRMED'
           ORDER BY r.dateTimeSlot.date ASC, r.dateTimeSlot.timeInterval.startTime ASC
           """)
-  List<ReservationEntity> findFutureRecurringReservations(@Param("recurringReservationId") UUID recurringReservationId);
+  List<ReservationEntity> findFutureRecurringReservations(
+      @Param("recurringReservationId") UUID recurringReservationId);
 
   /**
    * Busca todas as reservas futuras com base em uma lista de IDs
+   *
    * @param ids Lista de IDs das reservas
    * @return lista de reservas futuras
    */
@@ -78,11 +81,11 @@ public interface ReservationJpaRepository
   List<ReservationEntity> findAllFutureReservationsByIds(@Param("ids") List<UUID> ids);
 
   /**
-   * Busca todas as reservas passadas (histórico) de um usuário.
-   * Considera datas estritamente anteriores à data atual.
+   * Busca todas as reservas passadas (histórico) de um usuário. Considera datas estritamente
+   * anteriores à data atual.
    */
   @Query(
-          """
+      """
               SELECT r FROM ReservationEntity r
               WHERE r.userId = :userId
               AND r.dateTimeSlot.date < CURRENT_DATE
@@ -91,11 +94,11 @@ public interface ReservationJpaRepository
   List<ReservationEntity> findAllPastReservationsByUser(@Param("userId") UUID userId);
 
   /**
-   * Busca todas as reservas futuras ativas (não canceladas) de um usuário.
-   * Considera hoje e datas futuras.
+   * Busca todas as reservas futuras ativas (não canceladas) de um usuário. Considera hoje e datas
+   * futuras.
    */
   @Query(
-          """
+      """
               SELECT r FROM ReservationEntity r
               WHERE r.userId = :userId
               AND r.dateTimeSlot.date >= CURRENT_DATE

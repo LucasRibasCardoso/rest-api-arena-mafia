@@ -44,7 +44,8 @@ public class PreviewBlockedTimeConflictsUseCaseImp implements PreviewBlockedTime
   }
 
   @Override
-  public BlockedTimeConflictsPreview execute(BlockedTimeConflictsPreviewRequestDto request, UUID adminId) {
+  public BlockedTimeConflictsPreview execute(
+      BlockedTimeConflictsPreviewRequestDto request, UUID adminId) {
     // Valida se todas as quadras existem e estão ativas
     courtRepository.validateAllExistAndActive(request.courtIds());
 
