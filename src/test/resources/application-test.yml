@@ -17,6 +17,19 @@ spring:
       refresh-token-expiration-days: 7 # 7 days
       issuer: "arena-mafia-api"
 
+  cloud:
+    aws:
+      credentials:
+        access-key: test
+        secret-key: test
+      region:
+        static: us-east-1
+
+app:
+  notification:
+    sms-provider: MOCK
+    whatsapp-provider: MOCK
+
 management:
   endpoints:
     web:
@@ -27,6 +40,9 @@ resilience4j:
   ratelimiter:
     enabled: false
 
-app:
-  sms:
-    provider: MOCK
+# Valores fictícios para beans de adapters externos serem criados sem erro.
+# Em testes, o provider ativo é MOCK, portanto esses adapters nunca são chamados.
+comtele:
+  api-url: http://localhost
+  api-key: test-api-key
+

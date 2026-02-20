@@ -5,10 +5,11 @@ import static org.mockito.Mockito.*;
 
 import com.projetoExtensao.arenaMafia.application.notification.event.OnVerificationRequiredEvent;
 import com.projetoExtensao.arenaMafia.application.notification.gateway.OtpPort;
-import com.projetoExtensao.arenaMafia.application.notification.gateway.SmsPort;
 import com.projetoExtensao.arenaMafia.application.notification.listener.NotificationEventListener;
+import com.projetoExtensao.arenaMafia.application.priceRule.port.PriceRuleRepositoryPort;
 import com.projetoExtensao.arenaMafia.domain.model.User;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.OtpCode;
+import com.projetoExtensao.arenaMafia.infrastructure.adapter.gateway.notification.producer.NotificationProducer;
 import com.projetoExtensao.arenaMafia.unit.config.TestDataProvider;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
@@ -23,15 +24,16 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @DisplayName("Testes unitários para NotificationEventListener")
 public class NotificationEventListenerTest {
 
-  @Mock private SmsPort smsPort;
   @Mock private OtpPort otpPort;
+  @Mock private NotificationProducer notificationProducer;
+  @Mock private PriceRuleRepositoryPort priceRuleRepositoryPort;
   @InjectMocks private NotificationEventListener eventListener;
 
   private final OtpCode otpCode = OtpCode.generate();
 
   @Test
   @DisplayName("Deve gerar OTP e enviar SMS para o número atual do usuário")
-  void onOtpVerificationRequired_shouldGenerateOtpAndSendSms_onEvent() {
+  void onOtpVerification_shouldGenerateOtpAndSendSms_toCurrentPhone() {
     // Arrange
     User user = TestDataProvider.createActiveUser();
     UUID userId = user.getId();
@@ -40,22 +42,22 @@ public class NotificationEventListenerTest {
     when(otpPort.generateOtpCode(userId)).thenReturn(otpCode);
 
     // Act
-    eventListener.onOtpVerificationRequired(event);
+    eventListener.onOtpVerification(event);
 
     // Assert
     verify(otpPort, times(1)).generateOtpCode(userId);
 
     ArgumentCaptor<String> phoneCaptor = ArgumentCaptor.forClass(String.class);
     ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
-    verify(smsPort, times(1)).send(phoneCaptor.capture(), messageCaptor.capture());
+    verify(notificationProducer, times(1)).sendSms(phoneCaptor.capture(), messageCaptor.capture());
 
     assertEquals(user.getPhone(), phoneCaptor.getValue());
     assertTrue(messageCaptor.getValue().contains(otpCode.toString()));
   }
 
   @Test
-  @DisplayName("Deve gerar o OTP e enviar SMS para o novo número de telefone do usuário")
-  void onOtpVerificationRequired_shouldGenerateOtpAndSendSmsOnEvent() {
+  @DisplayName("Deve gerar OTP e enviar SMS para o novo número de telefone informado")
+  void onOtpVerification_shouldGenerateOtpAndSendSms_toNewPhone() {
     // Arrange
     User user = TestDataProvider.createActiveUser();
     UUID userId = user.getId();
@@ -65,21 +67,22 @@ public class NotificationEventListenerTest {
     when(otpPort.generateOtpCode(userId)).thenReturn(otpCode);
 
     // Act
-    eventListener.onOtpVerificationRequired(event);
+    eventListener.onOtpVerification(event);
 
+    // Assert
     verify(otpPort, times(1)).generateOtpCode(userId);
 
     ArgumentCaptor<String> phoneCaptor = ArgumentCaptor.forClass(String.class);
     ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
-    verify(smsPort, times(1)).send(phoneCaptor.capture(), messageCaptor.capture());
-    assertEquals(newPhone, phoneCaptor.getValue());
+    verify(notificationProducer, times(1)).sendSms(phoneCaptor.capture(), messageCaptor.capture());
 
+    assertEquals(newPhone, phoneCaptor.getValue());
     assertTrue(messageCaptor.getValue().contains(otpCode.toString()));
   }
 
   @Test
-  @DisplayName("Não deve enviar SMS se a geração de OTP falhar")
-  void onOtpVerificationRequired_shouldNotSendSms_whenOtpGenerationFails() {
+  @DisplayName("Deve propagar exceção se a geração de OTP falhar")
+  void onOtpVerification_shouldThrowException_whenOtpGenerationFails() {
     // Arrange
     User user = TestDataProvider.createActiveUser();
     OnVerificationRequiredEvent event = new OnVerificationRequiredEvent(user);
@@ -88,8 +91,8 @@ public class NotificationEventListenerTest {
         .thenThrow(new RuntimeException("Falha ao conectar com o Redis"));
 
     // Act & Assert
-    assertDoesNotThrow(() -> eventListener.onOtpVerificationRequired(event));
+    assertThrows(RuntimeException.class, () -> eventListener.onOtpVerification(event));
 
-    verify(smsPort, never()).send(anyString(), anyString());
+    verify(notificationProducer, never()).sendSms(anyString(), anyString());
   }
 }

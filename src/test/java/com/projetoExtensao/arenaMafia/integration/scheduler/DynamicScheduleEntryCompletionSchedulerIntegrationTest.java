@@ -27,7 +27,6 @@ import java.time.LocalTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @DisplayName("Testes de Integração para DynamicReservationCompletionScheduler")
 class DynamicScheduleEntryCompletionSchedulerIntegrationTest extends BaseTestContainersConfig {
 

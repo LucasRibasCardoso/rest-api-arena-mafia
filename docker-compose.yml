@@ -52,21 +52,32 @@ services:
     build: .
     image: backend-arena-mafia
     environment:
+      # Database Configuration
       - DATABASE_URL=${DATABASE_URL}
       - DATABASE_USERNAME=${DATABASE_USERNAME}
       - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+
+      # JWT Configuration
       - JWT_SECRET=${JWT_SECRET}
       - JWT_EXPIRATION=${JWT_EXPIRATION}
+
+      # Spring Configuration
       - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
       - SPRING_APPLICATION_NAME=${SPRING_APPLICATION_NAME}
 
-      # SMS Configuration
-      - SMS_PROVIDER=${SMS_PROVIDER}
-      - COMTELE_API_URL=${COMTELE_API_URL}
-      - COMTELE_API_KEY=${COMTELE_API_KEY}
+      # Redis Configuration
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+
+      # AWS Configuration (SQS)
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
       - AWS_REGION=${AWS_REGION}
+
+      # SMS Configuration
+      - COMTELE_API_URL=${COMTELE_API_URL}
+      - COMTELE_API_KEY=${COMTELE_API_KEY}
 
       # OpenTelemetry Configuration
       - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT}

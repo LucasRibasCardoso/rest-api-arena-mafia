@@ -21,7 +21,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @TestPropertySource(properties = "resilience4j.ratelimiter.enabled=true")
 public class RateLimitTest extends WebIntegrationTestConfig {
 

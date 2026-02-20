@@ -1,4 +1,4 @@
-package com.projetoExtensao.arenaMafia.infrastructure.adapter.gateway.notificationStrategies.sms;
+package com.projetoExtensao.arenaMafia.infrastructure.adapter.gateway.notification.sms;
 
 import com.projetoExtensao.arenaMafia.application.notification.gateway.SmsPort;
 

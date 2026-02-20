@@ -20,13 +20,12 @@ springdoc:
   api-docs:
     enabled: false
 
-# Provedores SMS disponíveis: MOCK, AWS, COMTELE
 app:
-  sms:
-    provider: ${SMS_PROVIDER:COMTELE}
+  notification:
+    sms-provider: COMTELE
+    whatsapp-provider: MOCK
 
-# Comtele Configuration (usado quando app.sms.provider=COMTELE)
 comtele:
-  api-url: ${COMTELE_API_URL:}
-  api-key: ${COMTELE_API_KEY:}
+  api-url: ${COMTELE_API_URL}
+  api-key: ${COMTELE_API_KEY}
 

@@ -29,6 +29,27 @@ spring:
       ddl-auto: validate
   flyway:
     enabled: true
+  cloud:
+    aws:
+      credentials:
+        access-key: ${AWS_ACCESS_KEY_ID}
+        secret-key: ${AWS_SECRET_ACCESS_KEY}
+      region:
+        static: ${AWS_REGION:us-east-1}
+      sqs:
+        listener:
+          max-concurrent-messages: 10
+          max-messages-per-poll: 10
+          poll-timeout: 20s
+
+app:
+  queue:
+    sms: sms-queue
+    whatsapp: whatsapp-queue
+    whatsapp-dlq: whatsapp-dlq
+  notification:
+    sms-provider: MOCK
+    whatsapp-provider: MOCK
 
 management:
   server:
@@ -47,6 +68,8 @@ logging:
     level: "%5p [${spring.application.name:},traceId=%X{traceId:-},spanId=%X{spanId:-}]"
   level:
     root: INFO
+    # ATENÇÃO: Pode esconder erros de desserialização do SQS
+    io.awspring.cloud.sqs.listener.sink.AbstractMessageProcessingPipelineSink: OFF
 
 resilience4j:
   ratelimiter:
@@ -74,4 +97,3 @@ resilience4j:
         limitForPeriod: 3
         limitRefreshPeriod: 1m
         timeoutDuration: 0
-

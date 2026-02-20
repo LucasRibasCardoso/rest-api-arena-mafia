@@ -22,7 +22,6 @@ import java.util.UUID;
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @DisplayName("Testes de Integração para AvailableTimesController")
 public class AvailableTimesControllerIntegrationTest extends WebIntegrationTestConfig {
 
@@ -247,6 +246,7 @@ public class AvailableTimesControllerIntegrationTest extends WebIntegrationTestC
       @DisplayName("Nenhuma quadra encontrada para a modalidade especificada")
       void noCourtsFoundForSpecifiedModality() {
         // Arrange
+        mockPersistPriceRule();
         UUID modalityId = UUID.randomUUID();
         String date = LocalDate.now().toString();
 

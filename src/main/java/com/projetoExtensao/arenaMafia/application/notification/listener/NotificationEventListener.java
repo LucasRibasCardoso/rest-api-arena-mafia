@@ -2,23 +2,19 @@ package com.projetoExtensao.arenaMafia.application.notification.listener;
 
 import com.projetoExtensao.arenaMafia.application.notification.event.*;
 import com.projetoExtensao.arenaMafia.application.notification.gateway.OtpPort;
-import com.projetoExtensao.arenaMafia.application.notification.gateway.SmsPort;
-import com.projetoExtensao.arenaMafia.application.notification.gateway.WhatsAppPort;
 import com.projetoExtensao.arenaMafia.application.priceRule.port.PriceRuleRepositoryPort;
 import com.projetoExtensao.arenaMafia.domain.model.User;
 import com.projetoExtensao.arenaMafia.domain.model.enums.DayOfWeek;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.Reservation;
-import com.projetoExtensao.arenaMafia.domain.model.schedule.ScheduleEntry;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.OtpCode;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
+import com.projetoExtensao.arenaMafia.infrastructure.adapter.gateway.notification.producer.NotificationProducer;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
@@ -27,139 +23,75 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @Component
 public class NotificationEventListener {
 
-  private static final Logger logger = LoggerFactory.getLogger(NotificationEventListener.class);
-
   private final OtpPort otpPort;
-  private final SmsPort smsPort;
-  private final WhatsAppPort whatsAppPort;
+  private final NotificationProducer notificationProducer;
   private final PriceRuleRepositoryPort priceRuleRepositoryPort;
 
   public NotificationEventListener(
       OtpPort otpPort,
-      SmsPort smsPort,
-      WhatsAppPort whatsAppPort,
+      NotificationProducer notificationProducer,
       PriceRuleRepositoryPort priceRuleRepositoryPort) {
     this.otpPort = otpPort;
-    this.smsPort = smsPort;
-    this.whatsAppPort = whatsAppPort;
+    this.notificationProducer = notificationProducer;
     this.priceRuleRepositoryPort = priceRuleRepositoryPort;
   }
 
   @Async
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-  public void onOtpVerificationRequired(OnVerificationRequiredEvent eventData) {
-    try {
-      User user = eventData.user();
-      String recipientPhone = eventData.getRecipientPhone();
+  public void onOtpVerification(OnVerificationRequiredEvent eventData) {
+    User user = eventData.user();
+    String recipientPhone = eventData.getRecipientPhone();
 
-      OtpCode otpCode = otpPort.generateOtpCode(user.getId());
-      String message = buildOtpVerificationMessage(otpCode);
+    OtpCode otpCode = otpPort.generateOtpCode(user.getId());
+    String message = buildOtpVerificationMessage(otpCode);
 
-      smsPort.send(recipientPhone, message);
-
-    } catch (Exception e) {
-      logger.error("Falha ao processar o evento de verificação OTP via SMS: {}", e.getMessage());
-    }
+    notificationProducer.sendSms(recipientPhone, message);
   }
 
   @Async
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-  public void onScheduleCreated(OnReservationCreatedEvent eventData) {
-    try {
-      ScheduleEntry scheduleEntry = eventData.scheduleEntry();
-
-      // Apenas envia notificação para reservas
-      if (!(scheduleEntry instanceof Reservation reservation)) {
-        logger.warn(
-            "Tipo de schedule não suportado para notificação: {}",
-            scheduleEntry.getClass().getSimpleName());
-        return;
-      }
-
+  public void onReservationCreated(OnReservationCreatedEvent eventData) {
+    if (eventData.scheduleEntry() instanceof Reservation reservation) {
       String message = buildReservationConfirmationMessage(eventData.username(), reservation);
-      smsPort.send(eventData.userPhone(), message);
-
-    } catch (Exception e) {
-      logger.error("Falha ao processar evento de criação de reserva: {}", e.getMessage(), e);
+      notificationProducer.sendWhatsapp(eventData.userPhone(), message);
     }
   }
 
   @Async
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
   public void onReservationCancelledByUser(OnReservationCancelledByUserEvent eventData) {
-    try {
-      Reservation reservation = eventData.reservation();
-
-      String message = buildReservationCancellationMessage(eventData.username(), reservation);
-      smsPort.send(eventData.userPhone(), message);
-
-    } catch (Exception e) {
-      logger.error("Falha ao processar evento de cancelamento de reserva: {}", e.getMessage(), e);
-    }
+    String message = buildReservationCancellationMessage(eventData.username(), eventData.reservation());
+    notificationProducer.sendWhatsapp(eventData.userPhone(), message);
   }
 
   @Async
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
   public void onReservationCancelledByAdmin(OnReservationCancelledByAdminEvent eventData) {
-    try {
-      Reservation reservation = eventData.reservation();
-
-      String message =
-          buildReservationCancellationByAdminMessage(
-              eventData.username(), reservation, eventData.adminReason());
-      smsPort.send(eventData.userPhone(), message);
-
-    } catch (Exception e) {
-      logger.error(
-          "Falha ao processar evento de cancelamento de reserva por admin: {}", e.getMessage(), e);
-    }
+    String message =
+        buildReservationCancellationByAdminMessage(
+            eventData.username(), eventData.reservation(), eventData.adminReason());
+    notificationProducer.sendWhatsapp(eventData.userPhone(), message);
   }
 
   @Async
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-  public void onRecurringReservationCreateByAdmin(
-      OnRecurringReservationCreatedByAdminEvent eventData) {
-    try {
-      String message = buildRecurringReservationCreateByAdminMessage(eventData);
-      smsPort.send(eventData.userPhone(), message);
-
-    } catch (Exception e) {
-      logger.error(
-          "Falha ao processar evento de criação de reservas recorrentes por admin: {}",
-          e.getMessage(),
-          e);
-    }
+  public void onRecurringReservationCreateByAdmin(OnRecurringReservationCreatedByAdminEvent eventData) {
+    String message = buildRecurringReservationCreateByAdminMessage(eventData);
+    notificationProducer.sendWhatsapp(eventData.userPhone(), message);
   }
 
   @Async
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-  public void onRecurringReservationCancelledByAdmin(
-      OnRecurringReservationCancelledByAdminEvent eventData) {
-    try {
-      String message = buildRecurringReservationCancellationByAdminMessage(eventData);
-      smsPort.send(eventData.userPhone(), message);
-
-    } catch (Exception e) {
-      logger.error(
-          "Falha ao processar evento de cancelamento de reservas recorrentes por admin: {}",
-          e.getMessage(),
-          e);
-    }
+  public void onRecurringReservationCancelledByAdmin(OnRecurringReservationCancelledByAdminEvent eventData) {
+    String message = buildRecurringReservationCancellationByAdminMessage(eventData);
+    notificationProducer.sendWhatsapp(eventData.userPhone(), message);
   }
 
   @Async
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
   public void onReservationsCancelledByAdmin(OnReservationsCancelledByAdminEvent eventData) {
-    try {
-      String message = buildReservationsCancelledByAdminMessage(eventData);
-      smsPort.send(eventData.userPhone(), message);
-
-    } catch (Exception e) {
-      logger.error(
-          "Falha ao processar evento de cancelamento em lote de reservas por admin: {}",
-          e.getMessage(),
-          e);
-    }
+    String message = buildReservationsCancelledByAdminMessage(eventData);
+    notificationProducer.sendWhatsapp(eventData.userPhone(), message);
   }
 
   //  ================================ Mensagens de notificação ================================
@@ -170,7 +102,7 @@ public class NotificationEventListener {
 
         Seu código de verificação é: %s
 
-        ⚠️ Não compartilhe este código com ninguém.
+        Não compartilhe este código com ninguém.
         O código expira em 5 minutos."""
         .formatted(otpCode);
   }
@@ -188,7 +120,6 @@ public class NotificationEventListener {
         Data: %s
         Horário: %s - %s
         Valor: R$ %s
-
         Código da reserva: %s"""
         .formatted(username, date, startTime, endTime, price, reservation.getId());
   }
@@ -219,13 +150,12 @@ public class NotificationEventListener {
 
         Olá %s,
         Sua reserva para o dia %s, no horário de %s às %s, foi cancelada pela administração.
+        Código da reserva: %s
 
         Motivo: %s
 
-        Código da reserva: %s
-
         Para mais informações, entre em contato com nossa central."""
-        .formatted(username, date, startTime, endTime, adminReason, reservation.getId());
+        .formatted(username, date, startTime, endTime, reservation.getId(), adminReason);
   }
 
   private String buildRecurringReservationCreateByAdminMessage(
@@ -254,7 +184,6 @@ public class NotificationEventListener {
            Dias da semana: %s
            Horário: %s - %s
            Preço: R$ %s
-
            Código das reservas: %s
            """
         .formatted(
@@ -286,10 +215,8 @@ public class NotificationEventListener {
            Período: %s a %s
            Dias: %s
            Horário: %s - %s
-
-           Motivo: %s
-
            Código: %s
+           Motivo: %s
            """
         .formatted(
             eventData.username(),
@@ -298,8 +225,8 @@ public class NotificationEventListener {
             daysOfWeek,
             timeInterval.startTime(),
             timeInterval.endTime(),
-            eventData.adminReason(),
-            recurringId);
+            recurringId,
+            eventData.adminReason());
   }
 
   private String buildReservationsCancelledByAdminMessage(

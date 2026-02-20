@@ -32,9 +32,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.test.annotation.DirtiesContext;
 
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @DisplayName("Testes de integração para AdminPriceRuleController")
 public class AdminPriceRuleControllerIntegrationTest extends WebIntegrationTestConfig {
 
@@ -735,6 +733,7 @@ public class AdminPriceRuleControllerIntegrationTest extends WebIntegrationTestC
       @DisplayName("Deve atualizar a regra de preço padrão com sucesso")
       void shouldReturn200_whenUpdatingDefaultPriceRule() {
         // Arrange
+        mockPersistDefaultPriceRule();
         BigDecimal newDefaultPrice = BigDecimal.valueOf(110);
         var request = new UpdateDefaultPriceRuleRequestDto(newDefaultPrice);
 
@@ -922,6 +921,7 @@ public class AdminPriceRuleControllerIntegrationTest extends WebIntegrationTestC
     @DisplayName("Deve retornar 200 OK com a lista de regras de preço filtradas isActive=true")
     void shouldReturn200_whenFilteringByActiveStatus() {
       // Arrange
+      mockPersistDefaultPriceRule();
       mockPersistListOfPriceRules();
 
       // Act

@@ -1,31 +1,33 @@
-package com.projetoExtensao.arenaMafia.infrastructure.adapter.gateway.notificationStrategies.sms.imp;
+package com.projetoExtensao.arenaMafia.infrastructure.adapter.gateway.notification.sms.imp;
 
-import com.projetoExtensao.arenaMafia.infrastructure.adapter.gateway.notificationStrategies.sms.SmsProvider;
-import com.projetoExtensao.arenaMafia.infrastructure.adapter.gateway.notificationStrategies.sms.SmsStrategy;
+import com.projetoExtensao.arenaMafia.infrastructure.adapter.gateway.notification.sms.SmsProvider;
+import com.projetoExtensao.arenaMafia.infrastructure.adapter.gateway.notification.sms.SmsStrategy;
 import com.projetoExtensao.arenaMafia.infrastructure.utils.PhoneFormatterUtils;
 import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
 @Component
-@ConditionalOnProperty(name = "app.sms.provider", havingValue = "COMTELE")
 public class ComteleSmsAdapter implements SmsStrategy {
 
   private static final Logger logger = LoggerFactory.getLogger(ComteleSmsAdapter.class);
-  private final RestClient restClient;
-  @Value("${comtele.api-url}")
-  private String apiUrl;
-  @Value("${comtele.api-key}")
-  private String apiKey;
 
-  public ComteleSmsAdapter(RestClient.Builder restClientBuilder) {
+  private final String apiUrl;
+  private final String apiKey;
+  private final RestClient restClient;
+
+  public ComteleSmsAdapter(
+      @Value("${comtele.api-url}") String apiUrl,
+      @Value("${comtele.api-key}") String apiKey,
+      RestClient.Builder restClientBuilder) {
+    this.apiUrl = apiUrl;
+    this.apiKey = apiKey;
     this.restClient = restClientBuilder.build();
   }
 
@@ -35,7 +37,7 @@ public class ComteleSmsAdapter implements SmsStrategy {
   }
 
   @Override
-  public void send(String phone, String message) {
+  public void sendMessage(String phone, String message) {
     String phoneFormatted = phone != null ? phone.replaceAll("\\D", "") : "";
 
     if (phoneFormatted.isEmpty()) {
@@ -55,11 +57,14 @@ public class ComteleSmsAdapter implements SmsStrategy {
           .retrieve()
           .toBodilessEntity();
 
-      logger.info("SMS enviado com sucesso para {}", PhoneFormatterUtils.maskPhoneNumber(phoneFormatted));
+      logger.info(
+          "SMS enviado com sucesso para {}", PhoneFormatterUtils.maskPhoneNumber(phoneFormatted));
 
     } catch (RestClientException ex) {
-      logger.error("Erro ao enviar SMS para {}: {}", PhoneFormatterUtils.maskPhoneNumber(phoneFormatted), ex.getMessage());
+      logger.error(
+          "Erro ao enviar SMS para {}: {}",
+          PhoneFormatterUtils.maskPhoneNumber(phoneFormatted),
+          ex.getMessage());
     }
   }
-
 }

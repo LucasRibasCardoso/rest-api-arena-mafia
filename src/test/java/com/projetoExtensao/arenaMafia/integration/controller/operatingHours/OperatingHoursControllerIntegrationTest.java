@@ -17,7 +17,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
 
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @DisplayName("Testes de Integração para OperatingHoursController")
 public class OperatingHoursControllerIntegrationTest extends WebIntegrationTestConfig {
 
