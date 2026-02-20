@@ -51,7 +51,8 @@ public class ScheduleDateCalculationService {
    * @param selectedDaysOfWeek Dias da semana selecionados (null ou vazio = todos os dias)
    * @return Lista de LocalDate representando as datas aplicáveis
    */
-  public List<LocalDate> calculateApplicableDates(LocalDate startDate, LocalDate endDate, Set<DayOfWeek> selectedDaysOfWeek) {
+  public List<LocalDate> calculateApplicableDates(
+      LocalDate startDate, LocalDate endDate, Set<DayOfWeek> selectedDaysOfWeek) {
 
     Stream<LocalDate> dateStream = startDate.datesUntil(endDate.plusDays(1));
 
@@ -78,12 +79,13 @@ public class ScheduleDateCalculationService {
    * @param endDate Data final do intervalo
    * @param courtsCount Número de quadras selecionadas
    * @return Conjunto de dias da semana efetivos
-   * @throws InvalidScheduleDateCalculationException se algum dia selecionado estiver fora do range de datas ou se
-   *     exceder limite de ocorrências
+   * @throws InvalidScheduleDateCalculationException se algum dia selecionado estiver fora do range
+   *     de datas ou se exceder limite de ocorrências
    * @throws OperatingHoursNotFoundException se algum dia não possuir horários de funcionamento
    *     definidos
    */
-  public Set<DayOfWeek> resolveEffectiveDaysOfWeekWithOccurrencesValidation(Set<DayOfWeek> selectedDaysOfWeek, LocalDate startDate, LocalDate endDate, int courtsCount) {
+  public Set<DayOfWeek> resolveEffectiveDaysOfWeekWithOccurrencesValidation(
+      Set<DayOfWeek> selectedDaysOfWeek, LocalDate startDate, LocalDate endDate, int courtsCount) {
 
     Set<DayOfWeek> effectiveDaysOfWeek;
 
@@ -141,8 +143,8 @@ public class ScheduleDateCalculationService {
    * @param effectiveDaysOfWeek Dias da semana efetivos
    * @return TimeInterval calculado
    * @throws InvalidBlockedTimeException se o intervalo não for fornecido quando isFullDay é false
-   * @throws InvalidScheduleDateCalculationException se o intervalo fornecido estiver fora do horário de
-   *     funcionamento de algum dos dias selecionados
+   * @throws InvalidScheduleDateCalculationException se o intervalo fornecido estiver fora do
+   *     horário de funcionamento de algum dos dias selecionados
    */
   public TimeInterval calculateSearchInterval(
       boolean isFullDay, TimeInterval providedInterval, Set<DayOfWeek> effectiveDaysOfWeek) {
@@ -200,7 +202,8 @@ public class ScheduleDateCalculationService {
    * @param selectedDaysOfWeek Dias da semana selecionados pelo usuário
    * @param startDate Data inicial do intervalo
    * @param endDate Data final do intervalo
-   * @throws InvalidScheduleDateCalculationException se algum dia selecionado não estiver presente no range de datas
+   * @throws InvalidScheduleDateCalculationException se algum dia selecionado não estiver presente
+   *     no range de datas
    */
   private void validateSelectedDaysWithinDateRange(
       Set<DayOfWeek> selectedDaysOfWeek, LocalDate startDate, LocalDate endDate) {
@@ -213,7 +216,8 @@ public class ScheduleDateCalculationService {
             .collect(Collectors.toSet());
 
     if (!invalidDays.isEmpty()) {
-      throw new InvalidScheduleDateCalculationException(ErrorCode.SCHEDULE_ENTRY_SELECTED_DAYS_OUTSIDE_DATE_RANGE);
+      throw new InvalidScheduleDateCalculationException(
+          ErrorCode.SCHEDULE_ENTRY_SELECTED_DAYS_OUTSIDE_DATE_RANGE);
     }
   }
 
@@ -230,8 +234,8 @@ public class ScheduleDateCalculationService {
    * @param interval Intervalo a ser validado
    * @param operatingHoursList Lista de horários de funcionamento
    * @param effectiveDaysOfWeek Dias da semana que devem ser validados
-   * @throws InvalidScheduleDateCalculationException se o intervalo não estiver dentro do horáriode funcionamento
-   *     de algum dia
+   * @throws InvalidScheduleDateCalculationException se o intervalo não estiver dentro do horáriode
+   *     funcionamento de algum dia
    */
   private void validateIntervalWithinOperatingHours(
       TimeInterval interval,
@@ -249,7 +253,8 @@ public class ScheduleDateCalculationService {
               .anyMatch(ohInterval -> ohInterval.containsInterval(interval));
 
       if (!isValidForDay) {
-        throw new InvalidScheduleDateCalculationException(ErrorCode.SCHEDULE_ENTRY_TIME_INTERVAL_OUTSIDE_OPERATING_HOURS);
+        throw new InvalidScheduleDateCalculationException(
+            ErrorCode.SCHEDULE_ENTRY_TIME_INTERVAL_OUTSIDE_OPERATING_HOURS);
       }
     }
   }
@@ -265,7 +270,8 @@ public class ScheduleDateCalculationService {
   private void validateOccurrencesLimit(int courtsCount, int datesCount) {
     int totalOccurrences = courtsCount * datesCount;
     if (totalOccurrences > MAX_RECURRING_SCHEDULES) {
-      throw new InvalidScheduleDateCalculationException(ErrorCode.SCHEDULE_ENTRY_TOO_MANY_OCCURRENCES);
+      throw new InvalidScheduleDateCalculationException(
+          ErrorCode.SCHEDULE_ENTRY_TOO_MANY_OCCURRENCES);
     }
   }
 

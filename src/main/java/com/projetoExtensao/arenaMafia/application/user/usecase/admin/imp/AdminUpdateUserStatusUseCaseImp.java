@@ -54,12 +54,15 @@ public class AdminUpdateUserStatusUseCaseImp implements AdminUpdateUserStatusUse
 
   private void validateIfUserIsVerified(User user) {
     if (user.isPendingVerification()) {
-      throw new AdminCannotUpdateStatusOfUnverifiedUserException(ErrorCode.ADMIN_CANNOT_UPDATE_STATUS_OF_UNVERIFIED_USER);
+      throw new AdminCannotUpdateStatusOfUnverifiedUserException(
+          ErrorCode.ADMIN_CANNOT_UPDATE_STATUS_OF_UNVERIFIED_USER);
     }
   }
 
   private void cancelFutureReservationsAndNotifyUser(User user) {
-    List<Reservation> futureReservations = reservationRepository.findAllFutureActiveReservationsByUser(user.getId());
-    reservationBatchCancellationService.cancelReservationsDueToAccountDisabled(futureReservations, user);
+    List<Reservation> futureReservations =
+        reservationRepository.findAllFutureActiveReservationsByUser(user.getId());
+    reservationBatchCancellationService.cancelReservationsDueToAccountDisabled(
+        futureReservations, user);
   }
 }

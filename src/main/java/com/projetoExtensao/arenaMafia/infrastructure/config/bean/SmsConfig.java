@@ -17,7 +17,9 @@ public class SmsConfig {
 
   @Bean
   @Primary
-  public SmsPort smsPort(List<SmsStrategy> strategies, @Value("${app.notification.sms-provider:MOCK}") String providerName) {
+  public SmsPort smsPort(
+      List<SmsStrategy> strategies,
+      @Value("${app.notification.sms-provider:MOCK}") String providerName) {
 
     SmsStrategy selectedStrategy =
         strategies.stream()

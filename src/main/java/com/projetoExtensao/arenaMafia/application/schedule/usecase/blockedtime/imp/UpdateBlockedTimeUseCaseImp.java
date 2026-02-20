@@ -27,14 +27,15 @@ public class UpdateBlockedTimeUseCaseImp implements UpdateBlockedTimeUseCase {
   }
 
   @Override
-  public List<BlockedTimeDetail> execute(UUID blockedTimeId, BlockedTimeUpdateRequestDto requestDto) {
+  public List<BlockedTimeDetail> execute(
+      UUID blockedTimeId, BlockedTimeUpdateRequestDto requestDto) {
     BlockedTime blockedTime = blockedTimeRepositoryPort.findByIdOrElseThrow(blockedTimeId);
 
     if (blockedTime.isRecurring() && requestDto.updateAllRecurring()) {
-      List<BlockedTime> recurringBlockedTimes = fetchRecurringBlockedTimes(blockedTime.getRecurringBlockedTimeId());
+      List<BlockedTime> recurringBlockedTimes =
+          fetchRecurringBlockedTimes(blockedTime.getRecurringBlockedTimeId());
       return updateRecurringBlockedTimes(recurringBlockedTimes, requestDto);
-    }
-    else {
+    } else {
       BlockedTimeDetail updatedBlockedTime = updateSingleBlockedTime(blockedTime, requestDto);
       return List.of(updatedBlockedTime);
     }
@@ -42,6 +43,7 @@ public class UpdateBlockedTimeUseCaseImp implements UpdateBlockedTimeUseCase {
 
   /**
    * Busca todos os BlockedTime recorrentes através do "recurringBlockedTimeId"
+   *
    * @param recurringBlockedTimeId identificador do grupo recorrente de BlockedTime
    * @return Lista de BlockedTime do mesmo grupo
    */
@@ -49,16 +51,15 @@ public class UpdateBlockedTimeUseCaseImp implements UpdateBlockedTimeUseCase {
     return blockedTimeRepositoryPort.findAllByRecurringBlockedTimeId(recurringBlockedTimeId);
   }
 
-
   /**
    * Atualiza um único BlockedTime
+   *
    * @param blockedTime BlockedTime a ser atualizado
-   * @param requestDto DTO de atualização 
+   * @param requestDto DTO de atualização
    * @return BlockedTime atualizado
    */
   private BlockedTimeDetail updateSingleBlockedTime(
-          BlockedTime blockedTime,
-          BlockedTimeUpdateRequestDto requestDto) {
+      BlockedTime blockedTime, BlockedTimeUpdateRequestDto requestDto) {
 
     blockedTime.updateDescription(requestDto.description());
     BlockedTime savedBlockedTime = blockedTimeRepositoryPort.save(blockedTime);
@@ -67,17 +68,20 @@ public class UpdateBlockedTimeUseCaseImp implements UpdateBlockedTimeUseCase {
 
   /**
    * Atualiza todos os BlockedTime recorrentes
+   *
    * @param recurringBlockedTimes Lista de BlockedTime recorrentes
    * @param requestDto DTO de atualização
    * @return Lista de BlockedTime atualizados
    */
   private List<BlockedTimeDetail> updateRecurringBlockedTimes(
-      List<BlockedTime> recurringBlockedTimes, 
-      BlockedTimeUpdateRequestDto requestDto) {
-    
-    recurringBlockedTimes.forEach(blockedTime -> blockedTime.updateDescription(requestDto.description()));
-    List<BlockedTime> savedRecurringBlockedTimes = blockedTimeRepositoryPort.saveAll(recurringBlockedTimes);
-    ScheduleEntriesEnrichedResult enrichedResult = enrichmentService.enrichScheduleEntries(savedRecurringBlockedTimes);
+      List<BlockedTime> recurringBlockedTimes, BlockedTimeUpdateRequestDto requestDto) {
+
+    recurringBlockedTimes.forEach(
+        blockedTime -> blockedTime.updateDescription(requestDto.description()));
+    List<BlockedTime> savedRecurringBlockedTimes =
+        blockedTimeRepositoryPort.saveAll(recurringBlockedTimes);
+    ScheduleEntriesEnrichedResult enrichedResult =
+        enrichmentService.enrichScheduleEntries(savedRecurringBlockedTimes);
     return enrichedResult.enrichedBlockedTimes();
   }
 }

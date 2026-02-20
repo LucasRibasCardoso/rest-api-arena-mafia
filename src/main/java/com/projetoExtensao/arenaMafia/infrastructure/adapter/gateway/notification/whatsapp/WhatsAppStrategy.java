@@ -4,5 +4,5 @@ import com.projetoExtensao.arenaMafia.application.notification.gateway.WhatsAppP
 
 public interface WhatsAppStrategy extends WhatsAppPort {
 
-    WhatsAppProvider getProvider();
+  WhatsAppProvider getProvider();
 }

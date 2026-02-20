@@ -73,7 +73,6 @@ public class CreateReservationUseCaseImp implements CreateReservationUseCase {
     Reservation reservation =
         saveReservation(request.modalityId(), request.courtId(), userId, price, dateTimeSlot);
 
-
     // Agenda a conclusão automática da reserva
     scheduleAutomaticCompletion(reservation);
     return reservation;
@@ -104,7 +103,6 @@ public class CreateReservationUseCaseImp implements CreateReservationUseCase {
     var reservation = Reservation.createByUser(modalityId, courtId, userId, price, dateTimeSlot);
     return reservationRepositoryPort.save(reservation);
   }
-
 
   /**
    * Agenda a conclusão automática da reserva no momento do seu término.

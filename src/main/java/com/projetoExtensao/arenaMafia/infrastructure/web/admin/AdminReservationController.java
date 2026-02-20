@@ -44,11 +44,12 @@ public class AdminReservationController {
   @GetMapping
   @CustomRateLimiter(limiterName = "globalLimiter")
   public ResponseEntity<Page<ReservationDetailResponseDto>> searchReservations(
-          @Valid AdminReservationSearchRequestDto requestDto,
-          Pageable pageable) {
+      @Valid AdminReservationSearchRequestDto requestDto, Pageable pageable) {
 
-    Page<ReservationDetail> reservations = adminListReservationsUseCase.execute(requestDto, pageable);
-    Page<ReservationDetailResponseDto> responseDtoPage = reservations.map(reservationResponseMapper::toDetailDto);
+    Page<ReservationDetail> reservations =
+        adminListReservationsUseCase.execute(requestDto, pageable);
+    Page<ReservationDetailResponseDto> responseDtoPage =
+        reservations.map(reservationResponseMapper::toDetailDto);
     return ResponseEntity.ok(responseDtoPage);
   }
 
@@ -71,12 +72,11 @@ public class AdminReservationController {
       @AuthenticationPrincipal UserDetailsAdapter authenticatedUser) {
 
     UUID adminId = authenticatedUser.user().getId();
-    List<ReservationDetailResponseDto> response = createReservationByAdminUseCase.execute(adminId, requestDto)
-            .stream()
+    List<ReservationDetailResponseDto> response =
+        createReservationByAdminUseCase.execute(adminId, requestDto).stream()
             .map(reservationResponseMapper::toDetailDto)
             .toList();
 
     return ResponseEntity.ok(response);
   }
-
 }

@@ -23,15 +23,18 @@ public class DefaultPriceRuleConfig implements CommandLineRunner {
   public void run(String... args) {
     try {
       PriceRule priceRule = priceRuleRepositoryPort.findDefaultRuleOrElseThrow();
-      log.info("Regra de preço padrão encontrada: [{}] - [R$ {}]", priceRule.getName(), priceRule.getPrice());
-    }
-    catch (DefaultPriceRuleNotFoundException e) {
+      log.info(
+          "Regra de preço padrão encontrada: [{}] - [R$ {}]",
+          priceRule.getName(),
+          priceRule.getPrice());
+    } catch (DefaultPriceRuleNotFoundException e) {
       PriceRule priceRule = PriceRule.createDefault();
       priceRuleRepositoryPort.save(priceRule);
-      log.info("Regra de preço padrão criada com sucesso: [{}] - [R$ {}]", priceRule.getName(), priceRule.getPrice());
-    }
-
-    catch (Exception e) {
+      log.info(
+          "Regra de preço padrão criada com sucesso: [{}] - [R$ {}]",
+          priceRule.getName(),
+          priceRule.getPrice());
+    } catch (Exception e) {
       log.error("Erro ao verificar/criar regra de preço padrão", e);
       throw new IllegalStateException("Falha ao inicializar regra de preço padrão do sistema", e);
     }

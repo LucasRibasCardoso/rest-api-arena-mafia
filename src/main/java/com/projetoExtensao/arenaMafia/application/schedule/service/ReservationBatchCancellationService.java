@@ -112,7 +112,8 @@ public class ReservationBatchCancellationService {
 
     List<User> users = userRepository.findAllByIds(userIds);
 
-    return users.stream().collect(Collectors.toMap(User::getId, user -> user, (existing, replacement) -> existing));
+    return users.stream()
+        .collect(Collectors.toMap(User::getId, user -> user, (existing, replacement) -> existing));
   }
 
   private void cancelByAdminAndSaveReservations(List<Reservation> reservations, UUID adminId) {
@@ -125,9 +126,10 @@ public class ReservationBatchCancellationService {
     reservationRepository.saveAll(reservations);
   }
 
-  private void publishCancellationEvents(List<Reservation> reservations, Map<UUID, User> usersMap, String reason) {
+  private void publishCancellationEvents(
+      List<Reservation> reservations, Map<UUID, User> usersMap, String reason) {
     Map<UUID, List<Reservation>> reservationsByUser =
-            reservations.stream().collect(Collectors.groupingBy(Reservation::getUserId));
+        reservations.stream().collect(Collectors.groupingBy(Reservation::getUserId));
 
     reservationsByUser.forEach(
         (userId, userReservations) -> {
@@ -143,7 +145,8 @@ public class ReservationBatchCancellationService {
     eventPublisher.publishEvent(event);
   }
 
-  private void createAndPublishCancellationEvent(User user, String reason, List<Reservation> reservations) {
+  private void createAndPublishCancellationEvent(
+      User user, String reason, List<Reservation> reservations) {
     var event =
         new OnReservationsCancelledByAdminEvent(
             user.getUsername(), user.getPhone(), reason, reservations);

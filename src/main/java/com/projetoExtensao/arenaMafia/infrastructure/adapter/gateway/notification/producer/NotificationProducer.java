@@ -34,13 +34,16 @@ public class NotificationProducer {
   public void sendSms(String phone, String content) {
     String payload = toJson(new NotificationDto(phone, content));
     sqsTemplate.send(to -> to.queue(smsQueue).payload(payload));
-    logger.info("Adicionado na fila de notificação SMS: {}", PhoneFormatterUtils.maskPhoneNumber(phone));
+    logger.info(
+        "Adicionado na fila de notificação SMS: {}", PhoneFormatterUtils.maskPhoneNumber(phone));
   }
 
   public void sendWhatsapp(String phone, String content) {
     String payload = toJson(new NotificationDto(phone, content));
     sqsTemplate.send(to -> to.queue(whatsappQueue).payload(payload));
-    logger.info("Adicionado na fila de notificação WhatsApp: {}", PhoneFormatterUtils.maskPhoneNumber(phone));
+    logger.info(
+        "Adicionado na fila de notificação WhatsApp: {}",
+        PhoneFormatterUtils.maskPhoneNumber(phone));
   }
 
   private String toJson(NotificationDto dto) {

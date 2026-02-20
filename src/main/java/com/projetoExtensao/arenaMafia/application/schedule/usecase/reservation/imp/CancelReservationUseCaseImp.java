@@ -25,7 +25,8 @@ public class CancelReservationUseCaseImp implements CancelReservationUseCase {
 
   @Override
   public void execute(UUID userId, UUID reservationId) {
-    Reservation reservation = reservationRepositoryPort.findReservationByIdAndUserIdOrElseThrow(reservationId, userId);
+    Reservation reservation =
+        reservationRepositoryPort.findReservationByIdAndUserIdOrElseThrow(reservationId, userId);
 
     validateCancellationPolicy(reservation);
     reservation.cancel();

@@ -6,7 +6,7 @@ import com.projetoExtensao.arenaMafia.domain.valueobjects.DateTimeSlot;
 import java.time.Instant;
 import java.util.UUID;
 
-public class    BlockedTime extends ScheduleEntry {
+public class BlockedTime extends ScheduleEntry {
 
   private final UUID blockedByAdminId;
   private final boolean isFullDay;
