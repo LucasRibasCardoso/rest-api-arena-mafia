@@ -15,7 +15,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
-import org.springframework.test.annotation.DirtiesContext;
 
 @DisplayName("Testes de Integração para OperatingHoursController")
 public class OperatingHoursControllerIntegrationTest extends WebIntegrationTestConfig {

@@ -36,7 +36,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.test.annotation.DirtiesContext;
 
 @DisplayName("Testes de Integração para ReservationController")
 public class ReservationControllerIntegrationTest extends WebIntegrationTestConfig {

@@ -36,7 +36,6 @@ import java.util.UUID;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.test.annotation.DirtiesContext;
 
 @DisplayName("Testes de Integração para PasswordResetController")
 public class PasswordResetControllerIntegrationTest extends WebIntegrationTestConfig {

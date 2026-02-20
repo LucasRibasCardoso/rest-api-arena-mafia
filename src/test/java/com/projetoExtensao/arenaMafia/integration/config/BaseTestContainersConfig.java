@@ -186,10 +186,8 @@ public abstract class BaseTestContainersConfig {
     var connectionFactory = redisTemplate.getConnectionFactory();
     if (connectionFactory != null) {
       var connection = connectionFactory.getConnection();
-      if (connection != null) {
-        connection.serverCommands().flushAll();
-        connection.close();
-      }
+      connection.serverCommands().flushAll();
+      connection.close();
     }
   }
 
@@ -591,12 +589,6 @@ public abstract class BaseTestContainersConfig {
     OperatingHours operatingHours4 = OperatingHours.create(inactiveDays, timeIntervalInactive);
     operatingHours4.disable();
     operatingHoursRepository.save(operatingHours4);
-  }
-
-  public OperatingHours mockPersistOperatingHoursFixedInterval(
-      Set<DayOfWeek> daysOfWeeks, TimeInterval timeInterval) {
-    OperatingHours operatingHours = OperatingHours.create(daysOfWeeks, timeInterval);
-    return operatingHoursRepository.save(operatingHours);
   }
 
   public OperatingHours mockPersistOperatingHours() {
