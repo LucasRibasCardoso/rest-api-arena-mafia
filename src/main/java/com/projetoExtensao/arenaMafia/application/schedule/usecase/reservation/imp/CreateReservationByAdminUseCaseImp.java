@@ -3,7 +3,7 @@ package com.projetoExtensao.arenaMafia.application.schedule.usecase.reservation.
 import com.projetoExtensao.arenaMafia.application.court.port.repository.CourtRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.modality.port.ModalityRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.notification.event.OnRecurringReservationCreatedByAdminEvent;
-import com.projetoExtensao.arenaMafia.application.notification.event.OnReservationCreatedEvent;
+import com.projetoExtensao.arenaMafia.application.notification.event.OnReservationCreatedByAdminEvent;
 import com.projetoExtensao.arenaMafia.application.priceRule.port.PriceRuleRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.priceRule.service.PriceCalculatorService;
 import com.projetoExtensao.arenaMafia.application.schedule.detail.ReservationDetail;
@@ -315,12 +315,12 @@ public class CreateReservationByAdminUseCaseImp implements CreateReservationByAd
   }
 
   /**
-   * Publica o evento de notificação informando o usuário sobre a reserva cadastrada
+   * Publica o evento de notificação informando o usuário sobre a reserva cadastrada pelo admin
    * @param costumer Usuário cliente
    * @param reservation Reserva cadastrada
    */
   private void publishConfirmationEvent(User costumer, Reservation reservation) {
-    eventPublisher.publishEvent(new OnReservationCreatedEvent(costumer.getUsername(), costumer.getPhone(), reservation));
+    eventPublisher.publishEvent(new OnReservationCreatedByAdminEvent(costumer.getUsername(), costumer.getPhone(), reservation));
   }
 
   /**

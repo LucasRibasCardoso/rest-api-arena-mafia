@@ -2,14 +2,12 @@ package com.projetoExtensao.arenaMafia.application.notification.listener;
 
 import com.projetoExtensao.arenaMafia.application.notification.event.*;
 import com.projetoExtensao.arenaMafia.application.notification.gateway.OtpPort;
-import com.projetoExtensao.arenaMafia.application.priceRule.port.PriceRuleRepositoryPort;
 import com.projetoExtensao.arenaMafia.domain.model.User;
 import com.projetoExtensao.arenaMafia.domain.model.enums.DayOfWeek;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.Reservation;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.OtpCode;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
 import com.projetoExtensao.arenaMafia.infrastructure.adapter.gateway.notification.producer.NotificationProducer;
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
@@ -25,17 +23,17 @@ public class NotificationEventListener {
 
   private final OtpPort otpPort;
   private final NotificationProducer notificationProducer;
-  private final PriceRuleRepositoryPort priceRuleRepositoryPort;
 
   public NotificationEventListener(
       OtpPort otpPort,
-      NotificationProducer notificationProducer,
-      PriceRuleRepositoryPort priceRuleRepositoryPort) {
+      NotificationProducer notificationProducer) {
     this.otpPort = otpPort;
     this.notificationProducer = notificationProducer;
-    this.priceRuleRepositoryPort = priceRuleRepositoryPort;
   }
 
+  /**
+   * Envia um SMS para o usuário com um código OTP para verificação de telefone
+   */
   @Async
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
   public void onOtpVerification(OnVerificationRequiredEvent eventData) {
@@ -48,31 +46,41 @@ public class NotificationEventListener {
     notificationProducer.sendSms(recipientPhone, message);
   }
 
+  /**
+   * Envia uma notificação via WhatsApp para o usuário informando que uma reserva foi criada para ele
+   */
   @Async
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-  public void onReservationCreated(OnReservationCreatedEvent eventData) {
-    if (eventData.scheduleEntry() instanceof Reservation reservation) {
-      String message = buildReservationConfirmationMessage(eventData.username(), reservation);
-      notificationProducer.sendWhatsapp(eventData.userPhone(), message);
-    }
-  }
-
-  @Async
-  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-  public void onReservationCancelledByUser(OnReservationCancelledByUserEvent eventData) {
-    String message = buildReservationCancellationMessage(eventData.username(), eventData.reservation());
+  public void onReservationCreatedByAdmin(OnReservationCreatedByAdminEvent eventData) {
+    String message = buildReservationCreatedByAdminMessage(eventData.username(), eventData.reservation());
     notificationProducer.sendWhatsapp(eventData.userPhone(), message);
   }
 
+  /**
+   * Envia uma notificação via WhatsApp para o usuário informando que uma reserva foi cancelada pela administração
+   */
   @Async
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
   public void onReservationCancelledByAdmin(OnReservationCancelledByAdminEvent eventData) {
     String message =
-        buildReservationCancellationByAdminMessage(
-            eventData.username(), eventData.reservation(), eventData.adminReason());
+            buildReservationCancellationByAdminMessage(
+                    eventData.username(), eventData.reservation(), eventData.adminReason());
     notificationProducer.sendWhatsapp(eventData.userPhone(), message);
   }
 
+  /**
+   * Envia uma notificação via WhatsApp para o usuário informando que suas reservas foram canceladas pela administração
+   */
+  @Async
+  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+  public void onReservationsCancelledByAdmin(OnReservationsCancelledByAdminEvent eventData) {
+    String message = buildReservationsCancelledByAdminMessage(eventData);
+    notificationProducer.sendWhatsapp(eventData.userPhone(), message);
+  }
+
+  /**
+   * Envia uma notificação via WhatsApp para o usuário informando que suas reservas recorrentes foram criadas pela administração
+   */
   @Async
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
   public void onRecurringReservationCreateByAdmin(OnRecurringReservationCreatedByAdminEvent eventData) {
@@ -80,19 +88,6 @@ public class NotificationEventListener {
     notificationProducer.sendWhatsapp(eventData.userPhone(), message);
   }
 
-  @Async
-  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-  public void onRecurringReservationCancelledByAdmin(OnRecurringReservationCancelledByAdminEvent eventData) {
-    String message = buildRecurringReservationCancellationByAdminMessage(eventData);
-    notificationProducer.sendWhatsapp(eventData.userPhone(), message);
-  }
-
-  @Async
-  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-  public void onReservationsCancelledByAdmin(OnReservationsCancelledByAdminEvent eventData) {
-    String message = buildReservationsCancelledByAdminMessage(eventData);
-    notificationProducer.sendWhatsapp(eventData.userPhone(), message);
-  }
 
   //  ================================ Mensagens de notificação ================================
 
@@ -107,36 +102,23 @@ public class NotificationEventListener {
         .formatted(otpCode);
   }
 
-  private String buildReservationConfirmationMessage(String username, Reservation reservation) {
+  private String buildReservationCreatedByAdminMessage(String username, Reservation reservation) {
     String date = reservation.getDateTimeSlot().date().toString();
     String startTime = reservation.getDateTimeSlot().timeInterval().startTime().toString();
     String endTime = reservation.getDateTimeSlot().timeInterval().endTime().toString();
     String price = reservation.getPrice().toString();
 
     return """
-        Arena Máfia - Reserva confirmada!
+        Arena Máfia - Reserva Confirmada!
 
-        Olá %s,
+        Olá %s, uma reserva foi criada para você pela administração.
+
         Data: %s
         Horário: %s - %s
         Valor: R$ %s
-        Código da reserva: %s"""
+        Código da reserva: %s
+        """
         .formatted(username, date, startTime, endTime, price, reservation.getId());
-  }
-
-  private String buildReservationCancellationMessage(String username, Reservation reservation) {
-    String date = reservation.getDateTimeSlot().date().toString();
-    String startTime = reservation.getDateTimeSlot().timeInterval().startTime().toString();
-    String endTime = reservation.getDateTimeSlot().timeInterval().endTime().toString();
-
-    return """
-        Arena Máfia - Reserva cancelada
-
-        Olá %s,
-        Sua reserva para o dia %s, no horário de %s às %s, foi cancelada com sucesso.
-
-        Código da reserva: %s"""
-        .formatted(username, date, startTime, endTime, reservation.getId());
   }
 
   private String buildReservationCancellationByAdminMessage(
@@ -167,23 +149,15 @@ public class NotificationEventListener {
     TimeInterval timeInterval = extractTimeInterval(reservations);
     UUID recurringId = extractRecurringId(reservations);
     String daysOfWeek = buildDaysOfWeek(eventData.daysOfWeek());
-    BigDecimal minPrice = extractMinPrice(reservations);
-    BigDecimal maxPrice = extractMaxPrice(reservations);
-
-    // Formatar preço (usar minPrice se todos iguais, senão range)
-    String priceText =
-        minPrice.equals(maxPrice) ? minPrice.toString() : minPrice + " - " + maxPrice;
 
     return """
            Arena Máfia - Reservas Confirmadas!
 
            Olá %s, suas reservas recorrentes foram confirmadas!
 
-           Data de início: %s
-           Data de término: %s
+           Período: %s a %s
            Dias da semana: %s
            Horário: %s - %s
-           Preço: R$ %s
            Código das reservas: %s
            """
         .formatted(
@@ -193,68 +167,34 @@ public class NotificationEventListener {
             daysOfWeek,
             timeInterval.startTime(),
             timeInterval.endTime(),
-            priceText,
             recurringId);
   }
 
-  private String buildRecurringReservationCancellationByAdminMessage(
-      OnRecurringReservationCancelledByAdminEvent eventData) {
+
+  private String buildReservationsCancelledByAdminMessage(OnReservationsCancelledByAdminEvent eventData) {
     List<Reservation> reservations = eventData.reservations();
+    int totalReservations = reservations.size();
 
     LocalDate startDate = extractStartDate(reservations);
     LocalDate endDate = extractEndDate(reservations);
-    TimeInterval timeInterval = extractTimeInterval(reservations);
-    UUID recurringId = extractRecurringId(reservations);
-    String daysOfWeek = buildDaysOfWeek(eventData.daysOfWeek());
+
+    String periodText = startDate.equals(endDate)
+        ? startDate.toString()
+        : startDate + " a " + endDate;
 
     return """
-           Arena Máfia - Reservas Canceladas!
+           Arena Máfia - Reservas Canceladas
 
-           Olá %s, suas reservas recorrentes foram canceladas pela administração.
+           Olá %s, %d reserva(s) foram canceladas pela administração.
 
-           Período: %s a %s
-           Dias: %s
-           Horário: %s - %s
-           Código: %s
-           Motivo: %s
-           """
-        .formatted(
-            eventData.username(),
-            startDate,
-            endDate,
-            daysOfWeek,
-            timeInterval.startTime(),
-            timeInterval.endTime(),
-            recurringId,
-            eventData.adminReason());
-  }
-
-  private String buildReservationsCancelledByAdminMessage(
-      OnReservationsCancelledByAdminEvent eventData) {
-    List<Reservation> reservations = eventData.reservations();
-
-    StringBuilder reservationsList = new StringBuilder();
-    for (Reservation reservation : reservations) {
-      String date = reservation.getDateTimeSlot().date().toString();
-      String startTime = reservation.getDateTimeSlot().timeInterval().startTime().toString();
-      String endTime = reservation.getDateTimeSlot().timeInterval().endTime().toString();
-      reservationsList.append(String.format("- %s, %s-%s\n", date, startTime, endTime));
-    }
-
-    return """
-           Arena Máfia - Reservas Canceladas!
-
-           Olá %s, suas reservas foram canceladas pela administração.
-
-           Reservas canceladas:
-           %s
+           Período afetado: %s
            Motivo: %s
 
            Para mais informações, entre em contato com nossa central.
            """
-        .formatted(
-            eventData.username(), reservationsList.toString().trim(), eventData.adminReason());
+        .formatted(eventData.username(), totalReservations, periodText, eventData.adminReason());
   }
+
 
   //  ================================ Métodos auxiliares ================================
 
@@ -282,23 +222,5 @@ public class NotificationEventListener {
 
   private String buildDaysOfWeek(Set<DayOfWeek> daysOfWeek) {
     return daysOfWeek.stream().map(DayOfWeek::getPortugueseName).collect(Collectors.joining(", "));
-  }
-
-  private BigDecimal extractMinPrice(List<Reservation> reservations) {
-    return reservations.stream()
-        .map(Reservation::getPrice)
-        .min(BigDecimal::compareTo)
-        .orElse(getDefaultPrice());
-  }
-
-  private BigDecimal extractMaxPrice(List<Reservation> reservations) {
-    return reservations.stream()
-        .map(Reservation::getPrice)
-        .max(BigDecimal::compareTo)
-        .orElse(getDefaultPrice());
-  }
-
-  private BigDecimal getDefaultPrice() {
-    return priceRuleRepositoryPort.findDefaultRuleOrElseThrow().getPrice();
   }
 }

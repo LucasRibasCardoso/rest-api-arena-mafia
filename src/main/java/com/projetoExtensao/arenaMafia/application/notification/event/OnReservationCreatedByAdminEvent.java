@@ -2,5 +2,9 @@ package com.projetoExtensao.arenaMafia.application.notification.event;
 
 import com.projetoExtensao.arenaMafia.domain.model.schedule.Reservation;
 
-public record OnReservationCancelledByUserEvent(
-    Reservation reservation, String username, String userPhone) {}
+public record OnReservationCreatedByAdminEvent(
+    String username,
+    String userPhone,
+    Reservation reservation
+) {}
+

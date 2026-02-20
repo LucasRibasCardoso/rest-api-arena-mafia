@@ -6,4 +6,4 @@ import java.util.List;
 import java.util.Set;
 
 public record OnRecurringReservationCreatedByAdminEvent(
-    String username, String userPhone, Set<DayOfWeek> daysOfWeek, List<Reservation> reservations) {}
+        String username, String userPhone, Set<DayOfWeek> daysOfWeek, List<Reservation> reservations) {}
