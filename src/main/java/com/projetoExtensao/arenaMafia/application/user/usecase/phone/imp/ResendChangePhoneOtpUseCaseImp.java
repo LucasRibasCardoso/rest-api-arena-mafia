@@ -1,6 +1,6 @@
 package com.projetoExtensao.arenaMafia.application.user.usecase.phone.imp;
 
-import com.projetoExtensao.arenaMafia.application.notification.event.OnVerificationRequiredEvent;
+import com.projetoExtensao.arenaMafia.application.notification.event.OnVerificationRequiredNotificationEvent;
 import com.projetoExtensao.arenaMafia.application.user.port.gateway.PendingPhoneChangePort;
 import com.projetoExtensao.arenaMafia.application.user.port.repository.UserRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.user.usecase.phone.ResendChangePhoneOtpUseCase;
@@ -35,7 +35,7 @@ public class ResendChangePhoneOtpUseCaseImp implements ResendChangePhoneOtpUseCa
         .ifPresent(
             user -> {
               user.ensureAccountEnabled();
-              eventPublisher.publishEvent(new OnVerificationRequiredEvent(user, newPhone));
+              eventPublisher.publishEvent(new OnVerificationRequiredNotificationEvent(user, newPhone));
             });
   }
 

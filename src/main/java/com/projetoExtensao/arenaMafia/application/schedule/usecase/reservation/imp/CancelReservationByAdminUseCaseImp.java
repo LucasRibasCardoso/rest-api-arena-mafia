@@ -1,9 +1,10 @@
 package com.projetoExtensao.arenaMafia.application.schedule.usecase.reservation.imp;
 
-import com.projetoExtensao.arenaMafia.application.notification.event.OnReservationCancelledByAdminEvent;
+import com.projetoExtensao.arenaMafia.application.notification.event.OnReservationCancelledByAdminNotificationEvent;
 import com.projetoExtensao.arenaMafia.application.schedule.port.repository.ReservationRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.schedule.service.ReservationBatchCancellationService;
 import com.projetoExtensao.arenaMafia.application.schedule.usecase.reservation.CancelReservationByAdminUseCase;
+import com.projetoExtensao.arenaMafia.application.scheduleTask.event.OnReservationCancelledScheduleTaskEvent;
 import com.projetoExtensao.arenaMafia.application.user.port.repository.UserRepositoryPort;
 import com.projetoExtensao.arenaMafia.domain.model.User;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.Reservation;
@@ -17,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class CancelReservationByAdminUseCaseImp implements CancelReservationByAdminUseCase {
 
-  private static final String REASON_OF_CANCELLATION = "Um administrador cancelou sua reserva";
+  private static final String REASON = "Um administrador cancelou sua reserva";
 
   private final UserRepositoryPort userRepository;
   private final ApplicationEventPublisher eventPublisher;
@@ -43,7 +44,7 @@ public class CancelReservationByAdminUseCaseImp implements CancelReservationByAd
     if (reservation.isRecurring() && cancelAllRecurring) {
       processCancelRecurringReservation(adminId, reservation.getRecurringReservationId());
     } else {
-      processCancelSingleReservation(adminId, reservation, costumer);
+      processCancelSingleReservation(adminId, reservation, costumer.getUsername(), costumer.getPhone());
     }
   }
 
@@ -54,10 +55,8 @@ public class CancelReservationByAdminUseCaseImp implements CancelReservationByAd
    * @param recurringReservationId Identificador unico da reserva recorrente
    */
   private void processCancelRecurringReservation(UUID adminId, UUID recurringReservationId) {
-    List<Reservation> reservations =
-        reservationRepository.findAllFutureRecurringReservations(recurringReservationId);
-    reservationBatchCancellationService.cancelReservationsInBatchByAdmin(
-        reservations, REASON_OF_CANCELLATION, adminId);
+    List<Reservation> reservations = reservationRepository.findAllFutureRecurringReservations(recurringReservationId);
+    reservationBatchCancellationService.cancelReservationsInBatchByAdmin(reservations, REASON, adminId);
   }
 
   /**
@@ -67,15 +66,11 @@ public class CancelReservationByAdminUseCaseImp implements CancelReservationByAd
    * @param reservation Reserva a ser cancelada
    * @param costumer Usuário que fez a reserva
    */
-  private void processCancelSingleReservation(
-      UUID adminId, Reservation reservation, User costumer) {
+  private void processCancelSingleReservation(UUID adminId, Reservation reservation, String username, String phone) {
     reservation.cancelByAdmin(adminId);
     reservationRepository.save(reservation);
 
-    var notificationEvent =
-        new OnReservationCancelledByAdminEvent(
-            costumer.getUsername(), costumer.getPhone(), REASON_OF_CANCELLATION, reservation);
-
-    eventPublisher.publishEvent(notificationEvent);
+    eventPublisher.publishEvent(new OnReservationCancelledByAdminNotificationEvent(username, phone, REASON, reservation));
+    eventPublisher.publishEvent(new OnReservationCancelledScheduleTaskEvent(reservation.getId()));
   }
 }

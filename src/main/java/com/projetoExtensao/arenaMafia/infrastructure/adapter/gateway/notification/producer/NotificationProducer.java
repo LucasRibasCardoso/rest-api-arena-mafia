@@ -2,6 +2,7 @@ package com.projetoExtensao.arenaMafia.infrastructure.adapter.gateway.notificati
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.projetoExtensao.arenaMafia.application.notification.gateway.NotificationPort;
 import com.projetoExtensao.arenaMafia.infrastructure.adapter.gateway.notification.dto.NotificationDto;
 import com.projetoExtensao.arenaMafia.infrastructure.utils.PhoneFormatterUtils;
 import io.awspring.cloud.sqs.operations.SqsTemplate;
@@ -11,39 +12,38 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
-public class NotificationProducer {
+public class NotificationProducer implements NotificationPort {
 
   private static final Logger logger = LoggerFactory.getLogger(NotificationProducer.class);
 
   private final String smsQueue;
-  private final String whatsappQueue;
+  private final String whatsappTransactionalQueue;
   private final SqsTemplate sqsTemplate;
   private final ObjectMapper objectMapper;
 
   public NotificationProducer(
-      @Value("${app.queue.sms}") String smsQueue,
-      @Value("${app.queue.whatsapp}") String whatsappQueue,
+      @Value("${app.queue.sms-queue}") String smsQueue,
+      @Value("${app.queue.whatsapp-transactional-queue}") String whatsappTransactionalQueue,
       SqsTemplate sqsTemplate,
       ObjectMapper objectMapper) {
     this.smsQueue = smsQueue;
-    this.whatsappQueue = whatsappQueue;
+    this.whatsappTransactionalQueue = whatsappTransactionalQueue;
     this.sqsTemplate = sqsTemplate;
     this.objectMapper = objectMapper;
   }
 
+  @Override
   public void sendSms(String phone, String content) {
     String payload = toJson(new NotificationDto(phone, content));
     sqsTemplate.send(to -> to.queue(smsQueue).payload(payload));
-    logger.info(
-        "Adicionado na fila de notificação SMS: {}", PhoneFormatterUtils.maskPhoneNumber(phone));
+    logger.info("Adicionado na fila SMS: {}", PhoneFormatterUtils.maskPhoneNumber(phone));
   }
 
-  public void sendWhatsapp(String phone, String content) {
+  @Override
+  public void sendWhatsappMessage(String phone, String content) {
     String payload = toJson(new NotificationDto(phone, content));
-    sqsTemplate.send(to -> to.queue(whatsappQueue).payload(payload));
-    logger.info(
-        "Adicionado na fila de notificação WhatsApp: {}",
-        PhoneFormatterUtils.maskPhoneNumber(phone));
+    sqsTemplate.send(to -> to.queue(whatsappTransactionalQueue).payload(payload));
+    logger.info("Adicionado na fila TRANSACIONAL WhatsApp: {}", PhoneFormatterUtils.maskPhoneNumber(phone));
   }
 
   private String toJson(NotificationDto dto) {

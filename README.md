@@ -20,7 +20,7 @@
 
 ### Diagrama da Arquitetura
 
-![Arquitetura Arena Mafia](assets/Arquitetura-Arena-Mafia-App.png)
+![Arquitetura Arena Mafia](assets/diagrama-infraestrutura-app.png)
 
 ### Arquitetura Hexagonal (Ports & Adapters)
 

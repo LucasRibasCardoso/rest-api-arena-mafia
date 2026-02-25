@@ -2,7 +2,6 @@ package com.projetoExtensao.arenaMafia.application.schedule.usecase.reservation.
 
 import com.projetoExtensao.arenaMafia.application.schedule.port.repository.ReservationRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.schedule.usecase.reservation.CompleteReservationUseCase;
-import com.projetoExtensao.arenaMafia.domain.model.enums.ReservationStatus;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.Reservation;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.ScheduleEntry;
 import java.util.UUID;
@@ -27,9 +26,7 @@ public class CompleteReservationUseCaseImp implements CompleteReservationUseCase
       return;
     }
 
-    if (reservation.getStatus() == ReservationStatus.CONFIRMED) {
-      reservation.complete();
-      reservationRepositoryPort.save(reservation);
-    }
+    reservation.complete();
+    reservationRepositoryPort.save(reservation);
   }
 }

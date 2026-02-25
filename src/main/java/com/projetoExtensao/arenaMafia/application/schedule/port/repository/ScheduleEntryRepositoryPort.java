@@ -31,7 +31,4 @@ public interface ScheduleEntryRepositoryPort {
   List<ScheduleEntry> findAllActiveSchedulesFromTodayByDaysOfWeekAndTimeInterval(
       Set<DayOfWeek> daysOfWeek, TimeInterval timeInterval);
 
-  List<ScheduleEntry> findAllActiveSchedulesEndedBeforeOrEqual(LocalDateTime dateTime);
-
-  List<ScheduleEntry> findAllActiveSchedulesWithEndTimeAfter(LocalDateTime dateTime);
 }

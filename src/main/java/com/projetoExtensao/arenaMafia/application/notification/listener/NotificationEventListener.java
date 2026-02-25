@@ -1,13 +1,13 @@
 package com.projetoExtensao.arenaMafia.application.notification.listener;
 
 import com.projetoExtensao.arenaMafia.application.notification.event.*;
+import com.projetoExtensao.arenaMafia.application.notification.gateway.NotificationPort;
 import com.projetoExtensao.arenaMafia.application.notification.gateway.OtpPort;
 import com.projetoExtensao.arenaMafia.domain.model.User;
 import com.projetoExtensao.arenaMafia.domain.model.enums.DayOfWeek;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.Reservation;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.OtpCode;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.TimeInterval;
-import com.projetoExtensao.arenaMafia.infrastructure.adapter.gateway.notification.producer.NotificationProducer;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
@@ -22,24 +22,36 @@ import org.springframework.transaction.event.TransactionalEventListener;
 public class NotificationEventListener {
 
   private final OtpPort otpPort;
-  private final NotificationProducer notificationProducer;
+  private final NotificationPort notificationPort;
 
-  public NotificationEventListener(OtpPort otpPort, NotificationProducer notificationProducer) {
+  public NotificationEventListener(OtpPort otpPort, NotificationPort notificationPort) {
     this.otpPort = otpPort;
-    this.notificationProducer = notificationProducer;
+    this.notificationPort = notificationPort;
   }
 
-  /** Envia um SMS para o usuário com um código OTP para verificação de telefone */
+
+  /**
+   * Envia um SMS para o usuário com um código OTP para verificação de telefone
+   * */
   @Async
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-  public void onOtpVerification(OnVerificationRequiredEvent eventData) {
+  public void onOtpVerification(OnVerificationRequiredNotificationEvent eventData) {
     User user = eventData.user();
-    String recipientPhone = eventData.getRecipientPhone();
 
     OtpCode otpCode = otpPort.generateOtpCode(user.getId());
     String message = buildOtpVerificationMessage(otpCode);
 
-    notificationProducer.sendSms(recipientPhone, message);
+    notificationPort.sendSms(eventData.getRecipientPhone(), message);
+  }
+
+  /**
+   * Envia uma notificação via WhatsApp para o usuário lembrando-o de uma reserva agendada
+   */
+  @Async
+  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+  public void onReservationReminder(OnReservationReminderNotificationEvent eventData) {
+    String message = buildReminderMessage(eventData.reservation());
+    notificationPort.sendWhatsappMessage(eventData.userPhone(), message);
   }
 
   /**
@@ -48,10 +60,9 @@ public class NotificationEventListener {
    */
   @Async
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-  public void onReservationCreatedByAdmin(OnReservationCreatedByAdminEvent eventData) {
-    String message =
-        buildReservationCreatedByAdminMessage(eventData.username(), eventData.reservation());
-    notificationProducer.sendWhatsapp(eventData.userPhone(), message);
+  public void onReservationCreatedByAdmin(OnReservationCreatedByAdminNotificationEvent eventData) {
+    String message = buildReservationCreatedByAdminMessage(eventData.username(), eventData.reservation());
+    notificationPort.sendWhatsappMessage(eventData.userPhone(), message);
   }
 
   /**
@@ -60,11 +71,11 @@ public class NotificationEventListener {
    */
   @Async
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-  public void onReservationCancelledByAdmin(OnReservationCancelledByAdminEvent eventData) {
+  public void onReservationCancelledByAdmin(OnReservationCancelledByAdminNotificationEvent eventData) {
     String message =
         buildReservationCancellationByAdminMessage(
             eventData.username(), eventData.reservation(), eventData.adminReason());
-    notificationProducer.sendWhatsapp(eventData.userPhone(), message);
+    notificationPort.sendWhatsappMessage(eventData.userPhone(), message);
   }
 
   /**
@@ -73,9 +84,9 @@ public class NotificationEventListener {
    */
   @Async
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-  public void onReservationsCancelledByAdmin(OnReservationsCancelledByAdminEvent eventData) {
+  public void onReservationsCancelledByAdmin(OnReservationsCancelledByAdminNotificationEvent eventData) {
     String message = buildReservationsCancelledByAdminMessage(eventData);
-    notificationProducer.sendWhatsapp(eventData.userPhone(), message);
+    notificationPort.sendWhatsappMessage(eventData.userPhone(), message);
   }
 
   /**
@@ -85,12 +96,28 @@ public class NotificationEventListener {
   @Async
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
   public void onRecurringReservationCreateByAdmin(
-      OnRecurringReservationCreatedByAdminEvent eventData) {
+      OnRecurringReservationCreatedByAdminNotificationEvent eventData) {
     String message = buildRecurringReservationCreateByAdminMessage(eventData);
-    notificationProducer.sendWhatsapp(eventData.userPhone(), message);
+    notificationPort.sendWhatsappMessage(eventData.userPhone(), message);
   }
 
   //  ================================ Mensagens de notificação ================================
+  private String buildReminderMessage(Reservation reservation) {
+    String date = reservation.getDateTimeSlot().date().toString();
+    String startTime = reservation.getDateTimeSlot().timeInterval().startTime().toString();
+    String endTime = reservation.getDateTimeSlot().timeInterval().endTime().toString();
+
+    return """
+        Arena Máfia - Lembrete de Reserva
+
+        Olá! Só passando para lembrar que você tem uma reserva agendada para logo mais.
+
+        Horário: %s - %s
+        Data: %s
+
+        Para mais informações, entre em contato com nossa central."""
+        .formatted(startTime, endTime, date);
+  }
 
   private String buildOtpVerificationMessage(OtpCode otpCode) {
     return """
@@ -142,7 +169,7 @@ public class NotificationEventListener {
   }
 
   private String buildRecurringReservationCreateByAdminMessage(
-      OnRecurringReservationCreatedByAdminEvent eventData) {
+      OnRecurringReservationCreatedByAdminNotificationEvent eventData) {
     List<Reservation> reservations = eventData.reservations();
 
     LocalDate startDate = extractStartDate(reservations);
@@ -172,7 +199,7 @@ public class NotificationEventListener {
   }
 
   private String buildReservationsCancelledByAdminMessage(
-      OnReservationsCancelledByAdminEvent eventData) {
+      OnReservationsCancelledByAdminNotificationEvent eventData) {
     List<Reservation> reservations = eventData.reservations();
     int totalReservations = reservations.size();
 

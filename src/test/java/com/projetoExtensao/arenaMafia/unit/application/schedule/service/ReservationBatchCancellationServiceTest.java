@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-import com.projetoExtensao.arenaMafia.application.notification.event.OnReservationsCancelledByAdminEvent;
+import com.projetoExtensao.arenaMafia.application.notification.event.OnReservationsCancelledByAdminNotificationEvent;
 import com.projetoExtensao.arenaMafia.application.schedule.port.repository.ReservationRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.schedule.service.ReservationBatchCancellationService;
 import com.projetoExtensao.arenaMafia.application.user.port.repository.UserRepositoryPort;
@@ -99,7 +99,7 @@ class ReservationBatchCancellationServiceTest {
         assertThat(reservation.getStatus()).isEqualTo(ReservationStatus.CANCELLED);
         assertThat(reservation.getCancelledByAdminId()).isEqualTo(adminId);
         verify(reservationRepository, times(1)).saveAll(anyList());
-        verify(eventPublisher, times(1)).publishEvent(any(OnReservationsCancelledByAdminEvent.class));
+        verify(eventPublisher, times(1)).publishEvent(any(OnReservationsCancelledByAdminNotificationEvent.class));
       }
 
       @Test
@@ -128,7 +128,7 @@ class ReservationBatchCancellationServiceTest {
         assertThat(reservation2.getStatus()).isEqualTo(ReservationStatus.CANCELLED);
         assertThat(reservation3.getStatus()).isEqualTo(ReservationStatus.CANCELLED);
         verify(reservationRepository, times(1)).saveAll(reservations);
-        verify(eventPublisher, times(3)).publishEvent(any(OnReservationsCancelledByAdminEvent.class));
+        verify(eventPublisher, times(3)).publishEvent(any(OnReservationsCancelledByAdminNotificationEvent.class));
       }
 
       @Test
@@ -142,15 +142,15 @@ class ReservationBatchCancellationServiceTest {
 
         when(userRepository.findAllByIds(any())).thenReturn(List.of(user));
 
-        ArgumentCaptor<OnReservationsCancelledByAdminEvent> eventCaptor =
-            ArgumentCaptor.forClass(OnReservationsCancelledByAdminEvent.class);
+        ArgumentCaptor<OnReservationsCancelledByAdminNotificationEvent> eventCaptor =
+            ArgumentCaptor.forClass(OnReservationsCancelledByAdminNotificationEvent.class);
 
         // Act
         service.cancelReservationsInBatchByAdmin(List.of(reservation), reason, adminId);
 
         // Assert
         verify(eventPublisher).publishEvent(eventCaptor.capture());
-        OnReservationsCancelledByAdminEvent event = eventCaptor.getValue();
+        OnReservationsCancelledByAdminNotificationEvent event = eventCaptor.getValue();
         assertThat(event.reservations().getFirst()).isEqualTo(reservation);
         assertThat(event.username()).isEqualTo(user.getUsername());
         assertThat(event.userPhone()).isEqualTo(user.getPhone());
@@ -249,8 +249,8 @@ class ReservationBatchCancellationServiceTest {
         Reservation reservation2 = createConfirmedReservationForUser(userId);
         List<Reservation> reservations = List.of(reservation1, reservation2);
 
-        ArgumentCaptor<OnReservationsCancelledByAdminEvent> eventCaptor =
-            ArgumentCaptor.forClass(OnReservationsCancelledByAdminEvent.class);
+        ArgumentCaptor<OnReservationsCancelledByAdminNotificationEvent> eventCaptor =
+            ArgumentCaptor.forClass(OnReservationsCancelledByAdminNotificationEvent.class);
 
         // Act
         int result = service.cancelReservationsDueToAccountDisabled(reservations, user);
@@ -266,7 +266,7 @@ class ReservationBatchCancellationServiceTest {
         // DEVE publicar evento de notificação
         verify(eventPublisher, times(1)).publishEvent(eventCaptor.capture());
 
-        OnReservationsCancelledByAdminEvent event = eventCaptor.getValue();
+        OnReservationsCancelledByAdminNotificationEvent event = eventCaptor.getValue();
         assertThat(event.username()).isEqualTo(user.getUsername());
         assertThat(event.userPhone()).isEqualTo(user.getPhone());
         assertThat(event.adminReason()).contains("conta foi desativada");

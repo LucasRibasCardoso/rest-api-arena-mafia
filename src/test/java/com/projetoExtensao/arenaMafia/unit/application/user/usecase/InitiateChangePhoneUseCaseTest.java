@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
-import com.projetoExtensao.arenaMafia.application.notification.event.OnVerificationRequiredEvent;
+import com.projetoExtensao.arenaMafia.application.notification.event.OnVerificationRequiredNotificationEvent;
 import com.projetoExtensao.arenaMafia.application.user.port.gateway.PendingPhoneChangePort;
 import com.projetoExtensao.arenaMafia.application.user.port.gateway.PhoneValidatorPort;
 import com.projetoExtensao.arenaMafia.application.user.port.repository.UserRepositoryPort;
@@ -55,7 +55,7 @@ public class InitiateChangePhoneUseCaseTest {
 
     // Assert
     verify(pendingPhoneChangePort, times(1)).save(idCurrentUser, newPhone);
-    verify(eventPublisher, times(1)).publishEvent(any(OnVerificationRequiredEvent.class));
+    verify(eventPublisher, times(1)).publishEvent(any(OnVerificationRequiredNotificationEvent.class));
   }
 
   @Test
@@ -79,7 +79,7 @@ public class InitiateChangePhoneUseCaseTest {
             });
 
     verify(pendingPhoneChangePort, never()).save(idCurrentUser, newPhone);
-    verify(eventPublisher, never()).publishEvent(any(OnVerificationRequiredEvent.class));
+    verify(eventPublisher, never()).publishEvent(any(OnVerificationRequiredNotificationEvent.class));
   }
 
   @Test
@@ -104,7 +104,7 @@ public class InitiateChangePhoneUseCaseTest {
             });
 
     verify(pendingPhoneChangePort, never()).save(idCurrentUser, newPhone);
-    verify(eventPublisher, never()).publishEvent(any(OnVerificationRequiredEvent.class));
+    verify(eventPublisher, never()).publishEvent(any(OnVerificationRequiredNotificationEvent.class));
   }
 
   @Test
@@ -130,6 +130,6 @@ public class InitiateChangePhoneUseCaseTest {
             });
 
     verify(pendingPhoneChangePort, never()).save(idCurrentUser, newPhone);
-    verify(eventPublisher, never()).publishEvent(any(OnVerificationRequiredEvent.class));
+    verify(eventPublisher, never()).publishEvent(any(OnVerificationRequiredNotificationEvent.class));
   }
 }

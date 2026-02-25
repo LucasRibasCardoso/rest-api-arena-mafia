@@ -3,7 +3,7 @@ package com.projetoExtensao.arenaMafia.unit.application.notification.listener;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.projetoExtensao.arenaMafia.application.notification.event.OnVerificationRequiredEvent;
+import com.projetoExtensao.arenaMafia.application.notification.event.OnVerificationRequiredNotificationEvent;
 import com.projetoExtensao.arenaMafia.application.notification.gateway.OtpPort;
 import com.projetoExtensao.arenaMafia.application.notification.listener.NotificationEventListener;
 import com.projetoExtensao.arenaMafia.application.priceRule.port.PriceRuleRepositoryPort;
@@ -37,7 +37,7 @@ public class NotificationEventListenerTest {
     // Arrange
     User user = TestDataProvider.createActiveUser();
     UUID userId = user.getId();
-    OnVerificationRequiredEvent event = new OnVerificationRequiredEvent(user);
+    OnVerificationRequiredNotificationEvent event = new OnVerificationRequiredNotificationEvent(user);
 
     when(otpPort.generateOtpCode(userId)).thenReturn(otpCode);
 
@@ -62,7 +62,7 @@ public class NotificationEventListenerTest {
     User user = TestDataProvider.createActiveUser();
     UUID userId = user.getId();
     String newPhone = "+5511999999999";
-    OnVerificationRequiredEvent event = new OnVerificationRequiredEvent(user, newPhone);
+    OnVerificationRequiredNotificationEvent event = new OnVerificationRequiredNotificationEvent(user, newPhone);
 
     when(otpPort.generateOtpCode(userId)).thenReturn(otpCode);
 
@@ -85,7 +85,7 @@ public class NotificationEventListenerTest {
   void onOtpVerification_shouldThrowException_whenOtpGenerationFails() {
     // Arrange
     User user = TestDataProvider.createActiveUser();
-    OnVerificationRequiredEvent event = new OnVerificationRequiredEvent(user);
+    OnVerificationRequiredNotificationEvent event = new OnVerificationRequiredNotificationEvent(user);
 
     when(otpPort.generateOtpCode(user.getId()))
         .thenThrow(new RuntimeException("Falha ao conectar com o Redis"));
