@@ -48,24 +48,11 @@ public class CancelReservationByAdminUseCaseImp implements CancelReservationByAd
     }
   }
 
-  /**
-   * Processa o cancelamento de uma reserva recorrente.
-   *
-   * @param adminId Identificador unico do administrador que cancelou a reserva
-   * @param recurringReservationId Identificador unico da reserva recorrente
-   */
   private void processCancelRecurringReservation(UUID adminId, UUID recurringReservationId) {
     List<Reservation> reservations = reservationRepository.findAllFutureRecurringReservations(recurringReservationId);
     reservationBatchCancellationService.cancelReservationsInBatchByAdmin(reservations, REASON, adminId);
   }
 
-  /**
-   * Processa o cancelamento de uma reserva individual.
-   *
-   * @param adminId Identificador unico do administrador que está cancelando a reserva
-   * @param reservation Reserva a ser cancelada
-   * @param costumer Usuário que fez a reserva
-   */
   private void processCancelSingleReservation(UUID adminId, Reservation reservation, String username, String phone) {
     reservation.cancelByAdmin(adminId);
     reservationRepository.save(reservation);

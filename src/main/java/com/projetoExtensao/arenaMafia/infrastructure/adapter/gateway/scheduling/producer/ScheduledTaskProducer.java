@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.projetoExtensao.arenaMafia.application.scheduleTask.gateway.ScheduledTaskPort;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.TimeZone;
 import java.util.UUID;
 
 import com.projetoExtensao.arenaMafia.domain.model.enums.ScheduleEntryType;

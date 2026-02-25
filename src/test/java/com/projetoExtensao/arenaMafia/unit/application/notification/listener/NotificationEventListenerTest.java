@@ -6,7 +6,6 @@ import static org.mockito.Mockito.*;
 import com.projetoExtensao.arenaMafia.application.notification.event.OnVerificationRequiredNotificationEvent;
 import com.projetoExtensao.arenaMafia.application.notification.gateway.OtpPort;
 import com.projetoExtensao.arenaMafia.application.notification.listener.NotificationEventListener;
-import com.projetoExtensao.arenaMafia.application.priceRule.port.PriceRuleRepositoryPort;
 import com.projetoExtensao.arenaMafia.domain.model.User;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.OtpCode;
 import com.projetoExtensao.arenaMafia.infrastructure.adapter.gateway.notification.producer.NotificationProducer;
@@ -26,7 +25,6 @@ public class NotificationEventListenerTest {
 
   @Mock private OtpPort otpPort;
   @Mock private NotificationProducer notificationProducer;
-  @Mock private PriceRuleRepositoryPort priceRuleRepositoryPort;
   @InjectMocks private NotificationEventListener eventListener;
 
   private final OtpCode otpCode = OtpCode.generate();
