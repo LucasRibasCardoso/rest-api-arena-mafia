@@ -36,10 +36,13 @@ public class ScheduledTaskEventListener {
     DateTimeSlot dateTimeSlot = res.getDateTimeSlot();
 
     LocalDateTime completeExecutionTime = dateTimeSlot.getEndDateTime();
+    scheduledTaskPort.scheduleTask(res.getId(), ScheduleEntryType.RESERVATION, completeExecutionTime);
+
     LocalDateTime reminderExecutionTime = dateTimeSlot.getStartDateTime().minusHours(REMINDER_HOURS_BEFORE_RESERVATION);
 
-    scheduledTaskPort.scheduleTask(res.getId(), ScheduleEntryType.RESERVATION, completeExecutionTime);
-    scheduledTaskPort.scheduleReservationReminderTask(res.getId(), reminderExecutionTime);
+    if (reminderExecutionTime.isAfter(LocalDateTime.now())) {
+      scheduledTaskPort.scheduleReservationReminderTask(res.getId(), reminderExecutionTime);
+    }
   }
 
   @Async
