@@ -60,7 +60,8 @@ public class SecurityConfig {
             "/webjars/**",
             "/openapi.yml")
         .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
-        .csrf(CsrfConfigurer::disable);
+        .csrf(CsrfConfigurer::disable)
+        .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin));
     return http.build();
   }
 

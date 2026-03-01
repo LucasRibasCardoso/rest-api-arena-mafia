@@ -23,6 +23,7 @@ public class SmsConsumer {
       smsPort.sendMessage(notificationDto.phone(), notificationDto.content());
     } catch (Exception e) {
       logger.error("Erro fatal ao tentar enviar SMS (descartado): {}", e.getMessage());
+      throw e;
     }
   }
 }

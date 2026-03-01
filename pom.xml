@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.5.4</version>
+        <version>3.5.11</version>
         <relativePath/>
     </parent>
     <groupId>com.projetoExtensao</groupId>
@@ -153,8 +153,10 @@
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>localstack</artifactId>
-            <version>1.21.0</version> <scope>test</scope>
+            <version>1.21.0</version>
+            <scope>test</scope>
         </dependency>
+
         <!-- Swagger -->
         <dependency>
             <groupId>org.springdoc</groupId>

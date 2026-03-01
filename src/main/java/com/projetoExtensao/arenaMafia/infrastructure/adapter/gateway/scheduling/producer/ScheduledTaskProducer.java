@@ -23,8 +23,8 @@ public class ScheduledTaskProducer implements ScheduledTaskPort {
   private static final Logger logger = LoggerFactory.getLogger(ScheduledTaskProducer.class);
   private static final String TIME_ZONE = "America/Sao_Paulo";
 
-  private static final String TASK_PREFIX = "task:";
-  private static final String REMINDER_PREFIX = "reminder-reservation:";
+  private static final String TASK_PREFIX = "task-";
+  private static final String REMINDER_PREFIX = "reminder-reservation-";
 
   private final String roleArn;
   private final String groupName;

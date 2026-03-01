@@ -39,7 +39,7 @@ spring:
       sqs:
         endpoint: ${AWS_SQS_ENDPOINT:}
         listener:
-          max-concurrent-messages: 1
+          max-concurrent-messages: 10
           max-messages-per-poll: 10
           poll-timeout: 20s
 
