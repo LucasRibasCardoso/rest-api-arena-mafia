@@ -46,6 +46,7 @@ spring:
 app:
   aws:
     scheduler:
+      endpoint: ${AWS_SCHEDULER_ENDPOINT:}
       role-arn: ${AWS_SCHEDULER_ROLE_ARN}
       group-name: ${AWS_SCHEDULER_GROUP_NAME:arena-mafia-schedules}
     queue-arn:

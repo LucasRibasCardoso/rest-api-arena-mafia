@@ -12,7 +12,7 @@ public class SchedulingConfig {
   public TaskScheduler taskScheduler() {
     ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
     scheduler.setPoolSize(10);
-    scheduler.setThreadNamePrefix("reservation-completion-");
+    scheduler.setThreadNamePrefix("task-scheduler-");
     scheduler.setAwaitTerminationSeconds(60);
     scheduler.setWaitForTasksToCompleteOnShutdown(true);
     scheduler.initialize();

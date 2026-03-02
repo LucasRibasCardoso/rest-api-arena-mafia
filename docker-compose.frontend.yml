@@ -1,0 +1,140 @@
+# =========================================================================
+# Docker Compose - Ambiente para equipe Frontend
+# =========================================================================
+# Sobe o backend completo (Redis + LocalStack + App) com um único comando.
+#
+# Uso:
+#   docker compose -f docker-compose.frontend.yml up -d
+#
+# A API estará disponível em: http://localhost:8080
+# O Swagger/OpenAPI estará em:  http://localhost:8080/swagger-ui.html
+# =========================================================================
+
+services:
+  # --- Redis (Cache e sessões OTP) ---
+  redis:
+    image: redis:7-alpine
+    container_name: frontend-redis
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - frontend-net
+
+  # --- LocalStack (Serviços AWS locais: SQS, IAM, Scheduler) ---
+  localstack:
+    image: localstack/localstack:3.8
+    container_name: frontend-localstack
+    environment:
+      - SERVICES=sqs,iam,scheduler
+      - EAGER_SERVICE_LOADING=1
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -sf http://localhost:4566/_localstack/health | grep -q '\"sqs\": \"available\"'" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - frontend-net
+
+  # --- Inicialização dos recursos AWS no LocalStack ---
+  localstack-init:
+    image: localstack/localstack:3.8
+    container_name: frontend-localstack-init
+    depends_on:
+      localstack:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c '
+        ENDPOINT="http://localstack:4566"
+        REGION="us-east-1"
+        ACCOUNT_ID="000000000000"
+
+        echo "==> Criando DLQs..."
+        aws --endpoint-url=$$ENDPOINT sqs create-queue --queue-name schedule-task-dlq --region $$REGION
+        aws --endpoint-url=$$ENDPOINT sqs create-queue --queue-name whatsapp-transactional-dlq --region $$REGION
+        aws --endpoint-url=$$ENDPOINT sqs create-queue --queue-name general-trash-dlq --region $$REGION
+
+        echo "==> Criando filas principais com Redrive Policy..."
+        aws --endpoint-url=$$ENDPOINT sqs create-queue --queue-name schedule-task-queue --region $$REGION \
+          --attributes "{\"RedrivePolicy\":\"{\\\"deadLetterTargetArn\\\":\\\"arn:aws:sqs:$$REGION:$$ACCOUNT_ID:schedule-task-dlq\\\",\\\"maxReceiveCount\\\":\\\"3\\\"}\"}"
+
+        aws --endpoint-url=$$ENDPOINT sqs create-queue --queue-name whatsapp-transactional-queue --region $$REGION \
+          --attributes "{\"RedrivePolicy\":\"{\\\"deadLetterTargetArn\\\":\\\"arn:aws:sqs:$$REGION:$$ACCOUNT_ID:whatsapp-transactional-dlq\\\",\\\"maxReceiveCount\\\":\\\"3\\\"}\"}"
+
+        aws --endpoint-url=$$ENDPOINT sqs create-queue --queue-name whatsapp-reminder-queue --region $$REGION \
+          --attributes "{\"RedrivePolicy\":\"{\\\"deadLetterTargetArn\\\":\\\"arn:aws:sqs:$$REGION:$$ACCOUNT_ID:general-trash-dlq\\\",\\\"maxReceiveCount\\\":\\\"1\\\"}\"}"
+
+        aws --endpoint-url=$$ENDPOINT sqs create-queue --queue-name sms-queue --region $$REGION \
+          --attributes "{\"RedrivePolicy\":\"{\\\"deadLetterTargetArn\\\":\\\"arn:aws:sqs:$$REGION:$$ACCOUNT_ID:general-trash-dlq\\\",\\\"maxReceiveCount\\\":\\\"1\\\"}\"}"
+
+        echo "==> Criando IAM Role para o Scheduler..."
+        aws --endpoint-url=$$ENDPOINT iam create-role --role-name arena-mafia-scheduler-role \
+          --assume-role-policy-document "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"scheduler.amazonaws.com\"},\"Action\":\"sts:AssumeRole\"}]}" \
+          --region $$REGION 2>/dev/null || true
+
+        echo "==> Criando Scheduler Group..."
+        aws --endpoint-url=$$ENDPOINT scheduler create-schedule-group --name arena-mafia-schedules --region $$REGION 2>/dev/null || true
+
+        echo "==> Filas criadas:"
+        aws --endpoint-url=$$ENDPOINT sqs list-queues --region $$REGION
+        echo "==> Inicialização concluída com sucesso!"
+      '
+    environment:
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_DEFAULT_REGION=us-east-1
+    networks:
+      - frontend-net
+
+  # --- Backend Application ---
+  backend-app:
+    # Substituir por imagem do GHRC
+    image: backend-arena-mafia
+    container_name: frontend-backend-app
+    ports:
+      - "8080:8080"
+    depends_on:
+      redis:
+        condition: service_healthy
+      localstack-init:
+        condition: service_completed_successfully
+    environment:
+      # Spring
+      - SPRING_PROFILES_ACTIVE=dev
+      # Redis (hostname do serviço Docker, não localhost)
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_DATA_REDIS_PORT=6379
+      # JWT
+      - JWT_SECRET_KEY=551VM4LcN284uYnv3MjDckhe9IQ6ta7/0jNwrvNqRz0=
+      # AWS Credentials (LocalStack)
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_REGION=us-east-1
+      # SQS Endpoint (aponta para o LocalStack)
+      - AWS_SQS_ENDPOINT=http://localstack:4566
+      # EventBridge Scheduler
+      - AWS_SCHEDULER_ENDPOINT=http://localstack:4566
+      - AWS_SCHEDULER_ROLE_ARN=arn:aws:iam::000000000000:role/arena-mafia-scheduler-role
+      - AWS_SCHEDULER_GROUP_NAME=arena-mafia-schedules
+      # SQS Queue ARNs
+      - AWS_SQS_SCHEDULE_TASK_QUEUE_ARN=arn:aws:sqs:us-east-1:000000000000:schedule-task-queue
+      - AWS_SQS_WHATSAPP_REMINDER_QUEUE_ARN=arn:aws:sqs:us-east-1:000000000000:whatsapp-reminder-queue
+      # Desabilitar OpenTelemetry Agent (não há collector neste compose)
+      - JAVA_OPTS=-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UseG1GC
+      - OTEL_JAVAAGENT_ENABLED=false
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -sf http://localhost:9091/actuator/health || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 40s
+    networks:
+      - frontend-net
+
+networks:
+  frontend-net:
+    driver: bridge
+
+
