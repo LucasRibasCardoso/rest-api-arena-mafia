@@ -21,8 +21,8 @@ spring:
   security:
     jwt:
       secret-key: ${JWT_SECRET_KEY}
-      access-token-expiration-ms: ${JWT_ACCESS_TOKEN_EXPIRATION_MS:3600000} # 1 hora
-      refresh-token-expiration-days: ${JWT_REFRESH_TOKEN_EXPIRATION_DAYS:7} # 7 dias
+      access-token-expiration-ms: 3600000 # 1 hora
+      refresh-token-expiration-days: 7
       issuer: "arena-mafia-api"
   jpa:
     hibernate:
@@ -37,16 +37,27 @@ spring:
       region:
         static: ${AWS_REGION:us-east-1}
       sqs:
+        endpoint: ${AWS_SQS_ENDPOINT:}
         listener:
           max-concurrent-messages: 10
           max-messages-per-poll: 10
           poll-timeout: 20s
 
 app:
+  aws:
+    scheduler:
+      endpoint: ${AWS_SCHEDULER_ENDPOINT:}
+      role-arn: ${AWS_SCHEDULER_ROLE_ARN}
+      group-name: ${AWS_SCHEDULER_GROUP_NAME:arena-mafia-schedules}
+    queue-arn:
+      schedule-task: ${AWS_SQS_SCHEDULE_TASK_QUEUE_ARN}
+      whatsapp-reminder: ${AWS_SQS_WHATSAPP_REMINDER_QUEUE_ARN}
   queue:
-    sms: sms-queue
-    whatsapp: whatsapp-queue
-    whatsapp-dlq: whatsapp-dlq
+    schedule-task-queue: ${AWS_SQS_SCHEDULE_TASK_NAME:schedule-task-queue}
+    whatsapp-transactional-queue: ${AWS_SQS_WHATSAPP_TRANSACTIONAL_NAME:whatsapp-transactional-queue}
+    whatsapp-transactional-dlq: ${AWS_SQS_WHATSAPP_TRANSACTIONAL_DLQ_NAME:whatsapp-transactional-dlq}
+    whatsapp-reminder-queue: ${AWS_SQS_WHATSAPP_REMINDER_NAME:whatsapp-reminder-queue}
+    sms-queue: ${AWS_SQS_SMS_NAME:sms-queue}
   notification:
     sms-provider: MOCK
     whatsapp-provider: MOCK

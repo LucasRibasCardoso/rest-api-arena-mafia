@@ -1,6 +1,6 @@
 package com.projetoExtensao.arenaMafia.infrastructure.config.bean;
 
-import com.projetoExtensao.arenaMafia.application.notification.gateway.SmsPort;
+import com.projetoExtensao.arenaMafia.infrastructure.adapter.gateway.notification.sms.SmsClient;
 import com.projetoExtensao.arenaMafia.infrastructure.adapter.gateway.notification.sms.SmsStrategy;
 import java.util.List;
 import org.slf4j.Logger;
@@ -17,7 +17,7 @@ public class SmsConfig {
 
   @Bean
   @Primary
-  public SmsPort smsPort(
+  public SmsClient smsPort(
       List<SmsStrategy> strategies,
       @Value("${app.notification.sms-provider:MOCK}") String providerName) {
 

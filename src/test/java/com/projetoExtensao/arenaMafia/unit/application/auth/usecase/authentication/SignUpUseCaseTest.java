@@ -7,7 +7,7 @@ import static org.mockito.Mockito.*;
 
 import com.projetoExtensao.arenaMafia.application.auth.port.gateway.OtpSessionPort;
 import com.projetoExtensao.arenaMafia.application.auth.usecase.authentication.imp.SignUpUseCaseImp;
-import com.projetoExtensao.arenaMafia.application.notification.event.OnVerificationRequiredEvent;
+import com.projetoExtensao.arenaMafia.application.notification.event.OnVerificationRequiredNotificationEvent;
 import com.projetoExtensao.arenaMafia.application.security.port.gateway.PasswordEncoderPort;
 import com.projetoExtensao.arenaMafia.application.user.port.gateway.PhoneValidatorPort;
 import com.projetoExtensao.arenaMafia.application.user.port.repository.UserRepositoryPort;
@@ -98,7 +98,7 @@ public class SignUpUseCaseTest {
               assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.PHONE_INVALID_FORMAT);
             });
 
-    verify(eventPublisher, never()).publishEvent(any(OnVerificationRequiredEvent.class));
+    verify(eventPublisher, never()).publishEvent(any(OnVerificationRequiredNotificationEvent.class));
     verify(otpSessionPort, never()).generateOtpSession(any(UUID.class));
   }
 
@@ -124,7 +124,7 @@ public class SignUpUseCaseTest {
             });
 
     verify(otpSessionPort, never()).generateOtpSession(any(UUID.class));
-    verify(eventPublisher, never()).publishEvent(any(OnVerificationRequiredEvent.class));
+    verify(eventPublisher, never()).publishEvent(any(OnVerificationRequiredNotificationEvent.class));
   }
 
   @Test
@@ -148,6 +148,6 @@ public class SignUpUseCaseTest {
             });
 
     verify(otpSessionPort, never()).generateOtpSession(any(UUID.class));
-    verify(eventPublisher, never()).publishEvent(any(OnVerificationRequiredEvent.class));
+    verify(eventPublisher, never()).publishEvent(any(OnVerificationRequiredNotificationEvent.class));
   }
 }

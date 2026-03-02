@@ -6,7 +6,7 @@ import static org.mockito.Mockito.*;
 
 import com.projetoExtensao.arenaMafia.application.auth.port.gateway.OtpSessionPort;
 import com.projetoExtensao.arenaMafia.application.auth.usecase.passwordreset.imp.ForgotPasswordUseCaseImp;
-import com.projetoExtensao.arenaMafia.application.notification.event.OnVerificationRequiredEvent;
+import com.projetoExtensao.arenaMafia.application.notification.event.OnVerificationRequiredNotificationEvent;
 import com.projetoExtensao.arenaMafia.application.user.port.gateway.PhoneValidatorPort;
 import com.projetoExtensao.arenaMafia.application.user.port.repository.UserRepositoryPort;
 import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
@@ -59,8 +59,8 @@ public class ForgotPasswordUseCaseTest {
     assertThat(response.message())
         .isEqualTo("Se o número estiver cadastrado, você receberá um código de verificação.");
 
-    ArgumentCaptor<OnVerificationRequiredEvent> eventCaptor =
-        ArgumentCaptor.forClass(OnVerificationRequiredEvent.class);
+    ArgumentCaptor<OnVerificationRequiredNotificationEvent> eventCaptor =
+        ArgumentCaptor.forClass(OnVerificationRequiredNotificationEvent.class);
 
     verify(eventPublisher).publishEvent(eventCaptor.capture());
 
@@ -87,7 +87,7 @@ public class ForgotPasswordUseCaseTest {
         .isEqualTo("Se o número estiver cadastrado, você receberá um código de verificação.");
 
     verify(otpSessionPort, never()).generateOtpSession(any(UUID.class));
-    verify(eventPublisher, never()).publishEvent(any(OnVerificationRequiredEvent.class));
+    verify(eventPublisher, never()).publishEvent(any(OnVerificationRequiredNotificationEvent.class));
   }
 
   @Test
@@ -113,6 +113,6 @@ public class ForgotPasswordUseCaseTest {
     // Verify
     verify(phoneValidator, times(1)).formatToE164(invalidPhone);
     verify(otpSessionPort, never()).generateOtpSession(any(UUID.class));
-    verify(eventPublisher, never()).publishEvent(any(OnVerificationRequiredEvent.class));
+    verify(eventPublisher, never()).publishEvent(any(OnVerificationRequiredNotificationEvent.class));
   }
 }

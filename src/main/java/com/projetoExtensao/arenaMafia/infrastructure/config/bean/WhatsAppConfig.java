@@ -1,6 +1,6 @@
 package com.projetoExtensao.arenaMafia.infrastructure.config.bean;
 
-import com.projetoExtensao.arenaMafia.application.notification.gateway.WhatsAppPort;
+import com.projetoExtensao.arenaMafia.infrastructure.adapter.gateway.notification.whatsapp.WhatsAppClient;
 import com.projetoExtensao.arenaMafia.infrastructure.adapter.gateway.notification.whatsapp.WhatsAppStrategy;
 import java.util.List;
 import org.slf4j.Logger;
@@ -17,7 +17,7 @@ public class WhatsAppConfig {
 
   @Bean
   @Primary
-  public WhatsAppPort whatsAppPort(
+  public WhatsAppClient whatsAppPort(
       List<WhatsAppStrategy> strategies,
       @Value("${app.notification.whatsapp-provider:MOCK}") String providerName) {
 

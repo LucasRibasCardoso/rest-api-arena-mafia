@@ -7,7 +7,7 @@ import static org.mockito.Mockito.*;
 
 import com.projetoExtensao.arenaMafia.application.auth.port.gateway.OtpSessionPort;
 import com.projetoExtensao.arenaMafia.application.auth.usecase.otp.imp.ResendOtpUseCaseImp;
-import com.projetoExtensao.arenaMafia.application.notification.event.OnVerificationRequiredEvent;
+import com.projetoExtensao.arenaMafia.application.notification.event.OnVerificationRequiredNotificationEvent;
 import com.projetoExtensao.arenaMafia.application.user.port.repository.UserRepositoryPort;
 import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidOtpSessionException;
@@ -58,7 +58,7 @@ public class ResendOtpUseCaseTest {
     resendOtpUseCaseTest.execute(otpSessionId);
 
     // Assert
-    verify(eventPublisher, times(1)).publishEvent(any(OnVerificationRequiredEvent.class));
+    verify(eventPublisher, times(1)).publishEvent(any(OnVerificationRequiredNotificationEvent.class));
   }
 
   @Test
@@ -78,7 +78,7 @@ public class ResendOtpUseCaseTest {
             });
 
     verify(userRepositoryPort, never()).findById(any());
-    verify(eventPublisher, never()).publishEvent(any(OnVerificationRequiredEvent.class));
+    verify(eventPublisher, never()).publishEvent(any(OnVerificationRequiredNotificationEvent.class));
   }
 
   @Test
@@ -99,7 +99,7 @@ public class ResendOtpUseCaseTest {
               assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.USER_NOT_FOUND);
             });
 
-    verify(eventPublisher, never()).publishEvent(any(OnVerificationRequiredEvent.class));
+    verify(eventPublisher, never()).publishEvent(any(OnVerificationRequiredNotificationEvent.class));
   }
 
   @ParameterizedTest
@@ -123,6 +123,6 @@ public class ResendOtpUseCaseTest {
               AccountStatusForbiddenException exception = (AccountStatusForbiddenException) ex;
               assertThat(exception.getErrorCode()).isEqualTo(expectedErrorCode);
             });
-    verify(eventPublisher, never()).publishEvent(any(OnVerificationRequiredEvent.class));
+    verify(eventPublisher, never()).publishEvent(any(OnVerificationRequiredNotificationEvent.class));
   }
 }

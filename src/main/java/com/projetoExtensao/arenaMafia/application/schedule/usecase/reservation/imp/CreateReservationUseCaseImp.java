@@ -5,9 +5,9 @@ import com.projetoExtensao.arenaMafia.application.modality.port.ModalityReposito
 import com.projetoExtensao.arenaMafia.application.priceRule.port.PriceRuleRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.priceRule.service.PriceCalculatorService;
 import com.projetoExtensao.arenaMafia.application.schedule.port.repository.ReservationRepositoryPort;
-import com.projetoExtensao.arenaMafia.application.schedule.scheduler.DynamicScheduleEntryCompletionScheduler;
 import com.projetoExtensao.arenaMafia.application.schedule.service.ScheduleAvailabilityService;
 import com.projetoExtensao.arenaMafia.application.schedule.usecase.reservation.CreateReservationUseCase;
+import com.projetoExtensao.arenaMafia.application.scheduleTask.event.OnReservationCreatedScheduleTaskEvent;
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.ReservationPastDateException;
 import com.projetoExtensao.arenaMafia.domain.exception.conflict.CourtNotSupportsModalityException;
 import com.projetoExtensao.arenaMafia.domain.exception.notFound.CourtNotFoundException;
@@ -20,9 +20,10 @@ import com.projetoExtensao.arenaMafia.infrastructure.persistence.specification.P
 import com.projetoExtensao.arenaMafia.infrastructure.web.schedule.dto.request.CreateReservationRequestDto;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,92 +31,56 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class CreateReservationUseCaseImp implements CreateReservationUseCase {
 
-  private final PriceCalculatorService priceCalculatorService;
-  private final ScheduleAvailabilityService scheduleAvailabilityService;
-  private final DynamicScheduleEntryCompletionScheduler completionScheduler;
   private final CourtRepositoryPort courtRepositoryPort;
+  private final ApplicationEventPublisher eventPublisher;
   private final ModalityRepositoryPort modalityRepositoryPort;
+  private final PriceCalculatorService priceCalculatorService;
   private final PriceRuleRepositoryPort priceRuleRepositoryPort;
   private final ReservationRepositoryPort reservationRepositoryPort;
+  private final ScheduleAvailabilityService scheduleAvailabilityService;
 
   public CreateReservationUseCaseImp(
-      PriceCalculatorService priceCalculatorService,
-      ScheduleAvailabilityService scheduleAvailabilityService,
-      DynamicScheduleEntryCompletionScheduler completionScheduler,
       CourtRepositoryPort courtRepositoryPort,
+      ApplicationEventPublisher eventPublisher,
       ModalityRepositoryPort modalityRepositoryPort,
+      PriceCalculatorService priceCalculatorService,
       PriceRuleRepositoryPort priceRuleRepositoryPort,
-      ReservationRepositoryPort reservationRepositoryPort) {
-    this.priceRuleRepositoryPort = priceRuleRepositoryPort;
-    this.reservationRepositoryPort = reservationRepositoryPort;
-    this.completionScheduler = completionScheduler;
+      ReservationRepositoryPort reservationRepositoryPort,
+      ScheduleAvailabilityService scheduleAvailabilityService) {
     this.courtRepositoryPort = courtRepositoryPort;
-    this.scheduleAvailabilityService = scheduleAvailabilityService;
+    this.eventPublisher = eventPublisher;
     this.modalityRepositoryPort = modalityRepositoryPort;
     this.priceCalculatorService = priceCalculatorService;
+    this.priceRuleRepositoryPort = priceRuleRepositoryPort;
+    this.reservationRepositoryPort = reservationRepositoryPort;
+    this.scheduleAvailabilityService = scheduleAvailabilityService;
   }
 
   @Override
   public Reservation execute(UUID userId, CreateReservationRequestDto request) {
-    // Valida se a data da reserva não está no passado
+    // Validações de negócio
     validateReservationDate(request.date());
-
-    // Valida se a modalidade existe e se a quadra suporta a modalidade
     validateModalityExists(request.modalityId());
     validateCourtSupportsModality(request.courtId(), request.modalityId());
 
-    // Valida a disponibilidade da quadra para o intervalo solicitado
-    DateTimeSlot dateTimeSlot = buildDateTimeSlot(request);
+    DateTimeSlot dateTimeSlot = new DateTimeSlot(request.date(), request.timeInterval());
     validateScheduleAvailability(request.courtId(), dateTimeSlot);
 
-    // Calcula o preço da reserva
-    BigDecimal price = calculatePrice(request);
-    Reservation reservation =
-        saveReservation(request.modalityId(), request.courtId(), userId, price, dateTimeSlot);
 
-    // Agenda a conclusão automática da reserva
-    scheduleAutomaticCompletion(reservation);
+    // Cria e salva a reserva
+    Reservation reservation = createAndSaveReservation(request, userId, dateTimeSlot);
+
+    // Publica evento para agendar conclusão da reserva
+    eventPublisher.publishEvent(new OnReservationCreatedScheduleTaskEvent(reservation));
+
     return reservation;
   }
 
-  /**
-   * Constrói um DateTimeSlot a partir dos dados da requisição.
-   *
-   * @param request dados da requisição
-   * @return DateTimeSlot construído
-   */
-  private DateTimeSlot buildDateTimeSlot(CreateReservationRequestDto request) {
-    return new DateTimeSlot(request.date(), request.timeInterval());
-  }
 
-  /**
-   * Cria e salva uma reserva no repositório.
-   *
-   * @param modalityId ID da modalidade
-   * @param courtId ID da quadra
-   * @param userId ID do usuário
-   * @param price Preço da reserva
-   * @param dateTimeSlot Intervalo de data e hora da reserva
-   * @return Reserva criada
-   */
-  private Reservation saveReservation(
-      UUID modalityId, UUID courtId, UUID userId, BigDecimal price, DateTimeSlot dateTimeSlot) {
-    var reservation = Reservation.createByUser(modalityId, courtId, userId, price, dateTimeSlot);
+  private Reservation createAndSaveReservation(CreateReservationRequestDto request, UUID userId, DateTimeSlot dateTimeSlot) {
+    BigDecimal price = calculatePrice(request);
+    var reservation = Reservation.createByUser(request.modalityId(), request.courtId(), userId, price, dateTimeSlot);
     return reservationRepositoryPort.save(reservation);
-  }
-
-  /**
-   * Agenda a conclusão automática da reserva no momento do seu término.
-   *
-   * @param reservation Reserva a ser agendada para conclusão automática
-   */
-  private void scheduleAutomaticCompletion(Reservation reservation) {
-    LocalDateTime endDateTime =
-        LocalDateTime.of(
-            reservation.getDateTimeSlot().date(),
-            reservation.getDateTimeSlot().timeInterval().endTime());
-
-    completionScheduler.scheduleReservationCompletion(reservation.getId(), endDateTime);
   }
 
   /**
@@ -151,8 +116,7 @@ public class CreateReservationUseCaseImp implements CreateReservationUseCase {
    * @param dateTimeSlot Intervalo de data e hora da reserva
    */
   private void validateScheduleAvailability(UUID courtId, DateTimeSlot dateTimeSlot) {
-    scheduleAvailabilityService.validateAvailability(
-        courtId, dateTimeSlot.date(), dateTimeSlot.timeInterval());
+    scheduleAvailabilityService.validateAvailability(courtId, dateTimeSlot.date(), dateTimeSlot.timeInterval());
   }
 
   /**

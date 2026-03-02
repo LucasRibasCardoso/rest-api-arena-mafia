@@ -51,4 +51,12 @@ public record DateTimeSlot(LocalDate date, TimeInterval timeInterval) {
     }
     return LocalDateTime.of(date, endTime);
   }
+
+  public LocalDateTime getStartDateTime() {
+    return LocalDateTime.of(date, timeInterval.startTime());
+  }
+
+  public LocalDateTime getEndDateTime() {
+    return calculateEndDateTime(timeInterval.startTime(), timeInterval.endTime());
+  }
 }

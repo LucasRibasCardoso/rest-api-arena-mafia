@@ -2,18 +2,17 @@ package com.projetoExtensao.arenaMafia.application.schedule.usecase.reservation.
 
 import com.projetoExtensao.arenaMafia.application.court.port.repository.CourtRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.modality.port.ModalityRepositoryPort;
-import com.projetoExtensao.arenaMafia.application.notification.event.OnRecurringReservationCreatedByAdminEvent;
-import com.projetoExtensao.arenaMafia.application.notification.event.OnReservationCreatedByAdminEvent;
+import com.projetoExtensao.arenaMafia.application.notification.event.OnRecurringReservationCreatedByAdminNotificationEvent;
+import com.projetoExtensao.arenaMafia.application.notification.event.OnReservationCreatedByAdminNotificationEvent;
 import com.projetoExtensao.arenaMafia.application.priceRule.port.PriceRuleRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.priceRule.service.PriceCalculatorService;
 import com.projetoExtensao.arenaMafia.application.schedule.detail.ReservationDetail;
 import com.projetoExtensao.arenaMafia.application.schedule.port.repository.ReservationRepositoryPort;
-import com.projetoExtensao.arenaMafia.application.schedule.result.ScheduleEntriesEnrichedResult;
-import com.projetoExtensao.arenaMafia.application.schedule.scheduler.DynamicScheduleEntryCompletionScheduler;
 import com.projetoExtensao.arenaMafia.application.schedule.service.ScheduleAvailabilityService;
 import com.projetoExtensao.arenaMafia.application.schedule.service.ScheduleDateCalculationService;
 import com.projetoExtensao.arenaMafia.application.schedule.service.ScheduleEntryEnrichmentService;
 import com.projetoExtensao.arenaMafia.application.schedule.usecase.reservation.CreateReservationByAdminUseCase;
+import com.projetoExtensao.arenaMafia.application.scheduleTask.event.OnReservationCreatedScheduleTaskEvent;
 import com.projetoExtensao.arenaMafia.application.user.port.gateway.PhoneValidatorPort;
 import com.projetoExtensao.arenaMafia.application.user.port.repository.UserRepositoryPort;
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidFormatPhoneException;
@@ -34,7 +33,6 @@ import com.projetoExtensao.arenaMafia.infrastructure.persistence.specification.P
 import com.projetoExtensao.arenaMafia.infrastructure.web.admin.dto.reservation.request.AdminReservationCreateRequestDto;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -57,8 +55,8 @@ public class CreateReservationByAdminUseCaseImp implements CreateReservationByAd
   private final ScheduleEntryEnrichmentService enrichmentService;
   private final ReservationRepositoryPort reservationRepositoryPort;
   private final ScheduleAvailabilityService scheduleAvailabilityService;
-  private final DynamicScheduleEntryCompletionScheduler completionScheduler;
   private final ScheduleDateCalculationService scheduleDateCalculationService;
+
 
   public CreateReservationByAdminUseCaseImp(
       UserRepositoryPort userRepositoryPort,
@@ -71,13 +69,11 @@ public class CreateReservationByAdminUseCaseImp implements CreateReservationByAd
       ScheduleEntryEnrichmentService enrichmentService,
       ReservationRepositoryPort reservationRepositoryPort,
       ScheduleAvailabilityService scheduleAvailabilityService,
-      DynamicScheduleEntryCompletionScheduler completionScheduler,
       ScheduleDateCalculationService scheduleDateCalculationService) {
     this.eventPublisher = eventPublisher;
     this.enrichmentService = enrichmentService;
     this.userRepositoryPort = userRepositoryPort;
     this.phoneValidatorPort = phoneValidatorPort;
-    this.completionScheduler = completionScheduler;
     this.courtRepositoryPort = courtRepositoryPort;
     this.modalityRepositoryPort = modalityRepositoryPort;
     this.priceCalculatorService = priceCalculatorService;
@@ -88,8 +84,7 @@ public class CreateReservationByAdminUseCaseImp implements CreateReservationByAd
   }
 
   @Override
-  public List<ReservationDetail> execute(
-      UUID adminId, AdminReservationCreateRequestDto requestDto) {
+  public List<ReservationDetail> execute(UUID adminId, AdminReservationCreateRequestDto requestDto) {
     validateReservationDate(requestDto.startDate());
     validateModalityExists(requestDto.modalityId());
     validateCourtSupportsModality(requestDto.courtId(), requestDto.modalityId());
@@ -123,19 +118,31 @@ public class CreateReservationByAdminUseCaseImp implements CreateReservationByAd
       AdminReservationCreateRequestDto request,
       List<PriceRule> priceRules) {
 
+    // Validação de disponibilidade para o horário solicitado
     DayOfWeek dayOfWeek = DayOfWeek.convertToDayOfWeek(request.startDate());
     scheduleDateCalculationService.validateDaysHaveOperatingHours(Set.of(dayOfWeek));
-    scheduleAvailabilityService.validateAvailability(
-        request.courtId(), request.startDate(), request.timeInterval());
+    scheduleAvailabilityService.validateAvailability(request.courtId(), request.startDate(), request.timeInterval());
 
+    // Criação da reserva e persistência no banco de dados
     DateTimeSlot dateTimeSlot = new DateTimeSlot(request.startDate(), request.timeInterval());
     BigDecimal price = calculateReservationPrice(dateTimeSlot, priceRules);
 
     Reservation reservation =
-        createAndSaveReservation(admin, costumer, request, dateTimeSlot, price);
+        Reservation.createByAdmin(
+            request.modalityId(),
+            request.courtId(),
+            costumer.getId(),
+            admin.getId(),
+            price,
+            dateTimeSlot);
+    reservationRepositoryPort.save(reservation);
 
-    publishConfirmationEvent(costumer, reservation);
-    scheduleAutomaticCompletion(reservation);
+
+    // Agendamento da tarefa de completar a reserva automaticamente no horário de início da reserva
+    String username = costumer.getUsername();
+    String phone = costumer.getPhone();
+    eventPublisher.publishEvent(new OnReservationCreatedByAdminNotificationEvent(username, phone,  reservation));
+    eventPublisher.publishEvent(new OnReservationCreatedScheduleTaskEvent(reservation));
 
     return enrichmentService.enrichReservation(reservation);
   }
@@ -155,21 +162,20 @@ public class CreateReservationByAdminUseCaseImp implements CreateReservationByAd
       AdminReservationCreateRequestDto request,
       List<PriceRule> priceRules) {
 
-    int courtsCount = 1; // Número de quadras
-    Set<DayOfWeek> effectiveDaysOfWeek =
+    final int courtsCount = 1; // Número de quadras
+    Set<DayOfWeek> daysOfWeek =
         scheduleDateCalculationService.resolveEffectiveDaysOfWeekWithOccurrencesValidation(
             request.selectedDaysOfWeek(), request.startDate(), request.endDate(), courtsCount);
 
     List<LocalDate> applicableDates =
         scheduleDateCalculationService.calculateApplicableDates(
-            request.startDate(), request.endDate(), effectiveDaysOfWeek);
+            request.startDate(), request.endDate(), daysOfWeek);
 
     UUID recurringReservationId = UUID.randomUUID();
-
     List<Reservation> reservations = new ArrayList<>();
+
     for (LocalDate date : applicableDates) {
-      scheduleAvailabilityService.validateAvailability(
-          request.courtId(), date, request.timeInterval());
+      scheduleAvailabilityService.validateAvailability(request.courtId(), date, request.timeInterval());
 
       DateTimeSlot dateTimeSlot = new DateTimeSlot(date, request.timeInterval());
       BigDecimal price = calculateReservationPrice(dateTimeSlot, priceRules);
@@ -185,15 +191,16 @@ public class CreateReservationByAdminUseCaseImp implements CreateReservationByAd
               recurringReservationId);
 
       reservations.add(reservation);
-      scheduleAutomaticCompletion(reservation);
     }
 
     reservationRepositoryPort.saveAll(reservations);
-    publishConfirmationRecurringEvent(costumer, reservations, effectiveDaysOfWeek);
 
-    ScheduleEntriesEnrichedResult enrichedResult =
-        enrichmentService.enrichScheduleEntries(reservations);
-    return enrichedResult.enrichedReservations();
+    // Publica evento de notificação para reservas criadas e evento para agendar a conclusão de cada reserva
+    publishConfirmationRecurringEvent(costumer, reservations, daysOfWeek);
+    publishScheduleCompletionEvent(reservations);
+
+    // Retorna as reservas criadas já enriquecidas com os detalhes necessários para exibição
+    return enrichmentService.enrichScheduleEntries(reservations).enrichedReservations();
   }
 
   /**
@@ -278,77 +285,18 @@ public class CreateReservationByAdminUseCaseImp implements CreateReservationByAd
    * @param dateTimeSlot slot de data de horário da reserva
    * @return Preço calculado
    */
-  private BigDecimal calculateReservationPrice(
-      DateTimeSlot dateTimeSlot, List<PriceRule> priceRules) {
+  private BigDecimal calculateReservationPrice(DateTimeSlot dateTimeSlot, List<PriceRule> priceRules) {
     return priceCalculatorService.calculatePrice(
         dateTimeSlot.timeInterval(), dateTimeSlot.date(), priceRules);
   }
 
-  /**
-   * Cria e salva a reserva
-   *
-   * @param admin Administrador
-   * @param costumer Usuário cliente
-   * @param request DTO de request
-   * @param dateTimeSlot slot de data de horário da reserva
-   * @param price Preço da reserva
-   * @return Reserva criada
-   */
-  private Reservation createAndSaveReservation(
-      User admin,
-      User costumer,
-      AdminReservationCreateRequestDto request,
-      DateTimeSlot dateTimeSlot,
-      BigDecimal price) {
-
-    Reservation reservation =
-        Reservation.createByAdmin(
-            request.modalityId(),
-            request.courtId(),
-            costumer.getId(),
-            admin.getId(),
-            price,
-            dateTimeSlot);
-    return reservationRepositoryPort.save(reservation);
-  }
-
-  /**
-   * Publica o evento de notificação informando o usuário sobre as reservas cadastradas
-   *
-   * @param costumer Cliente usuário
-   * @param reservations reservas cadastrada
-   * @param dayOfWeeks dias da semana
-   */
-  private void publishConfirmationRecurringEvent(
-      User costumer, List<Reservation> reservations, Set<DayOfWeek> dayOfWeeks) {
-    eventPublisher.publishEvent(
-        new OnRecurringReservationCreatedByAdminEvent(
+  private void publishConfirmationRecurringEvent(User costumer, List<Reservation> reservations, Set<DayOfWeek> dayOfWeeks) {
+    eventPublisher.publishEvent(new OnRecurringReservationCreatedByAdminNotificationEvent(
             costumer.getUsername(), costumer.getPhone(), dayOfWeeks, reservations));
   }
 
-  /**
-   * Publica o evento de notificação informando o usuário sobre a reserva cadastrada pelo admin
-   *
-   * @param costumer Usuário cliente
-   * @param reservation Reserva cadastrada
-   */
-  private void publishConfirmationEvent(User costumer, Reservation reservation) {
-    eventPublisher.publishEvent(
-        new OnReservationCreatedByAdminEvent(
-            costumer.getUsername(), costumer.getPhone(), reservation));
+  private void publishScheduleCompletionEvent(List<Reservation> reservations) {
+    reservations.forEach(reservation -> eventPublisher.publishEvent(new OnReservationCreatedScheduleTaskEvent(reservation)));
   }
 
-  /**
-   * Agenda a conclusão automática da reserva no momento do seu término
-   *
-   * @param reservation reserva a ser agendada para conclusão automática
-   */
-  private void scheduleAutomaticCompletion(Reservation reservation) {
-    LocalDateTime endDateTime =
-        LocalDateTime.of(
-            reservation.getDateTimeSlot().date(),
-            reservation.getDateTimeSlot().timeInterval().endTime());
-
-    completionScheduler.scheduleReservationCompletion(reservation.getId(), endDateTime);
-  }
 }

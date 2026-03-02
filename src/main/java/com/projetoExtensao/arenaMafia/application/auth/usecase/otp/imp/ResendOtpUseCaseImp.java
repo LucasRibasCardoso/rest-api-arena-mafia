@@ -2,7 +2,7 @@ package com.projetoExtensao.arenaMafia.application.auth.usecase.otp.imp;
 
 import com.projetoExtensao.arenaMafia.application.auth.port.gateway.OtpSessionPort;
 import com.projetoExtensao.arenaMafia.application.auth.usecase.otp.ResendOtpUseCase;
-import com.projetoExtensao.arenaMafia.application.notification.event.OnVerificationRequiredEvent;
+import com.projetoExtensao.arenaMafia.application.notification.event.OnVerificationRequiredNotificationEvent;
 import com.projetoExtensao.arenaMafia.application.user.port.repository.UserRepositoryPort;
 import com.projetoExtensao.arenaMafia.domain.exception.badRequest.InvalidOtpSessionException;
 import com.projetoExtensao.arenaMafia.domain.model.User;
@@ -35,7 +35,7 @@ public class ResendOtpUseCaseImp implements ResendOtpUseCase {
     User user = userRepository.findByIdOrElseThrow(userId);
 
     user.ensureCanRequestOtp();
-    eventPublisher.publishEvent(new OnVerificationRequiredEvent(user));
+    eventPublisher.publishEvent(new OnVerificationRequiredNotificationEvent(user));
   }
 
   private UUID getUserIdFromOtpSession(OtpSessionId otpSessionId) {

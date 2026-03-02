@@ -2,7 +2,7 @@ package com.projetoExtensao.arenaMafia.application.auth.usecase.authentication.i
 
 import com.projetoExtensao.arenaMafia.application.auth.port.gateway.OtpSessionPort;
 import com.projetoExtensao.arenaMafia.application.auth.usecase.authentication.SignUpUseCase;
-import com.projetoExtensao.arenaMafia.application.notification.event.OnVerificationRequiredEvent;
+import com.projetoExtensao.arenaMafia.application.notification.event.OnVerificationRequiredNotificationEvent;
 import com.projetoExtensao.arenaMafia.application.security.port.gateway.PasswordEncoderPort;
 import com.projetoExtensao.arenaMafia.application.user.port.gateway.PhoneValidatorPort;
 import com.projetoExtensao.arenaMafia.application.user.port.repository.UserRepositoryPort;
@@ -47,7 +47,7 @@ public class SignUpUseCaseImp implements SignUpUseCase {
     User savedUser = userRepository.save(userToSave);
 
     OtpSessionId otpSessionId = otpSessionPort.generateOtpSession(savedUser.getId());
-    eventPublisher.publishEvent(new OnVerificationRequiredEvent(savedUser));
+    eventPublisher.publishEvent(new OnVerificationRequiredNotificationEvent(savedUser));
     return otpSessionId;
   }
 

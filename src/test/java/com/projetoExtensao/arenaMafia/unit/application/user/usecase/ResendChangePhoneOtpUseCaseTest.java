@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
-import com.projetoExtensao.arenaMafia.application.notification.event.OnVerificationRequiredEvent;
+import com.projetoExtensao.arenaMafia.application.notification.event.OnVerificationRequiredNotificationEvent;
 import com.projetoExtensao.arenaMafia.application.user.port.gateway.PendingPhoneChangePort;
 import com.projetoExtensao.arenaMafia.application.user.port.repository.UserRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.user.usecase.phone.imp.ResendChangePhoneOtpUseCaseImp;
@@ -50,7 +50,7 @@ public class ResendChangePhoneOtpUseCaseTest {
     resendChangePhoneOtpUseCase.execute(userId);
 
     // Assert
-    verify(eventPublisher, times(1)).publishEvent(any(OnVerificationRequiredEvent.class));
+    verify(eventPublisher, times(1)).publishEvent(any(OnVerificationRequiredNotificationEvent.class));
   }
 
   @Test

@@ -1,6 +1,6 @@
 package com.projetoExtensao.arenaMafia.infrastructure.adapter.gateway.notification.consumer;
 
-import com.projetoExtensao.arenaMafia.application.notification.gateway.SmsPort;
+import com.projetoExtensao.arenaMafia.infrastructure.adapter.gateway.notification.sms.SmsClient;
 import com.projetoExtensao.arenaMafia.infrastructure.adapter.gateway.notification.dto.NotificationDto;
 import com.projetoExtensao.arenaMafia.infrastructure.utils.PhoneFormatterUtils;
 import io.awspring.cloud.sqs.annotation.SqsListener;
@@ -12,21 +12,13 @@ import org.springframework.stereotype.Component;
 public class WhatsAppFallbackConsumer {
 
   private static final Logger logger = LoggerFactory.getLogger(WhatsAppFallbackConsumer.class);
-  private final SmsPort smsPort;
+  private final SmsClient smsPort;
 
-  public WhatsAppFallbackConsumer(SmsPort smsPort) {
+  public WhatsAppFallbackConsumer(SmsClient smsPort) {
     this.smsPort = smsPort;
   }
 
-  /**
-   * Consumidor de mensagens do AWS SQS para enviar notificações via SMS como fallback. Este
-   * consumidor é acionado quando o envio via WhatsApp falha, garantindo que a mensagem seja
-   * entregue por outro canal.
-   *
-   * @param notificationDto DTO contendo o número de telefone e o conteúdo da mensagem a ser
-   *     enviada.
-   */
-  @SqsListener("${app.queue.whatsapp-dlq}")
+  @SqsListener("${app.queue.whatsapp-transactional-dlq}")
   public void recover(NotificationDto notificationDto) {
     String maskedPhone = PhoneFormatterUtils.maskPhoneNumber(notificationDto.phone());
     logger.warn("FALLBACK: WhatsApp falhou 3x. Enviando SMS backup para {}", maskedPhone);

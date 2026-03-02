@@ -30,17 +30,22 @@ import com.projetoExtensao.arenaMafia.infrastructure.web.auth.dto.response.AuthR
 import com.projetoExtensao.arenaMafia.infrastructure.web.exception.dto.ErrorResponseDto;
 import io.restassured.http.Cookie;
 import io.restassured.response.Response;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.temporal.TemporalAdjusters;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -54,72 +59,19 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.containers.localstack.LocalStackContainer;
 import org.testcontainers.utility.DockerImageName;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.sqs.SqsAsyncClient;
+import software.amazon.awssdk.services.sqs.model.GetQueueUrlRequest;
+import software.amazon.awssdk.services.sqs.model.PurgeQueueRequest;
 
-/**
- * Configuração base para testes de integração com Testcontainers.
- * Utiliza o padrão Singleton para reutilizar containers entre classes de teste,
- * reduzindo significativamente o tempo de execução da suite de testes.
- */
 @ActiveProfiles("test")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public abstract class BaseTestContainersConfig {
 
-  // =================== Singleton Containers ===================
-  // Containers são iniciados uma vez e reutilizados por todas as classes de teste
-
-  private static final PostgreSQLContainer<?> postgreSQLContainer;
-  private static final GenericContainer<?> redis;
-  private static final LocalStackContainer localStack;
-
-  static {
-    // PostgreSQL
-    postgreSQLContainer = new PostgreSQLContainer<>("postgres:16-alpine")
-        .withReuse(true);
-    postgreSQLContainer.start();
-
-    // Redis
-    redis = new GenericContainer<>("redis:7-alpine")
-        .withExposedPorts(6379)
-        .withReuse(true);
-    redis.start();
-
-    // LocalStack (SQS)
-    localStack = new LocalStackContainer(DockerImageName.parse("localstack/localstack:3.0"))
-        .withServices(LocalStackContainer.Service.SQS)
-        .withReuse(true);
-    localStack.start();
-
-    // Configurar filas SQS uma única vez
-    setupSqsQueues();
-  }
-
-  private static void setupSqsQueues() {
-    try {
-      // 1. Criar as filas
-      localStack.execInContainer("awslocal", "sqs", "create-queue", "--queue-name", "sms-queue");
-      localStack.execInContainer("awslocal", "sqs", "create-queue", "--queue-name", "whatsapp-dlq");
-      localStack.execInContainer("awslocal", "sqs", "create-queue", "--queue-name", "whatsapp-queue");
-
-      // 2. Configurar VisibilityTimeout baixo para retries rápidos em testes
-      localStack.execInContainer(
-          "sh", "-c",
-          "awslocal sqs set-queue-attributes " +
-          "--queue-url http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/whatsapp-queue " +
-          "--attributes '{\"VisibilityTimeout\":\"1\"}'");
-
-      // 3. Configurar Redrive Policy: após 3 falhas, move para DLQ
-      localStack.execInContainer(
-          "sh", "-c",
-          "awslocal sqs set-queue-attributes " +
-          "--queue-url http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/whatsapp-queue " +
-          "--attributes '{\"RedrivePolicy\":\"{\\\"deadLetterTargetArn\\\":\\\"arn:aws:sqs:us-east-1:000000000000:whatsapp-dlq\\\",\\\"maxReceiveCount\\\":\\\"3\\\"}\"}'");
-    } catch (Exception e) {
-      throw new RuntimeException("Falha ao configurar filas SQS no LocalStack", e);
-    }
-  }
+  private static final Logger logger = LoggerFactory.getLogger(BaseTestContainersConfig.class);
 
   // =================== Injeção de Dependências ===================
-
+  @Autowired private SqsAsyncClient sqsAsyncClient;
   @PersistenceContext private EntityManager entityManager;
   @Autowired private JdbcTemplate jdbcTemplate;
   @Autowired private RedisTemplate<String, String> redisTemplate;
@@ -134,10 +86,88 @@ public abstract class BaseTestContainersConfig {
   @Autowired private ScheduleEntryRepositoryPort scheduleEntryRepository;
   @Autowired private BlockedTimeRepositoryPort blockedTimeRepository;
 
-  public final String defaultUsername = "testuser";
-  public final String defaultPassword = "123456";
-  public final String defaultFullName = "Usuário de Teste";
-  public final String defaultPhone = "+558320548186";
+  // =================== Containers ===================
+  private static PostgreSQLContainer<?> postgreSQLContainer;
+  private static GenericContainer<?> redis;
+  private static LocalStackContainer localStack;
+
+  // =================== Constantes de Configurações ===================
+  public static final String AWS_ACCOUNT_ID = "000000000000";
+  public static final Region AWS_REGION = Region.US_EAST_1;
+  public static final String AWS_ACCESS_KEY = "test";
+  public static final String AWS_SECRET_KEY = "test";
+
+  private static final String SCHEDULE_TASK_QUEUE = "schedule-task-queue";
+  private static final String SCHEDULE_TASK_DLQ = "schedule-task-dlq";
+  private static final String WHATSAPP_TRANSACTIONAL_QUEUE = "whatsapp-transactional-queue";
+  private static final String WHATSAPP_TRANSACTIONAL_DLQ = "whatsapp-transactional-dlq";
+  private static final String WHATSAPP_REMINDER_QUEUE = "whatsapp-reminder-queue";
+  private static final String SMS_QUEUE = "sms-queue";
+  private static final String GENERAL_TRASH_DLQ = "general-trash-dlq";
+
+  private static final List<String> ALL_QUEUE_NAMES = List.of(
+      SCHEDULE_TASK_QUEUE,
+      SCHEDULE_TASK_DLQ,
+      WHATSAPP_TRANSACTIONAL_QUEUE,
+      WHATSAPP_TRANSACTIONAL_DLQ,
+      WHATSAPP_REMINDER_QUEUE,
+      SMS_QUEUE,
+      GENERAL_TRASH_DLQ
+  );
+
+  @BeforeAll
+  public static void configureEnvironment() {
+    // PostgreSQL
+    postgreSQLContainer = new PostgreSQLContainer<>("postgres:16-alpine").withReuse(true);
+    postgreSQLContainer.start();
+
+    // Redis
+    redis = new GenericContainer<>("redis:7-alpine").withExposedPorts(6379).withReuse(true);
+    redis.start();
+
+    // LocalStack
+    localStack = new LocalStackContainer(DockerImageName.parse("localstack/localstack:3.8"))
+            .withReuse(true)
+            .withEnv("SERVICES", "sqs,iam,scheduler");
+    localStack.start();
+
+    // Configurar recursos AWS no LocalStack
+    setupAwsResources();
+  }
+
+  @AfterEach
+  public void cleanupAfterEach() {
+    entityManager.clear();
+
+    // =================== Limpeza do Banco de Dados ===================
+    JdbcTestUtils.deleteFromTables(
+            jdbcTemplate,
+            // Nível 1: Tabelas mais dependentes (subtabelas de schedule_entries)
+            "tb_reservations",
+            "tb_blocked_times",
+            // Nível 2: Tabelas com FK para outras tabelas
+            "tb_schedule_entries",
+            "tb_refresh_token",
+            "tb_court_modalities",
+            "tb_operating_hours",
+            "tb_price_rules",
+            // Nível 3: Tabelas intermediárias
+            "tb_courts",
+            "tb_modalities",
+            // Nível 4: Tabelas base
+            "tb_users");
+
+    // =================== Limpeza do Redis ===================
+    var connectionFactory = redisTemplate.getConnectionFactory();
+    if (connectionFactory != null) {
+      var connection = connectionFactory.getConnection();
+      connection.serverCommands().flushAll();
+      connection.close();
+    }
+
+    // =================== Limpeza das Filas SQS ===================
+    purgeAllSqsQueues();
+  }
 
   @DynamicPropertySource
   static void overrideProperties(DynamicPropertyRegistry registry) {
@@ -150,46 +180,102 @@ public abstract class BaseTestContainersConfig {
     registry.add("spring.data.redis.host", redis::getHost);
     registry.add("spring.data.redis.port", () -> redis.getMappedPort(6379));
 
-    // LocalStack (SQS)
+    // LocalStack
+    String schedulerEndpoint = localStack.getEndpoint().toString();
+    registry.add("spring.cloud.aws.sqs.endpoint", () -> schedulerEndpoint);
     registry.add("spring.cloud.aws.region.static", localStack::getRegion);
-    registry.add("spring.cloud.aws.credentials.access-key", localStack::getAccessKey);
-    registry.add("spring.cloud.aws.credentials.secret-key", localStack::getSecretKey);
-    registry.add("spring.cloud.aws.sqs.endpoint", () -> localStack.getEndpointOverride(LocalStackContainer.Service.SQS).toString());
+    registry.add("spring.cloud.aws.credentials.access-key",() -> AWS_ACCESS_KEY);
+    registry.add("spring.cloud.aws.credentials.secret-key", () -> AWS_SECRET_KEY);
+
+    // Role do EventBridge Scheduler
+    registry.add(
+            "AWS_SCHEDULER_ROLE_ARN",
+            () -> String.format("arn:aws:iam::%s:role/arena-mafia-scheduler-role", AWS_ACCOUNT_ID));
+
+    // ARN da fila de tasks
+    registry.add(
+            "AWS_SQS_SCHEDULE_TASK_QUEUE_ARN",
+            () -> String.format("arn:aws:sqs:%s:%s:schedule-task-queue", AWS_REGION, AWS_ACCOUNT_ID));
+
+    // ARN da fila de lembretes
+    registry.add(
+            "AWS_SQS_WHATSAPP_REMINDER_QUEUE_ARN",
+            () -> String.format("arn:aws:sqs:%s:%s:whatsapp-reminder-queue", AWS_REGION, AWS_ACCOUNT_ID));
   }
 
-  @AfterEach
-  void cleanupAfterEach() {
-    // Limpa o cache de primeiro nível do Hibernate para evitar
-    // referências a entidades que serão deletadas via JDBC
-    entityManager.clear();
+  // =================== Métodos Auxiliares de Configuração ===================
+  private static void setupAwsResources() {
+    try {
+      // Criar as DLQs primeiro
+      createQueue(SCHEDULE_TASK_DLQ);
+      createQueue(WHATSAPP_TRANSACTIONAL_DLQ);
+      createQueue(GENERAL_TRASH_DLQ);
 
-    // Limpeza eficiente: deleta tabelas filhas primeiro para evitar FK violations
-    // Ordem correta baseada nas dependências de foreign keys
-    JdbcTestUtils.deleteFromTables(
-        jdbcTemplate,
-        // Nível 1: Tabelas mais dependentes (subtabelas de schedule_entries)
-        "tb_reservations",
-        "tb_blocked_times",
-        // Nível 2: Tabelas com FK para outras tabelas
-        "tb_schedule_entries",
-        "tb_refresh_token",
-        "tb_court_modalities",
-        "tb_operating_hours",
-        "tb_price_rules",
-        // Nível 3: Tabelas intermediárias
-        "tb_courts",
-        "tb_modalities",
-        // Nível 4: Tabelas base
-        "tb_users");
+      // Criar as Filas Principais apontando para as suas respectivas DLQs
+      createQueueWithDlq(SCHEDULE_TASK_QUEUE, SCHEDULE_TASK_DLQ, 3);
+      createQueueWithDlq(WHATSAPP_TRANSACTIONAL_QUEUE, WHATSAPP_TRANSACTIONAL_DLQ, 3);
+      createQueueWithDlq(WHATSAPP_REMINDER_QUEUE, GENERAL_TRASH_DLQ, 1);
+      createQueueWithDlq(SMS_QUEUE, GENERAL_TRASH_DLQ, 1);
 
-    // Limpa cache do Redis (OTP codes, rate limit, sessions, etc.)
-    var connectionFactory = redisTemplate.getConnectionFactory();
-    if (connectionFactory != null) {
-      var connection = connectionFactory.getConnection();
-      connection.serverCommands().flushAll();
-      connection.close();
+    } catch (Exception e) {
+      throw new RuntimeException("Falha ao configurar recursos AWS no LocalStack", e);
     }
   }
+
+  private static void createQueue(String queueName) throws Exception {
+    localStack.execInContainer("awslocal", "sqs", "create-queue", "--queue-name", queueName);
+  }
+
+  private static void createQueueWithDlq(String queueName, String dlqName, int maxReceiveCount) throws Exception {
+    createQueue(queueName);
+
+    String dlqArn = String.format("arn:aws:sqs:%s:%s:%s", AWS_REGION, AWS_ACCOUNT_ID, dlqName);
+
+    String redrivePolicy =
+            "{\\\"deadLetterTargetArn\\\":\\\"%s\\\",\\\"maxReceiveCount\\\":\\\"%d\\\"}"
+                    .formatted(dlqArn, maxReceiveCount);
+
+    String queueUrl =
+            "http://sqs.%s.localhost.localstack.cloud:4566/%s/%s".formatted(AWS_REGION, AWS_ACCOUNT_ID, queueName);
+
+    String attributes = "{\"VisibilityTimeout\":\"1\",\"RedrivePolicy\":\"%s\"}".formatted(redrivePolicy);
+
+    String command =
+            "awslocal sqs set-queue-attributes --queue-url %s --attributes '%s'".formatted(queueUrl, attributes);
+
+    localStack.execInContainer("sh", "-c", command);
+  }
+
+  private void purgeAllSqsQueues() {
+    try {
+      CompletableFuture<?>[] purgeFutures = ALL_QUEUE_NAMES.stream()
+          .map(queueName ->
+              sqsAsyncClient
+                  .getQueueUrl(GetQueueUrlRequest.builder().queueName(queueName).build())
+                  .thenCompose(urlResponse ->
+                      sqsAsyncClient.purgeQueue(
+                          PurgeQueueRequest.builder()
+                              .queueUrl(urlResponse.queueUrl())
+                              .build()))
+                  .exceptionally(ex -> {
+                    logger.warn("Falha ao purgar fila SQS '{}': {}", queueName, ex.getMessage());
+                    return null;
+                  }))
+          .toArray(CompletableFuture[]::new);
+
+      CompletableFuture.allOf(purgeFutures).join();
+
+    } catch (Exception e) {
+      logger.error("Erro inesperado ao purgar filas SQS no @AfterEach: {}", e.getMessage(), e);
+    }
+  }
+
+  // =================== Constantes de Negócio ===================
+  public final String defaultUsername = "testuser";
+  public final String defaultPassword = "123456";
+  public final String defaultFullName = "Usuário de Teste";
+
+  public final String defaultPhone = "+558320548186";
 
   /**
    * Valida uma resposta de erro de validação (400 Bad Request) com fieldErrors. Útil para validar
@@ -201,21 +287,21 @@ public abstract class BaseTestContainersConfig {
    * @param expectedErrorCode O ErrorCode esperado para o campo
    */
   public void assertValidationError(
-          ErrorResponseDto response,
-          String expectedPath,
-          String fieldName,
-          ErrorCode expectedErrorCode) {
+      ErrorResponseDto response,
+      String expectedPath,
+      String fieldName,
+      ErrorCode expectedErrorCode) {
 
     assertThat(response.status()).isEqualTo(400);
     assertThat(response.errorCode()).isEqualTo(ErrorCode.VALIDATION_FAILED.name());
     assertThat(response.developerMessage()).isEqualTo(ErrorCode.VALIDATION_FAILED.getMessage());
     assertThat(response.path()).isEqualTo(expectedPath);
     assertThat(response.fieldErrors())
-            .anyMatch(
-                    fieldError ->
-                            fieldError.fieldName().equals(fieldName)
-                                    && fieldError.errorCode().equals(expectedErrorCode.name())
-                                    && fieldError.developerMessage().equals(expectedErrorCode.getMessage()));
+        .anyMatch(
+            fieldError ->
+                fieldError.fieldName().equals(fieldName)
+                    && fieldError.errorCode().equals(expectedErrorCode.name())
+                    && fieldError.developerMessage().equals(expectedErrorCode.getMessage()));
   }
 
   /**
@@ -227,10 +313,10 @@ public abstract class BaseTestContainersConfig {
    * @param expectedErrorCode O ErrorCode esperado
    */
   public void assertBusinessError(
-          ErrorResponseDto response,
-          int expectedStatus,
-          String expectedPath,
-          ErrorCode expectedErrorCode) {
+      ErrorResponseDto response,
+      int expectedStatus,
+      String expectedPath,
+      ErrorCode expectedErrorCode) {
 
     assertThat(response.status()).isEqualTo(expectedStatus);
     assertThat(response.errorCode()).isEqualTo(expectedErrorCode.name());
@@ -239,12 +325,10 @@ public abstract class BaseTestContainersConfig {
   }
 
   /**
-   * Normaliza um horário para ter minutos válidos (0 ou 30).
-   * Essencial para simular reservas em andamento que sigam a regra de negócio.
-   * Regras de arredondamento:
-   * - 0-14 minutos → arredonda para baixo para 0
-   * - 15-44 minutos → arredonda para 30
-   * - 45-59 minutos → arredonda para hora seguinte com 0 minutos
+   * Normaliza um horário para ter minutos válidos (0 ou 30). Essencial para simular reservas em
+   * andamento que sigam a regra de negócio. Regras de arredondamento: - 0-14 minutos → arredonda
+   * para baixo para 0 - 15-44 minutos → arredonda para 30 - 45-59 minutos → arredonda para hora
+   * seguinte com 0 minutos
    */
   public LocalTime normalizeToValidMinutes(LocalTime time) {
     int minutes = time.getMinute();
@@ -262,8 +346,8 @@ public abstract class BaseTestContainersConfig {
   }
 
   /**
-   * Retorna a próxima data que corresponde ao dia da semana especificado.
-   * Se hoje for o mesmo dia da semana, retorna a próxima semana.
+   * Retorna a próxima data que corresponde ao dia da semana especificado. Se hoje for o mesmo dia
+   * da semana, retorna a próxima semana.
    */
   public LocalDate nextDayOfWeek(java.time.DayOfWeek dayOfWeek) {
     return LocalDate.now().with(TemporalAdjusters.next(dayOfWeek));
@@ -405,8 +489,8 @@ public abstract class BaseTestContainersConfig {
   }
 
   /**
-   * Retorna o System User (ghost user) existente ou cria um novo caso não exista.
-   * Necessário para testes que envolvam cleanup de contas desativadas (migração de reservas).
+   * Retorna o System User (ghost user) existente ou cria um novo caso não exista. Necessário para
+   * testes que envolvam cleanup de contas desativadas (migração de reservas).
    *
    * @return O System User existente ou recém-criado
    */
@@ -619,16 +703,17 @@ public abstract class BaseTestContainersConfig {
     return operatingHoursRepository.save(operatingHours);
   }
 
-  public OperatingHours mockPersistOperatingHoursAllDaysWithTimeInterval(TimeInterval timeInterval) {
+  public OperatingHours mockPersistOperatingHoursAllDaysWithTimeInterval(
+      TimeInterval timeInterval) {
     Set<DayOfWeek> daysOfWeek =
-            Set.of(
-                    DayOfWeek.MONDAY,
-                    DayOfWeek.TUESDAY,
-                    DayOfWeek.WEDNESDAY,
-                    DayOfWeek.THURSDAY,
-                    DayOfWeek.FRIDAY,
-                    DayOfWeek.SATURDAY,
-                    DayOfWeek.SUNDAY);
+        Set.of(
+            DayOfWeek.MONDAY,
+            DayOfWeek.TUESDAY,
+            DayOfWeek.WEDNESDAY,
+            DayOfWeek.THURSDAY,
+            DayOfWeek.FRIDAY,
+            DayOfWeek.SATURDAY,
+            DayOfWeek.SUNDAY);
     OperatingHours operatingHours = OperatingHours.create(daysOfWeek, timeInterval);
     return operatingHoursRepository.save(operatingHours);
   }
@@ -743,18 +828,19 @@ public abstract class BaseTestContainersConfig {
       ReservationStatus status) {
 
     DateTimeSlot dateTimeSlot = new DateTimeSlot(date, timeInterval);
-    Reservation reservation = Reservation.reconstitute(
-        UUID.randomUUID(),
-        courtId,
-        modalityId,
-        userId,
-        null,
-        null,
-        price,
-        dateTimeSlot,
-        status,
-        null,
-        Instant.now());
+    Reservation reservation =
+        Reservation.reconstitute(
+            UUID.randomUUID(),
+            courtId,
+            modalityId,
+            userId,
+            null,
+            null,
+            price,
+            dateTimeSlot,
+            status,
+            null,
+            Instant.now());
     return (Reservation) scheduleEntryRepository.save(reservation);
   }
 
@@ -770,7 +856,8 @@ public abstract class BaseTestContainersConfig {
 
     DateTimeSlot dateTimeSlot = new DateTimeSlot(date, timeInterval);
     Reservation reservation =
-        Reservation.createRecurring(modalityId, courtId, userId, adminId, price, dateTimeSlot, recurringReservationId);
+        Reservation.createRecurring(
+            modalityId, courtId, userId, adminId, price, dateTimeSlot, recurringReservationId);
     return (Reservation) scheduleEntryRepository.save(reservation);
   }
 
@@ -779,15 +866,21 @@ public abstract class BaseTestContainersConfig {
       UUID courtId, LocalDate date, TimeInterval timeInterval, String reason, UUID adminId) {
 
     DateTimeSlot dateTimeSlot = new DateTimeSlot(date, timeInterval);
-    BlockedTime blockedTime = BlockedTime.createSpecificTime(courtId, dateTimeSlot, reason, adminId);
+    BlockedTime blockedTime =
+        BlockedTime.createSpecificTime(courtId, dateTimeSlot, reason, adminId);
     return blockedTimeRepository.save(blockedTime);
   }
 
   public BlockedTime mockPersistBlockedTimeRecurring(
-          UUID courtId, LocalDate date, TimeInterval timeInterval, String reason, UUID adminId, UUID recurringId
-  ) {
+      UUID courtId,
+      LocalDate date,
+      TimeInterval timeInterval,
+      String reason,
+      UUID adminId,
+      UUID recurringId) {
     DateTimeSlot dateTimeSlot = new DateTimeSlot(date, timeInterval);
-    BlockedTime blockedTime = BlockedTime.createRecurring(courtId, dateTimeSlot, reason, adminId, true, recurringId);
+    BlockedTime blockedTime =
+        BlockedTime.createRecurring(courtId, dateTimeSlot, reason, adminId, true, recurringId);
     return blockedTimeRepository.save(blockedTime);
   }
 }

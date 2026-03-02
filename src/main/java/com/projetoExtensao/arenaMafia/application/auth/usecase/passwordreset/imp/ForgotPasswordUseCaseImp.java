@@ -2,7 +2,7 @@ package com.projetoExtensao.arenaMafia.application.auth.usecase.passwordreset.im
 
 import com.projetoExtensao.arenaMafia.application.auth.port.gateway.OtpSessionPort;
 import com.projetoExtensao.arenaMafia.application.auth.usecase.passwordreset.ForgotPasswordUseCase;
-import com.projetoExtensao.arenaMafia.application.notification.event.OnVerificationRequiredEvent;
+import com.projetoExtensao.arenaMafia.application.notification.event.OnVerificationRequiredNotificationEvent;
 import com.projetoExtensao.arenaMafia.application.user.port.gateway.PhoneValidatorPort;
 import com.projetoExtensao.arenaMafia.application.user.port.repository.UserRepositoryPort;
 import com.projetoExtensao.arenaMafia.domain.exception.forbidden.AccountStatusForbiddenException;
@@ -55,7 +55,7 @@ public class ForgotPasswordUseCaseImp implements ForgotPasswordUseCase {
     try {
       user.ensureAccountEnabled();
       OtpSessionId otpSessionId = otpSessionPort.generateOtpSession(user.getId());
-      eventPublisher.publishEvent(new OnVerificationRequiredEvent(user));
+      eventPublisher.publishEvent(new OnVerificationRequiredNotificationEvent(user));
       return Optional.of(otpSessionId);
     } catch (AccountStatusForbiddenException e) {
       logger.warn(

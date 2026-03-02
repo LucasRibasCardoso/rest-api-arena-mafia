@@ -10,7 +10,6 @@ import com.projetoExtensao.arenaMafia.infrastructure.persistence.entity.Schedule
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.mapper.ScheduleEntryMapper;
 import com.projetoExtensao.arenaMafia.infrastructure.persistence.repository.ScheduleEntryJpaRepository;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Set;
@@ -153,24 +152,4 @@ public class ScheduleEntryRepositoryAdapter implements ScheduleEntryRepositoryPo
     }
   }
 
-  @Override
-  public List<ScheduleEntry> findAllActiveSchedulesEndedBeforeOrEqual(LocalDateTime dateTime) {
-    return scheduleEntryJpaRepository
-        .findAllActiveSchedulesEndedBeforeOrEqual(dateTime.toLocalDate(), dateTime.toLocalTime())
-        .stream()
-        .map(scheduleEntryMapper::toDomain)
-        .filter(ScheduleEntry::isActive)
-        .toList();
-  }
-
-  @Override
-  public List<ScheduleEntry> findAllActiveSchedulesWithEndTimeAfter(LocalDateTime dateTime) {
-    LocalDate date = dateTime.toLocalDate();
-    LocalTime time = dateTime.toLocalTime();
-
-    return scheduleEntryJpaRepository.findAllActiveSchedulesEndedAfter(date, time).stream()
-        .map(scheduleEntryMapper::toDomain)
-        .filter(ScheduleEntry::isActive)
-        .toList();
-  }
 }

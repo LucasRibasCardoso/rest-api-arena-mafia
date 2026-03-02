@@ -1,6 +1,6 @@
 package com.projetoExtensao.arenaMafia.application.user.usecase.phone.imp;
 
-import com.projetoExtensao.arenaMafia.application.notification.event.OnVerificationRequiredEvent;
+import com.projetoExtensao.arenaMafia.application.notification.event.OnVerificationRequiredNotificationEvent;
 import com.projetoExtensao.arenaMafia.application.user.port.gateway.PendingPhoneChangePort;
 import com.projetoExtensao.arenaMafia.application.user.port.gateway.PhoneValidatorPort;
 import com.projetoExtensao.arenaMafia.application.user.port.repository.UserRepositoryPort;
@@ -42,7 +42,7 @@ public class InitiateChangePhoneUseCaseImp implements InitiateChangePhoneUseCase
     User user = userRepository.findByIdOrElseThrow(idCurrentUser);
 
     pendingPhoneChangePort.save(user.getId(), formattedPhone);
-    eventPublisher.publishEvent((new OnVerificationRequiredEvent(user)));
+    eventPublisher.publishEvent((new OnVerificationRequiredNotificationEvent(user)));
   }
 
   private void checkIfPhoneAlreadyExists(UUID idCurrentUser, String newPhone) {

@@ -1,7 +1,8 @@
 package com.projetoExtensao.arenaMafia.application.schedule.service;
 
-import com.projetoExtensao.arenaMafia.application.notification.event.OnReservationsCancelledByAdminEvent;
+import com.projetoExtensao.arenaMafia.application.notification.event.OnReservationsCancelledByAdminNotificationEvent;
 import com.projetoExtensao.arenaMafia.application.schedule.port.repository.ReservationRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.scheduleTask.event.OnReservationCancelledScheduleTaskEvent;
 import com.projetoExtensao.arenaMafia.application.user.port.repository.UserRepositoryPort;
 import com.projetoExtensao.arenaMafia.domain.exception.conflict.BatchCancellationFailedException;
 import com.projetoExtensao.arenaMafia.domain.model.User;
@@ -45,8 +46,7 @@ public class ReservationBatchCancellationService {
    * @throws BatchCancellationFailedException se qualquer reserva falhar ao ser cancelada
    */
   @Transactional
-  public int cancelReservationsInBatchByAdmin(
-      List<Reservation> reservations, String reason, UUID adminId) {
+  public int cancelReservationsInBatchByAdmin(List<Reservation> reservations, String reason, UUID adminId) {
     if (reservations == null || reservations.isEmpty()) return 0;
 
     Map<UUID, User> usersMap = fetchUsersInBatch(reservations);
@@ -117,39 +117,38 @@ public class ReservationBatchCancellationService {
   }
 
   private void cancelByAdminAndSaveReservations(List<Reservation> reservations, UUID adminId) {
-    reservations.forEach(reservation -> reservation.cancelByAdmin(adminId));
+    reservations.forEach(
+        reservation -> {
+          reservation.cancelByAdmin(adminId);
+          eventPublisher.publishEvent(new OnReservationCancelledScheduleTaskEvent(reservation.getId()));
+        });
     reservationRepository.saveAll(reservations);
   }
 
   private void cancelAndSaveReservations(List<Reservation> reservations) {
-    reservations.forEach(Reservation::cancel);
+    reservations.forEach(reservation -> {
+      reservation.cancel();
+      eventPublisher.publishEvent(new OnReservationCancelledScheduleTaskEvent(reservation.getId()));
+    });
     reservationRepository.saveAll(reservations);
   }
 
-  private void publishCancellationEvents(
-      List<Reservation> reservations, Map<UUID, User> usersMap, String reason) {
+  private void publishCancellationEvents(List<Reservation> reservations, Map<UUID, User> usersMap, String reason) {
     Map<UUID, List<Reservation>> reservationsByUser =
         reservations.stream().collect(Collectors.groupingBy(Reservation::getUserId));
 
     reservationsByUser.forEach(
         (userId, userReservations) -> {
           User user = usersMap.get(userId);
-          createAndPublishCancellationEvent(user, reason, userReservations);
+          eventPublisher.publishEvent(
+              new OnReservationsCancelledByAdminNotificationEvent(user.getUsername(), user.getPhone(), reason, reservations));
         });
   }
 
   private void publishAccountDisabledCancellationEvent(List<Reservation> reservations, User user) {
     var event =
-        new OnReservationsCancelledByAdminEvent(
+        new OnReservationsCancelledByAdminNotificationEvent(
             user.getUsername(), user.getPhone(), ACCOUNT_DISABLED_REASON, reservations);
-    eventPublisher.publishEvent(event);
-  }
-
-  private void createAndPublishCancellationEvent(
-      User user, String reason, List<Reservation> reservations) {
-    var event =
-        new OnReservationsCancelledByAdminEvent(
-            user.getUsername(), user.getPhone(), reason, reservations);
     eventPublisher.publishEvent(event);
   }
 }
