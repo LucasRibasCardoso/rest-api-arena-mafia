@@ -35,7 +35,6 @@ build/
 .htpasswd
 secrets/.actuator_password
 docker-compose.override.yml
-docker-compose.frontend.yml
 
 ### macOS ###
 .DS_Store

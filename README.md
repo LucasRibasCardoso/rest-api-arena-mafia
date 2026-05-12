@@ -1,18 +1,20 @@
 # Arena Mafia - Sistema de Agendamento de Quadras Esportivas
 
-> Uma aplicação moderna de agendamento de quadras esportivas desenvolvida como projeto de extensão universitária no IFSC. 
-> Construída com arquitetura hexagonal, Spring Boot 3.5 e observabilidade em tempo real com OpenTelemetry.
+> Uma aplicação moderna de agendamento de quadras esportivas desenvolvida como projeto de extensão universitária no IFSC.  
+> Construída com **Arquitetura Hexagonal**, **Spring Boot 3.5**, **Amazon Web Services (SQS, EventBridge Scheduler)** e observabilidade em tempo real com **OpenTelemetry**.
 
 ## 🎯 Visão Geral
 
-**Arena Mafia** é uma solução completa para gerenciar agendamentos de quadras esportivas (tênis, vôlei, badminton, etc.). A aplicação oferece:
+**Arena Mafia** é uma solução completa e cloud-native para gerenciar agendamentos de quadras esportivas (tênis, vôlei, badminton, etc.). A aplicação oferece:
 
-✅ **Autenticação e Autorização** - Sistema JWT com refresh tokens  
-✅ **Gestão de Usuários** - Perfis de administrador e cliente  
-✅ **Agendamento Inteligente** - Suporte a modalidades, quadras, horários e preços dinâmicos  
-✅ **Preços Variáveis** - Regras de preço por período, horário e modalidade  
-✅ **Observabilidade Completa** - Traces distribuído, logs centralizados e métricas em tempo real  
-✅ **API RESTful Documentada** - OpenAPI 3.1 com Swagger UI integrado
+✅ **Autenticação e Autorização** — Sistema JWT com refresh tokens  
+✅ **Gestão de Usuários** — Perfis de administrador e cliente  
+✅ **Agendamento Inteligente** — Suporte a modalidades, quadras, horários e preços dinâmicos  
+✅ **Preços Variáveis** — Regras de preço por período, horário e modalidade  
+✅ **Notificações Cloud-Native** — Pipeline assíncrono com AWS SQS, WhatsApp, SMS e fallback automático  
+✅ **Task Scheduling Distribuído** — Agendamento de tarefas com AWS EventBridge Scheduler  
+✅ **Observabilidade Completa** — Traces distribuído, logs centralizados e métricas em tempo real  
+✅ **API RESTful Documentada** — OpenAPI 3.1 com Swagger UI integrado
 
 ---
 
@@ -48,14 +50,19 @@ src/main/java/com/projetoExtensao/arenaMafia/
 │   ├── priceRule/                   # Use cases de regras de preço
 │   ├── schedule/                    # Use cases de agendamentos
 │   ├── user/                        # Use cases de usuários
+│   ├── notification/                # Eventos e listeners de notificação (WhatsApp, SMS, OTP)
+│   ├── scheduleTask/                # Eventos e listeners de agendamento de tarefas
 │   ├── {feature}/
 │   │   ├── usecase/                 # Interfaces dos casos de uso
 │   │   └── imp/                     # Implementações dos casos de uso
 │   └── security/                    # Portas de segurança
 │
 └── infrastructure/                  # Infraestrutura (Adapters)
-    ├── adapter/                     # Adaptadores das Portas
-    ├── config/                      # Configurações Spring
+    ├── adapter/
+    │   └── gateway/
+    │       ├── notification/         # AWS SQS Producers & Consumers (SMS, WhatsApp)
+    │       └── scheduling/          # AWS EventBridge Scheduler & SQS Consumers
+    ├── config/                      # Configurações Spring & AWS
     ├── persistence/                 # JPA Repositories (adaptam a porta do repositório)
     ├── security/                    # Spring Security (autenticação/autorização)
     └── web/                         # REST Controllers (adaptam as portas de entrada)
@@ -81,6 +88,228 @@ HTTP Request
 
 ---
 
+## ☁️ AWS Cloud Architecture — Notificações & Task Scheduling
+
+A aplicação integra-se com **Amazon Web Services (AWS)** para garantir **processamento assíncrono, resiliência e escalabilidade** nos fluxos de notificação e agendamento de tarefas. Toda a comunicação com serviços AWS segue o padrão **Ports & Adapters**, mantendo o domínio completamente desacoplado da infraestrutura cloud.
+
+### Visão Geral da Integração AWS
+
+```
+┌─────────────────────────── Aplicação Spring Boot ───────────────────────────────────┐
+│                                                                                     │
+│  Use Case executa ação                                                              │
+│       ↓                                                                             │
+│  Event Publisher (Spring Events)                                                    │
+│       ↓                         ↓                                                   │
+│  ScheduleTaskEventListener     NotificationEventListener                            │
+│       ↓                         ↓                                                   │
+│  ScheduledTaskPort (Port)      NotificationPort (Port)                              │
+│       ↓                         ↓                                                   │
+│  ScheduledTaskProducer ───→ AWS EventBridge ───→ NotificationProducer ───→ AWS SQS  │
+│       (Adapter)            Scheduler               (Adapter)                        │
+└─────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### 📨 Pipeline de Notificações (AWS SQS)
+
+O sistema de notificações é totalmente **event-driven** e baseado em **filas AWS SQS**, garantindo desacoplamento, entrega confiável e fallback automático entre canais de comunicação.
+
+#### Fluxo Arquitetural
+
+```
+  Use Case (ex: criar reserva)
+       ↓
+  ApplicationEventPublisher.publishEvent()
+       ↓
+  NotificationEventListener (Application Layer)
+       │
+       ├── OTP (verificação)  → NotificationPort.sendSms()
+       ├── Lembrete           → NotificationPort.sendWhatsappMessage()
+       └── Aviso admin        → NotificationPort.sendWhatsappMessage()
+                                       ↓
+                              NotificationProducer (Infrastructure)
+                                       ↓ SqsTemplate.send()
+                  ┌────────────────────────────────────────┐
+                  │          Amazon SQS Queues             │
+                  │                                        │
+                  │  ┌─────────────────────────────────┐   │
+                  │  │ whatsapp-transactional-queue    │   │
+                  │  │  → WhatsAppConsumer             │   │
+                  │  │  → API WhatsApp                 │   │
+                  │  │                                 │   │
+                  │  │  Retry: 3x → DLQ ↓              │   │
+                  │  └─────────────────────────────────┘   │
+                  │                                        │
+                  │  ┌─────────────────────────────────┐   │
+                  │  │ whatsapp-transactional-dlq      │   │
+                  │  │  → WhatsAppFallbackConsumer     │   │
+                  │  │  → Fallback: envia via SMS      │   │
+                  │  └─────────────────────────────────┘   │
+                  │                                        │
+                  │  ┌─────────────────────────────────┐   │
+                  │  │ sms-queue                       │   │
+                  │  │  → SmsConsumer                  │   │
+                  │  │  → API SMS                      │   │
+                  │  │  Retry: 1x → general-trash-dlq  │   │
+                  │  └─────────────────────────────────┘   │
+                  └────────────────────────────────────────┘
+```
+
+#### Tipos de Notificação
+
+| Evento | Canal | Fila SQS | Descrição |
+|--------|-------|----------|-----------|
+| Verificação de telefone (OTP) | SMS | `sms-queue` | Código de verificação de 6 dígitos |
+| Reserva criada pelo admin | WhatsApp | `whatsapp-transactional-queue` | Confirmação com dados da reserva |
+| Reserva cancelada pelo admin | WhatsApp | `whatsapp-transactional-queue` | Notificação com motivo do cancelamento |
+| Reservas recorrentes criadas | WhatsApp | `whatsapp-transactional-queue` | Detalhes do período e dias da semana |
+| Lembrete de reserva | WhatsApp | `whatsapp-transactional-queue` | Lembrete 2h antes da reserva |
+
+#### Estratégia de Resiliência (DLQ & Fallback)
+
+```
+              WhatsApp falhou?
+                    ↓
+    SQS Retry automático (até 3 tentativas)
+                    ↓
+            Ainda falhou?
+                    ↓
+    Mensagem movida para DLQ (whatsapp-transactional-dlq)
+                    ↓
+    WhatsAppFallbackConsumer consome da DLQ
+                    ↓
+    Envia notificação via SMS como backup
+```
+
+> **Decisão de Arquitetura**: O fallback WhatsApp → SMS garante que o usuário **sempre** receba a notificação, mesmo em caso de indisponibilidade total da API WhatsApp. O SQS gerencia automaticamente os retries e o redrive para a DLQ.
+
+---
+
+### ⏰ Task Scheduling Distribuído (AWS EventBridge Scheduler)
+
+O agendamento de tarefas utiliza o **AWS EventBridge Scheduler** para criar schedules one-time que, no momento programado, enviam mensagens para filas **AWS SQS** consumidas pela aplicação.
+
+#### Fluxo Arquitetural
+
+```
+  Use Case (ex: criar reserva)
+       ↓
+  ApplicationEventPublisher.publishEvent()
+       ↓
+  ScheduledTaskEventListener (Application Layer)
+       ↓
+  ScheduledTaskPort (Port Interface)
+       ↓
+  ScheduledTaskProducer (Infrastructure — AWS SDK)
+       ↓
+  AWS EventBridge Scheduler
+       │
+       ├── Cria Schedule one-time: at(2026-03-15T18:00:00)
+       │   Target: SQS schedule-task-queue
+       │   ActionAfterCompletion: DELETE
+       │
+       └── Cria Schedule one-time: at(2026-03-15T16:00:00)
+           Target: SQS whatsapp-reminder-queue
+           ActionAfterCompletion: DELETE
+
+  ──── Quando o horário chega ────
+
+  AWS EventBridge Scheduler dispara
+       ↓
+  Envia mensagem para a fila SQS
+       ↓
+  ┌────────────────────────────────────────────┐
+  │  schedule-task-queue                       │
+  │   → ScheduledTaskConsumer                  │
+  │   → Completa reserva / Deleta blocked time │
+  │   Retry: 3x → schedule-task-dlq            │
+  └────────────────────────────────────────────┘
+  ┌────────────────────────────────────────────┐
+  │  whatsapp-reminder-queue                   │
+  │   → ScheduledReminderConsumer              │
+  │   → Publica evento de lembrete via WhatsApp│
+  │   Retry: 3x → schedule-task-dlq            │
+  └────────────────────────────────────────────┘
+```
+
+#### Eventos Gerenciados pelo Scheduler
+
+| Evento de Domínio | Ação no EventBridge | Fila SQS Target | Consumer |
+|--------------------|---------------------|-----------------|----------|
+| Reserva criada | Agenda task de conclusão + lembrete | `schedule-task-queue` + `whatsapp-reminder-queue` | `ScheduledTaskConsumer` + `ScheduledReminderConsumer` |
+| Reserva cancelada | Cancela task de conclusão + lembrete | — | — |
+| Blocked time criado | Agenda task de deleção automática | `schedule-task-queue` | `ScheduledTaskConsumer` |
+| Blocked time deletado | Cancela task de deleção | — | — |
+
+#### Topologia Completa de Filas AWS SQS
+
+```
+                   Amazon SQS
+  ┌─────────────────────────────────────────────────────┐
+  │                                                     │
+  │  ┌────────────────────────┐   ┌──────────────────┐  │
+  │  │ schedule-task-queue    │──→│ schedule-task-dlq│  │
+  │  │ (Retry: 3x)            │   │ (Dead Letter)    │  │
+  │  └────────────────────────┘   └──────────────────┘  │
+  │                                                     │
+  │  ┌──────────────────────────┐ ┌──────────────────┐  │
+  │  │ whatsapp-reminder-queue  │→│ schedule-task-dlq│  │
+  │  │ (Retry: 3x)              │ │ (Dead Letter)    │  │
+  │  └──────────────────────────┘ └──────────────────┘  │
+  │                                                     │
+  │  ┌──────────────────────────────┐ ┌───────────────┐ │
+  │  │ whatsapp-transactional-queue │→│ whatsapp-     │ │
+  │  │ (Retry: 3x)                  │ │ transactional │ │
+  │  └──────────────────────────────┘ │ -dlq          │ │
+  │                                   │ (Fallback SMS)│ │
+  │                                   └───────────────┘ │
+  │                                                     │
+  │  ┌────────────────────┐   ┌──────────────────────┐  │
+  │  │ sms-queue          │──→│ general-trash-dlq    │  │
+  │  │ (Retry: 1x)        │   │ (Descartado)         │  │
+  │  └────────────────────┘   └──────────────────────┘  │
+  │                                                     │
+  └─────────────────────────────────────────────────────┘
+```
+
+#### Ports & Adapters — Desacoplamento AWS
+
+A integração com AWS segue rigorosamente a **Arquitetura Hexagonal**. A camada de domínio e aplicação não possuem nenhuma dependência direta com serviços AWS:
+
+```
+┌─────────────────────────────────────────────────┐
+│  APPLICATION LAYER (Ports)                      │
+│                                                 │
+│  ScheduledTaskPort (interface)                  │
+│    ├── scheduleTask(id, type, executionTime)    │
+│    ├── cancelTask(id, type)                     │
+│    ├── scheduleReservationReminderTask(id, time)│
+│    └── cancelReservationReminderTask(id)        │
+│                                                 │
+│  NotificationPort (interface)                   │
+│    ├── sendSms(phone, content)                  │
+│    └── sendWhatsappMessage(phone, content)      │
+└────────────────────┬────────────────────────────┘
+                     │ implementa
+┌────────────────────▼────────────────────────────┐
+│  INFRASTRUCTURE LAYER (Adapters)                │
+│                                                 │
+│  ScheduledTaskProducer                          │
+│    → AWS SDK SchedulerClient                    │
+│    → Cria/deleta schedules no EventBridge       │
+│                                                 │
+│  NotificationProducer                           │
+│    → Spring Cloud AWS SqsTemplate               │
+│    → Publica mensagens nas filas SQS            │
+└─────────────────────────────────────────────────┘
+```
+
+> **Princípio**: Trocar o AWS SQS por RabbitMQ ou o EventBridge por Quartz requer apenas a implementação de novos adapters — **zero alterações no domínio ou na camada de aplicação**.
+
+---
+
 ## 💻 Tecnologias
 
 ### Backend
@@ -88,11 +317,18 @@ HTTP Request
 - **Spring Boot 3.5.4** - Framework web
 - **Spring Security** - Autenticação e autorização
 - **Spring Data JPA** - Persistência de dados
+- **Spring Cloud AWS (SQS)** - Integração nativa com AWS SQS
 - **Flyway 11.10.2** - Versionamento de banco de dados
 - **MapStruct 1.5.5** - Mapeamento entre DTOs e entidades
 - **PostgreSQL** - Banco de dados principal
 - **Redis** - Cache e sessions distribuídas
 - **OpenTelemetry** - Observabilidade (traces, logs, métricas)
+
+### Amazon Web Services (AWS)
+- **AWS SQS** - Filas de mensagens assíncronas (notificações e tarefas)
+- **AWS SQS DLQ** - Dead Letter Queues para fallback e reprocessamento
+- **AWS EventBridge Scheduler** - Agendamento de tarefas one-time distribuídas
+- **AWS IAM** - Controle de acesso e roles para os serviços
 
 ### Infraestrutura & DevOps
 - **Docker** - Containerização
@@ -125,11 +361,30 @@ HTTP Request
 │   │   ├── java/com/projetoExtensao/arenaMafia/
 │   │   │   ├── domain/                 # Camada de Domínio
 │   │   │   ├── application/            # Camada de Aplicação
+│   │   │   │   ├── notification/       #   ├── Eventos e listeners de notificação
+│   │   │   │   │   ├── event/          #   │     Domain events (OTP, Lembrete, Aviso)
+│   │   │   │   │   ├── gateway/        #   │     Ports (NotificationPort, OtpPort)
+│   │   │   │   │   └── listener/       #   │     NotificationEventListener
+│   │   │   │   ├── scheduleTask/       #   ├── Eventos e listeners de task scheduling
+│   │   │   │   │   ├── event/          #   │     Domain events (Reserva, BlockedTime)
+│   │   │   │   │   ├── gateway/        #   │     Port (ScheduledTaskPort)
+│   │   │   │   │   └── listener/       #   │     ScheduledTaskEventListener
+│   │   │   │   └── {feature}/          #   └── Demais use cases
 │   │   │   └── infrastructure/         # Camada de Infraestrutura
+│   │   │       └── adapter/gateway/
+│   │   │           ├── notification/   #     AWS SQS Notification Adapters
+│   │   │           │   ├── consumer/   #       SmsConsumer, WhatsAppConsumer, WhatsAppFallbackConsumer
+│   │   │           │   ├── producer/   #       NotificationProducer (SqsTemplate)
+│   │   │           │   ├── sms/        #       SmsClient, SmsProvider (Strategy Pattern)
+│   │   │           │   └── whatsapp/   #       WhatsAppClient, WhatsAppProvider (Strategy Pattern)
+│   │   │           └── scheduling/     #     AWS EventBridge Scheduler Adapters
+│   │   │               ├── consumer/   #       ScheduledTaskConsumer, ScheduledReminderConsumer
+│   │   │               ├── producer/   #       ScheduledTaskProducer (SchedulerClient SDK)
+│   │   │               └── dto/        #       ScheduledTaskDto, ScheduledReminderTaskDto
 │   │   └── resources/
 │   │       ├── application.yml         # Configurações padrão
-│   │       ├── application-dev.yml     # Configurações dev
-│   │       ├── application-prod.yml    # Configurações prod
+│   │       ├── application-dev.yml     # Configurações dev (inclui AWS)
+│   │       ├── application-prod.yml    # Configurações prod (inclui AWS)
 │   │       ├── db/migration/           # Scripts Flyway
 │   │       └── static/docs/            # Documentação OpenAPI
 │   └── test/
