@@ -1,0 +1,42 @@
+package com.projetoExtensao.arenaMafia.infrastructure.web.schedule;
+
+import com.projetoExtensao.arenaMafia.application.schedule.usecase.availabletime.FindAllAvailableTimesUseCase;
+import com.projetoExtensao.arenaMafia.infrastructure.persistence.mapper.AvailableSlotMapper;
+import com.projetoExtensao.arenaMafia.infrastructure.security.rateLimit.CustomRateLimiter;
+import com.projetoExtensao.arenaMafia.infrastructure.web.schedule.dto.response.AvailableSlotResponseDto;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.UUID;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping("/api/schedules/available-slots")
+public class AvailableTimesController {
+
+  private final AvailableSlotMapper availableSlotMapper;
+  private final FindAllAvailableTimesUseCase findAllAvailableTimesUseCase;
+
+  public AvailableTimesController(
+      AvailableSlotMapper availableSlotMapper,
+      FindAllAvailableTimesUseCase findAllAvailableTimesUseCase) {
+    this.availableSlotMapper = availableSlotMapper;
+    this.findAllAvailableTimesUseCase = findAllAvailableTimesUseCase;
+  }
+
+  @GetMapping
+  @CustomRateLimiter(limiterName = "globalLimiter")
+  public ResponseEntity<List<AvailableSlotResponseDto>> getAvailableTimes(
+      @RequestParam("date") LocalDate date, @RequestParam("modalityId") UUID modalityId) {
+
+    List<AvailableSlotResponseDto> availableSlots =
+        findAllAvailableTimesUseCase.execute(modalityId, date).stream()
+            .map(availableSlotMapper::toDto)
+            .toList();
+
+    return ResponseEntity.ok(availableSlots);
+  }
+}

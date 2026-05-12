@@ -1,0 +1,11 @@
+description: Too Many Requests. O usuário excedeu o limite de requisições permitido em um determinado período de tempo.
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/error/ErrorResponseDto.yml'
+    example:
+      timestamp: "2024-06-15T14:30:00Z"
+      status: 429
+      errorCode: "TOO_MANY_REQUESTS"
+      developerMessage: "Limite de requisições excedido. Por favor, tente novamente mais tarde."
+      path: "/api/some-endpoint"

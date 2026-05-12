@@ -1,0 +1,37 @@
+type: object
+description: Representa um slot de horário disponível na agenda administrativa para uma quadra específica.
+required:
+  - type
+  - courtId
+  - courtName
+  - timeInterval
+  - availableModalityIds
+  - price
+properties:
+  type:
+    type: string
+    enum: [AVAILABLE_SLOT]
+    example: "AVAILABLE_SLOT"
+  courtId:
+    type: string
+    format: uuid
+    description: Identificador único da quadra.
+    example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+  courtName:
+    type: string
+    description: Nome da quadra.
+    example: "Quadra A"
+  timeInterval:
+    $ref: "../timeInterval/TimeIntervalDto.yml"
+  availableModalityIds:
+    type: array
+    description: Lista de IDs das modalidades disponíveis para este slot nesta quadra.
+    items:
+      type: string
+      format: uuid
+    example: ["550e8400-e29b-41d4-a716-446655440005", "550e8400-e29b-41d4-a716-446655440006"]
+  price:
+    type: number
+    format: decimal
+    description: O preço para reservar este slot nesta quadra.
+    example: 50.00

@@ -1,0 +1,14 @@
+description: Forbidden. O usuário não possui a permissão necessária para acessar o recurso solicitado.
+content:
+  application/json:
+    schema:
+      $ref: '../schemas/error/ErrorResponseDto.yml'
+    examples:
+      AccessDenied:
+        summary: Acesso negado por falta de permissão
+        value:
+          timestamp: "2026-01-07T14:30:00Z"
+          status: 403
+          errorCode: "ACCESS_DENIED"
+          developerMessage: "Acesso negado. Você não tem permissão para acessar este recurso."
+          path: "/api/some-protected-endpoint"

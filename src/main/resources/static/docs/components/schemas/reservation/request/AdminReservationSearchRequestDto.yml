@@ -1,0 +1,65 @@
+type: object
+description: |
+  Critérios de busca e filtros para listagem administrativa de reservas.
+
+  Permite buscar e filtrar reservas por:
+  - **searchTerm**: Busca textual em nome do usuário, username ou telefone
+  - **userId**: Filtro por ID do usuário que fez a reserva
+  - **startDate/endDate**: Intervalo de datas para filtrar reservas por data de criação
+  - **status**: Filtro por status da reserva (CONFIRMED, CANCELLED, COMPLETED)
+
+  Todos os filtros são opcionais e podem ser combinados.
+properties:
+  searchTerm:
+    type: string
+    maxLength: 100
+    description: |
+      Termo de busca para filtrar reservas por:
+      - Nome completo do usuário
+      - Username
+      - Telefone do usuário
+      
+      Máximo de 100 caracteres.
+    example: "João Silva"
+    nullable: true
+  userId:
+    type: string
+    format: uuid
+    description: |
+      Identificador único do usuário para filtrar suas reservas.
+      Se fornecido, retorna apenas as reservas deste usuário.
+    example: "123e4567-e89b-12d3-a456-426614174000"
+    nullable: true
+  startDate:
+    type: string
+    format: date
+    description: |
+      Data inicial do intervalo de datas para filtrar reservas (ISO 8601).
+      Se fornecido, deve ser anterior ou igual ao `endDate`.
+      Filtra por data de criação da reserva.
+    example: "2026-01-01"
+    nullable: true
+  endDate:
+    type: string
+    format: date
+    description: |
+      Data final do intervalo de datas para filtrar reservas (ISO 8601).
+      Se fornecido, deve ser posterior ou igual ao `startDate`.
+      Filtra por data de criação da reserva.
+    example: "2026-01-31"
+    nullable: true
+  status:
+    type: string
+    description: |
+      Status da reserva para filtrar.
+      
+      Valores aceitos:
+      - **CONFIRMED**: Reservas confirmadas
+      - **CANCELLED**: Reservas canceladas
+      - **COMPLETED**: Reservas completadas
+    enum:
+      - CONFIRMED
+      - CANCELLED
+      - COMPLETED
+    example: "CONFIRMED"
+    nullable: true

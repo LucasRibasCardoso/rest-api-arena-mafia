@@ -1,0 +1,7 @@
+name: userId
+in: path
+description: "ID do usuário cujo status será alterado."
+required: true
+schema:
+  type: string
+  format: uuid

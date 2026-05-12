@@ -1,0 +1,73 @@
+term:
+  name: term
+  in: query
+  description: "Termo de busca para filtrar usuários por nome de usuário, nome completo ou telefone."
+  required: false
+  schema:
+    type: string
+    maxLength: 100
+
+status:
+  name: status
+  in: query
+  description: "Filtra usuários por status da conta."
+  required: false
+  schema:
+    $ref: "../schemas/user/enuns/AccountStatus.yml"
+
+role:
+  name: role
+  in: query
+  description: "Filtra usuários por role (permissão)."
+  required: false
+  schema:
+    $ref: "../schemas/user/enuns/Role.yml"
+
+createdAtStart:
+  name: createdAtStart
+  in: query
+  description: "Data de início (inclusiva) para o filtro de data de criação. Formato: YYYY-MM-DD."
+  required: false
+  schema:
+    type: string
+    format: date
+    example: "2025-09-28"
+
+createdAtEnd:
+  name: createdAtEnd
+  in: query
+  description: "Data de fim (inclusiva) para o filtro de data de criação. Formato: YYYY-MM-DD."
+  required: false
+  schema:
+    type: string
+    format: date
+    example: "2025-09-29"
+
+page:
+  name: page
+  in: query
+  description: "Número da página a ser retornada (inicia em 0)."
+  required: false
+  schema:
+    type: integer
+    default: 0
+    minimum: 0
+
+size:
+  name: size
+  in: query
+  description: "Quantidade de itens por página."
+  required: false
+  schema:
+    type: integer
+    default: 20
+    minimum: 1
+
+sort:
+  name: sort
+  in: query
+  description: "Critério de ordenação no formato 'propriedade,direção'. Ex: 'username,desc'."
+  required: false
+  schema:
+    type: string
+    example: "createdAt,desc"

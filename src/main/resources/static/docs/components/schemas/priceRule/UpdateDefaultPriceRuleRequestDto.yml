@@ -1,0 +1,17 @@
+type: object
+description: |
+  Dados necessários para atualizar o preço da regra padrão.
+  A regra padrão é aplicada quando nenhuma outra regra específica se aplica.
+required:
+  - price
+properties:
+  price:
+    type: number
+    format: decimal
+    minimum: 0
+    description: |
+      Novo valor do preço padrão.
+      Deve ser um valor positivo.
+      Este preço será aplicado na regra de preço padrão.
+    example: 150
+

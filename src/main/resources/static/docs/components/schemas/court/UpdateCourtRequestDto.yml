@@ -1,0 +1,50 @@
+type: object
+description: |
+  Dados para atualização de uma quadra esportiva existente.
+  Todos os campos são opcionais - apenas os campos fornecidos serão atualizados.
+properties:
+  name:
+    type: string
+    minLength: 3
+    maxLength: 100
+    nullable: true
+    description: |
+      Novo nome identificador da quadra.
+      Se fornecido, deve ser único no sistema.
+    example: "Quadra de Futebol B"
+  description:
+    type: string
+    nullable: true
+    description: |
+      Nova descrição da quadra.
+      Pode conter informações como localização, características especiais, etc.
+      Use `null` para remover a descrição existente.
+    example: "Quadra descoberta com grama natural, reformada em 2024"
+  offsetMinutes:
+    type: integer
+    enum: [0, 30]
+    nullable: true
+    description: |
+      Novo deslocamento em minutos para o horário de funcionamento da quadra.
+      
+      Valores permitidos:
+      - `0`: Horários iniciam na hora cheia (ex: 08:00, 09:00, 10:00)
+      - `30`: Horários iniciam na meia hora (ex: 08:30, 09:30, 10:30)
+    example: 30
+  modalityIds:
+    type: array
+    minItems: 1
+    uniqueItems: true
+    nullable: true
+    description: |
+      Nova lista de identificadores (UUIDs) das modalidades esportivas suportadas pela quadra.
+      Se fornecida, deve conter ao menos uma modalidade.
+      Substitui completamente a lista de modalidades existente.
+      Todas as modalidades informadas devem existir no sistema.
+    items:
+      type: string
+      format: uuid
+    example: 
+      - "6ba7b810-9dad-11d1-80b4-00c04fd430c8"
+      - "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+      - "7c9e6679-7425-40de-944b-e07fc1f90ae7"

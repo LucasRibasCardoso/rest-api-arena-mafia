@@ -1,0 +1,4 @@
+type: array
+description: Lista de detalhes dos bloqueios de horário atualizados
+items:
+  $ref: "./BlockedTimeDetailResponseDto.yml"

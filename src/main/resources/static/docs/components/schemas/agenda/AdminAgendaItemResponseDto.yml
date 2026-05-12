@@ -1,0 +1,17 @@
+type: object
+description: |
+  Representa um item da agenda administrativa do estabelecimento.
+
+  Este é um objeto polimórfico que pode ser um dos seguintes tipos com base no discriminador "type":
+  - **AVAILABLE_SLOT**: Um slot de horário disponível para reserva em uma quadra específica.
+  - **SCHEDULE_DETAIL**: Detalhes de um agendamento (reserva ou bloqueio) em uma quadra específica.
+
+  O campo "type" determina o subtipo e suas propriedades específicas.
+discriminator:
+  propertyName: type
+  mapping:
+    AVAILABLE_SLOT: "#/components/schemas/AdminAvailableItemResponseDto"
+    SCHEDULE_DETAIL: "#/components/schemas/AdminScheduleDetailResponseDto"
+oneOf:
+  - $ref: "./AdminAvailableItemResponseDto.yml"
+  - $ref: "./AdminScheduleDetailResponseDto.yml"

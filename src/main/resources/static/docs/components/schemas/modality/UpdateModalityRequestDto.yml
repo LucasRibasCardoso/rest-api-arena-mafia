@@ -1,0 +1,13 @@
+type: object
+description: Dados necessários para atualizar uma modalidade esportiva existente.
+required:
+  - name
+properties:
+  name:
+    type: string
+    minLength: 3
+    maxLength: 100
+    description: |
+      Novo nome da modalidade esportiva.
+      Deve ser único no sistema.
+    example: "Futebol Society"

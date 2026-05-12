@@ -1,0 +1,50 @@
+allOf:
+  - $ref: "./ScheduleEntryResponseDto.yml"
+  - type: object
+    description: Resposta completa de uma reserva de horário.
+    required:
+      - userId
+      - modalityId
+      - price
+      - status
+    properties:
+      userId:
+        type: string
+        format: uuid
+        description: Identificador único do usuário que fez a reserva.
+        example: "123e4567-e89b-12d3-a456-426614174000"
+      modalityId:
+        type: string
+        format: uuid
+        description: Identificador único da modalidade esportiva reservada.
+        example: "550e8400-e29b-41d4-a716-446655440002"
+      scheduledByAdminId:
+        type: string
+        format: uuid
+        nullable: true
+        description: |
+          Identificador do administrador que criou a reserva.
+          Será null se a reserva foi feita pelo próprio usuário.
+        example: null
+      price:
+        type: number
+        format: decimal
+        description: Valor total da reserva.
+        example: 50.00
+      status:
+        type: string
+        description: Status atual da reserva.
+        enum:
+          - CONFIRMED
+          - CANCELLED
+          - COMPLETED
+        example: "CONFIRMED"
+      recurringReservationId:
+        type: string
+        format: uuid
+        nullable: true
+        description: |
+          Identificador da reserva recorrente (mensal) à qual esta reserva pertence.
+          Será null para reservas individuais.
+        example: null
+

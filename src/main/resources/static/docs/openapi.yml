@@ -1,0 +1,372 @@
+openapi: 3.1.0
+info:
+  title: API Rest - Backend - Arena Mafia
+  version: v1
+  description: |
+    Backend do projeto para a Arena Mafia, desenvolvido como parte do curso de
+    Análise e Desenvolvimento de Sistemas do Instituto Federal de Santa Catarina.
+
+    A seguir estão os códigos de erro mais comuns que podem ser retornados por qualquer endpoint. 
+    Erros específicos de cada operação estão documentados nos exemplos de resposta de cada endpoint.
+
+    | Código (`errorCode`) | Mensagem (`developerMessage`) | Descrição |
+    |---|---|---|
+    | `MALFORMED_JSON_REQUEST` | Requisição JSON malformada. | A resposta incluí detalhes adicionais no campo `fieldErrors`. |
+    | `UNEXPECTED_ERROR` | Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. | Erro lançado para falhas não previstas. |
+    | `ACCESS_DENIED` | Acesso negado. Você não tem permissão para acessar este recurso. | Erro lançado quando o usuário autenticado não tem permissão para acessar o recurso. |
+    | `DATA_INTEGRITY_VIOLATION` | O recurso que você está tentando criar ou atualizar já existe. | Erro lançado quando há violação de integridade de dados (duplicação, etc). |
+    | `INVALID_REQUEST_PARAMETER` | Um parâmetro da requisição é inválido ou está malformado. | A resposta incluí detalhes adicionais no campo `fieldErrors`. |
+    | `VALIDATION_FAILED` | A validação falhou. Verifique os detalhes dos campos para mais informações. | A resposta incluí detalhes adicionais no campo `fieldErrors`. |
+    | `SESSION_EXPIRED` | Sua sessão expirou. Por favor, faça login novamente. | Erro lançado quando o token de autenticação expirou. |
+    | `INVALID_SORT_PARAMETER` | O parâmetro de ordenação fornecido é inválido. | Erro lançado quando o parâmetro de ordenação (sort) não é válido. |
+    | `INVALID_FIELD_VALUE` | O valor fornecido para um campo é inválido. | Erro lançado quando o valor de um campo específico não é válido. |
+    | `TOO_MANY_REQUESTS` | Limite de requisições excedido. Por favor, tente novamente mais tarde. | Erro lançado quando o limite de requisições (rate limit) foi excedido. |
+    | `RESOURCE_NOT_FOUND` | Recurso não encontrado. | Erro lançado quando a url digitada não corresponde a nenhum recurso existente. |
+
+
+
+tags:
+  - name: "Autenticação - Core"
+    description: Endpoints relacionados a autenticação, como login, logout e renovação de tokens.
+
+  - name: "Autenticação - Cadastro de Usuário"
+    description: Endpoints relacionado ao cadastro de um novo usuário e ativação da conta
+
+  - name: "Autenticação - Recuperação de Senha"
+    description: Endpoints relacionados a redefinição da senha de um usuário que a esqueceu.
+
+  - name: "Usuário - Minha Conta - Perfil"
+    description: Endpoints relacionados ao perfil do usuário autenticado.
+
+  - name: "Usuário - Minha Conta - Segurança"
+    description: |
+      Endpoints relacionados à segurança da conta do usuário autenticado, como alteração de senha, 
+      nome de usuário. e desativação da conta.
+
+  - name: "Usuário - Minha Conta - Alteração de Telefone"
+    description: Endpoints relacionados à alteração do número de telefone do usuário autenticado.
+
+  - name: "Usuário - Agendamento de Horários"
+    description: Endpoints relacionados ao agendamento de horários para os usuários autenticados.
+
+  - name: "Administração - Gerenciamento de Usuários"
+    description: Endpoints relacionados ao gerenciamento de usuários, acessíveis apenas por administradores.
+
+  - name: "Administração - Gerenciamento de Modalidades"
+    description: Endpoints relacionados ao gerenciamento de modalidades esportivas, acessíveis apenas por administradores.
+
+  - name: "Administração - Gerenciamento de Quadras"
+    description: Endpoints relacionados ao gerenciamento de quadras, acessíveis apenas por administradores.
+
+  - name: "Administração - Gerenciamento de Regras de Preço"
+    description: Endpoints relacionados ao gerenciamento de regras de preço, acessíveis apenas por administradores.
+
+  - name: "Administração - Gerenciamento de Horários de Funcionamento"
+    description: Endpoints relacionados ao gerenciamento de horários de funcionamento, acessíveis apenas por administradores.
+
+  - name: "Administração - Gerenciamento de Bloqueios de Horários"
+    description: Endpoints relacionados ao gerenciamento de horários bloqueados, acessíveis apenas por administradores.
+
+  - name: "Administração - Gerenciamento de Agendamentos"
+    description: Endpoints relacionados ao gerenciamento da agenda, acessíveis apenas por administradores.
+
+  - name: "Endpoints Públicos"
+    description: Endpoints públicos para consultas. Dados utilizados por clientes sem necessidade de autenticação.
+
+components:
+  schemas:
+    ErrorResponseDto:
+      $ref: "./components/schemas/error/ErrorResponseDto.yml"
+    FieldErrorDto:
+      $ref: "./components/schemas/error/FieldErrorDto.yml"
+
+    AuthResponseDto:
+      $ref: "./components/schemas/auth/AuthResponseDto.yml"
+    LoginRequestDto:
+      $ref: "./components/schemas/auth/LoginRequestDto.yml"
+    ValidateOtpRequestDto:
+      $ref: "./components/schemas/auth/ValidateOtpRequestDto.yml"
+    ResendOtpRequestDto:
+      $ref: "./components/schemas/auth/ResendOtpRequestDto.yml"
+
+    ForgotPasswordRequestDto:
+      $ref: "./components/schemas/password/ForgotPasswordRequestDto.yml"
+    ForgotPasswordResponseDto:
+      $ref: "./components/schemas/password/ForgotPasswordResponseDto.yml"
+    ResetPasswordRequestDto:
+      $ref: "./components/schemas/password/ResetPasswordRequestDto.yml"
+    PasswordResetTokenResponseDto:
+      $ref: "./components/schemas/password/PasswordResetTokenResponseDto.yml"
+
+    SignupRequestDto:
+      $ref: "./components/schemas/auth/SignupRequestDto.yml"
+    SignupResponseDto:
+      $ref: "./components/schemas/auth/SignupResponseDto.yml"
+
+    AccountStatus:
+      $ref: "./components/schemas/user/enuns/AccountStatus.yml"
+    Role:
+      $ref: "./components/schemas/user/enuns/Role.yml"
+
+    UserProfileResponseDto:
+      $ref: "./components/schemas/user/UserProfileResponseDto.yml"
+    UpdateProfileRequestDto:
+      $ref: "./components/schemas/user/UpdateProfileRequestDto.yml"
+    ChangeUsernameRequestDto:
+      $ref: "./components/schemas/user/ChangeUsernameRequestDto.yml"
+    ChangePasswordRequestDto:
+      $ref: "./components/schemas/user/ChangePasswordRequestDto.yml"
+
+    InitiateChangePhoneRequestDto:
+      $ref: "./components/schemas/user/InitiateChangePhoneRequestDto.yml"
+    CompletePhoneChangeRequestDto:
+      $ref: "./components/schemas/user/CompletePhoneChangeRequestDto.yml"
+
+    PageOfUserAdminResponseDto:
+      $ref: "./components/schemas/admin/PageOfUserAdminResponseDto.yml"
+    UserAdminResponseDto:
+      $ref: "./components/schemas/admin/UserAdminResponseDto.yml"
+    UpdateUserStatusRequestDto:
+      $ref: "./components/schemas/admin/UpdateUserStatusRequestDto.yml"
+    UpdateUserRoleRequestDto:
+      $ref: "./components/schemas/admin/UpdateUserRoleRequestDto.yml"
+
+    CreateModalityRequestDto:
+      $ref: "./components/schemas/modality/CreateModalityRequestDto.yml"
+    UpdateModalityRequestDto:
+      $ref: "./components/schemas/modality/UpdateModalityRequestDto.yml"
+    ModalityResponseDto:
+      $ref: "./components/schemas/modality/ModalityResponseDto.yml"
+
+    PriceRuleResponseDto:
+      $ref: "./components/schemas/priceRule/PriceRuleResponseDto.yml"
+    CreatePriceRuleRequestDto:
+      $ref: "./components/schemas/priceRule/CreatePriceRuleRequestDto.yml"
+    UpdatePriceRuleRequestDto:
+      $ref: "./components/schemas/priceRule/UpdatePriceRuleRequestDto.yml"
+    UpdateDefaultPriceRuleRequestDto:
+      $ref: "./components/schemas/priceRule/UpdateDefaultPriceRuleRequestDto.yml"
+
+    CreateOperatingHoursRequestDto:
+      $ref: "./components/schemas/operatingHours/CreateOperatingHoursRequestDto.yml"
+    OperatingHoursResponseDto:
+      $ref: "./components/schemas/operatingHours/OperatingHoursResponseDto.yml"
+    OperatingHoursDisablePreviewResponseDto:
+      $ref: "./components/schemas/operatingHours/OperatingHoursDisablePreviewResponseDto.yml"
+    OperatingHoursDisableConfirmRequestDto:
+      $ref: "./components/schemas/operatingHours/OperatingHoursDisableConfirmRequestDto.yml"
+
+    HomePageDataResponseDto:
+      $ref: "./components/schemas/homepage/HomePageDataResponseDto.yml"
+
+    CreateCourtRequestDto:
+      $ref: "./components/schemas/court/CreateCourtRequestDto.yml"
+    UpdateCourtRequestDto:
+      $ref: "./components/schemas/court/UpdateCourtRequestDto.yml"
+    AdminCourtResponseDto:
+      $ref: "./components/schemas/court/AdminCourtResponseDto.yml"
+    CourtDisablePreviewResponseDto:
+      $ref: "./components/schemas/court/CourtDisablePreviewResponseDto.yml"
+    CourtDisableConfirmRequestDto:
+      $ref: "./components/schemas/court/CourtDisableConfirmRequestDto.yml"
+
+    AvailableSlotResponseDto:
+      $ref: "./components/schemas/reservation/AvailableSlotResponseDto.yml"
+    CreateReservationRequestDto:
+      $ref: "./components/schemas/reservation/CreateReservationRequestDto.yml"
+    ScheduleEntryResponseDto:
+      $ref: "./components/schemas/reservation/ScheduleEntryResponseDto.yml"
+    ReservationScheduleResponseDto:
+      $ref: "./components/schemas/reservation/ReservationScheduleResponseDto.yml"
+    PageOfReservationResponseDto:
+      $ref: "./components/schemas/reservation/PageOfReservationResponseDto.yml"
+
+    PublicAgendaItemResponseDto:
+      $ref: "./components/schemas/agenda/PublicAgendaItemResponseDto.yml"
+    PublicAvailableItemResponseDto:
+      $ref: "./components/schemas/agenda/PublicAvailableItemResponseDto.yml"
+    PublicScheduleEntryResponseDto:
+      $ref: "./components/schemas/agenda/PublicScheduleEntryResponseDto.yml"
+
+    AdminAgendaItemResponseDto:
+      $ref: "./components/schemas/agenda/AdminAgendaItemResponseDto.yml"
+    AdminAvailableItemResponseDto:
+      $ref: "./components/schemas/agenda/AdminAvailableItemResponseDto.yml"
+    AdminScheduleDetailResponseDto:
+      $ref: "./components/schemas/agenda/AdminScheduleDetailResponseDto.yml"
+
+    BlockedTimeConflictsPreviewRequestDto:
+      $ref: "./components/schemas/blockedTime/BlockedTimeConflictsPreviewRequestDto.yml"
+    BlockedTimeConflictsPreviewResponseDto:
+      $ref: "./components/schemas/blockedTime/BlockedTimeConflictsPreviewResponseDto.yml"
+    BlockedTimeConfirmRequestDto:
+      $ref: "./components/schemas/blockedTime/BlockedTimeConfirmRequestDto.yml"
+    BlockedTimeConfirmResponseDto:
+      $ref: "./components/schemas/blockedTime/BlockedTimeConfirmResponseDto.yml"
+    BlockedTimeDetailResponseDto:
+      $ref: "./components/schemas/blockedTime/BlockedTimeDetailResponseDto.yml"
+    BlockedTimeUpdateRequestDto:
+      $ref: "./components/schemas/blockedTime/BlockedTimeUpdateRequestDto.yml"
+    ListOfBlockedTimeDetailResponseDto:
+      $ref: "./components/schemas/blockedTime/ListOfBlockedTimeDetailResponseDto.yml"
+    ReservationDetailResponseDto:
+      $ref: "./components/schemas/reservation/ReservationDetailResponseDto.yml"
+    AdminReservationSearchRequestDto:
+      $ref: "./components/schemas/reservation/request/AdminReservationSearchRequestDto.yml"
+    PageOfReservationDetailResponseDto:
+      $ref: "./components/schemas/reservation/PageOfReservationDetailResponseDto.yml"
+    AdminReservationCreateRequestDto:
+      $ref: "./components/schemas/reservation/request/AdminReservationCreateRequestDto.yml"
+    ListOfReservationDetailResponseDto:
+      $ref: "./components/schemas/reservation/response/ListOfReservationDetailResponseDto.yml"
+
+  responses:
+    InternalServerError:
+      $ref: "./components/responses/InternalServerError.yml"
+    UnauthorizedError:
+      $ref: "./components/responses/UnauthorizedError.yml"
+    ForbiddenError:
+      $ref: "./components/responses/ForbiddenError.yml"
+    TooManyRequestsError:
+      $ref: "./components/responses/TooManyRequestsError.yml"
+    AccountStatusForbidden:
+      $ref: "./components/responses/AccountStatusForbidden.yml"
+
+  headers:
+    Set-Cookie:
+      $ref: "./components/headers/SetCookie.yml"
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "Token de autenticação JWT obtido no login."
+
+paths:
+  /api/auth/login:
+    $ref: "./paths/auth/Login.yml"
+  /api/auth/logout:
+    $ref: "./paths/auth/Logout.yml"
+  /api/auth/refresh-token:
+    $ref: "./paths/auth/RefreshToken.yml"
+  /api/auth/resend-otp:
+    $ref: "./paths/auth/ResendOtp.yml"
+
+  /api/auth/forgot-password:
+    $ref: "./paths/auth/ForgotPassword.yml"
+  /api/auth/reset-password-token:
+    $ref: "./paths/auth/ResetPasswordToken.yml"
+  /api/auth/reset-password:
+    $ref: "./paths/auth/ResetPassword.yml"
+
+  /api/auth/signup:
+    $ref: "./paths/auth/Signup.yml"
+  /api/auth/verify-account:
+    $ref: "./paths/auth/VerifyAccount.yml"
+
+  /api/users/me:
+    $ref: "./paths/user/MyProfile.yml"
+  /api/users/me/profile:
+    $ref: "./paths/user/UpdateProfile.yml"
+  /api/users/me/username:
+    $ref: "./paths/user/ChangeUsername.yml"
+  /api/users/me/password:
+    $ref: "./paths/user/ChangePassword.yml"
+
+  /api/users/me/phone/verification:
+    $ref: "./paths/user/changePhone/InitiatePhoneVerification.yml"
+  /api/users/me/phone/verification/confirm:
+    $ref: "./paths/user/changePhone/CompletePhoneChange.yml"
+  /api/users/me/phone/verification/resend-otp:
+    $ref: "./paths/user/changePhone/ResendOtp.yml"
+
+  /api/users/me/disable:
+    $ref: "./paths/user/DisableAccount.yml"
+
+  /api/schedules/available-slots:
+    $ref: "./paths/user/schedule/GetAvailableTimes.yml"
+  /api/users/me/reservations:
+    $ref: "./paths/user/schedule/Reservations.yml"
+  /api/users/me/reservations/{id}:
+    $ref: "./paths/user/schedule/ReservationById.yml"
+  /api/users/me/reservations/{reservationId}/cancel:
+    $ref: "./paths/user/schedule/CancelReservation.yml"
+
+  /api/admin/users:
+    $ref: "./paths/admin/users/GetUsers.yml"
+  /api/admin/users/{userId}/status:
+    $ref: "./paths/admin/users/UpdateStatus.yml"
+  /api/admin/users/{userId}/role:
+    $ref: "./paths/admin/users/UpdateRole.yml"
+
+  /api/admin/modalities:
+    $ref: "./paths/admin/modalities/Modalities.yml"
+  /api/admin/modalities/{modalityId}:
+    $ref: "./paths/admin/modalities/ModalityById.yml"
+  /api/admin/modalities/{modalityId}/disable:
+    $ref: "./paths/admin/modalities/DisableModality.yml"
+  /api/admin/modalities/{modalityId}/enable:
+    $ref: "./paths/admin/modalities/EnableModality.yml"
+
+  /api/admin/courts:
+    $ref: "./paths/admin/courts/Courts.yml"
+  /api/admin/courts/{courtId}:
+    $ref: "./paths/admin/courts/CourtsById.yml"
+  /api/admin/courts/{courtId}/enable:
+    $ref: "./paths/admin/courts/EnableCourt.yml"
+  /api/admin/courts/{courtId}/preview-disable:
+    $ref: "./paths/admin/courts/PreviewDisableCourt.yml"
+  /api/admin/courts/confirm-disable:
+    $ref: "./paths/admin/courts/ConfirmDisableCourt.yml"
+
+
+  /api/admin/price-rules:
+    $ref: "./paths/admin/priceRule/PriceRules.yml"
+  /api/admin/price-rules/{priceRuleId}:
+    $ref: "./paths/admin/priceRule/PriceRuleById.yml"
+  /api/admin/price-rules/{priceRuleId}/enable:
+    $ref: "./paths/admin/priceRule/PriceRuleEnable.yml"
+  /api/admin/price-rules/{priceRuleId}/disable:
+    $ref: "./paths/admin/priceRule/PriceRuleDisable.yml"
+  /api/admin/price-rules/default:
+    $ref: "./paths/admin/priceRule/DefaultPriceRule.yml"
+
+  /api/admin/operating-hours:
+    $ref: "./paths/admin/operatingHours/OperatingHours.yml"
+  /api/admin/operating-hours/{operatingHoursId}:
+    $ref: "./paths/admin/operatingHours/OperatingHoursById.yml"
+  /api/admin/operating-hours/{operatingHoursId}/enable:
+    $ref: "./paths/admin/operatingHours/OperatingHoursEnable.yml"
+  /api/admin/operating-hours/{operatingHoursId}/preview-disable:
+    $ref: "./paths/admin/operatingHours/PreviewDisableOperatingHours.yml"
+  /api/admin/operating-hours/confirm-disable:
+    $ref: "./paths/admin/operatingHours/ConfirmDisableOperatingHours.yml"
+
+  /api/admin/blocked-times:
+    $ref: "./paths/admin/schedule/blockedTime/GetBlockedTimes.yml"
+  /api/admin/blocked-times/preview-conflicts:
+    $ref: "./paths/admin/schedule/blockedTime/PreviewBlockedTimeConflicts.yml"
+  /api/admin/blocked-times/confirm:
+    $ref: "./paths/admin/schedule/blockedTime/ConfirmBlockedTime.yml"
+  /api/admin/blocked-times/{blockedTimeId}:
+    $ref: "./paths/admin/schedule/blockedTime/BlockedTimeById.yml"
+
+  /api/admin/agenda:
+    $ref: "./paths/admin/agenda/AdminAgenda.yml"
+
+  /api/admin/reservations:
+    $ref: "./paths/admin/reservations/AdminReservations.yml"
+  /api/admin/reservations/{reservationId}/cancel:
+    $ref: "./paths/admin/reservations/CancelReservation.yml"
+
+  /api/public/modalities:
+    $ref: "./paths/modality/GetAllModalities.yml"
+  /api/public/price-rules:
+    $ref: "./paths/priceRule/GetAllPriceRules.yml"
+  /api/public/operating-hours:
+    $ref: "./paths/operatingHours/GetAllOperatingHours.yml"
+  /api/public/homepage:
+    $ref: "./paths/homepage/GetHomePageData.yml"
+  /api/public/agenda:
+    $ref: "./paths/agenda/Agenda.yml"

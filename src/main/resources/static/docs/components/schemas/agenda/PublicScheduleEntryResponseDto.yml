@@ -1,0 +1,22 @@
+type: object
+description: "Representa uma entrada agendada (ex.: reserva ou bloqueio) na agenda pública."
+required:
+  - type
+  - timeInterval
+  - entryType
+properties:
+  type:
+    type: string
+    enum: [SCHEDULE_ENTRY]
+    example: "SCHEDULE_ENTRY"
+  timeInterval:
+    $ref: "../timeInterval/TimeIntervalDto.yml"
+  entryType:
+    type: string
+    description: "O tipo de entrada agendada (ex.: RESERVATION, BLOCKED_TIME)."
+    enum: [RESERVATION, BLOCKED_TIME]
+    example: "RESERVATION"
+  description:
+    type: string
+    description: "Uma descrição da entrada (ex.: 'Reservado' ou 'Manutenção')."
+    example: "Reservado"

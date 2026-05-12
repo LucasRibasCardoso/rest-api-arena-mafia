@@ -1,0 +1,104 @@
+patch:
+  operationId: cancelReservation
+  tags: [ "Usuário - Agendamento de Horários" ]
+  summary: Cancela uma reserva existente
+  security:
+    - bearerAuth: [ ]
+  description: |
+    Permite que um usuário autenticado cancele uma de suas próprias reservas.
+    
+    **Regras de negócio:**
+    - O cancelamento deve ser feito com pelo menos **1 hora e 30 minutos de antecedência** do horário agendado
+    - Apenas o proprietário da reserva pode cancelá-la
+    - A reserva não pode estar com status `CANCELLED` ou `COMPLETED`
+    - Não é possível cancelar reservas de datas passadas
+    
+    **Após o cancelamento:**
+    - O status da reserva é alterado para `CANCELLED`
+    - Uma notificação SMS de confirmação de cancelamento é enviada ao usuário
+    - O horário fica automaticamente disponível para novas reservas
+
+  parameters:
+    - $ref: "../../../components/parameters/ReservationId.yml"
+
+  responses:
+    204:
+      description: Reserva cancelada com sucesso. Nenhum conteúdo retornado.
+    400:
+      description: Requisição inválida. Parâmetros de URL ou corpo da requisição incorretos.
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
+          examples:
+            InvalidReservationId:
+              summary: ID de reserva inválido
+              value:
+                timestamp: "2025-10-09T12:30:00Z"
+                status: 400
+                errorCode: "INVALID_REQUEST_PARAMETER"
+                developerMessage: "Um parâmetro da requisição é inválido ou está malformado."
+                path: "/api/users/me/reservations/{reservationId}/cancel"
+            CancellationTooLate:
+              summary: Cancelamento feito com pouca antecedência
+              value:
+                status: 400
+                timestamp: "2025-10-09T12:30:00Z"
+                errorCode: "RESERVATION_NOT_POSSIBLE_TO_CANCEL"
+                developerMessage: "Não é possível cancelar a reserva com menos de 1:30 horas de antecedência."
+                path: "/api/users/me/reservations/{reservationId}/cancel"
+
+    401:
+      $ref: "../../../components/responses/UnauthorizedError.yml"
+    404:
+      description: Recurso não encontrado.
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
+          examples:
+            ReservationNotFound:
+              summary: Reserva não encontrada
+              value:
+                status: 404
+                timestamp: "2025-10-09T12:30:00Z"
+                errorCode: "SCHEDULE_ENTRY_NOT_FOUND"
+                developerMessage: "Agendamento não encontrado."
+                path: "/api/users/me/reservations/{reservationId}/cancel"
+            UserNotFound:
+              summary: Usuário não encontrado
+              description: Pode ocorrer se o token JWT for válido, mas o usuário associado tiver sido removido do sistema.
+              value:
+                status: 404
+                timestamp: "2025-10-09T12:30:00Z"
+                errorCode: "USER_NOT_FOUND"
+                developerMessage: "Usuário não encontrado."
+                path: "/api/users/me/reservations/{reservationId}/cancel"
+    409:
+      description: Conflito ao tentar cancelar a reserva.
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
+          examples:
+            ReservationAlreadyCancelled:
+              summary: Reserva já está cancelada
+              value:
+                status: 409
+                timestamp: "2025-10-09T12:30:00Z"
+                errorCode: "RESERVATION_ALREADY_CANCELLED"
+                developerMessage: "Esta reserva já foi cancelada."
+                path: "/api/users/me/reservations/{reservationId}/cancel"
+            ReservationAlreadyCompleted:
+              summary: Reserva já foi concluída
+              value:
+                status: 409
+                timestamp: "2025-10-09T12:30:00Z"
+                errorCode: "RESERVATION_ALREADY_COMPLETED"
+                developerMessage: "Esta reserva já foi concluída."
+                path: "/api/users/me/reservations/{reservationId}/cancel"
+    429:
+      $ref: "../../../components/responses/TooManyRequestsError.yml"
+    500:
+      $ref: "../../../components/responses/InternalServerError.yml"
+

@@ -24,14 +24,21 @@ RUN mvn clean package -DskipTests
 # =========================================================================
 FROM eclipse-temurin:21-jre-alpine
 
-# Instala 'curl', necessário para o comando do HEALTHCHECK.
-RUN apk add --no-cache curl
+# Instala 'curl' (necessário para HEALTHCHECK) e 'tzdata' (necessário para timezone).
+RUN apk add --no-cache curl tzdata
+
+# Define o fuso horário do container para America/Sao_Paulo.
+ENV TZ=America/Sao_Paulo
 
 # Cria um grupo e um usuário não-root para rodar a aplicação com segurança.
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
 # Define o diretório de trabalho no estágio final
 WORKDIR /app
+
+ADD https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/download/v2.0.0/opentelemetry-javaagent.jar /app/opentelemetry-javaagent.jar
+
+RUN chown appuser:appgroup /app/opentelemetry-javaagent.jar
 
 # Copia o .jar do estágio 'builder' e já define o dono correto em um único passo.
 # Esta é a forma mais eficiente e moderna.
@@ -49,4 +56,4 @@ ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UseG1GC"
 
 # 3. Ponto de Entrada: Executa a aplicação usando um shell para que as
 # variáveis de ambiente ($JAVA_OPTS) sejam processadas.
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -Djava.security.egd=file:/dev/./urandom -jar app.jar"]
+ENTRYPOINT ["sh", "-c", "java -javaagent:/app/opentelemetry-javaagent.jar $JAVA_OPTS -Duser.timezone=America/Sao_Paulo -Djava.security.egd=file:/dev/./urandom -jar app.jar"]

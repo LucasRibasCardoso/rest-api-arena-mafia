@@ -1,0 +1,36 @@
+get:
+  operationId: getAllModalities
+  tags: ["Endpoints Públicos"]
+  summary: Lista todas as modalidades disponíveis
+  description: |
+    Retorna uma lista de todas as modalidades esportivas ativas no sistema.
+    Este endpoint é público e não requer autenticação.
+  responses:
+    200:
+      description: Operação bem-sucedida. Retorna a lista de modalidades.
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: "../../components/schemas/modality/ModalityResponseDto.yml"
+          examples:
+            WithModalities:
+              summary: Lista com modalidades cadastradas
+              value:
+                - id: "550e8400-e29b-41d4-a716-446655440000"
+                  name: "Beach Tennis"
+                  isActive: true
+                  createdAt: "2024-10-08T10:30:00Z"
+                - id: "660e8400-e29b-41d4-a716-446655440001"
+                  name: "Futvolei"
+                  isActive: true
+                  createdAt: "2024-10-08T11:00:00Z"
+                - id: "770e8400-e29b-41d4-a716-446655440002"
+                  name: "Volei de Praia"
+                  isActive: true
+                  createdAt: "2024-10-08T11:30:00Z"
+    429:
+      $ref: "../../components/responses/TooManyRequestsError.yml"
+    500:
+      $ref: "../../components/responses/InternalServerError.yml"

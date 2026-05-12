@@ -1,0 +1,49 @@
+type: object
+description: |
+  Resposta do endpoint de preview para desativação de horário de funcionamento (OperatingHours).
+  Retorna um resumo dos bloqueios e reservas que seriam afetados caso o horário fosse desativado,
+  além da chave do preview que pode ser usada para confirmar a operação.
+properties:
+  previewKey:
+    type: string
+    nullable: true
+    description: Chave do preview salva em cache. Essa chave deve ser usada para confirmar a desativação posteriormente.
+    example: "operating-hours-disable-preview:960289b9-d32d-4f00-8df7-02f4c04a017c:5a2f25cb-6a58-4920-994d-b9336317eb90"
+  operatingHoursId:
+    type: string
+    format: uuid
+    description: Identificador do `OperatingHours` que será desativado.
+    example: "5a2f25cb-6a58-4920-994d-b9336317eb90"
+  usersAffectedCount:
+    type: integer
+    description: Quantidade de usuários distintos que seriam afetados pelos cancelamentos.
+    example: 5
+  blockedTimesAffectedCount:
+    type: integer
+    description: Quantidade de `BlockedTime` que seriam sobrescritos/cancelados.
+    example: 2
+  reservationsAffectedCount:
+    type: integer
+    description: Quantidade de reservas que seriam canceladas.
+    example: 12
+  affectedBlockedTimes:
+    type: array
+    description: Lista de bloqueios de horário conflitantes (detalhes enriquecidos).
+    items:
+      $ref: "../blockedTime/BlockedTimeDetailResponseDto.yml"
+  affectedReservations:
+    type: array
+    description: Lista de reservas conflitantes (detalhes enriquecidos).
+    items:
+      $ref: "../reservation/ReservationDetailResponseDto.yml"
+  inProgressReservations:
+    type: array
+    description: Lista de reservas que estão em andamento no momento do preview. Essas reservas não serão canceladas automaticamente na confirmação.
+    items:
+      $ref: "../reservation/ReservationDetailResponseDto.yml"
+required:
+  - operatingHoursId
+  - usersAffectedCount
+  - blockedTimesAffectedCount
+  - reservationsAffectedCount
+

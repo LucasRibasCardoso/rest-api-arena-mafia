@@ -1,0 +1,88 @@
+get:
+  operationId: getHomePageData
+  tags: [ "Endpoints Públicos" ]
+  summary: Obtém todos os dados necessários para a página inicial
+  description: |
+    Retorna em uma única requisição todos os dados necessários para renderizar a página inicial:
+    modalidades esportivas, horários de funcionamento e regras de preços.
+    
+    Este endpoint consolida as informações de três endpoints separados:
+    - `/api/public/modalities` - Modalidades esportivas ativas
+    - `/api/public/price-rules` - Regras de preços ativas
+    - `/api/public/operating-hours` - Horários de funcionamento ativos
+    
+    Este endpoint é público e não requer autenticação.
+  responses:
+    200:
+      description: Operação bem-sucedida. Retorna os dados agregados para a página inicial.
+      content:
+        application/json:
+          schema:
+            $ref: "../../components/schemas/homepage/HomePageDataResponseDto.yml"
+          examples:
+            CompleteHomePageData:
+              summary: Dados completos da página inicial
+              description: Exemplo de resposta contendo todos os dados necessários para renderizar a homepage.
+              value:
+                operatingHours:
+                  - id: "9a8b7c6d-5e4f-3210-abcd-ef1234567890"
+                    daysOfWeek: [ "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY" ]
+                    timeInterval:
+                      startTime: "08:00"
+                      endTime: "22:00"
+                    isActive: true
+                  - id: "1b2c3d4e-5f6a-7b8c-9d0e-f1a2b3c4d5e6"
+                    daysOfWeek: null
+                    timeInterval:
+                      startTime: "10:00"
+                      endTime: "20:00"
+                    isActive: true
+                modalities:
+                  - id: "550e8400-e29b-41d4-a716-446655440000"
+                    name: "Beach Tennis"
+                    isActive: true
+                    createdAt: "2024-10-08T10:30:00Z"
+                  - id: "660e8400-e29b-41d4-a716-446655440001"
+                    name: "Futvolei"
+                    isActive: true
+                    createdAt: "2024-10-08T11:00:00Z"
+                  - id: "770e8400-e29b-41d4-a716-446655440002"
+                    name: "Volei de Praia"
+                    isActive: true
+                    createdAt: "2024-10-08T11:30:00Z"
+                priceRules:
+                  - id: "7c8d9e10-1a2b-3c4d-5e6f-7890abcdef12"
+                    name: "Horário de Pico - Fim de Semana"
+                    daysOfWeek: [ "SATURDAY", "SUNDAY" ]
+                    timeInterval:
+                      startTime: "18:00"
+                      endTime: "22:00"
+                    price: 150.00
+                    priority: 10
+                    isDefault: false
+                    isActive: true
+                  - id: "8d9e0f11-2b3c-4d5e-6f7a-8901bcdef234"
+                    name: "Horário Comercial - Dias Úteis"
+                    daysOfWeek: [ "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY" ]
+                    timeInterval:
+                      startTime: "08:00"
+                      endTime: "18:00"
+                    price: 100.00
+                    priority: 5
+                    isDefault: false
+                    isActive: true
+                  - id: "9e0f1a12-3c4d-5e6f-7a8b-9012cdef3456"
+                    name: "Preço Padrão"
+                    daysOfWeek: null
+                    timeInterval:
+                      startTime: "00:00"
+                      endTime: "23:59"
+                    price: 80.00
+                    priority: 1
+                    isDefault: true
+                    isActive: true
+    429:
+      $ref: "../../components/responses/TooManyRequestsError.yml"
+    500:
+      $ref: "../../components/responses/InternalServerError.yml"
+

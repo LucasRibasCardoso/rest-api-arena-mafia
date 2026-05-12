@@ -1,0 +1,21 @@
+type: object
+description: Representa um horário disponível para reserva em uma quadra específica
+required:
+  - courtId
+  - timeInterval
+  - price
+properties:
+  courtId:
+    type: string
+    format: uuid
+    description: Identificador único da quadra
+    example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+  timeInterval:
+    $ref: "../timeInterval/TimeIntervalDto.yml"
+  price:
+    type: number
+    format: decimal
+    description: Preço calculado para o horário, em reais (R$)
+    minimum: 0
+    example: 80.00
+

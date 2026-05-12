@@ -1,0 +1,26 @@
+package com.projetoExtensao.arenaMafia.application.auth.usecase.authentication.imp;
+
+import com.projetoExtensao.arenaMafia.application.auth.port.gateway.AuthPort;
+import com.projetoExtensao.arenaMafia.application.auth.result.AuthResult;
+import com.projetoExtensao.arenaMafia.application.auth.usecase.authentication.LoginUseCase;
+import com.projetoExtensao.arenaMafia.domain.model.User;
+import com.projetoExtensao.arenaMafia.infrastructure.web.auth.dto.request.LoginRequestDto;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@Transactional
+public class LoginUseCaseImp implements LoginUseCase {
+
+  private final AuthPort authPort;
+
+  public LoginUseCaseImp(AuthPort authPort) {
+    this.authPort = authPort;
+  }
+
+  @Override
+  public AuthResult execute(LoginRequestDto loginRequestDto) {
+    User user = authPort.authenticate(loginRequestDto.username(), loginRequestDto.password());
+    return authPort.generateTokens(user);
+  }
+}

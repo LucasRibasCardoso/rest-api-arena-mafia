@@ -1,0 +1,33 @@
+type: object
+description: Resposta contendo os dados do usuário para administração.
+properties:
+  userId:
+    type: string
+    format: uuid
+    description: "ID único do usuário."
+    example: "123e4567-e89b-12d3-a456-426614174000"
+  username:
+    type: string
+    description: "Nome de usuário."
+    example: "testuser"
+  fullName:
+    type: string
+    description: "Nome completo do usuário."
+    example: "Usuário de Teste"
+  phone:
+    type: string
+    description: "Número de telefone do usuário."
+    example: "+5547988776655"
+  status:
+    type: string
+    description: "Status atual da conta do usuário."
+    example: "ACTIVE"
+  role:
+    type: string
+    description: "Role (permissão) do usuário."
+    example: "ROLE_USER"
+  createdAt:
+    type: string
+    format: date-time
+    description: "Data e hora de criação do usuário."
+    example: "2023-10-01T12:34:56Z"

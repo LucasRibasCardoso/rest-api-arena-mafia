@@ -1,0 +1,55 @@
+patch:
+  operationId: enableModality
+  summary: Habilitar uma modalidade
+  description: Habilita uma modalidade que atualmente esta desativada. Após a habilitação, a modalidade estará disponível para novos cadastros de quadras.
+  security:
+    - bearerAuth: [ ]
+  tags:
+    - "Administração - Gerenciamento de Modalidades"
+  parameters:
+    - $ref: "../../../components/parameters/ModalityId.yml"
+  responses:
+    204:
+      description: |
+        Modalidade habilitada com sucesso. Não retorna nenhum conteúdo no corpo da resposta.
+    400:
+      $ref: "../../../components/responses/BadRequestInvalidUUID.yml"
+    401:
+      $ref: "../../../components/responses/UnauthorizedError.yml"
+    403:
+      $ref: "../../../components/responses/ForbiddenError.yml"
+    404:
+      description: Modalidade não encontrada com o ID fornecido.
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
+          examples:
+            ModalityNotFound:
+              summary: Modalidade não encontrada
+              value:
+                timestamp: "2024-06-15T14:30:00Z"
+                status: 404
+                errorCode: "MODALITY_NOT_FOUND"
+                developerMessage: "Modalidade não encontrada."
+                path: "/api/admin/modalities/{modalityId}/enable"
+    409:
+      description: |
+        Conflito ao habilitar a modalidade. Isso pode ocorrer se a modalidade já estiver habilitada.
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
+          examples:
+            ModalityAlreadyEnabled:
+              summary: Modalidade já habilitada
+              value:
+                timestamp: "2024-06-15T14:30:00Z"
+                status: 409
+                errorCode: "MODALITY_ALREADY_ENABLE"
+                developerMessage: "Essa modalidade já está ativada."
+                path: "/api/admin/modalities/{modalityId}/enable"
+    429:
+      $ref: "../../../components/responses/TooManyRequestsError.yml"
+    500:
+      $ref: "../../../components/responses/InternalServerError.yml"

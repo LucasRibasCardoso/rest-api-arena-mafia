@@ -1,0 +1,56 @@
+type: object
+description: |
+  Representa a resposta do preview de desativação de quadra, contendo informações sobre agendamentos afetados.
+  Inclui detalhes das reservas e bloqueios que serão cancelados, além de reservas em andamento que não serão afetadas.
+properties:
+  previewKey:
+    type: string
+    description: Chave única do preview para confirmação da desativação.
+    example: "court-disable-preview:960289b9-d32d-4f00-8df7-02f4c04a017c:5a2f25cb-6a58-4920-994d-b9336317eb90"
+  courtId:
+    type: string
+    format: uuid
+    description: Identificador único da quadra que será desativada.
+    example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+  courtName:
+    type: string
+    description: Nome da quadra que será desativada.
+    example: "Quadra A"
+  usersAffectedCount:
+    type: integer
+    description: Número de usuários distintos que terão reservas canceladas.
+    example: 5
+  blockedTimesAffectedCount:
+    type: integer
+    description: Número de bloqueios de horário que serão cancelados.
+    example: 2
+  reservationsAffectedCount:
+    type: integer
+    description: Número de reservas que serão canceladas.
+    example: 10
+  affectedBlockedTimes:
+    type: array
+    description: Lista de bloqueios de horário que serão cancelados.
+    items:
+      $ref: '../blockedTime/BlockedTimeDetailResponseDto.yml'
+  affectedReservations:
+    type: array
+    description: Lista de reservas que serão canceladas.
+    items:
+      $ref: '../reservation/ReservationDetailResponseDto.yml'
+  inProgressReservations:
+    type: array
+    description: Lista de reservas em andamento que não serão canceladas.
+    items:
+      $ref: '../reservation/ReservationDetailResponseDto.yml'
+required:
+  - previewKey
+  - courtId
+  - courtName
+  - usersAffectedCount
+  - blockedTimesAffectedCount
+  - reservationsAffectedCount
+  - affectedBlockedTimes
+  - affectedReservations
+  - inProgressReservations
+

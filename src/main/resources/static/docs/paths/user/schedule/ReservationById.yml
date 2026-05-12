@@ -1,0 +1,71 @@
+get:
+  operationId: getReservationById
+  tags: [ "Usuário - Agendamento de Horários" ]
+  summary: Busca uma reserva específica do usuário por ID
+  security:
+    - bearerAuth: [ ]
+  description: |
+    Permite que um usuário autenticado busque os detalhes de uma reserva específica que pertence a ele.
+    O usuário só pode visualizar suas próprias reservas. 
+
+  parameters:
+    - $ref: "../../../components/parameters/ReservationId.yml"
+  responses:
+    200:
+      description: Reserva encontrada com sucesso.
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/reservation/ReservationDetailResponseDto.yml"
+    400:
+      description: Requisição inválida - ID mal formatado.
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
+          examples:
+            InvalidUUID:
+              summary: UUID inválido
+              value:
+                status: 400
+                timestamp: "2025-11-28T17:33:12.332726Z"
+                errorCode: "INVALID_REQUEST_PARAMETER"
+                developerMessage: "Um parâmetro da requisição é inválido ou está malformado."
+                path: "/api/users/me/reservations/invalid-id"
+    401:
+      $ref: "../../../components/responses/UnauthorizedError.yml"
+    403:
+      description: Tentativa de acesso a uma reserva que não pertence ao usuário autenticado.
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
+          examples:
+            ForbiddenReservationAccess:
+              summary: Acesso proibido à reserva
+              value:
+                status: 403
+                timestamp: "2025-11-28T17:33:12.332726Z"
+                errorCode: "RESERVATION_ACCESS_DENIED"
+                developerMessage: "Você não tem permissão para acessar esta reserva. Apenas o dono da reserva ou um administrador podem visualizá-la."
+                path: "/api/users/me/reservations/d4e5f6a7-b890-1234-cdef-1234567890ab"
+    404:
+      description: Reserva não encontrada.
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
+          examples:
+            ReservationNotFound:
+              summary: Reserva não encontrada
+              value:
+                timestamp: "2025-11-28T17:33:12.332726Z"
+                status: 404
+                errorCode: "SCHEDULE_ENTRY_NOT_FOUND"
+                developerMessage: "Agendamento não encontrado."
+                path: "/api/users/me/reservations/d4e5f6a7-b890-1234-cdef-1234567890ab"
+    429:
+      $ref: "../../../components/responses/TooManyRequestsError.yml"
+    500:
+      $ref: "../../../components/responses/InternalServerError.yml"
+

@@ -1,0 +1,140 @@
+get:
+  operationId: getPriceRuleById
+  tags: [ Administração - Gerenciamento de Regras de Preço ]
+  summary: Busca uma regra de preço pelo ID
+  description: |
+    Permite que administradores com a role 'ADMIN' busquem os detalhes de uma regra de preço 
+    específica através do seu identificador único (UUID).
+  security:
+    - bearerAuth: [ ]
+  parameters:
+    - $ref: "../../../components/parameters/PriceRuleId.yml"
+  responses:
+    200:
+      description: Operação bem-sucedida. Retorna os dados da regra de preço.
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/priceRule/PriceRuleResponseDto.yml"
+    401:
+      $ref: "../../../components/responses/UnauthorizedError.yml"
+    403:
+      $ref: "../../../components/responses/ForbiddenError.yml"
+    404:
+      description: Não encontrado. A regra de preço com o ID especificado não existe no sistema.
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
+          example:
+            timestamp: "2025-10-09T12:30:00Z"
+            status: 404
+            errorCode: "PRICE_RULE_NOT_FOUND"
+            developerMessage: "Regra de preço não encontrada."
+            path: "/api/admin/price-rules/550e8400-e29b-41d4-a716-446655440000"
+    429:
+      $ref: "../../../components/responses/TooManyRequestsError.yml"
+    500:
+      $ref: "../../../components/responses/InternalServerError.yml"
+
+patch:
+  operationId: updatePriceRuleById
+  tags: [ Administração - Gerenciamento de Regras de Preço ]
+  summary: Atualiza os dados de uma regra de preço pelo ID
+  description: |
+    Permite que administradores com a role 'ADMIN' atualizem os detalhes de uma regra de preço 
+    específica através do seu identificador único (UUID).
+  security:
+    - bearerAuth: [ ]
+  parameters:
+    - $ref: "../../../components/parameters/PriceRuleId.yml"
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: "../../../components/schemas/priceRule/UpdatePriceRuleRequestDto.yml"
+  responses:
+    200:
+      description: Operação bem-sucedida. Retorna os dados da regra de preço atualizada.
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/priceRule/PriceRuleResponseDto.yml"
+          example:
+            id: "7c8d9e10-1a2b-3c4d-5e6f-7890abcdef12"
+            name: "Horário de Pico - Fim de Semana (Atualizado)"
+            daysOfWeek: [ "SATURDAY", "SUNDAY" ]
+            timeInterval:
+              startTime: "10:00:00"
+              endTime: "22:00:00"
+            price: 180.00
+            priority: 10
+            isDefault: false
+            isActive: true
+    400:
+      description: Requisição inválida. Verifique os dados enviados.
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
+          examples:
+            PriceRuleInvalidName:
+              summary: Nome inválido
+              value:
+                timestamp: "2024-10-10T14:00:00Z"
+                status: 400
+                errorCode: "VALIDATION_FAILED"
+                developerMessage: "A validação falhou. Verifique os detalhes dos campos para mais informações."
+                path: "/api/admin/price-rules"
+                fieldErrors:
+                  - fieldName: "name"
+                    errorCode: "PRICE_RULE_NAME_INVALID_LENGTH"
+                    developerMessage: "O nome da regra de preço deve ter entre 1 e 100 caracteres."
+            PriceRuleInvalidPrice:
+              summary: Preço inválido
+              value:
+                timestamp: "2024-10-10T14:00:00Z"
+                status: 400
+                errorCode: "VALIDATION_FAILED"
+                developerMessage: "A validação falhou. Verifique os detalhes dos campos para mais informações."
+                path: "/api/admin/price-rules"
+                fieldErrors:
+                  - fieldName: "price"
+                    errorCode: "PRICE_RULE_PRICE_INVALID"
+                    developerMessage: "O preço deve ser um valor positivo."
+    401:
+      $ref: "../../../components/responses/UnauthorizedError.yml"
+    403:
+      $ref: "../../../components/responses/ForbiddenError.yml"
+    404:
+      description: Não encontrado. A regra de preço com o ID especificado não existe no sistema.
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
+          examples:
+            PriceRuleNotFound:
+              summary: Regra de preço não encontrada
+              value:
+                timestamp: "2025-11-12T14:30:00Z"
+                status: 404
+                errorCode: "PRICE_RULE_NOT_FOUND"
+                developerMessage: "Regra de preço não encontrada."
+                path: "/api/admin/price-rules/550e8400-e29b-41d4-a716-446655440000"
+    409:
+      description: Conflito. O nome da regra já existe no sistema.
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
+          example:
+            timestamp: "2025-11-12T14:30:00Z"
+            status: 409
+            errorCode: "PRICE_RULE_ALREADY_EXISTS"
+            developerMessage: "Essa regra de preço já está cadastrada."
+            path: "/api/admin/price-rules/7c8d9e10-1a2b-3c4d-5e6f-7890abcdef12"
+    429:
+      $ref: "../../../components/responses/TooManyRequestsError.yml"
+    500:
+      $ref: "../../../components/responses/InternalServerError.yml"

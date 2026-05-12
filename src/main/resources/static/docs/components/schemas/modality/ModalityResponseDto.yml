@@ -1,0 +1,25 @@
+type: object
+description: Representa os dados de uma modalidade esportiva retornada pela API.
+required:
+  - id
+  - name
+  - createdAt
+properties:
+  id:
+    type: string
+    format: uuid
+    description: Identificador único da modalidade.
+    example: "6ba7b810-9dad-11d1-80b4-00c04fd430c8"
+  name:
+    type: string
+    description: Nome da modalidade esportiva.
+    example: "Futebol"
+  isActive:
+    type: boolean
+    description: Indica se a modalidade está ativa no sistema.
+    example: true
+  createdAt:
+    type: string
+    format: date-time
+    description: Data e hora de criação da modalidade no sistema (formato ISO 8601).
+    example: "2024-10-08T10:30:00Z"

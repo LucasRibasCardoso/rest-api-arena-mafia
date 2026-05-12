@@ -1,0 +1,30 @@
+package com.projetoExtensao.arenaMafia.application.operatingHours.usecase.imp;
+
+import com.projetoExtensao.arenaMafia.application.operatingHours.port.repository.OperatingHoursRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.operatingHours.usecase.EnableOperatingHoursUseCase;
+import java.util.UUID;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@Transactional
+public class EnableOperatingHoursUseCaseImp implements EnableOperatingHoursUseCase {
+
+  private final OperatingHoursRepositoryPort operatingHoursRepository;
+
+  public EnableOperatingHoursUseCaseImp(OperatingHoursRepositoryPort operatingHoursRepository) {
+    this.operatingHoursRepository = operatingHoursRepository;
+  }
+
+  @Override
+  public void execute(UUID hourId) {
+    var operatingHoursToEnable = operatingHoursRepository.findByIdOrElseThrow(hourId);
+
+    operatingHoursRepository.findByDaysOfWeek(operatingHoursToEnable.getDaysOfWeek()).stream()
+        .filter(existing -> !existing.getId().equals(hourId))
+        .forEach(operatingHoursToEnable::validateNoOverlapWithSameDay);
+
+    operatingHoursToEnable.enable();
+    operatingHoursRepository.save(operatingHoursToEnable);
+  }
+}

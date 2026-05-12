@@ -1,0 +1,20 @@
+type: object
+description: Dados para atualização de um bloqueio de horário
+required:
+  - description
+  - updateAllRecurring
+properties:
+  description:
+    type: string
+    description: |
+      Descrição do bloqueio de horário.
+      Deve ter entre 3 e 500 caracteres.
+    minLength: 3
+    maxLength: 500
+    example: "Manutenção preventiva na quadra"
+  updateAllRecurring:
+    type: boolean
+    description: |
+      Indica se a atualização deve ser aplicada a todos os bloqueios recorrentes
+      com o mesmo ID recorrente. Se false, atualiza apenas o bloqueio específico.
+    example: false

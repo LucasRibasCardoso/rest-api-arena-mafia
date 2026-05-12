@@ -1,0 +1,116 @@
+post:
+  operationId: cancelAdminReservation
+  tags: ["Administração - Gerenciamento de Agendamentos"]
+  summary: Cancelar uma reserva
+  description: |
+    Cancela uma reserva existente.
+
+    **Este endpoint é protegido e requer autenticação de administrador.**
+
+    **Funcionalidades:**
+    - Permite cancelar uma reserva individual
+    - Opção para cancelar todas as instâncias futuras de uma reserva recorrente
+    - Registra automaticamente qual administrador realizou o cancelamento
+    - Retorna status 204 No Content após sucesso
+
+    **Comportamento:**
+    1. Se `cancelAllRecurring=false`: Cancela apenas a reserva especificada
+    2. Se `cancelAllRecurring=true`: Cancela a reserva especificada e todas as suas ocorrências futuras
+
+    **Casos de erro:**
+    - Reserva não encontrada (404)
+    - Reserva já cancelada (409)
+    - Reserva já completada (409)
+
+  security:
+    - BearerAuth: [ ]
+
+  parameters:
+    - name: reservationId
+      in: path
+      description: |
+        Identificador único da reserva a ser cancelada.
+      required: true
+      schema:
+        type: string
+        format: uuid
+      example: "3e7a9b2c-5d8f-4c3e-9a1b-7f6e4d2c1a0b"
+
+    - name: cancelAllRecurring
+      in: query
+      description: |
+        Define o comportamento do cancelamento para reservas recorrentes.
+        
+        - **false** (padrão): Cancela apenas a reserva especificada
+        - **true**: Cancela a reserva especificada e todas as suas ocorrências futuras
+      required: false
+      schema:
+        type: boolean
+        default: false
+      example: false
+
+  responses:
+    204:
+      description: |
+        Reserva cancelada com sucesso.
+
+        A operação foi concluída sem erros. Nenhum corpo de resposta é retornado.
+
+    401:
+      $ref: "../../../components/responses/UnauthorizedError.yml"
+    403:
+      $ref: "../../../components/responses/ForbiddenError.yml"
+    404:
+      description: |
+        Reserva não encontrada.
+
+        Lançado quando:
+        - A reserva especificada em `reservationId` não existe
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
+          examples:
+            ReservationNotFound:
+              summary: Reserva não encontrada
+              value:
+                timestamp: "2026-02-06T14:30:00Z"
+                status: 404
+                errorCode: "SCHEDULE_ENTRY_NOT_FOUND"
+                developerMessage: "Agendamento não encontrado."
+                path: "/api/admin/reservations/3e7a9b2c-5d8f-4c3e-9a1b-7f6e4d2c1a0b/cancel"
+
+    409:
+      description: |
+        Conflito ao cancelar a reserva.
+
+        Lançado quando:
+        - A reserva já foi cancelada
+        - A reserva já foi completada
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
+          examples:
+            AlreadyCancelled:
+              summary: Reserva já foi cancelada
+              value:
+                timestamp: "2026-02-06T14:30:00Z"
+                status: 409
+                errorCode: "RESERVATION_ALREADY_CANCELLED"
+                developerMessage: "Esta reserva já foi cancelada."
+                path: "/api/admin/reservations/3e7a9b2c-5d8f-4c3e-9a1b-7f6e4d2c1a0b/cancel"
+
+            AlreadyCompleted:
+              summary: Reserva já foi concluída
+              value:
+                timestamp: "2026-02-06T14:30:00Z"
+                status: 409
+                errorCode: "RESERVATION_ALREADY_COMPLETED"
+                developerMessage: "Esta reserva já foi concluída."
+                path: "/api/admin/reservations/3e7a9b2c-5d8f-4c3e-9a1b-7f6e4d2c1a0b/cancel"
+
+    429:
+      $ref: "../../../components/responses/TooManyRequestsError.yml"
+    500:
+      $ref: "../../../components/responses/InternalServerError.yml"

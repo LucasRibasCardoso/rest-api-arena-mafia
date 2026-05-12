@@ -1,0 +1,149 @@
+put:
+  operationId: updateCourt
+  tags: [ Administração - Gerenciamento de Quadras ]
+  summary: Atualizar uma quadra existente
+  description: Atualiza uma quadra existente a partir de um uuid informado via path
+  security:
+    - bearerAuth: [ ]
+  parameters:
+    - $ref: "../../../components/parameters/CourtId.yml"
+  requestBody:
+    description: |
+      Dados para atualização da quadra. Todos os campos são opcionais, mas quando 
+      fornecidos, devem atender às validações especificadas.
+    content:
+      application/json:
+        schema:
+          $ref: "../../../components/schemas/court/UpdateCourtRequestDto.yml"
+  responses:
+    200:
+      description: Quadra atualizada com sucesso. Retorna os dados da quadra atualizado
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/court/AdminCourtResponseDto.yml"
+    400:
+      description: Requisição inválida. Retornado quando algum campo fornecido falha na validação.
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
+          examples:
+            InvalidCourtName:
+              summary: Nome da quadra inválido
+              value:
+                timestamp: "2024-06-15T14:30:00Z"
+                status: 400
+                errorCode: "VALIDATION_FAILED"
+                developerMessage: "A validação falhou. Verifique os detalhes dos campos para mais informações."
+                path: "/api/admin/courts/{courtId}"
+                fieldErrors:
+                  - fieldName: "name"
+                    errorCode: "COURT_NAME_INVALID_LENGTH"
+                    developerMessage: "O nome da quadra deve ter entre 3 e 100 caracteres."
+            OffsetMinutesInvalid:
+              summary: OffsetMinutes inválido
+              value:
+                timestamp: "2024-06-15T14:30:00Z"
+                status: 400
+                errorCode: "VALIDATION_FAILED"
+                developerMessage: "A validação falhou. Verifique os detalhes dos campos para mais informações."
+                path: "/api/admin/courts/{courtId}"
+                fieldErrors:
+                  - fieldName: "offsetMinutes"
+                    errorCode: "INVALID_OFFSET_MINUTES"
+                    developerMessage: "O valor de minutos de offset fornecido é inválido. Valores válidos: 0 ou 30."
+            ModalityRequired:
+              summary: Nenhuma modalidade fornecida
+              value:
+                timestamp: "2024-06-15T14:30:00Z"
+                status: 400
+                errorCode: "VALIDATION_FAILED"
+                developerMessage: "A validação falhou. Verifique os detalhes dos campos para mais informações."
+                path: "/api/admin/courts/{courtId}"
+                fieldErrors:
+                  - fieldName: "modalityIds"
+                    errorCode: "COURT_MODALITY_REQUIRED"
+                    developerMessage: "Ao menos uma modalidade é necessária ser informada."
+    401:
+      $ref: "../../../components/responses/UnauthorizedError.yml"
+    404:
+      description: Quadra não encontrada.
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
+          examples:
+            CourtNotFound:
+              summary: Quadra não encontrada
+              value:
+                timestamp: "2024-06-15T14:30:00Z"
+                status: 404
+                errorCode: "COURT_NOT_FOUND"
+                developerMessage: "Quadra não encontrada."
+                path: "/api/admin/courts/{courtId}"
+            ModalityNotFound:
+              summary: Modalidade não encontrada
+              value:
+                timestamp: "2024-06-15T14:30:00Z"
+                status: 404
+                errorCode: "MODALITY_NOT_FOUND"
+                developerMessage: "Modalidade não encontrada."
+                path: "/api/admin/courts/{courtId}"
+    409:
+      description: Conflito ao atualizar a quadra. Retornado quando o nome da quadra já está em uso por outra quadra.
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
+          examples:
+            CourtNameConflict:
+              summary: Nome da quadra já em uso
+              value:
+                timestamp: "2024-06-15T14:30:00Z"
+                status: 409
+                errorCode: "COURT_ALREADY_EXISTS"
+                developerMessage: "Essa quadra já está cadastrada."
+                path: "/api/admin/courts/{courtId}"
+    429:
+      $ref: "../../../components/responses/TooManyRequestsError.yml"
+    500:
+      $ref: "../../../components/responses/InternalServerError.yml"
+
+get:
+  operationId: getCourtById
+  tags: [ Administração - Gerenciamento de Quadras ]
+  summary: Busca uma quadra pelo ID
+  description: Recupera os detalhes de uma quadra existente a partir de um uuid informado via path
+  security:
+    - bearerAuth: [ ]
+  parameters:
+    - $ref: "../../../components/parameters/ModalityId.yml"
+  responses:
+    200:
+      description: Detalhes da quadra recuperados com sucesso.
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/court/AdminCourtResponseDto.yml"
+    401:
+      $ref: "../../../components/responses/UnauthorizedError.yml"
+    404:
+      description: Quadra não encontrada.
+      content:
+        application/json:
+          schema:
+            $ref: "../../../components/schemas/error/ErrorResponseDto.yml"
+          examples:
+            CourtNotFound:
+              summary: Quadra não encontrada
+              value:
+                timestamp: "2024-06-15T14:30:00Z"
+                status: 404
+                errorCode: "COURT_NOT_FOUND"
+                developerMessage: "Quadra não encontrada."
+                path: "/api/admin/courts/{courtId}"
+    429:
+      $ref: "../../../components/responses/TooManyRequestsError.yml"
+    500:
+      $ref: "../../../components/responses/InternalServerError.yml"
