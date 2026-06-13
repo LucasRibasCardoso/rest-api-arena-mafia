@@ -18,6 +18,90 @@
 
 ---
 
+## Executar a arquitetura local completa
+
+O `docker-compose.yml` inicia PostgreSQL, Redis, LocalStack, backend, Nginx e a
+stack de observabilidade completa.
+
+### Pré-requisitos
+
+- Docker Desktop instalado e em execução
+- GitHub Personal Access Token com permissão `read:packages`
+
+### 1. Autenticar no GitHub Container Registry
+
+A imagem do backend está publicada no GHCR. Faça login antes da primeira
+execução:
+
+```bash
+echo "SEU_TOKEN_GITHUB" | docker login ghcr.io -u SEU_USUARIO_GITHUB --password-stdin
+```
+
+Não salve o token do GitHub no `.env` ou no repositório.
+
+### 2. Configurar o ambiente local
+
+O Compose possui valores padrão funcionais. Para sobrescrever portas,
+credenciais locais ou resolver conflitos com outros projetos:
+
+```bash
+cp .env.example .env
+```
+
+O Nginx exige um arquivo local de autenticação básica para proteger a
+documentação:
+
+```bash
+printf "admin:$(openssl passwd -apr1 admin)\n" > gateway/.htpasswd
+```
+
+### 3. Iniciar os serviços
+
+```bash
+docker compose up -d
+docker compose ps
+```
+
+O `backend-app`, PostgreSQL, Redis e LocalStack devem aparecer como `healthy`.
+O `localstack-init` deve aparecer como `Exited (0)`, pois é executado apenas
+para criar filas, DLQs, role e grupo do Scheduler.
+
+### Acessos locais
+
+| Serviço | Endereço | Credenciais |
+|---|---|---|
+| Swagger UI | http://localhost:8080/swagger-ui.html | Não exige login |
+| OpenAPI YAML | http://localhost:8080/docs/openapi.yml | Não exige login |
+| API pelo gateway | http://localhost/api/ | JWT nos endpoints protegidos |
+| Swagger pelo gateway | http://localhost/swagger-ui.html | `admin` / `admin` |
+| Grafana | http://localhost:3000/grafana/ | `admin` / valor de `GF_SECURITY_ADMIN_PASSWORD` |
+| Prometheus | http://localhost:9090 | Não exige login |
+| LocalStack | http://localhost:4567 | Credenciais locais `test` / `test` |
+| PostgreSQL | `localhost:5433` | Valores de `POSTGRES_USER` e `POSTGRES_PASSWORD` |
+| Redis | `localhost:6380` | Sem senha no ambiente local |
+
+As portas podem ser alteradas no `.env`. Consulte `.env.example` para ver
+todas as variáveis disponíveis.
+
+### Comandos úteis
+
+```bash
+# Acompanhar logs do backend
+docker compose logs -f backend-app
+
+# Baixar a versão mais recente da imagem e recriar o backend
+docker compose pull backend-app
+docker compose up -d backend-app
+
+# Parar os serviços preservando os volumes
+docker compose down
+
+# Parar os serviços e remover os dados locais
+docker compose down -v
+```
+
+---
+
 ## 🏗️ Arquitetura
 
 ### Diagrama da Arquitetura
@@ -402,8 +486,8 @@ A integração com AWS segue rigorosamente a **Arquitetura Hexagonal**. A camada
 ├── gateway/
 │   └── nginx.conf                       # Nginx reverse proxy
 │
-├── docker-compose.yml                   # Compose principal (prod)
-├── docker-compose.override.yml          # Overrides para dev
+├── docker-compose.yml                   # Arquitetura local completa
+├── .env.example                         # Variáveis locais opcionais
 ├── Dockerfile                           # Build da imagem
 ├── pom.xml                              # Maven config
 ├── LICENSE                              # Licença
@@ -615,4 +699,3 @@ Este projeto é licenciado sob a [MIT License](LICENSE).
 ## 👥 Autores
 
 Projeto desenvolvido como iniciativa de extensão universitária no **Instituto Federal de Santa Catarina (IFSC)**.
-

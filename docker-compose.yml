@@ -1,205 +1,276 @@
+name: arena-mafia
+
 services:
-  # --- GATEWAY ---
-  nginx:
-    image: nginx:alpine
-    profiles: ["dev-full", "prod"]
-    container_name: gateway_nginx
-    ports:
-      - "80:80"
-    volumes:
-      - ./gateway/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./gateway/.htpasswd:/etc/nginx/.htpasswd:ro
-    networks:
-      - public_net
-      - private_net
-    depends_on:
-      - backend-app
-      - grafana
-
-  # --- INFRAESTRUTURA ---
-  redis:
-    image: redis:7-alpine
-    profiles: ["dev", "dev-full", "prod"]
-    container_name: redis
-    healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - private_net
-
   postgres:
     image: postgres:16-alpine
-    profiles: ["dev-full", "prod"]
-    container_name: postgres
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+    restart: unless-stopped
     environment:
-      - POSTGRES_DB=${POSTGRES_DB}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-arena_mafia}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    ports:
+      - "${POSTGRES_HOST_PORT:-5433}:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     networks:
-      - private_net
+      - arena-net
 
-  backend-app:
-    profiles: ["dev-full", "prod"]
-    build: .
-    image: backend-arena-mafia
-    environment:
-      # Database Configuration
-      - DATABASE_URL=${DATABASE_URL}
-      - DATABASE_USERNAME=${DATABASE_USERNAME}
-      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
-
-      # JWT Configuration
-      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
-
-      # Spring Configuration
-      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
-      - SPRING_APPLICATION_NAME=${SPRING_APPLICATION_NAME}
-
-      # Redis Configuration
-      - REDIS_HOST=${REDIS_HOST}
-      - REDIS_PORT=${REDIS_PORT}
-      - REDIS_PASSWORD=${REDIS_PASSWORD}
-
-      # AWS Configuration (Credentials)
-      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-      - AWS_REGION=${AWS_REGION}
-
-      # AWS EventBridge Scheduler Configuration
-      - AWS_SCHEDULER_ROLE_ARN=${AWS_SCHEDULER_ROLE_ARN}
-      - AWS_SCHEDULER_GROUP_NAME=${AWS_SCHEDULER_GROUP_NAME}
-
-      # AWS SQS Queue Names
-      - AWS_SQS_SCHEDULE_TASK_NAME=${AWS_SQS_SCHEDULE_TASK_NAME}
-      - AWS_SQS_WHATSAPP_TRANSACTIONAL_NAME=${AWS_SQS_WHATSAPP_TRANSACTIONAL_NAME}
-      - AWS_SQS_WHATSAPP_TRANSACTIONAL_DLQ_NAME=${AWS_SQS_WHATSAPP_TRANSACTIONAL_DLQ_NAME}
-      - AWS_SQS_WHATSAPP_REMINDER_NAME=${AWS_SQS_WHATSAPP_REMINDER_NAME}
-      - AWS_SQS_SMS_NAME=${AWS_SQS_SMS_NAME}
-
-      # AWS SQS Queue ARNs (for EventBridge Scheduler)
-      - AWS_SQS_SCHEDULE_TASK_QUEUE_ARN=${AWS_SQS_SCHEDULE_TASK_QUEUE_ARN}
-      - AWS_SQS_WHATSAPP_REMINDER_QUEUE_ARN=${AWS_SQS_WHATSAPP_REMINDER_QUEUE_ARN}
-
-      # SMS Configuration
-      - COMTELE_API_URL=${COMTELE_API_URL}
-      - COMTELE_API_KEY=${COMTELE_API_KEY}
-
-      # OpenTelemetry Configuration
-      - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT}
-      - OTEL_EXPORTER_OTLP_PROTOCOL=${OTEL_EXPORTER_OTLP_PROTOCOL}
-      - OTEL_LOGS_EXPORTER=${OTEL_LOGS_EXPORTER}
-      - OTEL_METRICS_EXPORTER=${OTEL_METRICS_EXPORTER}
-      - OTEL_TRACES_EXPORTER=${OTEL_TRACES_EXPORTER}
-      - OTEL_SERVICE_NAME=${OTEL_SERVICE_NAME}
-      - OTEL_RESOURCE_ATTRIBUTES=${OTEL_RESOURCE_ATTRIBUTES}
-    depends_on:
-      otel-collector:
-        condition: service_started
-      redis:
-        condition: service_healthy
-      postgres:
-        condition: service_healthy
-        required: false
-    networks:
-      - private_net
-    labels:
-      service: "backend-api"
-      container_name: "spring-app"
-
-  # --- OBSERVABILIDADE ---
-  prometheus:
-    profiles: ["dev", "dev-full", "prod"]
-    image: prom/prometheus:v3.9.0
-    container_name: prometheus
-    command:
-      - --config.file=/etc/prometheus/prometheus.yml
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "${REDIS_HOST_PORT:-6380}:6379"
     volumes:
-      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - prometheus-data:/prometheus
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
     networks:
-      - private_net
+      - arena-net
+
+  localstack:
+    image: localstack/localstack:3.8
+    restart: unless-stopped
+    environment:
+      SERVICES: sqs,iam,scheduler
+      EAGER_SERVICE_LOADING: "1"
+      AWS_DEFAULT_REGION: us-east-1
+    ports:
+      - "${LOCALSTACK_HOST_PORT:-4567}:4566"
+    volumes:
+      - localstack-data:/var/lib/localstack
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:4566/_localstack/health | grep -q '\"sqs\"'"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    networks:
+      - arena-net
+
+  localstack-init:
+    image: localstack/localstack:3.8
+    depends_on:
+      localstack:
+        condition: service_healthy
+    environment:
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_DEFAULT_REGION: us-east-1
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        set -eu
+        ENDPOINT="http://localstack:4566"
+        REGION="us-east-1"
+        ACCOUNT_ID="000000000000"
+
+        aws --endpoint-url="$$ENDPOINT" sqs create-queue --queue-name schedule-task-dlq --region "$$REGION"
+        aws --endpoint-url="$$ENDPOINT" sqs create-queue --queue-name whatsapp-transactional-dlq --region "$$REGION"
+        aws --endpoint-url="$$ENDPOINT" sqs create-queue --queue-name general-trash-dlq --region "$$REGION"
+
+        aws --endpoint-url="$$ENDPOINT" sqs create-queue --queue-name schedule-task-queue --region "$$REGION" \
+          --attributes "{\"RedrivePolicy\":\"{\\\"deadLetterTargetArn\\\":\\\"arn:aws:sqs:$$REGION:$$ACCOUNT_ID:schedule-task-dlq\\\",\\\"maxReceiveCount\\\":\\\"3\\\"}\"}"
+        aws --endpoint-url="$$ENDPOINT" sqs create-queue --queue-name whatsapp-transactional-queue --region "$$REGION" \
+          --attributes "{\"RedrivePolicy\":\"{\\\"deadLetterTargetArn\\\":\\\"arn:aws:sqs:$$REGION:$$ACCOUNT_ID:whatsapp-transactional-dlq\\\",\\\"maxReceiveCount\\\":\\\"3\\\"}\"}"
+        aws --endpoint-url="$$ENDPOINT" sqs create-queue --queue-name whatsapp-reminder-queue --region "$$REGION" \
+          --attributes "{\"RedrivePolicy\":\"{\\\"deadLetterTargetArn\\\":\\\"arn:aws:sqs:$$REGION:$$ACCOUNT_ID:general-trash-dlq\\\",\\\"maxReceiveCount\\\":\\\"3\\\"}\"}"
+        aws --endpoint-url="$$ENDPOINT" sqs create-queue --queue-name sms-queue --region "$$REGION" \
+          --attributes "{\"RedrivePolicy\":\"{\\\"deadLetterTargetArn\\\":\\\"arn:aws:sqs:$$REGION:$$ACCOUNT_ID:general-trash-dlq\\\",\\\"maxReceiveCount\\\":\\\"1\\\"}\"}"
+
+        aws --endpoint-url="$$ENDPOINT" iam create-role \
+          --role-name arena-mafia-scheduler-role \
+          --assume-role-policy-document '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"Service":"scheduler.amazonaws.com"},"Action":"sts:AssumeRole"}]}' \
+          2>/dev/null || true
+        aws --endpoint-url="$$ENDPOINT" iam put-role-policy \
+          --role-name arena-mafia-scheduler-role \
+          --policy-name allow-sqs \
+          --policy-document '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":"sqs:SendMessage","Resource":"*"}]}'
+        aws --endpoint-url="$$ENDPOINT" scheduler create-schedule-group \
+          --name arena-mafia-schedules \
+          --region "$$REGION" 2>/dev/null || true
+
+        aws --endpoint-url="$$ENDPOINT" sqs list-queues --region "$$REGION"
+    networks:
+      - arena-net
 
   loki:
-    profiles: ["dev", "dev-full", "prod"]
     image: grafana/loki:3.0.0
-    container_name: loki
+    restart: unless-stopped
     command: -config.file=/etc/loki/local-config.yaml
+    ports:
+      - "${LOKI_HOST_PORT:-3100}:3100"
     volumes:
       - ./config/loki.yml:/etc/loki/local-config.yaml:ro
       - loki-data:/loki
     networks:
-      - private_net
+      - arena-net
 
   tempo:
-    profiles: ["dev", "dev-full", "prod"]
     image: grafana/tempo:2.4.1
-    container_name: tempo
-    command: [ "-config.file=/etc/tempo.yaml" ]
+    restart: unless-stopped
+    command: ["-config.file=/etc/tempo.yaml"]
+    ports:
+      - "${TEMPO_HOST_PORT:-3200}:3200"
     volumes:
       - ./config/tempo.yml:/etc/tempo.yaml:ro
       - tempo-data:/var/tempo
     networks:
-      - private_net
+      - arena-net
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.96.0
+    restart: unless-stopped
+    command: ["--config=/etc/otel-collector-config.yml"]
+    depends_on:
+      - loki
+      - tempo
+    ports:
+      - "${OTEL_GRPC_HOST_PORT:-4317}:4317"
+      - "${OTEL_HTTP_HOST_PORT:-4318}:4318"
+      - "${OTEL_METRICS_HOST_PORT:-8889}:8889"
+    volumes:
+      - ./config/otel-collector-config.yml:/etc/otel-collector-config.yml:ro
+    networks:
+      - arena-net
+
+  prometheus:
+    image: prom/prometheus:v3.9.0
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+    depends_on:
+      - otel-collector
+    ports:
+      - "${PROMETHEUS_HOST_PORT:-9090}:9090"
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    networks:
+      - arena-net
 
   grafana:
-    profiles: ["dev", "dev-full", "prod"]
     image: grafana/grafana:10.3.0
-    container_name: grafana
+    restart: unless-stopped
+    depends_on:
+      - loki
+      - tempo
+      - prometheus
     environment:
-      - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD}
-      - GF_USERS_ALLOW_SIGN_UP=false
-      - GF_SERVER_ROOT_URL=${GF_SERVER_ROOT_URL}
-      - GF_SERVER_SERVE_FROM_SUB_PATH=true
-      - GF_SECURITY_ALLOW_EMBEDDING=true
-      - GF_SECURITY_CSRF_ALWAYS_CHECK=false
-      - GF_AUTH_ANONYMOUS_ENABLED=false
-      - GF_AUTH_DISABLE_LOGIN_FORM=false
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GF_SECURITY_ADMIN_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_SERVER_ROOT_URL: ${GF_SERVER_ROOT_URL:-http://localhost/grafana/}
+      GF_SERVER_SERVE_FROM_SUB_PATH: "true"
+      GF_SECURITY_ALLOW_EMBEDDING: "true"
+      GF_SECURITY_CSRF_ALWAYS_CHECK: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_AUTH_DISABLE_LOGIN_FORM: "false"
+    ports:
+      - "${GRAFANA_HOST_PORT:-3000}:3000"
     volumes:
       - grafana-data:/var/lib/grafana
       - ./config/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
       - ./config/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
       - ./config/grafana/dashboards:/etc/grafana/dashboards:ro
     networks:
-      - private_net
-    depends_on:
-      - loki
-      - tempo
-      - prometheus
+      - arena-net
 
-  otel-collector:
-    profiles: ["dev", "dev-full", "prod"]
-    image: otel/opentelemetry-collector-contrib:0.96.0
-    container_name: otel-collector
-    command: [ "--config=/etc/otel-collector-config.yml" ]
-    volumes:
-      - ./config/otel-collector-config.yml:/etc/otel-collector-config.yml
+  backend-app:
+    image: ghcr.io/lucasribascardoso/backend-arena-mafia:develop
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      localstack-init:
+        condition: service_completed_successfully
+      otel-collector:
+        condition: service_started
+    environment:
+      SPRING_APPLICATION_NAME: ${SPRING_APPLICATION_NAME:-backend-arena-mafia}
+      SPRING_PROFILES_ACTIVE: dev,prod
+      SPRINGDOC_API_DOCS_ENABLED: "true"
+      SPRINGDOC_SWAGGER_UI_URL: /docs/openapi.yml
+      SPRING_FLYWAY_LOCATIONS: classpath:db/migration,classpath:db/migration-dev
+      DATABASE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-arena_mafia}
+      DATABASE_USERNAME: ${POSTGRES_USER:-postgres}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      REDIS_PASSWORD: ""
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-551VM4LcN284uYnv3MjDckhe9IQ6ta7/0jNwrvNqRz0=}
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_REGION: us-east-1
+      AWS_SQS_ENDPOINT: http://localstack:4566
+      AWS_SCHEDULER_ENDPOINT: http://localstack:4566
+      AWS_SCHEDULER_ROLE_ARN: arn:aws:iam::000000000000:role/arena-mafia-scheduler-role
+      AWS_SCHEDULER_GROUP_NAME: arena-mafia-schedules
+      AWS_SQS_SCHEDULE_TASK_NAME: schedule-task-queue
+      AWS_SQS_WHATSAPP_TRANSACTIONAL_NAME: whatsapp-transactional-queue
+      AWS_SQS_WHATSAPP_TRANSACTIONAL_DLQ_NAME: whatsapp-transactional-dlq
+      AWS_SQS_WHATSAPP_REMINDER_NAME: whatsapp-reminder-queue
+      AWS_SQS_SMS_NAME: sms-queue
+      AWS_SQS_SCHEDULE_TASK_QUEUE_ARN: arn:aws:sqs:us-east-1:000000000000:schedule-task-queue
+      AWS_SQS_WHATSAPP_REMINDER_QUEUE_ARN: arn:aws:sqs:us-east-1:000000000000:whatsapp-reminder-queue
+      APP_NOTIFICATION_SMS_PROVIDER: MOCK
+      APP_NOTIFICATION_WHATSAPP_PROVIDER: MOCK
+      COMTELE_API_URL: ${COMTELE_API_URL:-http://localhost}
+      COMTELE_API_KEY: ${COMTELE_API_KEY:-local}
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+      OTEL_LOGS_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: otlp
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_SERVICE_NAME: ${OTEL_SERVICE_NAME:-backend-arena-mafia}
+      OTEL_RESOURCE_ATTRIBUTES: ${OTEL_RESOURCE_ATTRIBUTES:-deployment.environment=local}
+    ports:
+      - "${BACKEND_HOST_PORT:-8080}:8080"
+      - "${MANAGEMENT_HOST_PORT:-9091}:9091"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sS -o /dev/null http://localhost:9091/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 45s
     networks:
-      - private_net
+      - arena-net
+
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
     depends_on:
-      - loki
-      - tempo
+      backend-app:
+        condition: service_healthy
+      grafana:
+        condition: service_started
+    ports:
+      - "${GATEWAY_HOST_PORT:-80}:80"
+    volumes:
+      - ./gateway/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./gateway/.htpasswd:/etc/nginx/.htpasswd:ro
+    networks:
+      - arena-net
 
-# --- REDES ---
 networks:
-  public_net:
+  arena-net:
     driver: bridge
-  private_net:
-    driver: bridge
-    internal: true
 
-# --- VOLUMES ---
 volumes:
   postgres-data:
+  redis-data:
+  localstack-data:
   prometheus-data:
   loki-data:
   tempo-data:
