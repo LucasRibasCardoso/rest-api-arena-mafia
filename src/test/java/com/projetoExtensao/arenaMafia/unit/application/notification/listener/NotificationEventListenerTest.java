@@ -35,7 +35,8 @@ public class NotificationEventListenerTest {
     // Arrange
     User user = TestDataProvider.createActiveUser();
     UUID userId = user.getId();
-    OnVerificationRequiredNotificationEvent event = new OnVerificationRequiredNotificationEvent(user);
+    OnVerificationRequiredNotificationEvent event =
+        new OnVerificationRequiredNotificationEvent(user);
 
     when(otpPort.generateOtpCode(userId)).thenReturn(otpCode);
 
@@ -60,7 +61,8 @@ public class NotificationEventListenerTest {
     User user = TestDataProvider.createActiveUser();
     UUID userId = user.getId();
     String newPhone = "+5511999999999";
-    OnVerificationRequiredNotificationEvent event = new OnVerificationRequiredNotificationEvent(user, newPhone);
+    OnVerificationRequiredNotificationEvent event =
+        new OnVerificationRequiredNotificationEvent(user, newPhone);
 
     when(otpPort.generateOtpCode(userId)).thenReturn(otpCode);
 
@@ -83,7 +85,8 @@ public class NotificationEventListenerTest {
   void onOtpVerification_shouldThrowException_whenOtpGenerationFails() {
     // Arrange
     User user = TestDataProvider.createActiveUser();
-    OnVerificationRequiredNotificationEvent event = new OnVerificationRequiredNotificationEvent(user);
+    OnVerificationRequiredNotificationEvent event =
+        new OnVerificationRequiredNotificationEvent(user);
 
     when(otpPort.generateOtpCode(user.getId()))
         .thenThrow(new RuntimeException("Falha ao conectar com o Redis"));

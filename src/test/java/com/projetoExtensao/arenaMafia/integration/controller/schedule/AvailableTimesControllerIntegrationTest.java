@@ -1,5 +1,8 @@
 package com.projetoExtensao.arenaMafia.integration.controller.schedule;
 
+import static io.restassured.RestAssured.given;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 import com.projetoExtensao.arenaMafia.domain.model.Modality;
 import com.projetoExtensao.arenaMafia.domain.model.enums.OffsetMinutes;
@@ -8,18 +11,14 @@ import com.projetoExtensao.arenaMafia.infrastructure.web.schedule.dto.response.A
 import com.projetoExtensao.arenaMafia.integration.config.WebIntegrationTestConfig;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.specification.RequestSpecification;
+import java.time.LocalDate;
+import java.util.Set;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
-
-import java.time.LocalDate;
-import java.util.Set;
-import java.util.UUID;
-
-import static io.restassured.RestAssured.given;
-import static org.assertj.core.api.Assertions.assertThat;
 
 @DisplayName("Testes de Integração para AvailableTimesController")
 public class AvailableTimesControllerIntegrationTest extends WebIntegrationTestConfig {

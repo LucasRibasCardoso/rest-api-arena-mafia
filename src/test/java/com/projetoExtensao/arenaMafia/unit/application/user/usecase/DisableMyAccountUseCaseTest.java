@@ -110,7 +110,8 @@ public class DisableMyAccountUseCaseTest {
   }
 
   @Test
-  @DisplayName("Deve lançar AccountStatusConflictException quando o status da conta já for DISABLED")
+  @DisplayName(
+      "Deve lançar AccountStatusConflictException quando o status da conta já for DISABLED")
   void execute_shouldThrowAccountStatusConflictException_whenAccountStatusIsNotActive() {
     // Arrange
     User user =
@@ -134,14 +135,16 @@ public class DisableMyAccountUseCaseTest {
 
   private List<Reservation> createFutureReservations(UUID userId, int count) {
     return java.util.stream.IntStream.range(0, count)
-        .mapToObj(i -> Reservation.createByUser(
-            UUID.randomUUID(),
-            UUID.randomUUID(),
-            userId,
-            BigDecimal.valueOf(50.00),
-            new DateTimeSlot(
-                LocalDate.now().plusDays(i + 1),
-                new TimeInterval(LocalTime.of(10, 0), LocalTime.of(11, 0)))))
+        .mapToObj(
+            i ->
+                Reservation.createByUser(
+                    UUID.randomUUID(),
+                    UUID.randomUUID(),
+                    userId,
+                    BigDecimal.valueOf(50.00),
+                    new DateTimeSlot(
+                        LocalDate.now().plusDays(i + 1),
+                        new TimeInterval(LocalTime.of(10, 0), LocalTime.of(11, 0)))))
         .toList();
   }
 }

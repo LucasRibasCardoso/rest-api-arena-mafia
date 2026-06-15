@@ -58,7 +58,8 @@ public class ResendOtpUseCaseTest {
     resendOtpUseCaseTest.execute(otpSessionId);
 
     // Assert
-    verify(eventPublisher, times(1)).publishEvent(any(OnVerificationRequiredNotificationEvent.class));
+    verify(eventPublisher, times(1))
+        .publishEvent(any(OnVerificationRequiredNotificationEvent.class));
   }
 
   @Test
@@ -78,7 +79,8 @@ public class ResendOtpUseCaseTest {
             });
 
     verify(userRepositoryPort, never()).findById(any());
-    verify(eventPublisher, never()).publishEvent(any(OnVerificationRequiredNotificationEvent.class));
+    verify(eventPublisher, never())
+        .publishEvent(any(OnVerificationRequiredNotificationEvent.class));
   }
 
   @Test
@@ -99,7 +101,8 @@ public class ResendOtpUseCaseTest {
               assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.USER_NOT_FOUND);
             });
 
-    verify(eventPublisher, never()).publishEvent(any(OnVerificationRequiredNotificationEvent.class));
+    verify(eventPublisher, never())
+        .publishEvent(any(OnVerificationRequiredNotificationEvent.class));
   }
 
   @ParameterizedTest
@@ -123,6 +126,7 @@ public class ResendOtpUseCaseTest {
               AccountStatusForbiddenException exception = (AccountStatusForbiddenException) ex;
               assertThat(exception.getErrorCode()).isEqualTo(expectedErrorCode);
             });
-    verify(eventPublisher, never()).publishEvent(any(OnVerificationRequiredNotificationEvent.class));
+    verify(eventPublisher, never())
+        .publishEvent(any(OnVerificationRequiredNotificationEvent.class));
   }
 }

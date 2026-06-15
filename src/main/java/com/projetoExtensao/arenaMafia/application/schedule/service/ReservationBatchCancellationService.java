@@ -46,7 +46,8 @@ public class ReservationBatchCancellationService {
    * @throws BatchCancellationFailedException se qualquer reserva falhar ao ser cancelada
    */
   @Transactional
-  public int cancelReservationsInBatchByAdmin(List<Reservation> reservations, String reason, UUID adminId) {
+  public int cancelReservationsInBatchByAdmin(
+      List<Reservation> reservations, String reason, UUID adminId) {
     if (reservations == null || reservations.isEmpty()) return 0;
 
     Map<UUID, User> usersMap = fetchUsersInBatch(reservations);
@@ -120,20 +121,24 @@ public class ReservationBatchCancellationService {
     reservations.forEach(
         reservation -> {
           reservation.cancelByAdmin(adminId);
-          eventPublisher.publishEvent(new OnReservationCancelledScheduleTaskEvent(reservation.getId()));
+          eventPublisher.publishEvent(
+              new OnReservationCancelledScheduleTaskEvent(reservation.getId()));
         });
     reservationRepository.saveAll(reservations);
   }
 
   private void cancelAndSaveReservations(List<Reservation> reservations) {
-    reservations.forEach(reservation -> {
-      reservation.cancel();
-      eventPublisher.publishEvent(new OnReservationCancelledScheduleTaskEvent(reservation.getId()));
-    });
+    reservations.forEach(
+        reservation -> {
+          reservation.cancel();
+          eventPublisher.publishEvent(
+              new OnReservationCancelledScheduleTaskEvent(reservation.getId()));
+        });
     reservationRepository.saveAll(reservations);
   }
 
-  private void publishCancellationEvents(List<Reservation> reservations, Map<UUID, User> usersMap, String reason) {
+  private void publishCancellationEvents(
+      List<Reservation> reservations, Map<UUID, User> usersMap, String reason) {
     Map<UUID, List<Reservation>> reservationsByUser =
         reservations.stream().collect(Collectors.groupingBy(Reservation::getUserId));
 
@@ -141,7 +146,8 @@ public class ReservationBatchCancellationService {
         (userId, userReservations) -> {
           User user = usersMap.get(userId);
           eventPublisher.publishEvent(
-              new OnReservationsCancelledByAdminNotificationEvent(user.getUsername(), user.getPhone(), reason, reservations));
+              new OnReservationsCancelledByAdminNotificationEvent(
+                  user.getUsername(), user.getPhone(), reason, reservations));
         });
   }
 

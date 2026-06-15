@@ -35,7 +35,8 @@ public class ResendChangePhoneOtpUseCaseImp implements ResendChangePhoneOtpUseCa
         .ifPresent(
             user -> {
               user.ensureAccountEnabled();
-              eventPublisher.publishEvent(new OnVerificationRequiredNotificationEvent(user, newPhone));
+              eventPublisher.publishEvent(
+                  new OnVerificationRequiredNotificationEvent(user, newPhone));
             });
   }
 

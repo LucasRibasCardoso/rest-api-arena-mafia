@@ -732,7 +732,8 @@ public class AdminReservationControllerIntegrationTest extends WebIntegrationTes
             .statusCode(204);
 
         // Assert
-        Reservation cancelledReservation = reservationRepository.findByIdOrElseThrow(reservation.getId());
+        Reservation cancelledReservation =
+            reservationRepository.findByIdOrElseThrow(reservation.getId());
         assertThat(cancelledReservation.getStatus()).isEqualTo(ReservationStatus.CANCELLED);
         assertThat(cancelledReservation.getCancelledByAdminId()).isEqualTo(adminId);
       }

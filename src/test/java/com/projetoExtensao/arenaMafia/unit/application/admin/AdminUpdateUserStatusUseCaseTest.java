@@ -6,8 +6,8 @@ import static org.mockito.Mockito.*;
 
 import com.projetoExtensao.arenaMafia.application.schedule.port.repository.ReservationRepositoryPort;
 import com.projetoExtensao.arenaMafia.application.schedule.service.ReservationBatchCancellationService;
-import com.projetoExtensao.arenaMafia.application.user.usecase.admin.imp.AdminUpdateUserStatusUseCaseImp;
 import com.projetoExtensao.arenaMafia.application.user.port.repository.UserRepositoryPort;
+import com.projetoExtensao.arenaMafia.application.user.usecase.admin.imp.AdminUpdateUserStatusUseCaseImp;
 import com.projetoExtensao.arenaMafia.domain.exception.ErrorCode;
 import com.projetoExtensao.arenaMafia.domain.exception.conflict.AccountStatusConflictException;
 import com.projetoExtensao.arenaMafia.domain.exception.forbidden.AccountStatusForbiddenException;
@@ -46,7 +46,8 @@ public class AdminUpdateUserStatusUseCaseTest {
 
   @Test
   @DisplayName("Deve desativar a conta do usuário e cancelar reservas futuras com notificação")
-  void execute_ShouldUpdateUserStatusAndCancelFutureReservationsWithNotification_WhenDisablingAccount() {
+  void
+      execute_ShouldUpdateUserStatusAndCancelFutureReservationsWithNotification_WhenDisablingAccount() {
     // Arrange
     UUID authenticatedAdminId = UUID.randomUUID();
     UUID targetUserId = UUID.randomUUID();
@@ -108,7 +109,8 @@ public class AdminUpdateUserStatusUseCaseTest {
     // Assert
     assertThat(user.getStatus()).isEqualTo(AccountStatus.LOCKED);
     verify(reservationRepository, never()).findAllFutureActiveReservationsByUser(any());
-    verify(reservationBatchCancellationService, never()).cancelReservationsInBatchSilently(anyList());
+    verify(reservationBatchCancellationService, never())
+        .cancelReservationsInBatchSilently(anyList());
   }
 
   @Test
@@ -128,7 +130,8 @@ public class AdminUpdateUserStatusUseCaseTest {
     // Assert
     assertThat(user.getStatus()).isEqualTo(AccountStatus.ACTIVE);
     verify(reservationRepository, never()).findAllFutureActiveReservationsByUser(any());
-    verify(reservationBatchCancellationService, never()).cancelReservationsInBatchSilently(anyList());
+    verify(reservationBatchCancellationService, never())
+        .cancelReservationsInBatchSilently(anyList());
   }
 
   @Test
@@ -142,7 +145,8 @@ public class AdminUpdateUserStatusUseCaseTest {
     // Act & Assert
     assertThatThrownBy(
             () ->
-                adminUpdateUserStatusUseCase.execute(authenticatedAdminId, authenticatedAdminId, newStatus))
+                adminUpdateUserStatusUseCase.execute(
+                    authenticatedAdminId, authenticatedAdminId, newStatus))
         .isInstanceOf(AdminCannotUpdateOwnStatusException.class)
         .satisfies(
             ex -> {
@@ -263,14 +267,16 @@ public class AdminUpdateUserStatusUseCaseTest {
 
   private List<Reservation> createFutureReservations(UUID userId, int count) {
     return java.util.stream.IntStream.range(0, count)
-        .mapToObj(i -> Reservation.createByUser(
-            UUID.randomUUID(),
-            UUID.randomUUID(),
-            userId,
-            BigDecimal.valueOf(50.00),
-            new DateTimeSlot(
-                LocalDate.now().plusDays(i + 1),
-                new TimeInterval(LocalTime.of(10, 0), LocalTime.of(11, 0)))))
+        .mapToObj(
+            i ->
+                Reservation.createByUser(
+                    UUID.randomUUID(),
+                    UUID.randomUUID(),
+                    userId,
+                    BigDecimal.valueOf(50.00),
+                    new DateTimeSlot(
+                        LocalDate.now().plusDays(i + 1),
+                        new TimeInterval(LocalTime.of(10, 0), LocalTime.of(11, 0)))))
         .toList();
   }
 }

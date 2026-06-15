@@ -46,8 +46,7 @@ public class PriceRuleTest {
       // Act
       PriceRule priceRule =
           PriceRule.create(
-
-                  defaultName, defaultDaysOfWeek, defaultTimeInterval, defaultPrice, defaultPriority);
+              defaultName, defaultDaysOfWeek, defaultTimeInterval, defaultPrice, defaultPriority);
       // Assert
       assertThat(priceRule).isNotNull();
       assertThat(priceRule.getId()).isNotNull();
@@ -124,7 +123,8 @@ public class PriceRuleTest {
     void create_shouldNormalizeEmptyDaysOfWeekToNull() {
       // Act
       PriceRule priceRule =
-          PriceRule.create(defaultName, Set.of(), defaultTimeInterval, defaultPrice, defaultPriority);
+          PriceRule.create(
+              defaultName, Set.of(), defaultTimeInterval, defaultPrice, defaultPriority);
 
       // Assert
       assertThat(priceRule).isNotNull();
@@ -374,8 +374,7 @@ public class PriceRuleTest {
         "disable() deve lançar PriceRuleStatusConflictException quando tentando desativar regra padrão")
     void disable_shouldThrowException_whenPriceRuleIsDefault() {
       // Arrange
-      PriceRule defaultPriceRule =
-          TestPriceRuleDataProvider.createDefaultPriceRule();
+      PriceRule defaultPriceRule = TestPriceRuleDataProvider.createDefaultPriceRule();
       assertThat(defaultPriceRule.isDefault()).isTrue();
 
       // Act & Assert
@@ -528,8 +527,7 @@ public class PriceRuleTest {
     @DisplayName("isApplicable() deve retornar true para regra padrão ativa")
     void isApplicable_shouldReturnTrue_forActiveDefaultRule() {
       // Arrange
-      PriceRule defaultRule =
-          TestPriceRuleDataProvider.createDefaultPriceRule();
+      PriceRule defaultRule = TestPriceRuleDataProvider.createDefaultPriceRule();
 
       // Act & Assert
       assertThat(defaultRule.isApplicable(DayOfWeek.MONDAY, LocalTime.of(10, 0))).isTrue();
@@ -658,8 +656,6 @@ public class PriceRuleTest {
       // Act & Assert
       assertDoesNotThrow(() -> rule1.validateOverlapWith(rule2));
     }
-
-    
 
     @Test
     @DisplayName(

@@ -8,7 +8,8 @@ public interface ScheduledTaskPort {
 
   void cancelTask(UUID scheduleEntryId, ScheduleEntryType scheduleEntryType);
 
-  void scheduleTask(UUID scheduleEntryId, ScheduleEntryType scheduleEntryType, LocalDateTime executionTime);
+  void scheduleTask(
+      UUID scheduleEntryId, ScheduleEntryType scheduleEntryType, LocalDateTime executionTime);
 
   void scheduleReservationReminderTask(UUID reservationId, LocalDateTime executionTime);
 

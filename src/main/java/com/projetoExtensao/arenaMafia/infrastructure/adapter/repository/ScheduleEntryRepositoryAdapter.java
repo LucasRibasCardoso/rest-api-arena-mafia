@@ -151,5 +151,4 @@ public class ScheduleEntryRepositoryAdapter implements ScheduleEntryRepositoryPo
           .toList();
     }
   }
-
 }
