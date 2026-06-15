@@ -795,7 +795,8 @@ public abstract class BaseTestContainersConfig {
             DayOfWeek.WEDNESDAY,
             DayOfWeek.THURSDAY,
             DayOfWeek.FRIDAY);
-    PriceRule priceRule = PriceRule.create(ruleName, daysOfWeek, timeInterval, rulePrice, rulePriority);
+    PriceRule priceRule =
+        PriceRule.create(ruleName, daysOfWeek, timeInterval, rulePrice, rulePriority);
     return priceRuleRepository.save(priceRule);
   }
 

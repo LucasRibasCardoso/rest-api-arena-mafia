@@ -41,15 +41,16 @@ public class PriceRuleControllerIntegrationTest extends WebIntegrationTestConfig
     // Act
     var responseBodyJson =
         given()
-                .spec(specification)
-                .when()
-                .get()
-                .then()
-                .log().all()
-                .statusCode(200)
-                .extract()
-                .body()
-                .asString();
+            .spec(specification)
+            .when()
+            .get()
+            .then()
+            .log()
+            .all()
+            .statusCode(200)
+            .extract()
+            .body()
+            .asString();
 
     var response = new JsonPath(responseBodyJson).getList("", PriceRuleResponseDto.class);
 
