@@ -91,7 +91,7 @@ services:
   # --- Backend Application ---
   backend-app:
     # Substituir por imagem do GHRC
-    image: backend-arena-mafia
+    image: ghcr.io/lucasribascardoso/backend-arena-mafia:develop
     container_name: frontend-backend-app
     ports:
       - "8080:8080"
@@ -103,6 +103,7 @@ services:
     environment:
       # Spring
       - SPRING_PROFILES_ACTIVE=dev
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-http://localhost:5173}
       # Redis (hostname do serviço Docker, não localhost)
       - SPRING_DATA_REDIS_HOST=redis
       - SPRING_DATA_REDIS_PORT=6379
@@ -136,5 +137,4 @@ services:
 networks:
   frontend-net:
     driver: bridge
-
 
