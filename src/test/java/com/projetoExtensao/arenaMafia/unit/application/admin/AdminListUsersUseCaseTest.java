@@ -70,7 +70,9 @@ public class AdminListUsersUseCaseTest {
     assertThat(capturedPageable.getPageNumber()).isEqualTo(0);
     assertThat(capturedPageable.getPageSize()).isEqualTo(10);
     assertThat(capturedPageable.getSort().getOrderFor("createdAt")).isNotNull();
-    assertThat(Objects.requireNonNull(capturedPageable.getSort().getOrderFor("createdAt")).getDirection())
+    assertThat(
+            Objects.requireNonNull(capturedPageable.getSort().getOrderFor("createdAt"))
+                .getDirection())
         .isEqualTo(Sort.Direction.DESC);
   }
 
@@ -95,7 +97,9 @@ public class AdminListUsersUseCaseTest {
     Pageable capturedPageable = pageableCaptor.getValue();
     // Garante que NÃO mudou para createdAt
     assertThat(capturedPageable.getSort().getOrderFor("fullName")).isNotNull();
-    assertThat(Objects.requireNonNull(capturedPageable.getSort().getOrderFor("fullName")).getDirection())
+    assertThat(
+            Objects.requireNonNull(capturedPageable.getSort().getOrderFor("fullName"))
+                .getDirection())
         .isEqualTo(Sort.Direction.ASC);
     assertThat(capturedPageable.getSort().getOrderFor("createdAt")).isNull();
   }

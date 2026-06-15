@@ -22,7 +22,6 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
-
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -66,7 +65,6 @@ public class CreateReservationUseCaseImp implements CreateReservationUseCase {
     DateTimeSlot dateTimeSlot = new DateTimeSlot(request.date(), request.timeInterval());
     validateScheduleAvailability(request.courtId(), dateTimeSlot);
 
-
     // Cria e salva a reserva
     Reservation reservation = createAndSaveReservation(request, userId, dateTimeSlot);
 
@@ -76,10 +74,12 @@ public class CreateReservationUseCaseImp implements CreateReservationUseCase {
     return reservation;
   }
 
-
-  private Reservation createAndSaveReservation(CreateReservationRequestDto request, UUID userId, DateTimeSlot dateTimeSlot) {
+  private Reservation createAndSaveReservation(
+      CreateReservationRequestDto request, UUID userId, DateTimeSlot dateTimeSlot) {
     BigDecimal price = calculatePrice(request);
-    var reservation = Reservation.createByUser(request.modalityId(), request.courtId(), userId, price, dateTimeSlot);
+    var reservation =
+        Reservation.createByUser(
+            request.modalityId(), request.courtId(), userId, price, dateTimeSlot);
     return reservationRepositoryPort.save(reservation);
   }
 
@@ -116,7 +116,8 @@ public class CreateReservationUseCaseImp implements CreateReservationUseCase {
    * @param dateTimeSlot Intervalo de data e hora da reserva
    */
   private void validateScheduleAvailability(UUID courtId, DateTimeSlot dateTimeSlot) {
-    scheduleAvailabilityService.validateAvailability(courtId, dateTimeSlot.date(), dateTimeSlot.timeInterval());
+    scheduleAvailabilityService.validateAvailability(
+        courtId, dateTimeSlot.date(), dateTimeSlot.timeInterval());
   }
 
   /**

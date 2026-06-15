@@ -57,7 +57,6 @@ public class CreateReservationByAdminUseCaseImp implements CreateReservationByAd
   private final ScheduleAvailabilityService scheduleAvailabilityService;
   private final ScheduleDateCalculationService scheduleDateCalculationService;
 
-
   public CreateReservationByAdminUseCaseImp(
       UserRepositoryPort userRepositoryPort,
       PhoneValidatorPort phoneValidatorPort,
@@ -84,7 +83,8 @@ public class CreateReservationByAdminUseCaseImp implements CreateReservationByAd
   }
 
   @Override
-  public List<ReservationDetail> execute(UUID adminId, AdminReservationCreateRequestDto requestDto) {
+  public List<ReservationDetail> execute(
+      UUID adminId, AdminReservationCreateRequestDto requestDto) {
     validateReservationDate(requestDto.startDate());
     validateModalityExists(requestDto.modalityId());
     validateCourtSupportsModality(requestDto.courtId(), requestDto.modalityId());
@@ -121,7 +121,8 @@ public class CreateReservationByAdminUseCaseImp implements CreateReservationByAd
     // Validação de disponibilidade para o horário solicitado
     DayOfWeek dayOfWeek = DayOfWeek.convertToDayOfWeek(request.startDate());
     scheduleDateCalculationService.validateDaysHaveOperatingHours(Set.of(dayOfWeek));
-    scheduleAvailabilityService.validateAvailability(request.courtId(), request.startDate(), request.timeInterval());
+    scheduleAvailabilityService.validateAvailability(
+        request.courtId(), request.startDate(), request.timeInterval());
 
     // Criação da reserva e persistência no banco de dados
     DateTimeSlot dateTimeSlot = new DateTimeSlot(request.startDate(), request.timeInterval());
@@ -137,11 +138,11 @@ public class CreateReservationByAdminUseCaseImp implements CreateReservationByAd
             dateTimeSlot);
     reservationRepositoryPort.save(reservation);
 
-
     // Agendamento da tarefa de completar a reserva automaticamente no horário de início da reserva
     String username = costumer.getUsername();
     String phone = costumer.getPhone();
-    eventPublisher.publishEvent(new OnReservationCreatedByAdminNotificationEvent(username, phone,  reservation));
+    eventPublisher.publishEvent(
+        new OnReservationCreatedByAdminNotificationEvent(username, phone, reservation));
     eventPublisher.publishEvent(new OnReservationCreatedScheduleTaskEvent(reservation));
 
     return enrichmentService.enrichReservation(reservation);
@@ -175,7 +176,8 @@ public class CreateReservationByAdminUseCaseImp implements CreateReservationByAd
     List<Reservation> reservations = new ArrayList<>();
 
     for (LocalDate date : applicableDates) {
-      scheduleAvailabilityService.validateAvailability(request.courtId(), date, request.timeInterval());
+      scheduleAvailabilityService.validateAvailability(
+          request.courtId(), date, request.timeInterval());
 
       DateTimeSlot dateTimeSlot = new DateTimeSlot(date, request.timeInterval());
       BigDecimal price = calculateReservationPrice(dateTimeSlot, priceRules);
@@ -195,7 +197,8 @@ public class CreateReservationByAdminUseCaseImp implements CreateReservationByAd
 
     reservationRepositoryPort.saveAll(reservations);
 
-    // Publica evento de notificação para reservas criadas e evento para agendar a conclusão de cada reserva
+    // Publica evento de notificação para reservas criadas e evento para agendar a conclusão de cada
+    // reserva
     publishConfirmationRecurringEvent(costumer, reservations, daysOfWeek);
     publishScheduleCompletionEvent(reservations);
 
@@ -285,18 +288,22 @@ public class CreateReservationByAdminUseCaseImp implements CreateReservationByAd
    * @param dateTimeSlot slot de data de horário da reserva
    * @return Preço calculado
    */
-  private BigDecimal calculateReservationPrice(DateTimeSlot dateTimeSlot, List<PriceRule> priceRules) {
+  private BigDecimal calculateReservationPrice(
+      DateTimeSlot dateTimeSlot, List<PriceRule> priceRules) {
     return priceCalculatorService.calculatePrice(
         dateTimeSlot.timeInterval(), dateTimeSlot.date(), priceRules);
   }
 
-  private void publishConfirmationRecurringEvent(User costumer, List<Reservation> reservations, Set<DayOfWeek> dayOfWeeks) {
-    eventPublisher.publishEvent(new OnRecurringReservationCreatedByAdminNotificationEvent(
+  private void publishConfirmationRecurringEvent(
+      User costumer, List<Reservation> reservations, Set<DayOfWeek> dayOfWeeks) {
+    eventPublisher.publishEvent(
+        new OnRecurringReservationCreatedByAdminNotificationEvent(
             costumer.getUsername(), costumer.getPhone(), dayOfWeeks, reservations));
   }
 
   private void publishScheduleCompletionEvent(List<Reservation> reservations) {
-    reservations.forEach(reservation -> eventPublisher.publishEvent(new OnReservationCreatedScheduleTaskEvent(reservation)));
+    reservations.forEach(
+        reservation ->
+            eventPublisher.publishEvent(new OnReservationCreatedScheduleTaskEvent(reservation)));
   }
-
 }

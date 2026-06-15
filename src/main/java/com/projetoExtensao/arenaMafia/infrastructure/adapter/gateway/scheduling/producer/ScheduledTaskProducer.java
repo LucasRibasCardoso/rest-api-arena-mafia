@@ -3,13 +3,12 @@ package com.projetoExtensao.arenaMafia.infrastructure.adapter.gateway.scheduling
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.projetoExtensao.arenaMafia.application.scheduleTask.gateway.ScheduledTaskPort;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.UUID;
-
 import com.projetoExtensao.arenaMafia.domain.model.enums.ScheduleEntryType;
 import com.projetoExtensao.arenaMafia.infrastructure.adapter.gateway.scheduling.dto.ScheduledReminderTaskDto;
 import com.projetoExtensao.arenaMafia.infrastructure.adapter.gateway.scheduling.dto.ScheduledTaskDto;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -49,12 +48,17 @@ public class ScheduledTaskProducer implements ScheduledTaskPort {
   }
 
   @Override
-  public void scheduleTask(UUID scheduleEntryId, ScheduleEntryType scheduleEntryType, LocalDateTime executionTime) {
+  public void scheduleTask(
+      UUID scheduleEntryId, ScheduleEntryType scheduleEntryType, LocalDateTime executionTime) {
     String scheduleName = generateTaskName(scheduleEntryId, scheduleEntryType);
     String payload = toJson(new ScheduledTaskDto(scheduleEntryId, scheduleEntryType));
 
     createOneTimeSchedule(scheduleName, executionTime, taskQueueArn, payload);
-    logger.info("Agendada task {} ({}) para executar às {}", scheduleEntryType, scheduleEntryId, executionTime);
+    logger.info(
+        "Agendada task {} ({}) para executar às {}",
+        scheduleEntryType,
+        scheduleEntryId,
+        executionTime);
   }
 
   @Override
@@ -69,7 +73,10 @@ public class ScheduledTaskProducer implements ScheduledTaskPort {
     String payload = toJson(new ScheduledReminderTaskDto(reservationId));
 
     createOneTimeSchedule(scheduleName, executionTime, reminderQueueArn, payload);
-    logger.info("Agendado lembrete de WhatsApp da reserva {} para disparar às {}", reservationId, executionTime);
+    logger.info(
+        "Agendado lembrete de WhatsApp da reserva {} para disparar às {}",
+        reservationId,
+        executionTime);
   }
 
   @Override
@@ -80,10 +87,8 @@ public class ScheduledTaskProducer implements ScheduledTaskPort {
 
   private void deleteScheduleFromAws(String scheduleName) {
     try {
-      DeleteScheduleRequest request = DeleteScheduleRequest.builder()
-              .name(scheduleName)
-              .groupName(groupName)
-              .build();
+      DeleteScheduleRequest request =
+          DeleteScheduleRequest.builder().name(scheduleName).groupName(groupName).build();
 
       schedulerClient.deleteSchedule(request);
       logger.info("Agendamento {} cancelado com sucesso no AWS EventBridge", scheduleName);
@@ -100,27 +105,20 @@ public class ScheduledTaskProducer implements ScheduledTaskPort {
   }
 
   private void createOneTimeSchedule(
-          String scheduleName,
-          LocalDateTime executionTime,
-          String targetArn,
-          String payload) {
+      String scheduleName, LocalDateTime executionTime, String targetArn, String payload) {
 
     try {
       // Formato exigido pela AWS EventBridge Scheduler: at(yyyy-MM-dd'T'HH:mm:ss)
       DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
       String scheduleExpression = "at(" + executionTime.format(formatter) + ")";
 
-      Target target = Target.builder()
-              .arn(targetArn)
-              .roleArn(roleArn)
-              .input(payload)
-              .build();
+      Target target = Target.builder().arn(targetArn).roleArn(roleArn).input(payload).build();
 
-      FlexibleTimeWindow timeWindow = FlexibleTimeWindow.builder()
-              .mode(FlexibleTimeWindowMode.OFF)
-              .build();
+      FlexibleTimeWindow timeWindow =
+          FlexibleTimeWindow.builder().mode(FlexibleTimeWindowMode.OFF).build();
 
-      CreateScheduleRequest request = CreateScheduleRequest.builder()
+      CreateScheduleRequest request =
+          CreateScheduleRequest.builder()
               .name(scheduleName)
               .groupName(groupName)
               .scheduleExpression(scheduleExpression)
@@ -133,7 +131,8 @@ public class ScheduledTaskProducer implements ScheduledTaskPort {
       schedulerClient.createSchedule(request);
 
     } catch (Exception e) {
-      logger.error("FALHA CRÍTICA ao criar agendamento {} na AWS: {}", scheduleName, e.getMessage());
+      logger.error(
+          "FALHA CRÍTICA ao criar agendamento {} na AWS: {}", scheduleName, e.getMessage());
       throw new RuntimeException("Erro de comunicação com AWS EventBridge", e);
     }
   }

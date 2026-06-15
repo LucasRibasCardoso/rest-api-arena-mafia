@@ -29,5 +29,4 @@ public interface ScheduleEntryRepositoryPort {
 
   List<ScheduleEntry> findAllActiveSchedulesFromTodayByDaysOfWeekAndTimeInterval(
       Set<DayOfWeek> daysOfWeek, TimeInterval timeInterval);
-
 }

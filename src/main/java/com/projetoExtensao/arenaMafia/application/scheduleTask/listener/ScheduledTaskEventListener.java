@@ -9,12 +9,11 @@ import com.projetoExtensao.arenaMafia.domain.model.enums.ScheduleEntryType;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.BlockedTime;
 import com.projetoExtensao.arenaMafia.domain.model.schedule.Reservation;
 import com.projetoExtensao.arenaMafia.domain.valueobjects.DateTimeSlot;
+import java.time.LocalDateTime;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
-
-import java.time.LocalDateTime;
 
 @Component
 public class ScheduledTaskEventListener {
@@ -28,7 +27,6 @@ public class ScheduledTaskEventListener {
     this.scheduledTaskPort = scheduledTaskPort;
   }
 
-
   @Async
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
   public void onReservationCreated(OnReservationCreatedScheduleTaskEvent event) {
@@ -36,9 +34,11 @@ public class ScheduledTaskEventListener {
     DateTimeSlot dateTimeSlot = res.getDateTimeSlot();
 
     LocalDateTime completeExecutionTime = dateTimeSlot.getEndDateTime();
-    scheduledTaskPort.scheduleTask(res.getId(), ScheduleEntryType.RESERVATION, completeExecutionTime);
+    scheduledTaskPort.scheduleTask(
+        res.getId(), ScheduleEntryType.RESERVATION, completeExecutionTime);
 
-    LocalDateTime reminderExecutionTime = dateTimeSlot.getStartDateTime().minusHours(REMINDER_HOURS_BEFORE_RESERVATION);
+    LocalDateTime reminderExecutionTime =
+        dateTimeSlot.getStartDateTime().minusHours(REMINDER_HOURS_BEFORE_RESERVATION);
 
     if (reminderExecutionTime.isAfter(LocalDateTime.now())) {
       scheduledTaskPort.scheduleReservationReminderTask(res.getId(), reminderExecutionTime);
@@ -57,7 +57,8 @@ public class ScheduledTaskEventListener {
   public void onBlockedTimeCreated(OnBlockedTimeCreatedScheduleTaskEvent event) {
     BlockedTime blockedTime = event.blockedTime();
     LocalDateTime deleteExecutionTime = blockedTime.getDateTimeSlot().getEndDateTime();
-    scheduledTaskPort.scheduleTask(blockedTime.getId(), ScheduleEntryType.BLOCKED_TIME, deleteExecutionTime);
+    scheduledTaskPort.scheduleTask(
+        blockedTime.getId(), ScheduleEntryType.BLOCKED_TIME, deleteExecutionTime);
   }
 
   @Async
@@ -66,4 +67,3 @@ public class ScheduledTaskEventListener {
     scheduledTaskPort.cancelTask(event.blockedTimeId(), ScheduleEntryType.BLOCKED_TIME);
   }
 }
-

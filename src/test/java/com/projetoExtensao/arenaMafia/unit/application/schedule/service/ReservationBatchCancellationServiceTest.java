@@ -32,23 +32,19 @@ import org.springframework.context.ApplicationEventPublisher;
 @DisplayName("Testes unitários para ReservationBatchCancellationService")
 class ReservationBatchCancellationServiceTest {
 
-  @Mock
-  private ReservationRepositoryPort reservationRepository;
+  @Mock private ReservationRepositoryPort reservationRepository;
 
-  @Mock
-  private UserRepositoryPort userRepository;
+  @Mock private UserRepositoryPort userRepository;
 
-  @Mock
-  private ApplicationEventPublisher eventPublisher;
+  @Mock private ApplicationEventPublisher eventPublisher;
 
   private ReservationBatchCancellationService service;
 
   @BeforeEach
   void setUp() {
-    service = new ReservationBatchCancellationService(
-        reservationRepository,
-        userRepository,
-        eventPublisher);
+    service =
+        new ReservationBatchCancellationService(
+            reservationRepository, userRepository, eventPublisher);
   }
 
   @Nested
@@ -74,7 +70,9 @@ class ReservationBatchCancellationServiceTest {
       @DisplayName("Deve retornar 0 quando lista de reservas for vazia")
       void shouldReturnZeroWhenReservationsIsEmpty() {
         // Act
-        int result = service.cancelReservationsInBatchByAdmin(Collections.emptyList(), "Motivo", UUID.randomUUID());
+        int result =
+            service.cancelReservationsInBatchByAdmin(
+                Collections.emptyList(), "Motivo", UUID.randomUUID());
 
         // Assert
         assertThat(result).isZero();
@@ -92,14 +90,17 @@ class ReservationBatchCancellationServiceTest {
         when(userRepository.findAllByIds(any())).thenReturn(List.of(user));
 
         // Act
-        int result = service.cancelReservationsInBatchByAdmin(List.of(reservation), "Bloqueio de horário", adminId);
+        int result =
+            service.cancelReservationsInBatchByAdmin(
+                List.of(reservation), "Bloqueio de horário", adminId);
 
         // Assert
         assertThat(result).isEqualTo(1);
         assertThat(reservation.getStatus()).isEqualTo(ReservationStatus.CANCELLED);
         assertThat(reservation.getCancelledByAdminId()).isEqualTo(adminId);
         verify(reservationRepository, times(1)).saveAll(anyList());
-        verify(eventPublisher, times(1)).publishEvent(any(OnReservationsCancelledByAdminNotificationEvent.class));
+        verify(eventPublisher, times(1))
+            .publishEvent(any(OnReservationsCancelledByAdminNotificationEvent.class));
       }
 
       @Test
@@ -128,7 +129,8 @@ class ReservationBatchCancellationServiceTest {
         assertThat(reservation2.getStatus()).isEqualTo(ReservationStatus.CANCELLED);
         assertThat(reservation3.getStatus()).isEqualTo(ReservationStatus.CANCELLED);
         verify(reservationRepository, times(1)).saveAll(reservations);
-        verify(eventPublisher, times(3)).publishEvent(any(OnReservationsCancelledByAdminNotificationEvent.class));
+        verify(eventPublisher, times(3))
+            .publishEvent(any(OnReservationsCancelledByAdminNotificationEvent.class));
       }
 
       @Test
@@ -163,7 +165,8 @@ class ReservationBatchCancellationServiceTest {
     class FailureScenarios {
 
       @Test
-      @DisplayName("Deve lançar BatchCancellationFailedException quando uma reserva já cancelada e NÃO publicar eventos")
+      @DisplayName(
+          "Deve lançar BatchCancellationFailedException quando uma reserva já cancelada e NÃO publicar eventos")
       void shouldThrowExceptionWhenOneReservationFailsAndNotPublishEvents() {
         // Arrange
         Reservation validReservation = createConfirmedReservation();
@@ -176,7 +179,10 @@ class ReservationBatchCancellationServiceTest {
         when(userRepository.findAllByIds(any())).thenReturn(List.of(user));
 
         // Act & Assert
-        assertThatThrownBy(() -> service.cancelReservationsInBatchByAdmin(reservations, "Motivo", UUID.randomUUID()))
+        assertThatThrownBy(
+                () ->
+                    service.cancelReservationsInBatchByAdmin(
+                        reservations, "Motivo", UUID.randomUUID()))
             .isInstanceOf(BatchCancellationFailedException.class);
 
         // Verifica que NENHUM evento foi publicado (evita notificação sem commit)
@@ -184,17 +190,23 @@ class ReservationBatchCancellationServiceTest {
       }
 
       @Test
-      @DisplayName("Deve lançar BatchCancellationFailedException quando saveAll falhar e NÃO publicar eventos")
+      @DisplayName(
+          "Deve lançar BatchCancellationFailedException quando saveAll falhar e NÃO publicar eventos")
       void shouldThrowExceptionWhenSaveFailsAndNotPublishEvents() {
         // Arrange
         Reservation reservation = createConfirmedReservation();
         User user = createUser(reservation.getUserId());
 
         when(userRepository.findAllByIds(any())).thenReturn(List.of(user));
-        doThrow(new RuntimeException("Database error")).when(reservationRepository).saveAll(anyList());
+        doThrow(new RuntimeException("Database error"))
+            .when(reservationRepository)
+            .saveAll(anyList());
 
         // Act & Assert
-        assertThatThrownBy(() -> service.cancelReservationsInBatchByAdmin(List.of(reservation), "Motivo", UUID.randomUUID()))
+        assertThatThrownBy(
+                () ->
+                    service.cancelReservationsInBatchByAdmin(
+                        List.of(reservation), "Motivo", UUID.randomUUID()))
             .isInstanceOf(BatchCancellationFailedException.class);
 
         // Verifica que NENHUM evento foi publicado
@@ -279,7 +291,8 @@ class ReservationBatchCancellationServiceTest {
     class FailureScenarios {
 
       @Test
-      @DisplayName("Deve lançar BatchCancellationFailedException quando uma reserva já estiver cancelada")
+      @DisplayName(
+          "Deve lançar BatchCancellationFailedException quando uma reserva já estiver cancelada")
       void shouldThrowExceptionWhenReservationAlreadyCancelled() {
         // Arrange
         UUID userId = UUID.randomUUID();
@@ -302,10 +315,13 @@ class ReservationBatchCancellationServiceTest {
         UUID userId = UUID.randomUUID();
         User user = createUser(userId);
         Reservation reservation = createConfirmedReservationForUser(userId);
-        doThrow(new RuntimeException("Database error")).when(reservationRepository).saveAll(anyList());
+        doThrow(new RuntimeException("Database error"))
+            .when(reservationRepository)
+            .saveAll(anyList());
 
         // Act & Assert
-        assertThatThrownBy(() -> service.cancelReservationsDueToAccountDisabled(List.of(reservation), user))
+        assertThatThrownBy(
+                () -> service.cancelReservationsDueToAccountDisabled(List.of(reservation), user))
             .isInstanceOf(BatchCancellationFailedException.class);
 
         verify(eventPublisher, never()).publishEvent(any());
@@ -374,7 +390,8 @@ class ReservationBatchCancellationServiceTest {
     class FailureScenarios {
 
       @Test
-      @DisplayName("Deve lançar BatchCancellationFailedException quando uma reserva já estiver cancelada")
+      @DisplayName(
+          "Deve lançar BatchCancellationFailedException quando uma reserva já estiver cancelada")
       void shouldThrowExceptionWhenReservationAlreadyCancelled() {
         // Arrange
         Reservation validReservation = createConfirmedReservation();
@@ -393,7 +410,9 @@ class ReservationBatchCancellationServiceTest {
       void shouldThrowExceptionWhenSaveAllFails() {
         // Arrange
         Reservation reservation = createConfirmedReservation();
-        doThrow(new RuntimeException("Database error")).when(reservationRepository).saveAll(anyList());
+        doThrow(new RuntimeException("Database error"))
+            .when(reservationRepository)
+            .saveAll(anyList());
 
         // Act & Assert
         assertThatThrownBy(() -> service.cancelReservationsInBatchSilently(List.of(reservation)))
@@ -448,4 +467,3 @@ class ReservationBatchCancellationServiceTest {
         java.time.Instant.now());
   }
 }
-

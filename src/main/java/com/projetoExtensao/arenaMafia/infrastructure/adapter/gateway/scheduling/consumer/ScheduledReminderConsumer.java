@@ -37,17 +37,23 @@ public class ScheduledReminderConsumer {
       Reservation reservation = reservationRepositoryPort.findByIdOrElseThrow(dto.reservationId());
 
       if (!reservation.isActive()) {
-        logger.info("Lembrete ignorado: A reserva {} não está mais no status CONFIRMED.", dto.reservationId());
+        logger.info(
+            "Lembrete ignorado: A reserva {} não está mais no status CONFIRMED.",
+            dto.reservationId());
         return;
       }
 
       String userPhone = userRepositoryPort.findByIdOrElseThrow(reservation.getUserId()).getPhone();
-      eventPublisher.publishEvent(new OnReservationReminderNotificationEvent(userPhone, reservation));
+      eventPublisher.publishEvent(
+          new OnReservationReminderNotificationEvent(userPhone, reservation));
 
     } catch (ScheduleNotFoundException e) {
       logger.warn("Reserva {} não encontrada. Lembrete ignorado.", dto.reservationId());
     } catch (Exception e) {
-      logger.error("Falha ao processar lembrete {}: {}. Enviando para a Lixeira.", dto.reservationId(), e.getMessage());
+      logger.error(
+          "Falha ao processar lembrete {}: {}. Enviando para a Lixeira.",
+          dto.reservationId(),
+          e.getMessage());
       throw e;
     }
   }

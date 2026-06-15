@@ -50,7 +50,8 @@ public class ResendChangePhoneOtpUseCaseTest {
     resendChangePhoneOtpUseCase.execute(userId);
 
     // Assert
-    verify(eventPublisher, times(1)).publishEvent(any(OnVerificationRequiredNotificationEvent.class));
+    verify(eventPublisher, times(1))
+        .publishEvent(any(OnVerificationRequiredNotificationEvent.class));
   }
 
   @Test

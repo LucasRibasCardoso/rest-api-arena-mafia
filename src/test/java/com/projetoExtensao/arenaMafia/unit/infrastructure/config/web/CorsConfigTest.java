@@ -21,8 +21,7 @@ class CorsConfigTest {
 
   @BeforeEach
   void setup() {
-    configurationSource =
-        new CorsConfig().corsConfigurationSource(List.of(ALLOWED_ORIGIN));
+    configurationSource = new CorsConfig().corsConfigurationSource(List.of(ALLOWED_ORIGIN));
     corsProcessor = new DefaultCorsProcessor();
   }
 
