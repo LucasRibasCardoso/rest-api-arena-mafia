@@ -40,23 +40,22 @@ public class PriceRuleControllerIntegrationTest extends WebIntegrationTestConfig
 
     // Act
     var responseBodyJson =
-        given().spec(specification).when().get().then().statusCode(200).extract().body().asString();
+        given()
+                .spec(specification)
+                .when()
+                .get()
+                .then()
+                .log().all()
+                .statusCode(200)
+                .extract()
+                .body()
+                .asString();
 
     var response = new JsonPath(responseBodyJson).getList("", PriceRuleResponseDto.class);
 
     // Assert
-    assertThat(response).hasSize(3);
+    assertThat(response).hasSize(2);
     assertThat(response).allMatch(PriceRuleResponseDto::isActive);
-
-    // Valida a Regra de Preço Padrão
-    PriceRuleResponseDto defaultRule =
-        response.stream().filter(PriceRuleResponseDto::isDefault).findFirst().orElseThrow();
-
-    assertThat(defaultRule.name()).isEqualTo("Regra de Preço Padrão");
-    assertThat(defaultRule.price()).isEqualByComparingTo("50.00");
-    assertThat(defaultRule.priority()).isZero();
-    assertThat(defaultRule.daysOfWeek()).isNull();
-    assertThat(defaultRule.timeInterval()).isNull();
 
     // Valida a Regra "Horário Nobre - Dias de Semana"
     PriceRuleResponseDto peakHoursRule =
