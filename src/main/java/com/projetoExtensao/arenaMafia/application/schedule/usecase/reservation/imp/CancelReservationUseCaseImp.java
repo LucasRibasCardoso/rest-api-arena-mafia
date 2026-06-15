@@ -31,7 +31,8 @@ public class CancelReservationUseCaseImp implements CancelReservationUseCase {
 
   @Override
   public void execute(UUID userId, UUID reservationId) {
-    Reservation reservation = reservationRepositoryPort.findReservationByIdAndUserIdOrElseThrow(reservationId, userId);
+    Reservation reservation =
+        reservationRepositoryPort.findReservationByIdAndUserIdOrElseThrow(reservationId, userId);
 
     validateCancellationPolicy(reservation);
     reservation.cancel();
@@ -49,7 +50,8 @@ public class CancelReservationUseCaseImp implements CancelReservationUseCase {
   private void validateCancellationPolicy(Reservation reservation) {
     LocalDateTime now = LocalDateTime.now();
 
-    long minutesUntilReservation = Duration.between(now, reservation.getDateTimeSlot().getStartDateTime()).toMinutes();
+    long minutesUntilReservation =
+        Duration.between(now, reservation.getDateTimeSlot().getStartDateTime()).toMinutes();
 
     if (minutesUntilReservation < MINIUM_MINUTES_BEFORE_CANCELLATION_DEFAULT) {
       throw new InvalidReservationException(ErrorCode.RESERVATION_NOT_POSSIBLE_TO_CANCEL);

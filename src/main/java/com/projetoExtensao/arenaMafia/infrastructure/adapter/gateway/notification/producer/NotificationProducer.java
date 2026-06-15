@@ -43,7 +43,8 @@ public class NotificationProducer implements NotificationPort {
   public void sendWhatsappMessage(String phone, String content) {
     String payload = toJson(new NotificationDto(phone, content));
     sqsTemplate.send(to -> to.queue(whatsappTransactionalQueue).payload(payload));
-    logger.info("Adicionado na fila TRANSACIONAL WhatsApp: {}", PhoneFormatterUtils.maskPhoneNumber(phone));
+    logger.info(
+        "Adicionado na fila TRANSACIONAL WhatsApp: {}", PhoneFormatterUtils.maskPhoneNumber(phone));
   }
 
   private String toJson(NotificationDto dto) {

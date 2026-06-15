@@ -10,6 +10,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -60,6 +61,7 @@ public class SecurityConfig {
             "/webjars/**",
             "/openapi.yml")
         .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
+        .cors(Customizer.withDefaults())
         .csrf(CsrfConfigurer::disable)
         .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin));
     return http.build();
@@ -69,6 +71,9 @@ public class SecurityConfig {
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
     http
+        // Habilita CORS usando o CorsConfigurationSource da aplicação
+        .cors(Customizer.withDefaults())
+
         // Desabilita o CSRF
         .csrf(CsrfConfigurer::disable)
 

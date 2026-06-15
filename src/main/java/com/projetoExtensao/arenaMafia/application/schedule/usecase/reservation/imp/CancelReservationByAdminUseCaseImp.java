@@ -44,20 +44,25 @@ public class CancelReservationByAdminUseCaseImp implements CancelReservationByAd
     if (reservation.isRecurring() && cancelAllRecurring) {
       processCancelRecurringReservation(adminId, reservation.getRecurringReservationId());
     } else {
-      processCancelSingleReservation(adminId, reservation, costumer.getUsername(), costumer.getPhone());
+      processCancelSingleReservation(
+          adminId, reservation, costumer.getUsername(), costumer.getPhone());
     }
   }
 
   private void processCancelRecurringReservation(UUID adminId, UUID recurringReservationId) {
-    List<Reservation> reservations = reservationRepository.findAllFutureRecurringReservations(recurringReservationId);
-    reservationBatchCancellationService.cancelReservationsInBatchByAdmin(reservations, REASON, adminId);
+    List<Reservation> reservations =
+        reservationRepository.findAllFutureRecurringReservations(recurringReservationId);
+    reservationBatchCancellationService.cancelReservationsInBatchByAdmin(
+        reservations, REASON, adminId);
   }
 
-  private void processCancelSingleReservation(UUID adminId, Reservation reservation, String username, String phone) {
+  private void processCancelSingleReservation(
+      UUID adminId, Reservation reservation, String username, String phone) {
     reservation.cancelByAdmin(adminId);
     reservationRepository.save(reservation);
 
-    eventPublisher.publishEvent(new OnReservationCancelledByAdminNotificationEvent(username, phone, REASON, reservation));
+    eventPublisher.publishEvent(
+        new OnReservationCancelledByAdminNotificationEvent(username, phone, REASON, reservation));
     eventPublisher.publishEvent(new OnReservationCancelledScheduleTaskEvent(reservation.getId()));
   }
 }

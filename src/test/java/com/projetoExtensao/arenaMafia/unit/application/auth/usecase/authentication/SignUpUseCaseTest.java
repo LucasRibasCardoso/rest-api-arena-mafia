@@ -98,7 +98,8 @@ public class SignUpUseCaseTest {
               assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.PHONE_INVALID_FORMAT);
             });
 
-    verify(eventPublisher, never()).publishEvent(any(OnVerificationRequiredNotificationEvent.class));
+    verify(eventPublisher, never())
+        .publishEvent(any(OnVerificationRequiredNotificationEvent.class));
     verify(otpSessionPort, never()).generateOtpSession(any(UUID.class));
   }
 
@@ -124,7 +125,8 @@ public class SignUpUseCaseTest {
             });
 
     verify(otpSessionPort, never()).generateOtpSession(any(UUID.class));
-    verify(eventPublisher, never()).publishEvent(any(OnVerificationRequiredNotificationEvent.class));
+    verify(eventPublisher, never())
+        .publishEvent(any(OnVerificationRequiredNotificationEvent.class));
   }
 
   @Test
@@ -148,6 +150,7 @@ public class SignUpUseCaseTest {
             });
 
     verify(otpSessionPort, never()).generateOtpSession(any(UUID.class));
-    verify(eventPublisher, never()).publishEvent(any(OnVerificationRequiredNotificationEvent.class));
+    verify(eventPublisher, never())
+        .publishEvent(any(OnVerificationRequiredNotificationEvent.class));
   }
 }

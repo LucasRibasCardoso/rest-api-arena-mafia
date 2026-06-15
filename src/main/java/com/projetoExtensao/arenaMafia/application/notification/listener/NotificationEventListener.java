@@ -29,10 +29,7 @@ public class NotificationEventListener {
     this.notificationPort = notificationPort;
   }
 
-
-  /**
-   * Envia um SMS para o usuário com um código OTP para verificação de telefone
-   * */
+  /** Envia um SMS para o usuário com um código OTP para verificação de telefone */
   @Async
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
   public void onOtpVerification(OnVerificationRequiredNotificationEvent eventData) {
@@ -44,9 +41,7 @@ public class NotificationEventListener {
     notificationPort.sendSms(eventData.getRecipientPhone(), message);
   }
 
-  /**
-   * Envia uma notificação via WhatsApp para o usuário lembrando-o de uma reserva agendada
-   */
+  /** Envia uma notificação via WhatsApp para o usuário lembrando-o de uma reserva agendada */
   @Async
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
   public void onReservationReminder(OnReservationReminderNotificationEvent eventData) {
@@ -61,7 +56,8 @@ public class NotificationEventListener {
   @Async
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
   public void onReservationCreatedByAdmin(OnReservationCreatedByAdminNotificationEvent eventData) {
-    String message = buildReservationCreatedByAdminMessage(eventData.username(), eventData.reservation());
+    String message =
+        buildReservationCreatedByAdminMessage(eventData.username(), eventData.reservation());
     notificationPort.sendWhatsappMessage(eventData.userPhone(), message);
   }
 
@@ -71,7 +67,8 @@ public class NotificationEventListener {
    */
   @Async
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-  public void onReservationCancelledByAdmin(OnReservationCancelledByAdminNotificationEvent eventData) {
+  public void onReservationCancelledByAdmin(
+      OnReservationCancelledByAdminNotificationEvent eventData) {
     String message =
         buildReservationCancellationByAdminMessage(
             eventData.username(), eventData.reservation(), eventData.adminReason());
@@ -84,7 +81,8 @@ public class NotificationEventListener {
    */
   @Async
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-  public void onReservationsCancelledByAdmin(OnReservationsCancelledByAdminNotificationEvent eventData) {
+  public void onReservationsCancelledByAdmin(
+      OnReservationsCancelledByAdminNotificationEvent eventData) {
     String message = buildReservationsCancelledByAdminMessage(eventData);
     notificationPort.sendWhatsappMessage(eventData.userPhone(), message);
   }

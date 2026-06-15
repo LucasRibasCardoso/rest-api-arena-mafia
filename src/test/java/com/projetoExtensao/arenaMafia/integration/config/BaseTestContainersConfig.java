@@ -42,10 +42,10 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -105,15 +105,15 @@ public abstract class BaseTestContainersConfig {
   private static final String SMS_QUEUE = "sms-queue";
   private static final String GENERAL_TRASH_DLQ = "general-trash-dlq";
 
-  private static final List<String> ALL_QUEUE_NAMES = List.of(
-      SCHEDULE_TASK_QUEUE,
-      SCHEDULE_TASK_DLQ,
-      WHATSAPP_TRANSACTIONAL_QUEUE,
-      WHATSAPP_TRANSACTIONAL_DLQ,
-      WHATSAPP_REMINDER_QUEUE,
-      SMS_QUEUE,
-      GENERAL_TRASH_DLQ
-  );
+  private static final List<String> ALL_QUEUE_NAMES =
+      List.of(
+          SCHEDULE_TASK_QUEUE,
+          SCHEDULE_TASK_DLQ,
+          WHATSAPP_TRANSACTIONAL_QUEUE,
+          WHATSAPP_TRANSACTIONAL_DLQ,
+          WHATSAPP_REMINDER_QUEUE,
+          SMS_QUEUE,
+          GENERAL_TRASH_DLQ);
 
   @BeforeAll
   public static void configureEnvironment() {
@@ -126,7 +126,8 @@ public abstract class BaseTestContainersConfig {
     redis.start();
 
     // LocalStack
-    localStack = new LocalStackContainer(DockerImageName.parse("localstack/localstack:3.8"))
+    localStack =
+        new LocalStackContainer(DockerImageName.parse("localstack/localstack:3.8"))
             .withReuse(true)
             .withEnv("SERVICES", "sqs,iam,scheduler");
     localStack.start();
@@ -141,21 +142,21 @@ public abstract class BaseTestContainersConfig {
 
     // =================== Limpeza do Banco de Dados ===================
     JdbcTestUtils.deleteFromTables(
-            jdbcTemplate,
-            // Nível 1: Tabelas mais dependentes (subtabelas de schedule_entries)
-            "tb_reservations",
-            "tb_blocked_times",
-            // Nível 2: Tabelas com FK para outras tabelas
-            "tb_schedule_entries",
-            "tb_refresh_token",
-            "tb_court_modalities",
-            "tb_operating_hours",
-            "tb_price_rules",
-            // Nível 3: Tabelas intermediárias
-            "tb_courts",
-            "tb_modalities",
-            // Nível 4: Tabelas base
-            "tb_users");
+        jdbcTemplate,
+        // Nível 1: Tabelas mais dependentes (subtabelas de schedule_entries)
+        "tb_reservations",
+        "tb_blocked_times",
+        // Nível 2: Tabelas com FK para outras tabelas
+        "tb_schedule_entries",
+        "tb_refresh_token",
+        "tb_court_modalities",
+        "tb_operating_hours",
+        "tb_price_rules",
+        // Nível 3: Tabelas intermediárias
+        "tb_courts",
+        "tb_modalities",
+        // Nível 4: Tabelas base
+        "tb_users");
 
     // =================== Limpeza do Redis ===================
     var connectionFactory = redisTemplate.getConnectionFactory();
@@ -184,23 +185,24 @@ public abstract class BaseTestContainersConfig {
     String schedulerEndpoint = localStack.getEndpoint().toString();
     registry.add("spring.cloud.aws.sqs.endpoint", () -> schedulerEndpoint);
     registry.add("spring.cloud.aws.region.static", localStack::getRegion);
-    registry.add("spring.cloud.aws.credentials.access-key",() -> AWS_ACCESS_KEY);
+    registry.add("spring.cloud.aws.credentials.access-key", () -> AWS_ACCESS_KEY);
     registry.add("spring.cloud.aws.credentials.secret-key", () -> AWS_SECRET_KEY);
 
     // Role do EventBridge Scheduler
     registry.add(
-            "AWS_SCHEDULER_ROLE_ARN",
-            () -> String.format("arn:aws:iam::%s:role/arena-mafia-scheduler-role", AWS_ACCOUNT_ID));
+        "AWS_SCHEDULER_ROLE_ARN",
+        () -> String.format("arn:aws:iam::%s:role/arena-mafia-scheduler-role", AWS_ACCOUNT_ID));
 
     // ARN da fila de tasks
     registry.add(
-            "AWS_SQS_SCHEDULE_TASK_QUEUE_ARN",
-            () -> String.format("arn:aws:sqs:%s:%s:schedule-task-queue", AWS_REGION, AWS_ACCOUNT_ID));
+        "AWS_SQS_SCHEDULE_TASK_QUEUE_ARN",
+        () -> String.format("arn:aws:sqs:%s:%s:schedule-task-queue", AWS_REGION, AWS_ACCOUNT_ID));
 
     // ARN da fila de lembretes
     registry.add(
-            "AWS_SQS_WHATSAPP_REMINDER_QUEUE_ARN",
-            () -> String.format("arn:aws:sqs:%s:%s:whatsapp-reminder-queue", AWS_REGION, AWS_ACCOUNT_ID));
+        "AWS_SQS_WHATSAPP_REMINDER_QUEUE_ARN",
+        () ->
+            String.format("arn:aws:sqs:%s:%s:whatsapp-reminder-queue", AWS_REGION, AWS_ACCOUNT_ID));
   }
 
   // =================== Métodos Auxiliares de Configuração ===================
@@ -226,42 +228,53 @@ public abstract class BaseTestContainersConfig {
     localStack.execInContainer("awslocal", "sqs", "create-queue", "--queue-name", queueName);
   }
 
-  private static void createQueueWithDlq(String queueName, String dlqName, int maxReceiveCount) throws Exception {
+  private static void createQueueWithDlq(String queueName, String dlqName, int maxReceiveCount)
+      throws Exception {
     createQueue(queueName);
 
     String dlqArn = String.format("arn:aws:sqs:%s:%s:%s", AWS_REGION, AWS_ACCOUNT_ID, dlqName);
 
     String redrivePolicy =
-            "{\\\"deadLetterTargetArn\\\":\\\"%s\\\",\\\"maxReceiveCount\\\":\\\"%d\\\"}"
-                    .formatted(dlqArn, maxReceiveCount);
+        "{\\\"deadLetterTargetArn\\\":\\\"%s\\\",\\\"maxReceiveCount\\\":\\\"%d\\\"}"
+            .formatted(dlqArn, maxReceiveCount);
 
     String queueUrl =
-            "http://sqs.%s.localhost.localstack.cloud:4566/%s/%s".formatted(AWS_REGION, AWS_ACCOUNT_ID, queueName);
+        "http://sqs.%s.localhost.localstack.cloud:4566/%s/%s"
+            .formatted(AWS_REGION, AWS_ACCOUNT_ID, queueName);
 
-    String attributes = "{\"VisibilityTimeout\":\"1\",\"RedrivePolicy\":\"%s\"}".formatted(redrivePolicy);
+    String attributes =
+        "{\"VisibilityTimeout\":\"1\",\"RedrivePolicy\":\"%s\"}".formatted(redrivePolicy);
 
     String command =
-            "awslocal sqs set-queue-attributes --queue-url %s --attributes '%s'".formatted(queueUrl, attributes);
+        "awslocal sqs set-queue-attributes --queue-url %s --attributes '%s'"
+            .formatted(queueUrl, attributes);
 
     localStack.execInContainer("sh", "-c", command);
   }
 
   private void purgeAllSqsQueues() {
     try {
-      CompletableFuture<?>[] purgeFutures = ALL_QUEUE_NAMES.stream()
-          .map(queueName ->
-              sqsAsyncClient
-                  .getQueueUrl(GetQueueUrlRequest.builder().queueName(queueName).build())
-                  .thenCompose(urlResponse ->
-                      sqsAsyncClient.purgeQueue(
-                          PurgeQueueRequest.builder()
-                              .queueUrl(urlResponse.queueUrl())
-                              .build()))
-                  .exceptionally(ex -> {
-                    logger.warn("Falha ao purgar fila SQS '{}': {}", queueName, ex.getMessage());
-                    return null;
-                  }))
-          .toArray(CompletableFuture[]::new);
+      CompletableFuture<?>[] purgeFutures =
+          ALL_QUEUE_NAMES.stream()
+              .map(
+                  queueName ->
+                      sqsAsyncClient
+                          .getQueueUrl(GetQueueUrlRequest.builder().queueName(queueName).build())
+                          .thenCompose(
+                              urlResponse ->
+                                  sqsAsyncClient.purgeQueue(
+                                      PurgeQueueRequest.builder()
+                                          .queueUrl(urlResponse.queueUrl())
+                                          .build()))
+                          .exceptionally(
+                              ex -> {
+                                logger.warn(
+                                    "Falha ao purgar fila SQS '{}': {}",
+                                    queueName,
+                                    ex.getMessage());
+                                return null;
+                              }))
+              .toArray(CompletableFuture[]::new);
 
       CompletableFuture.allOf(purgeFutures).join();
 

@@ -432,7 +432,9 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
                 modality.getId(), courtId, date, timeInterval, DEFAULT_RESERVATION_PRICE, adminId);
             mockPersistBlockedTimeSpecific(courtId, date, timeInterval, "Manutenção", adminId);
 
-            var requestDto = new BlockedTimeConflictsPreviewRequestDto(List.of(courtId), date, date, timeInterval, false, null);
+            var requestDto =
+                new BlockedTimeConflictsPreviewRequestDto(
+                    List.of(courtId), date, date, timeInterval, false, null);
 
             // Act
             var response =
@@ -443,7 +445,8 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
                     .when()
                     .post("/preview-conflicts")
                     .then()
-                        .log().all()
+                    .log()
+                    .all()
                     .statusCode(200)
                     .extract()
                     .as(BlockedTimeConflictsPreviewResponseDto.class);
@@ -2890,8 +2893,10 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
         assertThat(response).hasSize(1);
         assertThat(response.getFirst().description()).isEqualTo("Manutenção única");
 
-        BlockedTime updatedBlockedTime1 = blockedTimeRepository.findByIdOrElseThrow(blockedTime1.getId());
-        BlockedTime notUpdatedBlockedTime2 = blockedTimeRepository.findByIdOrElseThrow(blockedTime2.getId());
+        BlockedTime updatedBlockedTime1 =
+            blockedTimeRepository.findByIdOrElseThrow(blockedTime1.getId());
+        BlockedTime notUpdatedBlockedTime2 =
+            blockedTimeRepository.findByIdOrElseThrow(blockedTime2.getId());
 
         assertThat(updatedBlockedTime1.getDescription()).isEqualTo("Manutenção única");
         assertThat(notUpdatedBlockedTime2.getDescription()).isEqualTo("Manutenção recorrente");
@@ -2955,7 +2960,8 @@ public class AdminBlockedTimeControllerIntegrationTest extends WebIntegrationTes
 
         // Assert
         String path = "/api/admin/blocked-times/" + nonExistentId;
-        assertValidationError(response, path, "description", ErrorCode.BLOCKED_TIME_DESCRIPTION_INVALID_LENGTH);
+        assertValidationError(
+            response, path, "description", ErrorCode.BLOCKED_TIME_DESCRIPTION_INVALID_LENGTH);
       }
     }
 

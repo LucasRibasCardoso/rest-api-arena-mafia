@@ -3,17 +3,13 @@ package com.projetoExtensao.arenaMafia.infrastructure.adapter.gateway.scheduling
 import com.projetoExtensao.arenaMafia.domain.model.enums.ScheduleEntryType;
 import java.util.UUID;
 
-public record ScheduledTaskDto(
-    UUID scheduleEntryId,
-    ScheduleEntryType scheduleEntryType
-) {
+public record ScheduledTaskDto(UUID scheduleEntryId, ScheduleEntryType scheduleEntryType) {
 
   public boolean isReservation() {
     return scheduleEntryType == ScheduleEntryType.RESERVATION;
   }
 
-    public boolean isBlockedTime() {
-      return scheduleEntryType == ScheduleEntryType.BLOCKED_TIME;
-    }
+  public boolean isBlockedTime() {
+    return scheduleEntryType == ScheduleEntryType.BLOCKED_TIME;
+  }
 }
-

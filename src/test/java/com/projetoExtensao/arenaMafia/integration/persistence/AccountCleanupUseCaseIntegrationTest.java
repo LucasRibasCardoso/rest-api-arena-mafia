@@ -155,23 +155,25 @@ public class AccountCleanupUseCaseIntegrationTest extends BaseTestContainersConf
       TimeInterval timeInterval = new TimeInterval(LocalTime.of(10, 0), LocalTime.of(11, 0));
       LocalDate pastDate = LocalDate.now().minusDays(5);
 
-      Reservation pastReservation1 = mockPersistReservationByUserWithStatus(
-          modality.getId(),
-          court.getId(),
-          pastDate,
-          timeInterval,
-          BigDecimal.valueOf(100),
-          userToDelete.getId(),
-          ReservationStatus.COMPLETED);
+      Reservation pastReservation1 =
+          mockPersistReservationByUserWithStatus(
+              modality.getId(),
+              court.getId(),
+              pastDate,
+              timeInterval,
+              BigDecimal.valueOf(100),
+              userToDelete.getId(),
+              ReservationStatus.COMPLETED);
 
-      Reservation pastReservation2 = mockPersistReservationByUserWithStatus(
-          modality.getId(),
-          court.getId(),
-          pastDate.minusDays(1),
-          timeInterval,
-          BigDecimal.valueOf(100),
-          userToDelete.getId(),
-          ReservationStatus.CANCELLED);
+      Reservation pastReservation2 =
+          mockPersistReservationByUserWithStatus(
+              modality.getId(),
+              court.getId(),
+              pastDate.minusDays(1),
+              timeInterval,
+              BigDecimal.valueOf(100),
+              userToDelete.getId(),
+              ReservationStatus.CANCELLED);
 
       // Act
       accountCleanupUseCase.executeCleanupOfDisabledAccounts();
@@ -180,8 +182,10 @@ public class AccountCleanupUseCaseIntegrationTest extends BaseTestContainersConf
       assertThat(userRepositoryPort.findById(userToDelete.getId())).isEmpty();
 
       // Assert - Reservas migradas para system user
-      Reservation migratedReservation1 = reservationRepository.findByIdOrElseThrow(pastReservation1.getId());
-      Reservation migratedReservation2 = reservationRepository.findByIdOrElseThrow(pastReservation2.getId());
+      Reservation migratedReservation1 =
+          reservationRepository.findByIdOrElseThrow(pastReservation1.getId());
+      Reservation migratedReservation2 =
+          reservationRepository.findByIdOrElseThrow(pastReservation2.getId());
 
       assertThat(migratedReservation1.getUserId()).isEqualTo(systemUser.getId());
       assertThat(migratedReservation2.getUserId()).isEqualTo(systemUser.getId());

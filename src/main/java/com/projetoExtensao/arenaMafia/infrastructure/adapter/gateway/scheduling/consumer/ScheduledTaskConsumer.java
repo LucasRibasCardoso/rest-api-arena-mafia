@@ -32,7 +32,8 @@ public class ScheduledTaskConsumer {
       deleteBlockedTime(taskDto);
       logger.info("SUCESSO: BlockedTime {} deletado após conclusão.", taskDto.scheduleEntryId());
     } else {
-      logger.warn("Tipo de ScheduleEntry desconhecido recebido da fila: {}", taskDto.scheduleEntryType());
+      logger.warn(
+          "Tipo de ScheduleEntry desconhecido recebido da fila: {}", taskDto.scheduleEntryType());
     }
   }
 

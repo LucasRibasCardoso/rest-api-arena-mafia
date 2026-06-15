@@ -1,7 +1,7 @@
 package com.projetoExtensao.arenaMafia.infrastructure.adapter.gateway.notification.consumer;
 
-import com.projetoExtensao.arenaMafia.infrastructure.adapter.gateway.notification.sms.SmsClient;
 import com.projetoExtensao.arenaMafia.infrastructure.adapter.gateway.notification.dto.NotificationDto;
+import com.projetoExtensao.arenaMafia.infrastructure.adapter.gateway.notification.sms.SmsClient;
 import com.projetoExtensao.arenaMafia.infrastructure.utils.PhoneFormatterUtils;
 import io.awspring.cloud.sqs.annotation.SqsListener;
 import org.slf4j.Logger;

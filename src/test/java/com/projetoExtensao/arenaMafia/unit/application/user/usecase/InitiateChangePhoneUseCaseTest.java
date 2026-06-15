@@ -55,7 +55,8 @@ public class InitiateChangePhoneUseCaseTest {
 
     // Assert
     verify(pendingPhoneChangePort, times(1)).save(idCurrentUser, newPhone);
-    verify(eventPublisher, times(1)).publishEvent(any(OnVerificationRequiredNotificationEvent.class));
+    verify(eventPublisher, times(1))
+        .publishEvent(any(OnVerificationRequiredNotificationEvent.class));
   }
 
   @Test
@@ -79,7 +80,8 @@ public class InitiateChangePhoneUseCaseTest {
             });
 
     verify(pendingPhoneChangePort, never()).save(idCurrentUser, newPhone);
-    verify(eventPublisher, never()).publishEvent(any(OnVerificationRequiredNotificationEvent.class));
+    verify(eventPublisher, never())
+        .publishEvent(any(OnVerificationRequiredNotificationEvent.class));
   }
 
   @Test
@@ -104,7 +106,8 @@ public class InitiateChangePhoneUseCaseTest {
             });
 
     verify(pendingPhoneChangePort, never()).save(idCurrentUser, newPhone);
-    verify(eventPublisher, never()).publishEvent(any(OnVerificationRequiredNotificationEvent.class));
+    verify(eventPublisher, never())
+        .publishEvent(any(OnVerificationRequiredNotificationEvent.class));
   }
 
   @Test
@@ -130,6 +133,7 @@ public class InitiateChangePhoneUseCaseTest {
             });
 
     verify(pendingPhoneChangePort, never()).save(idCurrentUser, newPhone);
-    verify(eventPublisher, never()).publishEvent(any(OnVerificationRequiredNotificationEvent.class));
+    verify(eventPublisher, never())
+        .publishEvent(any(OnVerificationRequiredNotificationEvent.class));
   }
 }

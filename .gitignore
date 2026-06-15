@@ -32,6 +32,7 @@ build/
 .vscode/
 
 .env
+!.env.example
 .htpasswd
 secrets/.actuator_password
 docker-compose.override.yml
@@ -40,3 +41,4 @@ docker-compose.override.yml
 .DS_Store
 **/*\ 2.*
 **/* 2.*
+

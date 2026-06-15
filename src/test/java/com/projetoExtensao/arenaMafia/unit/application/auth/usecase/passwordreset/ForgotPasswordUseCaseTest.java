@@ -87,7 +87,8 @@ public class ForgotPasswordUseCaseTest {
         .isEqualTo("Se o número estiver cadastrado, você receberá um código de verificação.");
 
     verify(otpSessionPort, never()).generateOtpSession(any(UUID.class));
-    verify(eventPublisher, never()).publishEvent(any(OnVerificationRequiredNotificationEvent.class));
+    verify(eventPublisher, never())
+        .publishEvent(any(OnVerificationRequiredNotificationEvent.class));
   }
 
   @Test
@@ -113,6 +114,7 @@ public class ForgotPasswordUseCaseTest {
     // Verify
     verify(phoneValidator, times(1)).formatToE164(invalidPhone);
     verify(otpSessionPort, never()).generateOtpSession(any(UUID.class));
-    verify(eventPublisher, never()).publishEvent(any(OnVerificationRequiredNotificationEvent.class));
+    verify(eventPublisher, never())
+        .publishEvent(any(OnVerificationRequiredNotificationEvent.class));
   }
 }
